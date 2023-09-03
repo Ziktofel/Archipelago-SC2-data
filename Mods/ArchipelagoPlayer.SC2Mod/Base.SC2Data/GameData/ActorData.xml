@@ -830,6 +830,26 @@
         <VitalNames index="Shields" value="Vital/ZergShields"/>
         <WireframeShieldColor value="255,0,128,0"/>
     </CActorUnit>
+    <CActorModel default="1" id="AP_HotSLeviathanTentacle">
+        <Model value="AP_LeviathanTentacle"/>
+        <Host Subject="_Selectable"/>
+        <HostedAttaches Name="TentacleAttack">
+            <AttachQuery Methods="Weapon"/>
+        </HostedAttaches>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="CloakEffect" value="1"/>
+        <Inherits index="Opacity" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <On Terms="ActorCreation" Send="$Stand PlayForever"/>
+        <!--On Terms="ActorCreation" Send="SetScale 0.5"/-->
+        <On Terms="Signal.*.Attack" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="Signal.*.TentacleRetracted" Send="AnimBracketStop Attack"/>
+        <On Terms="Signal.*.TentacleRetracted" Send="RefClear TentacleAttack"/>
+        <On Terms="UnitDeath" Send="$Death"/>
+        <On Terms="UnitDeath" Send="Create AP_TentacleDeathSound"/>
+        <On Terms="AnimDone; AnimName Death" Send="Destroy"/>
+    </CActorModel>
     <CActorModel id="AP_250mmStrikeCannonsImpact" parent="ModelAnimationStyleOneShot">
         <On Terms="Effect.AP_250mmStrikeCannonsDamage.Start; At Target" Send="Create"/>
         <HostSiteOps Ops="SOpShadow ThorBarrageVariance"/>
@@ -15749,10 +15769,6 @@
         <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
         <NameOffset value="40"/>
         <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
-        <SoundArray index="Ready" value="AP_PrimalUltralisk_Ready"/>
-        <SoundArray index="What" value="AP_PrimalUltralisk_What"/>
-        <SoundArray index="Yes" value="AP_PrimalUltralisk_Yes"/>
-        <SoundArray index="Attack" value="AP_PrimalUltralisk_Attack"/>
         <StatusColors index="Shields">
             <ColorArray index="0" value="255,0,128,0"/>
         </StatusColors>
@@ -15769,6 +15785,261 @@
     <CActorAction id="AP_UltraliskAttack" parent="GenericAttack" effectAttack="AP_KaiserBladesDamage">
         <ShieldFlashType value="Full"/>
     </CActorAction>
+    <CActorRange id="AP_HotSBioPlasmidDischargeRange" parent="RangeAbil" abil="AP_HotSBioPlasmidDischarge"/>
+    <CActorAction id="AP_HotSBioPlasmidDischargeAttack" parent="GenericAttack" effectImpact="AP_HotSBioPlasmidDischargeDamage" effectLaunch="AP_HotSBioPlasmidDischargeLaunchMissile">
+        <LaunchAttachQuery Methods="Weapon 1"/>
+        <LaunchAssets Sound="AP_Leviathan_BioPlasmidDischargeLaunch"/>
+        <Missile value="AP_HotSBioPlasmidDischargeAttackMissile"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeNoVizEnhance SOpForwardLaunchGuide" HoldPosition="1" HoldRotation="1"/>
+        <ImpactMap index="None" Model="AP_HotSBioPlasmidDischargeAttackImpact" Sound="AP_Leviathan_BioPlasmidDischargeImpact"/>
+    </CActorAction>
+    <CActorRange id="AP_HotSBioStasisRange" parent="RangeAbil" abil="AP_HotSBioStasis"/>
+    <CActorSplat id="AP_HotSBioStasisCursorSplat" parent="ZergCursorSplat" abil="AP_HotSBioStasis"/>
+    <CActorMissile id="AP_HotSBioPlasmidDischargeAttackMissile" parent="GenericAttackMissile" unitName="AP_HotSBioPlasmidDischargeWeapon"/>
+    <CActorAction id="AP_HotSBioStasis" parent="GenericAttack" effectImpact="AP_HotSBioStasisSearchArea" effectLaunch="AP_HotSBioStasisLaunchMissile">
+        <LaunchAttachQuery Methods="Weapon 1"/>
+        <LaunchAssets Sound="AP_Leviathan_BioStasisLaunch"/>
+        <Missile value="AP_HotSBioStasisMissile"/>
+        <ImpactMap index="None" Model="AP_HotSBioStasisImpact" Sound="AP_Leviathan_BioStasisImpact"/>
+    </CActorAction>
+    <CActorModel id="AP_HotSBioStasisBlob" parent="ModelAddition">
+        <On Terms="Behavior.AP_HotSBioStasis.On" Send="Create"/>
+        <On Terms="Behavior.AP_HotSBioStasis.Off" Send="AnimBracketStop BSD"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="0.750000"/>
+    </CActorModel>
+    <CActorMissile id="AP_HotSBioStasisMissile" parent="GenericAttackMissile" unitName="AP_HotSBioStasisMissile"/>
+    <CActorUnit id="AP_HotSLeviathan" parent="GenericUnitStandard" unitName="AP_HotSLeviathan">
+        <Aliases value="_UnitHuge"/>
+        <On Terms="ActorCreation" Send="ModelSwap AP_LeviathanBirth"/>
+        <On Terms="ActorCreation" Send="$Birth"/>
+        <On Terms="AnimDone; AnimName Birth" Send="ModelSwap AP_HotSLeviathan"/>
+        <On Terms="AnimDone; AnimName Birth" Send="AnimBaselineStart"/>
+        <On Terms="AnimDone; AnimName Birth" Send="AnimPlay Roar Spell"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_HotSLeviathan" Send="Create"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_HotSLeviathan" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_HotSLeviathan" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create AP_HotSLeviathanTentacleA"/>
+        <On Terms="ActorCreation" Send="Create AP_HotSLeviathanTentacleB"/>
+        <On Terms="ActorCreation" Send="Create AP_HotSLeviathanTentacleC"/>
+        <On Terms="ActorCreation" Send="Create AP_HotSLeviathanTentacleD"/>
+        <On Terms="ActorCreation" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation" Send="SetScale 1.000000 1.000000"/>
+        <On Terms="ActorCreation" Send="Create AP_Spell_SpawnLeviathan_WarpIn"/>
+        <On Terms="Abil.AP_HotSBioPlasmidDischarge.SourceCastStart" Send="$Spell"/>
+        <On Terms="Abil.AP_HotSBioPlasmidDischarge.SourceCastStart" Send="Create AP_BioPlasmidDischargeChargeLaunchBurstSound"/>
+        <On Terms="Abil.AP_HotSBioStasis.SourceCastStart" Send="$Spell"/>
+        <AnimBlendTime value="0.300000"/>
+        <DeathArray index="Normal" ModelLink="AP_LeviathanDeath" SoundLink="AP_Leviathan_Explode"/>
+        <DeathActorModelLow value="UnitDeathModel"/>
+        <PortraitModel value="AP_LeviathanPortrait"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-zerg-leviathan.dds"/>
+        </GroupIcon>
+        <GroupSoundArray index="What" value=""/>
+        <GroupSoundArray index="Yes" value=""/>
+        <GroupSoundArray index="Attack" value=""/>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-leviathan.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-flyercarapace-level0.dds"/>
+        <SoundArray index="Ready" value="AP_Leviathan_Ready"/>
+        <SoundArray index="What" value="AP_Leviathan_What"/>
+        <SoundArray index="Yes" value="AP_Leviathan_Yes"/>
+        <SoundArray index="Attack" value="AP_Leviathan_Attack"/>
+        <SoundArray index="Pissed" value="AP_Leviathan_What"/>
+        <UnitIcon value="Assets\Textures\btn-unit-zerg-leviathan.dds"/>
+        <UnitKillRank Text="UnitKillRank/Leviathan"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-zerg-leviathan.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorSound id="AP_Spell_SpawnLeviathan_WarpIn" parent="SoundOneShot"/>
+    <CActorSound id="AP_BioPlasmidDischargeChargeLaunchBurstSound" parent="SoundOneShot">
+        <Sound value="AP_Leviathan_BioPlasmidDischargeBurst"/>
+    </CActorSound>
+    <CActorAction id="AP_HotSLeviathanAirAttack" parent="GenericAttack" effectImpact="AP_HotSLeviathanAirAttackDamage" effectLaunch="AP_HotSLeviathanAirAttackLaunchMissile">
+        <LaunchAttachQuery Methods="AMFilterWeaponSetA0 AP_AMPatternLeviathanAir"/>
+        <LaunchAssets Model="AP_HotSLeviathanWeaponLaunch" Sound="AP_Leviathan_AirAttackLaunch"/>
+        <Missile value="AP_HotSLeviathanAirAttackMissile"/>
+        <ImpactMap index="None" Model="AP_HotSLeviathanAirAttackImpact" Sound="AP_Leviathan_AirAttackImpact"/>
+    </CActorAction>
+    <CActorSite id="AP_HotSLeviathanTentacleALaunchSite">
+        <Host Subject="::scope.HotSLeviathanTentacleA"/>
+    </CActorSite>
+    <CActorSite id="AP_HotSLeviathanTentacleBLaunchSite">
+        <Host Subject="::scope.HotSLeviathanTentacleB"/>
+    </CActorSite>
+    <CActorSite id="AP_HotSLeviathanTentacleCLaunchSite">
+        <Host Subject="::scope.HotSLeviathanTentacleC"/>
+    </CActorSite>
+    <CActorSite id="AP_HotSLeviathanTentacleDLaunchSite">
+        <Host Subject="::scope.HotSLeviathanTentacleD"/>
+    </CActorSite>
+    <CActorMissile id="AP_HotSLeviathanAirAttackMissile" parent="GenericAttackMissile" unitName="AP_HotSLeviathanScourgeMissile"/>
+    <CActorAction id="AP_HotSLeviathanTentacleAAttack" parent="GenericAttack" effectImpact="AP_HotSLeviathanGroundAttackDamage" effectLaunch="AP_HotSLeviathanGroundAttackLaunchMissileA">
+        <LaunchSiteOps Ops="SOpAttachHarnessStationary"/>
+        <LaunchSite value="AP_HotSLeviathanTentacleALaunchSite"/>
+        <LaunchAttachQuery Methods="Weapon"/>
+        <LaunchAssets Sound="AP_Leviathan_GroundAttackLaunch"/>
+        <Missile value="AP_HotSLeviathanTentacleAAttackMissile"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
+        <ImpactSiteOpsReaction Ops="SOp2DRotation SOp180" HoldPosition="1" HoldRotation="1"/>
+        <ImpactAttachQuery Methods="AMFilterTarget AMProximityAll"/>
+        <ImpactMap index="None" Model="AP_HotSLeviathanGroundAttackImpact" Sound="AP_Leviathan_GroundAttackImpact"/>
+        <ImpactPhysics Name="ImpalerTentacleImpact" MatchKeys="Basic" Physics="SpineCrawlerAttackDeathForce"/>
+    </CActorAction>
+    <CActorMissile id="AP_HotSLeviathanTentacleAAttackMissile" parent="GenericTentacleMissile" unitName="HotSLeviathanTentacleAMissile2">
+        <Supporter>
+            <Subject value="AP_HotSLeviathanTentacleA"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileA"/>
+        </Supporter>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="Signal Attack"/>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="RefSet TentacleAttack ::Self"/>
+        <On Terms="ActorDestruction" Target="::Supporter" Send="Signal TentacleRetracted"/>
+        <Model value="Invisible"/>
+        <HostReturn>
+            <Subject value="AP_HotSLeviathanTentacleA"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileA"/>
+        </HostReturn>
+        <HostReturnSiteOps Ops="SOpAttachHardPoint"/>
+    </CActorMissile>
+    <CActorAction id="AP_HotSLeviathanTentacleBAttack" parent="GenericAttack" effectImpact="AP_HotSLeviathanGroundAttackDamage" effectLaunch="AP_HotSLeviathanGroundAttackLaunchMissileB">
+        <LaunchSiteOps Ops="SOpAttachHarnessStationary"/>
+        <LaunchSite value="AP_HotSLeviathanTentacleBLaunchSite"/>
+        <LaunchAttachQuery Methods="Weapon"/>
+        <LaunchAssets Sound="AP_Leviathan_GroundAttackLaunch"/>
+        <Missile value="AP_HotSLeviathanTentacleBAttackMissile"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
+        <ImpactSiteOpsReaction Ops="SOp2DRotation SOp180" HoldPosition="1" HoldRotation="1"/>
+        <ImpactAttachQuery Methods="AMFilterTarget AMProximityAll"/>
+        <ImpactMap index="None" Model="AP_HotSLeviathanGroundAttackImpact" Sound="AP_Leviathan_GroundAttackImpact"/>
+        <ImpactPhysics Name="ImpalerTentacleImpact" MatchKeys="Basic" Physics="SpineCrawlerAttackDeathForce"/>
+    </CActorAction>
+    <CActorMissile id="AP_HotSLeviathanTentacleBAttackMissile" parent="GenericTentacleMissile" unitName="HotSLeviathanTentacleBMissile2">
+        <Supporter>
+            <Subject value="AP_HotSLeviathanTentacleB"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileB"/>
+        </Supporter>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="Signal Attack"/>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="RefSet TentacleAttack ::Self"/>
+        <On Terms="ActorDestruction" Target="::Supporter" Send="Signal TentacleRetracted"/>
+        <Model value="Invisible"/>
+        <HostReturn>
+            <Subject value="AP_HotSLeviathanTentacleB"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileB"/>
+        </HostReturn>
+        <HostReturnSiteOps Ops="SOpAttachHardPoint"/>
+    </CActorMissile>
+    <CActorAction id="AP_HotSLeviathanTentacleCAttack" parent="GenericAttack" effectImpact="AP_HotSLeviathanGroundAttackDamage" effectLaunch="AP_HotSLeviathanGroundAttackLaunchMissileC">
+        <LaunchSiteOps Ops="SOpAttachHarnessStationary"/>
+        <LaunchSite value="AP_HotSLeviathanTentacleCLaunchSite"/>
+        <LaunchAttachQuery Methods="Weapon"/>
+        <LaunchAssets Sound="AP_Leviathan_GroundAttackLaunch"/>
+        <Missile value="AP_HotSLeviathanTentacleCAttackMissile"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
+        <ImpactSiteOpsReaction Ops="SOp2DRotation SOp180" HoldPosition="1" HoldRotation="1"/>
+        <ImpactAttachQuery Methods="AMFilterTarget AMProximityAll"/>
+        <ImpactMap index="None" Model="AP_HotSLeviathanGroundAttackImpact" Sound="AP_Leviathan_GroundAttackImpact"/>
+        <ImpactPhysics Name="ImpalerTentacleImpact" MatchKeys="Basic" Physics="SpineCrawlerAttackDeathForce"/>
+    </CActorAction>
+    <CActorMissile id="AP_HotSLeviathanTentacleCAttackMissile" parent="GenericTentacleMissile" unitName="HotSLeviathanTentacleCMissile2">
+        <Supporter>
+            <Subject value="AP_HotSLeviathanTentacleC"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileC"/>
+        </Supporter>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="Signal Attack"/>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="RefSet TentacleAttack ::Self"/>
+        <On Terms="ActorDestruction" Target="::Supporter" Send="Signal TentacleRetracted"/>
+        <Model value="Invisible"/>
+        <HostReturn>
+            <Subject value="AP_HotSLeviathanTentacleC"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileC"/>
+        </HostReturn>
+        <HostReturnSiteOps Ops="SOpAttachHardPoint"/>
+    </CActorMissile>
+    <CActorAction id="AP_HotSLeviathanTentacleDAttack" parent="GenericAttack" effectImpact="AP_HotSLeviathanGroundAttackDamage" effectLaunch="AP_HotSLeviathanGroundAttackLaunchMissileD">
+        <LaunchSiteOps Ops="SOpAttachHarnessStationary"/>
+        <LaunchSite value="AP_HotSLeviathanTentacleDLaunchSite"/>
+        <LaunchAttachQuery Methods="Weapon"/>
+        <LaunchAssets Sound="AP_Leviathan_GroundAttackLaunch"/>
+        <Missile value="AP_HotSLeviathanTentacleDAttackMissile"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
+        <ImpactSiteOpsReaction Ops="SOp2DRotation SOp180" HoldPosition="1" HoldRotation="1"/>
+        <ImpactAttachQuery Methods="AMFilterTarget AMProximityAll"/>
+        <ImpactMap index="None" Model="AP_HotSLeviathanGroundAttackImpact" Sound="AP_Leviathan_GroundAttackImpact"/>
+        <ImpactPhysics Name="ImpalerTentacleImpact" MatchKeys="Basic" Physics="SpineCrawlerAttackDeathForce"/>
+    </CActorAction>
+    <CActorMissile id="AP_HotSLeviathanTentacleDAttackMissile" parent="GenericTentacleMissile" unitName="HotSLeviathanTentacleDMissile2">
+        <Supporter>
+            <Subject value="AP_HotSLeviathanTentacleD"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileD"/>
+        </Supporter>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="Signal Attack"/>
+        <On Terms="MotionPhaseStart; MotionPhase" Target="::Supporter" Send="RefSet TentacleAttack ::Self"/>
+        <On Terms="ActorDestruction" Target="::Supporter" Send="Signal TentacleRetracted"/>
+        <Model value="Invisible"/>
+        <HostReturn>
+            <Subject value="AP_HotSLeviathanTentacleD"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_HotSLeviathanGroundAttackLaunchMissileD"/>
+        </HostReturn>
+        <HostReturnSiteOps Ops="SOpAttachHardPoint"/>
+    </CActorMissile>
+    <CActorSiteOpRotationExplicit id="AP_HotSLeviathanTentacleAFacing">
+        <Forward value="-1.000000,-1.000000,0.000000"/>
+    </CActorSiteOpRotationExplicit>
+    <CActorSiteOpRotationExplicit id="AP_HotSLeviathanTentacleBFacing">
+        <Forward value="-1.000000,-1.000000,0.000000"/>
+    </CActorSiteOpRotationExplicit>
+    <CActorSiteOpRotationExplicit id="AP_HotSLeviathanTentacleCFacing">
+        <Forward value="-1.000000,-1.000000,0.000000"/>
+    </CActorSiteOpRotationExplicit>
+    <CActorSiteOpRotationExplicit id="AP_HotSLeviathanTentacleDFacing">
+        <Forward value="-1.000000,-1.000000,0.000000"/>
+    </CActorSiteOpRotationExplicit>
+    <CActorModel id="AP_HotSLeviathanTentacleA" parent="AP_HotSLeviathanTentacle">
+        <HostSiteOps Ops="SOpAttachHardPoint"/>
+        <On Terms="ActorCreation" Send="RefSet ::scope.AP_HotSLeviathanTentacleA ::Self"/>
+        <On Terms="ActorCreation" Send="SetOpacity"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.565000 Opacity"/>
+        <On Terms="TimerExpired; TimerName Opacity" Send="SetOpacity 1.000000 0.250000"/>
+    </CActorModel>
+    <CActorModel id="AP_HotSLeviathanTentacleB" parent="AP_HotSLeviathanTentacle">
+        <HostSiteOps Ops="SOpAttachHardPoint01"/>
+        <On Terms="ActorCreation" Send="RefSet ::scope.AP_HotSLeviathanTentacleB ::Self"/>
+        <On Terms="ActorCreation" Send="SetOpacity"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.565000 Opacity"/>
+        <On Terms="TimerExpired; TimerName Opacity" Send="SetOpacity 1.000000 0.250000"/>
+    </CActorModel>
+    <CActorModel id="AP_HotSLeviathanTentacleC" parent="AP_HotSLeviathanTentacle">
+        <HostSiteOps Ops="SOpAttachHardPoint02"/>
+        <On Terms="ActorCreation" Send="RefSet ::scope.AP_HotSLeviathanTentacleC ::Self"/>
+        <On Terms="ActorCreation" Send="SetOpacity"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.565000 Opacity"/>
+        <On Terms="TimerExpired; TimerName Opacity" Send="SetOpacity 1.000000 0.250000"/>
+    </CActorModel>
+    <CActorModel id="AP_HotSLeviathanTentacleD" parent="AP_HotSLeviathanTentacle">
+        <HostSiteOps Ops="SOpAttachHardPoint03"/>
+        <On Terms="ActorCreation" Send="RefSet ::scope.AP_HotSLeviathanTentacleD ::Self"/>
+        <On Terms="ActorCreation" Send="SetOpacity"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.565000 Opacity"/>
+        <On Terms="TimerExpired; TimerName Opacity" Send="SetOpacity 1.000000 0.250000"/>
+    </CActorModel>
     <CActorSound id="Zerg_BuildingMorphStart">
         <!-- Override -->
         <On Terms="Abil.AP_ZergBuild.BuiltStart" Send="Create"/>
@@ -24874,12 +25145,11 @@
         </Wireframe>
         <SoundArray index="Birth" value=""/>
         <SoundArray index="Ready" value="Drone_Ready"/>
-        <SoundArray index="Help" value=""/>
+        <SoundArray index="Help" value="Alert_ZergEconomyUnderAttack"/>
         <SoundArray index="What" value="Drone_What"/>
         <SoundArray index="Yes" value="Drone_Yes"/>
         <SoundArray index="Attack" value="Drone_Attack"/>
         <SoundArray index="Pissed" value="Drone_Pissed"/>
-        <SoundArray index="Help" value="Alert_ZergEconomyUnderAttack"/>
         <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
         <Aliases value="_UnitSmall"/>
     </CActorUnit>
