@@ -24,6 +24,8 @@ void lib15EF4C78_InitVariables () {
     lib15EF4C78_InitVariables_completed = true;
 
     lib15EF4C78_gv_kerriganPsiStrikeEnergyCost = libNtve_gf_CostOfAbility("AP_PsiStrikeBlink", "Energy");
+    lib15EF4C78_gv_supplicantWarpTrainActualUnitCost = UnitTypeGetCost("AP_Supplicant", c_unitCostMinerals);
+    lib15EF4C78_gv_supplicantWarpTrainActualCommand = AbilityCommand("AP_WarpGateTrainSupplicantTrue", 11);
     lib15EF4C78_gv_aP_Player_ON_PRIMARY_TOWN_HALL_SET_EVENT = "AP_Player_OnPrimaryTownHallSetEvent";
     for (init_i = 0; init_i <= lib15EF4C78_gv_cUC_HeroMaxCount; init_i += 1) {
         for (init_j = 0; init_j <= 20; init_j += 1) {
@@ -2037,6 +2039,161 @@ void lib15EF4C78_gt_KerriganPsiStrike_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Supplicant Warp Train
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_SupplicantWarpTrain_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_u;
+    unit lv_actualCreator;
+    unit lv_warpGate;
+    point lv_p;
+    order lv_order1;
+    order lv_order2;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_u = EventUnitCreatedUnit();
+    lv_warpGate = EventUnit();
+    lv_p = UnitGetPosition(lv_u);
+    lv_order1 = OrderTargetingPoint(lib15EF4C78_gv_supplicantWarpTrainActualCommand, PointWithOffset(lv_p, -0.5, 0.0));
+    lv_order2 = OrderTargetingPoint(lib15EF4C78_gv_supplicantWarpTrainActualCommand, PointWithOffset(lv_p, 0.5, 0.0));
+    lv_player = UnitGetOwner(lv_u);
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(lv_u) == lib15EF4C78_gv_supplicantWarpTrainDummyUnitLink))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitCreate(1, lib15EF4C78_gv_supplicantWarpTrainCreatorUnitLink, c_unitCreateIgnorePlacement, lv_player, lv_p, 270.0);
+    lv_actualCreator = UnitLastCreated();
+    if ((UnitOrderIsValid(lv_actualCreator, lv_order1) == false) && (UnitOrderIsValid(lv_actualCreator, lv_order2) == false)) {
+        UnitAbilityAddChargeUsed(lv_warpGate, lib15EF4C78_gv_warpGateTrainAbility, "WarpGateTrain", -1.0);
+        UnitRemove(lv_actualCreator);
+        return true;
+    }
+
+    UnitIssueOrder(lv_actualCreator, lv_order1, c_orderQueueAddToFront);
+    UnitIssueOrder(lv_actualCreator, lv_order2, c_orderQueueAddToFront);
+    UnitBehaviorAdd(lv_actualCreator, lib15EF4C78_gv_supplicantWarpTrainCreatorWarpGateFinderBehaviorLink, lv_warpGate, 1);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_SupplicantWarpTrain_Init () {
+    lib15EF4C78_gt_SupplicantWarpTrain = TriggerCreate("lib15EF4C78_gt_SupplicantWarpTrain_Func");
+    TriggerAddEventUnitCreated(lib15EF4C78_gt_SupplicantWarpTrain, null, lib15EF4C78_gv_warpGateTrainAbility, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Supplicant Actual Train
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_SupplicantActualTrain_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_u;
+    unit lv_warpSource;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_u = EventUnitCreatedUnit();
+    lv_warpSource = EventUnit();
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitBehaviorAdd(lv_u, lib15EF4C78_gv_supplicantWarpTrainWarpPowerCheckBehaviorLink, lv_warpSource, 1);
+    UnitBehaviorAdd(lv_u, lib15EF4C78_gv_supplicantWarpTrainCreatorFinderBehaviorLink, lv_warpSource, 1);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_SupplicantActualTrain_Init () {
+    lib15EF4C78_gt_SupplicantActualTrain = TriggerCreate("lib15EF4C78_gt_SupplicantActualTrain_Func");
+    TriggerAddEventUnitCreated(lib15EF4C78_gt_SupplicantActualTrain, null, lib15EF4C78_gv_supplicantWarpTrainActualAbility, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Supplicant Warp Finish
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_SupplicantWarpFinish_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_supplicant;
+    unit lv_creator;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_supplicant = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitHasBehavior2(lv_supplicant, lib15EF4C78_gv_supplicantWarpTrainCreatorFinderBehaviorLink) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_creator = UnitBehaviorEffectUnit(lv_supplicant, lib15EF4C78_gv_supplicantWarpTrainCreatorFinderBehaviorLink, c_effectUnitCaster, 0);
+    UnitBehaviorRemove(lv_supplicant, lib15EF4C78_gv_supplicantWarpTrainCreatorFinderBehaviorLink, 1);
+    UnitRemove(lv_creator);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_SupplicantWarpFinish_Init () {
+    lib15EF4C78_gt_SupplicantWarpFinish = TriggerCreate("lib15EF4C78_gt_SupplicantWarpFinish_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_SupplicantWarpFinish, c_playerAny, lib15EF4C78_gv_supplicantWarpTrainActualUnitBirthEventLink);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Supplicant Warp Cancel
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_SupplicantWarpCancel_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_supplicant;
+    unit lv_creator;
+    unit lv_warpGate;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_supplicant = EventPlayerEffectUsedUnit(c_effectUnitTarget);
+    lv_creator = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((UnitBehaviorCount(lv_creator, lib15EF4C78_gv_supplicantWarpTrainWarpRefundBehaviorLink) > 0)) {
+        lv_warpGate = UnitBehaviorEffectUnit(lv_creator, lib15EF4C78_gv_supplicantWarpTrainCreatorWarpGateFinderBehaviorLink, c_effectUnitCaster, 0);
+        UnitAbilityAddChargeUsed(lv_warpGate, lib15EF4C78_gv_warpGateTrainAbility, "WarpGateTrain", -1.0);
+        UnitRemove(lv_creator);
+    }
+    else {
+        UnitBehaviorAdd(lv_creator, lib15EF4C78_gv_supplicantWarpTrainWarpRefundBehaviorLink, lv_supplicant, 1);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_SupplicantWarpCancel_Init () {
+    lib15EF4C78_gt_SupplicantWarpCancel = TriggerCreate("lib15EF4C78_gt_SupplicantWarpCancel_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_SupplicantWarpCancel, c_playerAny, lib15EF4C78_gv_supplicantWarpTrainActualUnitCancelEventLink);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: SlayerInit
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_SlayerInit_Func (bool testConds, bool runActions) {
@@ -2775,6 +2932,10 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_Set5SecondsMark_Init();
     lib15EF4C78_gt_ZerglingRespawnInit_Init();
     lib15EF4C78_gt_KerriganPsiStrike_Init();
+    lib15EF4C78_gt_SupplicantWarpTrain_Init();
+    lib15EF4C78_gt_SupplicantActualTrain_Init();
+    lib15EF4C78_gt_SupplicantWarpFinish_Init();
+    lib15EF4C78_gt_SupplicantWarpCancel_Init();
     lib15EF4C78_gt_SlayerInit_Init();
     lib15EF4C78_gt_CreepTumorBuild_Init();
     lib15EF4C78_gt_AP_Player_FindPrimaryTownHallForAllPlayers_Init();
