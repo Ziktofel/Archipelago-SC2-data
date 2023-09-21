@@ -6264,7 +6264,7 @@
         <Sound value="CocoonCancelOrCocoonComplete"/>
     </CActorSound>
     <CActorSplat id="AP_ChargedBlastCursor" parent="ProtossCursorSplat" abil="AP_ChargedBlastTargeted">
-        <Model value="VoidProtossAOECursorSplat"/>
+        <Model value="AP_VoidProtossAOECursorSplat"/>
     </CActorSplat>
     <CActorRange id="AP_ChargedBlastRange" parent="RangeAbil" abil="AP_ChargedBlastTargeted"/>
     <CActorUnit id="AP_BanelingNest" parent="ZergBuildingEx" unitName="AP_BanelingNest">
@@ -12779,6 +12779,7 @@
         <On Terms="WeaponStop.*.AttackStop" Send="AnimBracketStop Attack"/>
         <On Terms="Abil.attack.ReadyStop" Send="AnimGroupRemove Ready"/>
         <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Stalker_Land"/>
+        <On Terms="UnitBirth.AP_StalkerReinforcementDummy" Send="Create"/>
         <ModelFlags index="OutlineEmitter" value="1"/>
         <BuildModel value="AP_StalkerShakurasWarpIn"/>
         <DeathArray index="Normal" ModelLink="AP_StalkerShakurasDeath" SoundLink=""/>
@@ -17000,9 +17001,8 @@
     </CActorUnit>
     <CActorAction id="AP_DragoonAttack" parent="GenericAttack" effectImpact="AP_DragoonDamage" effectLaunch="AP_DragoonLM">
         <LaunchAssets Sound="AP_DragoonVoid_AttackLaunch"/>
-        <Missile value="AP_DragoonAttackMissile"/>
         <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
-        <ImpactMap index="None" Model="AP_DragoonAttackImpact" Sound="AP_DragoonVoid_AttackImpact"/>
+        <ImpactMap index="None" Sound="AP_DragoonVoid_AttackImpact"/>
         <ImpactMap index="Flesh" ModelReaction="BloodTargetImpact"/>
         <ImpactPhysics Name="DragoonPhaseDisruptorImpact" MatchKeys="Basic" Physics="AP_DragoonAttackDeathForce"/>
     </CActorAction>
@@ -17024,6 +17024,859 @@
     <CActorSound id="AP_Dragoon_Land" parent="SoundOneShot">
         <Sound value="Dragoon_Land"/>
     </CActorSound>
+    <CActorAction id="AP_FenixChampionAttack" parent="GenericAttack" effectAttack="AP_FenixChampionDamage">
+        <LaunchAssets Sound="AP_Fenix_CleaveAttackLaunch"/>
+        <ImpactMap index="None" Model="AP_FenixChampionAttackImpact" Sound="AP_Fenix_CleaveAttackImpact"/>
+        <ImpactMap index="Flesh" ModelReaction="BloodTargetImpact"/>
+        <ShieldFlashType value="Header"/>
+    </CActorAction>
+    <CActorModel id="AP_FenixChargeImpactModel" parent="ModelAnimationStyleOneShot">
+        <On Terms="Effect.AP_FenixChargeTargetImpactSearch.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_FenixSOAChargeStunSearch.Start; At Caster" Send="Create"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter" HoldPosition="1" HoldRotation="1"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_FenixChargeStunModel" parent="ModelAnimationStyleContinuous">
+        <On Terms="ActorCreation" Send="AnimBracketStart GL_BSD GLbirth GLstand GLdeath"/>
+        <On Terms="Behavior.AP_FenixChargeStun.On" Send="Create"/>
+        <On Terms="Behavior.AP_FenixChargeStun.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_FenixSOAChargeStun.On" Send="Create"/>
+        <On Terms="Behavior.AP_FenixSOAChargeStun.Off" Send="AnimBracketStop BSD"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOverhead"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorUnit id="AP_FenixSOA" parent="GenericUnitBase" unitName="AP_FenixSOA">
+        <Aliases value="_MissileHybrids"/>
+        <Aliases value="_UnitMedium"/>
+        <On Terms="Abil.attack.ReadyStart" Send="AnimGroupApply Ready"/>
+        <On Terms="WeaponStart.AP_FenixSOAWeapon.AttackStart; IsStatus WeaponBypass 0" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="WeaponStop.AP_FenixSOAWeapon.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="Abil.attack.ReadyStop" Send="AnimGroupRemove Ready"/>
+        <On Terms="Behavior.AP_FenixSOACharging.On" Send="AnimPlay SpellA Spell,A PlayForever"/>
+        <On Terms="Behavior.AP_FenixSOACharging.On" Send="StatusSet WeaponBypass 1"/>
+        <On Terms="Effect.AP_FenixSOAChargeStunSearch.Start" Send="AnimPlay SpellAEnd Spell,A,End"/>
+        <On Terms="Effect.AP_FenixSOAChargeStunSearch.Start" Send="AnimClear SpellA"/>
+        <On Terms="Behavior.AP_FenixSOACharging.Off" Send="AnimClear SpellA"/>
+        <On Terms="Behavior.AP_FenixSOACharging.Off" Send="StatusSet WeaponBypass 0"/>
+        <On Terms="Behavior.AP_FenixSOAWhirlwind.On" Send="AnimPlay SpellB Spell,B PlayForever"/>
+        <On Terms="Behavior.AP_FenixSOAWhirlwind.Off" Send="AnimClear SpellB"/>
+        <On Terms="Behavior.AP_FenixSOAWhirlwind.On" Send="StatusSet WeaponBypass 1"/>
+        <On Terms="Behavior.AP_FenixSOAWhirlwind.Off" Send="StatusSet WeaponBypass 0"/>
+        <On Terms="UnitMovementUpdate.*.Walk" Send="AnimClear SpellAEnd"/>
+        <On Terms="Behavior.AP_FenixSOASpawnDelay.On" Send="AnimPlay WorkStart Stand,Work,Start 0 0.000000"/>
+        <On Terms="Behavior.AP_FenixSOASpawn.Off" Send="AnimClear WorkStart"/>
+        <On Terms="Behavior.AP_FenixSOATimedLifeExpire.On" Send="AnimPlay WorkEnd Stand,Work,End PlayForever"/>
+        <On Terms="Behavior.AP_FenixSOATimedLifeExpire.On" Send="TimerSet 2.230000 WarpOut"/>
+        <On Terms="TimerExpired; TimerName WarpOut" Send="ModelSwap AP_FenixChampionWarpOut"/>
+        <On Terms="ModelSwap" Send="$Birth"/>
+        <On Terms="ModelEvent; ModelEventName FenixBirthImpact" Send="Create AP_FenixBirthImpact"/>
+        <Model value="AP_FenixChampion"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <BuildModel value="AP_FenixChampionWarpIn"/>
+        <DeathArray index="Normal" ModelLink="AP_Fenix_Death" SoundLink="Immortal_Explode"/>
+        <DeathCustoms ModelLink="ProtossLargeUnitDeathLow" Name="AntiGravProtoss"/>
+        <PortraitActor value="AP_FenixEx2Portrait"/>
+        <PortraitModel value="AP_FenixEx2Portrait"/>
+        <WalkAnimMoveSpeed value="2.25"/>
+        <BarOffset value="80"/>
+        <BarWidth value="90"/>
+        <CustomUnitStatusFrame value="AP_LotV_UnitStatus/HeroUnitEnergyStatusFrameTemplate"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\btn-unit-protoss-fenix.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\BTN-Unit-Protoss-stonezealot.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-protoss-groundarmorlevel0.dds"/>
+        <SoundArray index="Ready" value="AP_Fenix_Ready"/>
+        <SoundArray index="Help" value="AP_Fenix_Help"/>
+        <SoundArray index="What" value="AP_Fenix_What"/>
+        <SoundArray index="Yes" value="AP_Fenix_Yes"/>
+        <SoundArray index="Attack" value="AP_Fenix_Attack"/>
+        <SoundArray index="Pissed" value="AP_Fenix_Pissed"/>
+        <UnitFlags index="SuppressDefaultStatusBar" value="1"/>
+        <UnitIcon value="Assets\Textures\BTN-Unit-Protoss-stonezealot.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-protoss-fenix.dds"/>
+        </Wireframe>
+        <WireframeShield>
+            <Image value="Assets\Textures\wireframe-protoss-fenix-shield01.dds"/>
+            <Image value="Assets\Textures\wireframe-protoss-fenix-shield02.dds"/>
+            <Image value="Assets\Textures\wireframe-protoss-fenix-shield03.dds"/>
+        </WireframeShield>
+    </CActorUnit>
+    <CActorUnit id="AP_SoAAutonomousCaster" parent="GenericUnitBase" unitName="AP_SoAAutonomousCaster">
+        <Model value="Invisible"/>
+    </CActorUnit>
+    <CActorModel id="AP_FenixBirthImpact" parent="ModelAnimationStyleOneShot">
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+    </CActorModel>
+    <CActorPortrait id="AP_FenixEx2Portrait" parent="CompositePortrait"/>
+    <CActorAction id="AP_FenixSOAAttack" parent="GenericAttack" effectAttack="AP_FenixSOAWeaponDamage">
+        <LaunchAssets Sound="AP_Fenix_CleaveAttackLaunch"/>
+        <ImpactMap index="None" Sound="AP_Fenix_CleaveAttackImpact"/>
+        <ImpactMap index="Flesh" ModelReaction="BloodTargetImpact"/>
+        <ShieldFlashType value="Header"/>
+    </CActorAction>
+    <CActorAction id="AP_FenixWhirlwindAttack" parent="GenericAttack" effectAttack="AP_FenixWhirlwindDamage">
+        <ImpactMap index="None" Model="AP_FenixWhirlwindImpact" Sound="Zealot_AttackImpact"/>
+    </CActorAction>
+    <CActorSound id="AP_FenixWhirlwindLoop" parent="SoundContinuous">
+        <On Terms="Behavior.AP_FenixWhirlwind.On" Send="Create"/>
+        <On Terms="Behavior.AP_FenixWhirlwind.Off" Send="Destroy"/>
+        <On Terms="Behavior.AP_FenixSoAWhirlwind.On" Send="Create"/>
+        <On Terms="Behavior.AP_FenixSoAWhirlwind.Off" Send="Destroy"/>
+        <Host Subject="_Selectable"/>
+    </CActorSound>
+    <CActorModel id="AP_FenixWhirlwindModel" parent="ModelAnimationStyleContinuous">
+        <On Terms="Behavior.AP_FenixWhirlwind.On" Send="Create"/>
+        <On Terms="Behavior.AP_FenixWhirlwind.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_FenixSoAWhirlwind.On" Send="Create"/>
+        <On Terms="Behavior.AP_FenixSoAWhirlwind.Off" Send="AnimBracketStop BSD"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+    </CActorModel>
+    <CActorModelMaterial id="AP_GlazeFenixShield" parent="GlazeParent">
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <On Terms="Effect.AP_VoidShieldCapacitor.Start; At Caster" Send="Create"/>
+        <On Terms="ActorCreation" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="ActorCreation" Send="$Birth"/>
+        <On Terms="AnimDone; AnimName Birth" Send="ModelMaterialRemoveFrom ::Main"/>
+        <On Terms="AnimDone; AnimName Birth" Send="Destroy"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModelMaterial>
+    <CActorModelMaterial id="AP_GlazeSuperShield" parent="GlazeParent">
+        <On Terms="Behavior.AP_SoASuperShield.On" Send="Create"/>
+        <On Terms="ActorCreation" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="UnitBirth" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="Behavior.AP_SoASuperShield.Off" Send="ModelMaterialRemoveFrom ::Main"/>
+        <On Terms="Behavior.AP_SoASuperShield.Off" Send="Destroy"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModelMaterial>
+    <CActorModelMaterial id="AP_GlazeTimeStop" parent="GlazeParent">
+        <Terms value="Cap 1"/>
+        <On Terms="Behavior.AP_SOAGravitonBomb.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOAGravitonBomb.On" Send="StatusIncrement TimeStopped"/>
+        <On Terms="Behavior.AP_SOATimeFreeze.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOATimeFreeze.On" Send="StatusIncrement TimeStopped"/>
+        <On Terms="ActorCreation" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimPlay FreezeFlail Flail PlayForever,RandomStartOffset"/>
+        <On Terms="Behavior.AP_SOAGravitonBomb.Off" Send="StatusDecrement TimeStopped"/>
+        <On Terms="Behavior.AP_SOATimeFreeze.Off" Send="StatusDecrement TimeStopped"/>
+        <On Terms="StatusDecrement; IsStatus TimeStopped 0" Send="ModelMaterialRemoveFrom ::Main"/>
+        <On Terms="StatusDecrement; IsStatus TimeStopped 0" Target="_Unit" Send="AnimClear FreezeFlail"/>
+        <On Terms="StatusDecrement; IsStatus TimeStopped 0" Send="Destroy"/>
+        <Model value="GlazeTimeStop"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModelMaterial>
+    <CActorSound id="AP_SOAGlobalCloakFadeSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SOAGlobalCloak.Off" Send="Create"/>
+    </CActorSound>
+    <CActorModel id="AP_SOAGlobalCloakImpact" parent="ModelAnimationStyleContinuous">
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_SOAGlobalCloakSearch.Start" Send="Create"/>
+        <On Terms="ActorCreation" Send="TimerSet 2.000000 Impact"/>
+        <On Terms="TimerExpired; TimerName Impact" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpMoveUpByDot5"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAGlobalCloakImpactSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SOAGlobalCloak.On" Send="Create"/>
+    </CActorSound>
+    <CActorSound id="AP_SOAGlobalCloakLaunchSound" parent="SoundOneShot">
+        <On Terms="Effect.AP_SOAGlobalCloakSearch.Start" Send="Create"/>
+    </CActorSound>
+    <CActorAction id="AP_SOAGravitonBombAttack" parent="GenericAttack" effectImpact="AP_SOAGravitonBombCP" effectLaunch="AP_SOAGravitonBombLM">
+        <LaunchSiteOps Ops="SOpTargetPointStationary AP_SOpSOAOrbitalStrikeOffset"/>
+        <LaunchAssets Sound="AP_SOA_TemporalField_Launch"/>
+        <Missile value="AP_SOAGravitonBombMissile"/>
+        <ImpactMap index="None" Sound="AP_SOA_TemporalField_Impact"/>
+    </CActorAction>
+    <CActorSiteOpLocalOffset id="AP_SOpSOAOrbitalStrikeOffset">
+        <LocalOffset value="0.000000,0.000000,30.000000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSound id="AP_SOAGravitonBombImpactBeam_EndSound" parent="SoundOneShot">
+        <On Terms="Effect.AP_SOAGravitonBombCP.Stop" Send="Create"/>
+        <Sound value="AP_SOA_TemporalField_End"/>
+    </CActorSound>
+    <CActorSound id="AP_SOAGravitonBombImpactBeam_LoopSound" parent="SoundContinuous">
+        <On Terms="Effect.AP_SOAGravitonBombCP.Start" Send="Create"/>
+        <On Terms="Effect.AP_SOAGravitonBombCP.Stop" Send="Destroy"/>
+        <Sound value="AP_SOA_TemporalField_Loop"/>
+    </CActorSound>
+    <CActorModel id="AP_SOAGravitonBombImpactShockwave" parent="ModelAnimationStyleContinuous">
+        <On Terms="Effect.AP_SOAGravitonBombCP.Start" Send="Create"/>
+        <On Terms="Effect.AP_SOAGravitonBombCP.Stop" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorMissile id="AP_SOAGravitonBombMissile" parent="GenericAttackMissile" unitName="AP_SOAGravitonBombMissile"/>
+    <CActorSimple id="AP_SOAGravitonBombStunTinter">
+        <On Terms="Behavior.AP_SOAGravitonBomb.On" Send="Create"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.062500 DelayCreation"/>
+        <On Terms="Behavior.AP_SOAGravitonBomb.Off" Send="Destroy"/>
+    </CActorSimple>
+    <CActorModel id="AP_SOAGravitonBombTargetModel" parent="ModelAnimationStyleOneShot">
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death ContentPlayOnce"/>
+        <On Terms="ActorCreation" Send="$Birth"/>
+        <On Terms="AnimDone; AnimName Birth" Send="$Stand PlayForever"/>
+        <On Terms="Signal.*.Destroy" Send="SetOpacity 0.000000 1.000000"/>
+        <On Terms="Signal.*.Destroy" Send="TimerSet 1.000000 DelayDestroy"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAGravitonBombTargetSound" parent="SoundOneShot">
+        <Sound value="AP_SOAGravitonBombTarget"/>
+    </CActorSound>
+    <CActorModel id="AP_SOAThermalLanceTargetingModel">
+        <On Terms="ActorCreation" Send="$Stand PlayForever"/>
+        <!--On Terms="ActorCreation" Send="Create SOAThermalLanceTargetingBeam"/-->
+        <On Terms="Signal.*.Destroy" Send="Destroy"/>
+        <Model value="Invisible"/>
+        <HostSiteOps Ops="SOpShadow"/>
+    </CActorModel>
+    <CActorSimple id="AP_SOAMassRecallOpacity">
+        <On Terms="Behavior.AP_SOARecalling.On" Send="Create"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="SetTintColor 100,100,255 0.250000 OneShot MassRecallTint"/>
+        <On Terms="Behavior.AP_SOARecalled.Off" Send="TimerSet 0.150000 ClearRecallOpacity"/>
+        <On Terms="Behavior.AP_Yoink.On" Target="_Unit" Send="ClearOpacity 0.250000 MassRecallOpacity"/>
+        <On Terms="Behavior.AP_Yoink.On" Target="_Unit" Send="ClearTintColor 0.250000 MassRecallTint"/>
+        <On Terms="Behavior.AP_Yoink.On" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName ClearRecallOpacity; ValidateUnit AP_SOAMassRecallNoRecalledBehavior" Target="_Unit" Send="ClearTintColor 0.250000 MassRecallTint"/>
+        <On Terms="TimerExpired; TimerName ClearRecallOpacity; ValidateUnit AP_SOAMassRecallNoRecalledBehavior" Send="Destroy"/>
+    </CActorSimple>
+    <CActorModel id="AP_SOAMassRecalledImpact" parent="ModelAnimationStyleOneShot">
+        <On Terms="Behavior.AP_SOARecalled.On" Send="Create"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Model value="AP_ArbiterMPRecalledImpact"/>
+        <AutoScaleFactor value="0.450000"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAMassRecalledImpactSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SOARecalled.On" Send="Create"/>
+        <Host Subject="_Selectable"/>
+        <Sound value="AP_ArbiterMP_RecallEnd"/>
+    </CActorSound>
+    <CActorModel id="AP_SOAMassRecallingImpact" parent="ModelAnimationStyleOneShot">
+        <On Terms="Behavior.AP_SOARecalling.On" Send="Create"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Model value="AP_ArbiterMPRecallingImpact"/>
+        <AutoScaleFactor value="0.450000"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAMassRecallingImpactSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SOARecalling.On" Send="Create"/>
+        <Host Subject="_Selectable"/>
+        <Sound value="AP_ArbiterMP_RecallStart"/>
+    </CActorSound>
+    <CActorModel id="AP_SOAOrbitalStrikeTargetModel" parent="ModelAnimationStyleOneShot">
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death ContentPlayOnce"/>
+        <On Terms="ActorCreation" Send="$Birth"/>
+        <On Terms="AnimDone; AnimName Birth" Send="$Stand PlayForever"/>
+        <On Terms="Signal.*.Destroy" Send="SetOpacity 0.000000 1.000000"/>
+        <On Terms="Signal.*.Destroy" Send="TimerSet 1.000000 DelayDestroy"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
+    </CActorModel>
+    <CActorAction id="AP_SOAOrbitalStrikeAttack" parent="AoEAttackShieldHitter" effectHit="AP_SOAOrbitalStrikeDamage"/>
+    <CActorForceSphere id="AP_SOAOrbitalStrikeAttackForce">
+        <On Terms="Effect.AP_SOAOrbitalStrikeImpactSearch.Start" Send="Create"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAOrbitalStrikeAttackUpForce"/>
+        <HostSiteOps Ops="SOpTargetPoint SOpForwardLaunchGuide SOp2DRotation SOpRandomPointInCircleDot35"/>
+        <Duration value="0.150000"/>
+        <Magnitude value="25.000000,12.000000"/>
+        <Radius value="2.150000,0.200000"/>
+    </CActorForceSphere>
+    <CActorForceSphere id="AP_SOAOrbitalStrikeAttackUpForce">
+        <Host Subject="::Creator"/>
+        <HostSiteOps Ops="SOpForwardLaunchGuide SOp2DRotation SOp180 SOpRotVariancerUp35 SOpPointDown1ByDot25 SOpRotationRandomPitch30"/>
+        <Field value="Directional"/>
+        <Duration value="0.150000"/>
+        <Magnitude value="23.000000,10.000000"/>
+        <Radius value="2.150000,0.200000"/>
+    </CActorForceSphere>
+    <CActorModel id="AP_SOAOrbitalStrikeImpact" parent="ModelAnimationStyleOneShot">
+        <On Terms="Effect.AP_SOAOrbitalStrikeImpactDummy.Start" Send="Create"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAOrbitalStrikeImpactSound"/>
+        <HostSiteOps Ops="SOpShadow"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAOrbitalStrikeImpactSound" parent="SoundOneShot">
+        <Host Subject="::Creator"/>
+        <Sound value="AP_SOA_Orbital_Strike_Impact"/>
+        <Layers>
+            <Sound value="AP_SOABomberModeImpactSound"/>
+            <PitchSource value="Actor"/>
+            <PlayDelaySource value="Actor"/>
+            <VolumeSource value="Actor"/>
+            <Chance value="100"/>
+            <Pitch value="-3.000000,2.000000"/>
+            <Volume value="1.000000,2.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorModel id="AP_SOAOrbitalStrikeLaunch" parent="ModelAnimationStyleOneShot">
+        <On Terms="Effect.AP_SOAOrbitalStrikeCP.Start" Send="Create"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAOrbitalStrikeLaunchSound"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAOrbitalStrikePreLaunchSound"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Model value="AP_SOAOrbitalStrikeMissile"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAOrbitalStrikeLaunchSound" parent="SoundOneShot">
+        <Sound value="AP_SOA_Orbital_Strike_Launch"/>
+        <Host Subject="::Creator"/>
+    </CActorSound>
+    <CActorSound id="AP_SOAOrbitalStrikePreLaunchSound" parent="SoundOneShot">
+        <Sound value="AP_SOA_Orbital_Strike_MissilePre_Impact2"/>
+        <Host Subject="::Creator"/>
+    </CActorSound>
+    <CActorAction id="AP_SOAOverWatchAttack" parent="GenericAttack" effectAttack="AP_SOAOverWatchDamage">
+        <LaunchSiteOps Ops="SOpTargetPointStationary AP_SOpSOALaserAttackBeamOffset"/>
+        <LaunchSiteFallback value=""/>
+        <Beam value="AP_SOAOverWatchAttackBeam"/>
+        <ImpactMap index="None" Sound="AP_SOAOverWatch_Impact"/>
+        <ImpactPhysics Name="Explosion" MatchKeys="Basic" Physics="AP_SOAOverWatchAttackForce"/>
+    </CActorAction>
+    <CActorSiteOpLocalOffset id="AP_SOpSOALaserAttackBeamOffset">
+        <LocalOffset value="0.000000,0.000000,15.000000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorForceSphere id="AP_SOAOverWatchAttackForce">
+        <HostSiteOps Ops="SOpTargetPoint SOpForwardLaunchGuide SOp2DRotation SOpRandomPointInCircleDot35"/>
+        <Magnitude value="25.000000,12.000000"/>
+        <Radius value="2.150000,0.200000"/>
+        <Duration value="0.150000"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAOverWatchAttackUpForce"/>
+    </CActorForceSphere>
+    <CActorForceSphere id="AP_SOAOverWatchAttackUpForce">
+        <Host Subject="::Creator"/>
+        <HostSiteOps Ops="SOpForwardLaunchGuide SOp2DRotation SOp180 SOpRotVariancerUp35 SOpPointDown1ByDot25 SOpRotationRandomPitch30"/>
+        <Magnitude value="23.000000,10.000000"/>
+        <Radius value="2.150000,0.200000"/>
+        <Duration value="0.150000"/>
+        <Field value="Directional"/>
+    </CActorForceSphere>
+    <CActorBeamSimple id="AP_SOAOverWatchAttackBeam" parent="BeamSimpleAnimationStyleOneShot">
+        <On Terms="ActorCreation" Send="SetOpacity 0.000000 0.500000"/>
+        <HostLaunchSiteOps Ops="SOpTargetPointStationary AP_SOpSOAOverWatchBeamOffset"/>
+        <HostImpactSiteOps Ops="SOpTargetPointStationary"/>
+    </CActorBeamSimple>
+    <CActorSiteOpLocalOffset id="AP_SOpSOAOverWatchBeamOffset">
+        <LocalOffset value="0.000000,0.000000,15.000000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSplat id="AP_SOAPylonPowerCursorSplat" parent="ProtossCursorSplat" abil="AP_SOAPylonPower">
+        <Model value="AP_SOAPylonPowerCursorSplat"/>
+        <Scale value="6.000000"/>
+    </CActorSplat>
+    <CActorSound id="AP_SOAPylonPowerImpact" parent="SoundOneShot">
+        <On Terms="Effect.AP_SOAPylonPower.Start" Send="Create"/>
+    </CActorSound>
+    <CActorModel id="AP_SOARepairBeam" parent="ModelAnimationStyleContinuous">
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <On Terms="Effect.AP_SOARepairBeamHeal.TargetStart; At Target" Send="Create"/>
+        <On Terms="Effect.AP_SOARepairBeamHeal.TargetStop" Send="Destroy"/>
+        <On Terms="Effect.AP_SOARepairBeamHealStructure.TargetStart; At Target" Send="Create"/>
+        <On Terms="Effect.AP_SOARepairBeamHealStructure.TargetStop" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create AP_SOARepairBeamHealSoundStart"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOrigin SOpForwardNorth"/>
+        <AutoScaleFactor value="0.700000"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorSound id="AP_SOARepairBeamHealSoundStart" parent="SoundOneShot">
+        <Sound value="AP_SOA_RepairBeamStart"/>
+        <Layers>
+            <Sound value="AP_SOA_RepairBeamSweetener"/>
+            <PitchSource value="Sound"/>
+            <PlayDelaySource value="Sound"/>
+            <VolumeSource value="Sound"/>
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorModelMaterial id="AP_SOARepairBeamGlaze" parent="GlazeParent">
+        <On Terms="Behavior.AP_SOARepairBeam.On" Send="Create"/>
+        <On Terms="ActorCreation" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <On Terms="Behavior.AP_SOARepairBeam.Off" Send="AnimBracketStop BSD"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModelMaterial>
+    <CActorModel id="AP_SOARepairBeamImpact" parent="ModelAnimationStyleContinuous">
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <On Terms="Effect.AP_SOARepairBeamHeal.TargetStart; At Target" Send="Create"/>
+        <On Terms="Effect.AP_SOARepairBeamHeal.TargetStop" Send="Destroy"/>
+        <On Terms="Effect.AP_SOARepairBeamHealStructure.TargetStart; At Target" Send="Create"/>
+        <On Terms="Effect.AP_SOARepairBeamHealStructure.TargetStop" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create AP_SOARepairBeamHealSound"/>
+        <On Terms="ActorDestruction" Target="AP_SOARepairBeamHealSound" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="0.700000"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorSound id="AP_SOARepairBeamHealSound" parent="SoundContinuous">
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <!--On Terms="ActorCreation" Send="Create SOARepairBeamHealSoundStart"/-->
+        <!-- <On Terms="ActorDestruction" Send="Create SOARepairBeamHealSoundEnd"/> -->
+        <Host Subject="_Selectable"/>
+        <!-- <Sound value="SOA_RepairBeam"/> -->
+    </CActorSound>
+    <CActorModel id="AP_SOAShieldRegeneration" parent="ModelAnimationStyleContinuous">
+        <On Terms="Behavior.AP_SOAShieldRegeneration.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOAShieldRegeneration.On" Send="Create AP_SOAShieldRegenerationImpactSound"/>
+        <On Terms="Behavior.AP_SOAShieldRegeneration.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_SOAShieldRegeneration.Off" Send="Create AP_SOAShieldRegenerationFadeSound"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="0.800000"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAShieldRegenerationImpactSound" parent="SoundOneShot"/>
+    <CActorSound id="AP_SOAShieldRegenerationFadeSound" parent="SoundOneShot"/>
+    <CActorSimple id="AP_SOASuperChronoAnimationSpeed">
+        <On Terms="Behavior.AP_SOASuperChrono.On" Send="Create"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimSetTimeScale ::Baseline 0.200000"/>
+        <On Terms="Behavior.AP_SOASuperChrono.Off" Target="_Unit" Send="AnimSetTimeScale ::Baseline 1.000000"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimSetTimeScale GL_BSD 0.200000"/>
+        <On Terms="Behavior.AP_SOASuperChrono.Off" Target="_Unit" Send="AnimSetTimeScale GL_BSD 1.000000"/>
+        <On Terms="Behavior.AP_SOASuperChrono.Off" Send="Destroy"/>
+    </CActorSimple>
+    <CActorModel id="AP_SOASuperChronoModel" parent="ModelAnimationStyleContinuous">
+        <Inherits index="CloakEffect" value="1"/>
+        <On Terms="Behavior.AP_SOASuperChrono.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOASuperChrono.Off" Send="AnimBracketStop BSD"/>
+        <Host Subject="_Unit"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_SOASuperPowerField2" parent="ModelAnimationStyleContinuous">
+        <On Terms="Behavior.AP_SOASuperPowerField.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOASuperPowerField.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="ActorCreation" Send="SetTintColor 255,128,0"/>
+        <HostSiteOps Ops="SOpMoveDownBy2"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+    </CActorModel>
+    <CActorModel id="AP_SOASuperPowerField" parent="ModelAnimationStyleContinuous">
+        <On Terms="Behavior.AP_SOASuperPowerField.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOASuperPowerField.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="ActorCreation" Send="SetOpacity 0.300000"/>
+        <On Terms="ActorCreation" Send="SetTintColor 255,128,0"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+    </CActorModel>
+    <CActorSound id="AP_SOASuperPowerFieldOff" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SOASuperPowerField.Off" Send="Create"/>
+    </CActorSound>
+    <CActorSound id="AP_SOASuperPowerFieldOn" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SOASuperPowerField.On" Send="Create"/>
+    </CActorSound>
+    <CActorSimple id="AP_SOASuperPowerFieldPowered">
+        <On Terms="Behavior.AP_SOASuperPowerFieldPowered.On" Send="Create"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="SetTintColor {255,255,255 1.700000} 0.500000"/>
+        <On Terms="Behavior.AP_SOASuperPowerFieldPowered.Off" Target="_Unit" Send="ClearTintColor 0.500000"/>
+        <On Terms="Behavior.AP_SOASuperPowerFieldPowered.Off" Send="Destroy"/>
+    </CActorSimple>
+    <CActorModel id="AP_SOASuperShieldImpact" parent="ModelAnimationStyleOneShot">
+        <Macros value="GlobalLoopMacro"/>
+        <On Terms="Behavior.AP_SoASuperShield.On" Send="Create"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="1.000000"/>
+    </CActorModel>
+    <CActorModel id="AP_SOATimeFreezeImpact" parent="ModelAnimationStyleContinuous">
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <On Terms="Behavior.AP_SOATimeFreeze.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOATimeFreeze.Off" Send="Destroy"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="1.000000"/>
+    </CActorModel>
+    <CActorSplat id="AP_SOATimeWarpCursorSplat" parent="ProtossCursorSplat" abil="AP_SOATimeWarp">
+        <Model value="AP_VoidProtossAOECursorSplat"/>
+    </CActorSplat>
+    <CActorSplat id="AP_SOAVortexCursorSplat" parent="ProtossCursorSplat" abil="AP_SOAVortex">
+        <Model value="AP_VoidProtossAOECursorSplat"/>
+    </CActorSplat>
+    <CActorSimple id="AP_SOAVortexKillShrinker">
+        <Supporter Subject="_Unit"/>
+        <On Terms="Behavior.AP_SOAVortex.On" Send="Create"/>
+        <On Terms="ActorCreation" Target="::Main" Send="AnimSetPausedAll"/>
+        <On Terms="ActorCreation" Target="::Main" Send="SetScale 0.010000 3.000000 Vortex"/>
+        <On Terms="Behavior.AP_SOAVortex.Off" Target="::Main" Send="ClearScale 0.000000 Vortex"/>
+        <On Terms="Behavior.AP_SOAVortexEnemy.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOAVortexEnemy.Off" Target="::Main" Send="ClearScale 0.000000 Vortex"/>
+        <On Terms="Behavior.AP_SOAVortex.Off" Send="Destroy"/>
+        <On Terms="Behavior.AP_SOAVortexEnemy.Off" Send="Destroy"/>
+        <On Terms="Behavior.AP_SOAVortex.Off" Target="::Main" Send="AnimSetPausedAll 0"/>
+        <On Terms="Behavior.AP_SOAVortexEnemy.Off" Target="::Main" Send="AnimSetPausedAll 0"/>
+    </CActorSimple>
+    <CActorSound id="AP_SOA_SuperShieldLoop_ActorSound" parent="SoundContinuous">
+        <On Terms="Behavior.AP_SoASuperShield.On" Send="Create"/>
+        <On Terms="Behavior.AP_SoASuperShield.Off" Send="Destroy"/>
+        <Host Subject="_Unit"/>
+        <Sound value="AP_SOA_SuperShieldLoop"/>
+    </CActorSound>
+    <CActorSound id="AP_SOA_SuperShieldOff_ActorSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SoASuperShield.Off" Send="Create"/>
+        <Host Subject="_Unit"/>
+        <Sound value="AP_SOA_SuperShieldOff"/>
+    </CActorSound>
+    <CActorSound id="AP_SOA_SuperShieldOn_ActorSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_SoASuperShield.On" Send="Create"/>
+        <Host Subject="_Unit"/>
+        <Sound value="AP_SOA_SuperShieldOn"/>
+    </CActorSound>
+    <CActorUnit id="AP_SoACaster" parent="ProtossBuilding" unitName="AP_SoACaster">
+        <Macros value="GlobalLoopMacro"/>
+        <Macros value="QueueAnim"/>
+        <Macros value="UnpoweredAnim"/>
+        <Macros value="BuildingFlattenTerrainMacro"/>
+        <Macros value="ProtossBuildingPowerUp"/>
+        <EventDataSound Name="BuildingWarpIn" Actor="UnitSound" Sound="Protoss_BuildingWarpIn"/>
+        <BuildModel value="AP_SoACasterBirth"/>
+        <DeathArray index="Normal" ModelLink="AP_SoACasterDeath" SoundLink="AP_SoACaster_Explode"/>
+        <DeathArray index="UnderConstruction" ModelLink="ProtossWarpInDeath" SoundLink="Gateway_Explode"/>
+        <PlacementSound value="Protoss_BuildingPlacement"/>
+        <PortraitModel value="ExecutorPortrait"/>
+        <BarOffset value="140"/>
+        <BarWidth value="160"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-protoss-shipgeneratorsmall.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-building-protoss-obelisk.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-armor-protoss-buildingplating.dds"/>
+        <NameOffset value="130"/>
+        <SoundArray index="Ready" value="AP_SoACaster_Ready"/>
+        <SoundArray index="What" value="AP_SoACaster_What"/>
+        <UnitIcon value="Assets\Textures\btn-building-protoss-obelisk.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-protoss-shipgeneratorsmall.dds"/>
+        </Wireframe>
+        <WireframeShield>
+            <Image value="Assets\Textures\wireframe-protoss-shipgeneratorsmall-shield01.dds"/>
+            <Image value="Assets\Textures\wireframe-protoss-shipgeneratorsmall-shield02.dds"/>
+            <Image value="Assets\Textures\wireframe-protoss-shipgeneratorsmall-shield03.dds"/>
+        </WireframeShield>
+    </CActorUnit>
+    <CActorModel id="AP_SOAPurifierBeam" parent="ModelAnimationStyleContinuous">
+        <!--On Terms="ActorDestruction" Send="Create SOAPurifierBeamEndSound"/-->
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachOrigin SOpShadowSyncGround"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorUnit id="AP_SOAPurifierBeamUnit" parent="GenericUnitBase" unitName="AP_SOAPurifierBeamUnit">
+        <On Terms="ActorCreation" Send="SetOpacity"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAPurifierBeam"/>
+        <!--On Terms="Behavior.SOAPurifierBeamFiring.On" Send="Create SOAPurifierBeam"/-->
+        <On Terms="Behavior.AP_SOAPurifierBeamFiring.Off" Target="AP_SOAPurifierBeam" Send="Destroy"/>
+        <!--On Terms="Behavior.SOAPurifierBeamFiring.Off" Target="_Unit" Send="Create SOAPurifierBeamEndSound"/-->
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <UnitFlags index="ShowBlobShadow" value="0"/>
+        <SoundArray index="What" value="AP_SOAPurifierBeamWhat"/>
+        <SoundArray index="Attack" value="AP_SOAPurifierBeamAttack"/>
+        <PortraitModel value="ExecutorPortrait"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-protoss-PurifierBeam.dds"/>
+        </Wireframe>
+        <WireframeShield>
+            <Image value="Assets\Textures\wireframe-protoss-PurifierBeam-Shield01.dds"/>
+            <Image value="Assets\Textures\wireframe-protoss-PurifierBeam-Shield02.dds"/>
+            <Image value="Assets\Textures\wireframe-protoss-PurifierBeam-Shield03.dds"/>
+        </WireframeShield>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-protoss-purifierbeam.dds"/>
+        </GroupIcon>
+    </CActorUnit>
+    <CActorSplat id="AP_SOAMassRecallCursorSplat" parent="ProtossCursorSplat" abil="AP_SOARecall">
+        <Model value="AP_SOA_MassRecallCursor"/>
+        <On Terms="ActorCreation" Send="Create AP_SOA_MassRecallCursor_Energy"/>
+    </CActorSplat>
+    <CActorModel id="AP_SOA_MassRecallCursor_Energy" parent="ModelAnimationStyleContinuous">
+        <HostSiteOps Ops="SOpBasicScopeFollow SOpShadow"/>
+        <Flags index="SuppressSaveLoad" value="1"/>
+    </CActorModel>
+    <CActorSplat id="AP_FenixSOACursorSplat" parent="ProtossCursorSplat" abil="AP_SOAFenixCalldown">
+        <Model value="AP_SOA_MouseCursor"/>
+    </CActorSplat>
+    <CActorSplat id="AP_SOAPurifierBeamCursorSplat" parent="ProtossCursorSplat" abil="AP_SOAPurifierBeam">
+        <Model value="AP_SOA_MouseCursor"/>
+    </CActorSplat>
+    <CActorSplat id="AP_SOAStrafeAttackCursorInner" parent="ProtossCursorSplat" abil="AP_SOAStrafeAttack">
+        <Model value="AP_SOA_MouseCursor"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAStrafeAttackCursorOuter"/>
+        <On Terms="ActorDestruction" Target="AP_SOAStrafeAttackCursorOuter" Send="Destroy"/>
+        <Scale value="1.500000"/>
+    </CActorSplat>
+    <CActorSplat id="AP_SOAStrafeAttackCursorOuter" parent="ProtossCursorSplat">
+        <Model value="AP_SOA_MouseCursor"/>
+        <Scale value="1.500000"/>
+        <On index="0" Terms="Abil.Cursor" Send="Create"/>
+        <On Terms="ActorCreation" Send="SetOpacity 0.300000"/>
+        <On Terms="ActorCreation" Send="TimerSet 2.000000 Scaling"/>
+        <On Terms="ActorCreation" Send="SetScale 7.500000 2.000000"/>
+        <On Terms="TimerExpired; TimerName Scaling" Send="SetScale 1.500000"/>
+        <On Terms="TimerExpired; TimerName Scaling" Send="SetScale 7.500000 2.000000"/>
+        <On Terms="TimerExpired; TimerName Scaling" Send="TimerSet 2.000000 Scaling"/>
+    </CActorSplat>
+    <CActorSound id="AP_VortexBirthSound" parent="SoundOneShot">
+<!--        <On Terms="Effect.VortexCreatePersistent.Start" Send="Create"/>-->
+        <On Terms="Effect.AP_VortexKillDamageAB.Start" Send="Create"/>
+        <On Terms="Effect.AP_SOAVortexCreatePersistent.Start" Send="Create"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Sound value="Mothership_VortexStart"/>
+    </CActorSound>
+    <CActorSound id="AP_VortexDeathSound" parent="SoundOneShot">
+<!--        <On Terms="Effect.VortexCreatePersistent.Stop" Send="Create"/>-->
+        <On Terms="Effect.AP_SOAVortexCreatePersistent.Stop" Send="Create"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Sound value="Mothership_VortexEnd"/>
+    </CActorSound>
+    <CActorSound id="AP_VortexLoopSound" parent="SoundContinuous">
+<!--        <On Terms="Effect.VortexCreatePersistent.Start" Send="Create"/>-->
+<!--        <On Terms="Effect.VortexCreatePersistent.Stop" Send="Destroy"/>-->
+        <On Terms="Behavior.AP_VortexKill.On" Send="Create"/>
+        <On Terms="Behavior.AP_VortexKill.Off" Send="Destroy"/>
+        <On Terms="Effect.AP_SOAVortexCreatePersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_SOAVortexCreatePersistent.Stop" Send="Destroy"/>
+<!--        <On Terms="Behavior.AmonVortex.On" Send="Create"/>-->
+<!--        <On Terms="Behavior.AmonVortex.Off" Send="Destroy"/>-->
+        <HostSiteOps Ops="SOpShadow"/>
+        <Sound value="Mothership_VortexLoop"/>
+    </CActorSound>
+    <CActorModel id="AP_VortexModel" parent="ModelAnimationStyleContinuous">
+<!--        <On Terms="Effect.VortexCreatePersistent.Start" Send="Create"/>-->
+<!--        <On Terms="Effect.VortexCreatePersistent.Stop" Send="AnimBracketStop BSD"/>-->
+        <On Terms="Effect.AP_SOAVortexCreatePersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_SOAVortexCreatePersistent.Stop" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Model value="VortexModel"/>
+    </CActorModel>
+    <CActorSplat id="AP_SOAOrbitalStrikeCursor" parent="ProtossCursorSplat" abil="AP_SOAOrbitalStrikeTargetingDummy">
+        <Model value="AP_SOA_MouseCursor"/>
+    </CActorSplat>
+    <CActorSplat id="AP_SOAGravitonBombCursor" parent="ProtossCursorSplat" abil="AP_SOAGravitonBomb">
+        <Model value="AP_SOA_MouseCursor"/>
+    </CActorSplat>
+    <CActorModel id="AP_SOASuperTimeWarpAreaModel">
+        <On Terms="Behavior.AP_SOASuperTimeWarp.On" Send="Create"/>
+        <On Terms="ActorCreation" Send="$Birth"/>
+        <On Terms="AnimDone; AnimName Birth" Send="AnimPlay StandA Stand"/>
+        <On Terms="AnimDone; AnimName StandA" Send="AnimPlay StandB Stand"/>
+        <On Terms="AnimDone; AnimName StandA" Send="AnimSetTime StandB 10.000000"/>
+        <On Terms="AnimDone; AnimName StandB" Send="AnimPlay StandA Stand"/>
+        <On Terms="AnimDone; AnimName StandB" Send="AnimSetTime StandA 10.000000"/>
+        <On Terms="Behavior.AP_SOASuperTimeWarp.Off" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="SetOpacity 0.100000"/>
+        <!--HostSiteOps Ops="SOpAttachOrigin SOpShadowSyncGround"/-->
+        <Host Subject="_Unit"/>
+    </CActorModel>
+    <CActorSimple id="AP_SOAWarpInReinforcementsOpacity">
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.On" Send="Create"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="SetOpacity"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.Off" Target="_Unit" Send="SetOpacity 1.000000"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.Off" Send="Destroy"/>
+        <Supporter Subject="_Unit"/>
+    </CActorSimple>
+    <CActorModel id="AP_SOAWarpInReinforcementsBeam" parent="ModelAddition">
+        <Inherits index="Opacity" value="0"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.On" Send="Create"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.Off" Send="AnimBracketStop BSD"/>
+        <Host Subject="_Unit"/>
+    </CActorModel>
+    <CActorModel id="AP_SOAWarpInReinforcementsZealot" parent="ModelAddition">
+        <Model value="ZealotWarpIn"/>
+        <Inherits index="Opacity" value="0"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.On; ValidateUnit AP_IsZealotReinforcementDummy" Send="Create"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.Off" Send="Destroy"/>
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsZealotAiur" Send="ModelSwap AP_ZealotAiurWarpIn"/>-->
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsZealotPurifier" Send="ModelSwap AP_ZealotPurifierWarpIn"/>-->
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsZealotPurifier" Send="SetScaleAbsolute"/>-->
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsZealotShakuras" Send="ModelSwap AP_ZealotShakurasWarpIn"/>-->
+        <Host Subject="_Unit"/>
+    </CActorModel>
+    <CActorModel id="AP_SOAWarpInReinforcementsStalker" parent="ModelAddition">
+        <Model value="StalkerWarpIn"/>
+        <Inherits index="Opacity" value="0"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.On; ValidateUnit AP_IsStalkerReinforcementDummy" Send="Create"/>
+        <On Terms="Behavior.AP_SOAWarpInReinforcements.Off" Send="Destroy"/>
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsStalkerShakuras" Send="ModelSwap AP_StalkerShakurasWarpIn"/>-->
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsDragoon" Send="ModelSwap AP_DragoonWarpIn"/>-->
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsDragoon" Send="SetScaleAbsolute"/>-->
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsAdept" Send="ModelSwap AP_AdeptWarpIn"/>-->
+<!--        <On Terms="ActorCreation; ValidateUnit AP_IsAdept" Send="SetScaleAbsolute"/>-->
+        <Host Subject="_Unit"/>
+    </CActorModel>
+    <CActorSound id="AP_SOATargetingModeConfirmationSound" parent="SoundOneShot">
+        <Sound value="AP_SOABomberModeTargeting"/>
+        <Layers>
+            <Sound value="AP_SOABomberModeTarget_Select_Layer"/>
+            <PitchSource value="Actor"/>
+            <PlayDelaySource value="Actor"/>
+            <VolumeSource value="Actor"/>
+            <Chance value="100"/>
+            <Pitch value="-1.000000,0.000000"/>
+            <PlayDelay value="0,10"/>
+            <Volume value="-1.000000,-1.000000"/>
+        </Layers>
+        <Layers>
+            <Sound value="AP_SOABomberModeTarget_Select_Layer2"/>
+            <PitchSource value="Actor"/>
+            <PlayDelaySource value="Actor"/>
+            <VolumeSource value="Actor"/>
+            <Chance value="100"/>
+            <Pitch value="-1.300000,-1.000000"/>
+            <PlayDelay value="0,10"/>
+            <Volume value="-30.000000,-30.000000"/>
+        </Layers>
+        <Layers>
+            <Sound value="AP_SOABomberModeTarget_Select_Layer3"/>
+            <PitchSource value="Actor"/>
+            <PlayDelaySource value="Actor"/>
+            <VolumeSource value="Actor"/>
+            <Chance value="100"/>
+            <Pitch value="-8.000000,-7.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="5.000000,5.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorSiteMover id="AP_SOAThermalLanceLaunchSite">
+        <Acceleration value="99.000000"/>
+        <Deceleration value="999.000000"/>
+        <Speed value="7.000000"/>
+        <SpeedMax value="7.000000"/>
+        <HostSiteOps Ops="SOpShadow AP_SOpSOAThermalLanceOffset"/>
+        <On Terms="Effect.AP_SOAThermalLanceCP.Start" Send="Create"/>
+        <On Terms="Effect.AP_SOAThermalLanceSearchEndPoint.Start; At Effect" Send="MoverSetDestination2D"/>
+    </CActorSiteMover>
+    <CActorSiteOpLocalOffset id="AP_SOpSOAThermalLanceOffset">
+        <LocalOffset value="0.000000,0.000000,30.000000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteMover id="AP_SOAThermalLanceImpactSite">
+        <Acceleration value="99.000000"/>
+        <Deceleration value="999.000000"/>
+        <Speed value="7.000000"/>
+        <SpeedMax value="7.000000"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <On Terms="Effect.AP_SOAThermalLanceCP.Start" Send="Create"/>
+        <On Terms="Effect.AP_SOAThermalLanceEndPoint.Start; At Effect" Send="MoverSetDestination2D"/>
+    </CActorSiteMover>
+    <CActorModel id="AP_SOAThermalLanceBeam" parent="ModelAnimationStyleContinuous">
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <On Terms="ActorCreation" Send="Create AP_SOAThermalLanceLaunchSound"/>
+        <On Terms="Effect.AP_SOAThermalLanceCP.Stop" Send="AnimBracketStop BSD"/>
+        <On Terms="Effect.AP_SOAThermalLanceSearch.Start" Target="AP_SOAThermalLanceImpactSite" Send="MoverMove"/>
+        <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <On Terms="Effect.AP_SOAThermalLanceCP.Start" Send="Create"/>
+        <Host Subject="AP_SOAThermalLanceImpactSite"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAThermalLanceLaunchSound" parent="SoundOneShot">
+        <Sound value="AP_SOASolarLanceLaunch"/>
+        <!--         <Host Subject="::Creator"/> -->
+    </CActorSound>
+    <CActorModel id="AP_SOAThermalLanceImpact">
+        <Flags index="SuppressSaveLoad" value="1"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Stand,Work,Start Stand,Work Stand,Work,End ContentPlayOnce"/>
+        <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <On Terms="Effect.AP_SOAThermalLanceSearchWithModel.Start" Send="Create"/>
+        <HostSiteOps Ops="SOpForwardOriginPoint"/>
+    </CActorModel>
+    <CActorUnit id="AP_SOAThermalLanceTargeter" parent="GenericUnitBase" unitName="AP_SOAThermalLanceTargeter">
+        <Model value="Invisible"/>
+        <On Terms="Signal.*.GuideOn" Send="Create AP_SOAThermalLanceTargetingGuide"/>
+        <On Terms="Effect.AP_SOAThermalLanceCP.Start" Target="AP_SOAThermalLanceTargetingGuide" Send="Destroy"/>
+    </CActorUnit>
+    <CActorQuad id="AP_SOAThermalLanceGuide" parent="ZergGuideVisualQuadDown" abil="AP_SOAThermalLanceExecute">
+        <Height value="11.000000"/>
+        <Width value="2.000000"/>
+        <FogVisibility value="Visible"/>
+        <LaunchActor value="AP_ProtossGuideVisualQuadSolarLanceLaunch"/>
+        <CenterActor value="AP_ProtossGuideVisualQuadSolarLanceCenter"/>
+        <ImpactActor value="AP_ProtossGuideVisualQuadSolarLanceImpact"/>
+        <!--On Terms="ActorCreation" Send="Create SOAThermalLanceRearGuideAddition"/-->
+        <HostSiteOps Ops="SOpAttachOrigin SOpMoveBackBy1"/>
+        <!--Decoration Actor="ProtossGuideVisualQuadBlueDecoration" SpawnInterval="0.500000" TravelSpeed="10.000000">
+            <Flags index="UseLaunchActorScale" value="1"/>
+        </Decoration-->
+    </CActorQuad>
+    <CActorModel id="AP_ProtossGuideVisualQuadSolarLanceLaunch" parent="GuideVisualQuadModel">
+        <Model value="ProtossAOEStretchLineSolarLanceStart"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_ProtossGuideVisualQuadSolarLanceCenter" parent="GuideVisualQuadModel">
+        <Model value="ProtossAOEStretchLineSolarLanceMid"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_ProtossGuideVisualQuadSolarLanceImpact" parent="GuideVisualQuadModel">
+        <Model value="ProtossAOEStretchLineSolarLanceEnd"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorQuad id="AP_SOAThermalLanceTargetingGuide">
+        <Height value="11.000000"/>
+        <Width value="2.000000"/>
+        <Aliases value="_GuideVisual"/>
+        <Aliases value="_Scalable"/>
+        <LaunchActor value="AP_ProtossGuideVisualQuadBlueLaunch"/>
+        <CenterActor value="AP_ProtossGuideVisualQuadBlueCenter"/>
+        <ImpactActor value="AP_ProtossGuideVisualQuadBlueImpact"/>
+        <Quad value="-0.500000,-1.000000,0.500000,0.000000"/>
+        <Host Subject="_Unit"/>
+        <Flags index="SuppressSaveLoad" value="1"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <!--On Terms="ActorCreation" Send="SetTintColor {255,0,0 6.000000}"/-->
+        <On Terms="ActorDestruction" Target="_GuideRegion" Send="Destroy"/>
+        <On Terms="ActorDestruction" Target="_GuideQuadSegment" Send="Destroy"/>
+        <On Terms="ActorDestruction" Target="_GuideDecoration" Send="Destroy"/>
+        <!--On Terms="ActorCreation" Send="Create SOAThermalLanceRearTargetingGuideAddition"/-->
+        <HostSiteOps Ops="SOpAttachOrigin SOpMoveBackBy1"/>
+        <Decoration Actor="AP_ProtossGuideVisualQuadBlueDecoration" SpawnInterval="0.500000" TravelSpeed="10.000000">
+            <Flags index="UseLaunchActorScale" value="1"/>
+        </Decoration>
+    </CActorQuad>
+    <CActorModel id="AP_ProtossGuideVisualQuadBlueLaunch" parent="GuideVisualQuadModel">
+        <Model value="ProtossAOEStretchLineBlueStart"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_ProtossGuideVisualQuadBlueCenter" parent="GuideVisualQuadModel">
+        <Model value="ProtossAOEStretchLineBlueMid"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_ProtossGuideVisualQuadBlueImpact" parent="GuideVisualQuadModel">
+        <Model value="ProtossAOEStretchLineBlueEnd"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_ProtossGuideVisualQuadBlueDecoration" parent="GuideVisualQuadModel">
+        <Model value="ProtossAOEStretchLineBlueScrollMid"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_SOAStrafeAttackImpact" parent="ModelAnimationStyleOneShot">
+        <On Terms="Effect.AP_SOAStrafeAttackDamage.Start" Send="Create"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorSound id="AP_SOAStrafeAttackLaunchSound" parent="SoundOneShot">
+        <On Terms="Effect.AP_SOAStrafeAttackDamage.Start" Send="Create"/>
+        <Sound value="AP_SOA_SolarBombardment_Launch"/>
+    </CActorSound>
+    <CActorSound id="AP_SOAStrafeAttackImpactSound" parent="SoundOneShot">
+        <On Terms="Effect.AP_SOAStrafeAttackDamage.Start" Send="Create"/>
+        <Sound value="AP_SOA_SolarBombardment_Impact"/>
+    </CActorSound>
+    <CActorModel id="AP_SOATimeFreezeVisual" parent="ModelAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_SOATimeFreezeVisualDummy.Start" Send="Create"/>
+    </CActorModel>
+    <CActorSplat id="AP_SOAThermalLanceAoECursor" parent="ProtossCursorSplat" abil="AP_SOAThermalLanceTargetingDummy">
+        <EditorCategories value=""/>
+        <!--On index="0" Terms="Abil.SOAThermalLanceTargetingDummy.Cursor" Send="Create"/-->
+        <Model value="AP_SOA_MouseCursor"/>
+    </CActorSplat>
     <CActorSound id="Zerg_BuildingMorphStart">
         <!-- Override -->
         <On Terms="Abil.AP_ZergBuild.BuiltStart" Send="Create"/>
@@ -17266,17 +18119,17 @@
         <Subject Filters="Unit" Terms="ScopeContains _Selectable"/>
         <OnResponse Target="_Selectable" Send="Signal PylonUnpoweredCheck"/>
     </CActorQueryResponse>
-    <CActorAction id="AP_SOAPylonWeaponAttack" parent="GenericAttack" effectAttack="SOAPylonWeaponDamage">
+    <CActorAction id="AP_SOAPylonWeaponAttack" parent="GenericAttack" effectAttack="AP_SOAPylonWeaponDamage">
         <EditorCategories value=""/>
         <LaunchSiteOps Ops="SOpAttachOverhead"/>
-        <LaunchAssets Sound="SOAPylonWeaponAttackLaunch"/>
+        <LaunchAssets Sound="AP_SOAPylonWeaponAttackLaunch"/>
         <Beam value="AP_SOAPylonWeaponBeam"/>
-        <ImpactMap index="None" Sound="SOAPylonWeaponAttackImpact"/>
+        <ImpactMap index="None" Sound="AP_SOAPylonWeaponAttackImpact"/>
     </CActorAction>
     <CActorBeamSimple id="AP_SOAPylonWeaponBeam" parent="BeamSimpleAnimationStyleOneShot">
         <On Terms="ActorCreation" Send="TimerSet 0.400000 Death"/>
         <On Terms="TimerExpired; TimerName Death" Send="AnimBracketStop BSD"/>
-        <Model value="SOAPylonWeaponBeam"/>
+        <Model value="AP_SOAPylonWeaponBeam"/>
     </CActorBeamSimple>
     <CActorBeamSimple id="AP_SOAPylonWeaponCharge" parent="ModelAnimationStyleContinuous">
         <On Terms="Behavior.AP_SOAPylonWeapon.On" Send="Create"/>
@@ -18252,6 +19105,7 @@
         <LaunchAssets Sound="AP_SOAMothership_BlinkStrikeLaunchSound"/>
         <Missile value="AP_SOAMothershipBlinkStrikeMissile"/>
         <ImpactSiteOps Ops="SOpTargetPointStationary"/>
+        <!-- The model doesn't exist -->
         <ImpactMap index="None" Model="SOAOrbitalStrikeImpactCrater" Sound="AP_SOAMothership_BlinkStrikeImpactSound"/>
     </CActorAction>
     <CActorBeamSimple id="AP_SOAMothershipBlinkStrikeBeam" parent="BeamSimpleAnimationStyleContinuous">
@@ -26289,4 +27143,8 @@
         <!-- Override -->
         <On Terms="UnitRefund.AP_AlarakSupplicantWarpTrainDummy.Salvage" Send="Destroy Immediate"/>
     </CActorText>
+    <CActorUnit id="Zealot">
+        <!-- Override -->
+        <On Terms="UnitBirth.AP_ZealotReinforcementDummy" Send="Create"/>
+    </CActorUnit>
 </Catalog>

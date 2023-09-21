@@ -24,6 +24,40 @@ void lib15EF4C78_InitVariables () {
     lib15EF4C78_InitVariables_completed = true;
 
     lib15EF4C78_gv_kerriganPsiStrikeEnergyCost = libNtve_gf_CostOfAbility("AP_PsiStrikeBlink", "Energy");
+    lib15EF4C78_gv_pM_ScreenMode = c_uiModeConsole;
+    for (init_i = 0; init_i <= 20; init_i += 1) {
+        lib15EF4C78_gv_pM_SoACasterGroup[init_i] = UnitGroupEmpty();
+    }
+    lib15EF4C78_gv_pM_SoATargetingDirectionGroup = UnitGroupEmpty();
+    lib15EF4C78_gv_soA_TargetingMode_Timer = TimerCreate();
+    lib15EF4C78_gv_sOA_TimeFreezeUI = c_invalidDialogId;
+    lib15EF4C78_gv_pU_GPCasterGroup = UnitGroupEmpty();
+    lib15EF4C78_gv_pU_GPPanel = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_GPHolder = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_GPCutscene = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_GPEnergyBarScene = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_GPEnergyGlassScene = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_GPEnergyBar = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_GPEnergyLabel = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_GPRequestedVisible = true;
+    lib15EF4C78_gv_pU_GPCmdPanel = c_invalidDialogControlId;
+    for (init_i = 0; init_i <= 12; init_i += 1) {
+        lib15EF4C78_gv_pU_GPCmdButtons[init_i] = c_invalidDialogControlId;
+    }
+    lib15EF4C78_gv_pU_GPBlackTooltipAnchor = c_invalidDialogControlId;
+    for (init_i = 0; init_i <= 12; init_i += 1) {
+        lib15EF4C78_gv_pU_GPAbilityArrows[init_i] = c_invalidDialogControlId;
+    }
+    lib15EF4C78_gv_pU_TargetingOverlayDialog = c_invalidDialogId;
+    lib15EF4C78_gv_pU_TargetingOverlayPortrait = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_TargetingAbilityDialog = c_invalidDialogId;
+    lib15EF4C78_gv_pU_TargetingPanel = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_TargetingCancelButton = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_TargetingChargesPanel = c_invalidDialogControlId;
+    lib15EF4C78_gv_pU_TargetingInstructionsLabel = c_invalidDialogControlId;
+    for (init_i = 0; init_i <= 5; init_i += 1) {
+        lib15EF4C78_gv_pU_TargetingChargeSinglePanel[init_i] = c_invalidDialogControlId;
+    }
     lib15EF4C78_gv_supplicantWarpTrainActualUnitCost = UnitTypeGetCost("AP_Supplicant", c_unitCostMinerals);
     lib15EF4C78_gv_supplicantWarpTrainActualCommand = AbilityCommand("AP_WarpGateTrainSupplicantTrue", 11);
     lib15EF4C78_gv_aP_Player_ON_PRIMARY_TOWN_HALL_SET_EVENT = "AP_Player_OnPrimaryTownHallSetEvent";
@@ -193,6 +227,18 @@ void lib15EF4C78_InitVariables () {
     lib15EF4C78_gv_zS_KerriganLevelLabel = c_invalidDialogControlId;
 }
 
+// Custom Script
+//--------------------------------------------------------------------------------------------------
+// Custom Script: AP_Player_GalaxyIncludes
+//--------------------------------------------------------------------------------------------------
+include "AP_Player_PlayerBooleanFunction"
+include "AP_Player_Action"
+include "AP_Player_CinematicMode_h"
+include "AP_Player_LotVShowHideCampaignTeachingHook_h"
+
+void lib15EF4C78_InitCustomScript () {
+}
+
 // Presets
 // Functions
 string lib15EF4C78_gf_AP_Player_findNovaWeapon (unit lp_sourceNovaUnit) {
@@ -214,6 +260,1058 @@ string lib15EF4C78_gf_AP_Player_findNovaWeapon (unit lp_sourceNovaUnit) {
         return "AP_NovaWeaponBlazefireBlade";
     }
     return null;
+}
+
+void lib15EF4C78_gf_SetSpearofAdunEnergy (int lp_player, fixed lp_energy, int lp_type) {
+    // Automatic Variable Declarations
+    int auto3B104957_val;
+
+    // Implementation
+    auto3B104957_val = lp_type;
+    if (auto3B104957_val == lib15EF4C78_ge_SpearofAdunEnergyType_Absolute) {
+        UnitSetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lp_player], c_unitPropEnergy, lp_energy);
+    }
+    else if (auto3B104957_val == lib15EF4C78_ge_SpearofAdunEnergyType_Percent) {
+        UnitSetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lp_player], c_unitPropEnergyPercent, lp_energy);
+    }
+    else if (auto3B104957_val == lib15EF4C78_ge_SpearofAdunEnergyType_Regeneration) {
+        UnitSetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lp_player], c_unitPropEnergyRegen, lp_energy);
+    }
+    else {
+    }
+    if ((lib15EF4C78_gf_AP_Player_isPlayerInCinematicMode(lp_player) == true) && (lp_type != lib15EF4C78_ge_SpearofAdunEnergyType_Regeneration)) {
+        lib15EF4C78_gv_pM_CinematicModeSoAEnergy[lp_player] = UnitGetPropertyFixed(lib15EF4C78_gv_sOA_CasterUnit[lp_player], c_unitPropEnergy, c_unitPropCurrent);
+    }
+
+}
+
+fixed lib15EF4C78_gf_SpearofAdunEnergy (int lp_player, int lp_type) {
+    // Automatic Variable Declarations
+    int autoF2D84762_val;
+
+    // Implementation
+    autoF2D84762_val = lp_type;
+    if (autoF2D84762_val == lib15EF4C78_ge_SpearofAdunEnergyType_Percent) {
+        return UnitGetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lp_player], c_unitPropEnergyPercent, c_unitPropCurrent);
+    }
+    else if (autoF2D84762_val == lib15EF4C78_ge_SpearofAdunEnergyType_Absolute) {
+        return UnitGetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lp_player], c_unitPropEnergy, c_unitPropCurrent);
+    }
+    else if (autoF2D84762_val == lib15EF4C78_ge_SpearofAdunEnergyType_Regeneration) {
+        return UnitGetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lp_player], c_unitPropEnergyRegen, c_unitPropCurrent);
+    }
+    else {
+    }
+    return 0.0;
+}
+
+void lib15EF4C78_gf_PauseUnpauseSpearofAdunCooldowns (int lp_player, bool lp_pauseUnpause) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_pauseUnpause == true)) {
+        lib15EF4C78_gv_pM_SoAPaused[lp_player] = true;
+        if ((UnitHasBehavior2(lib15EF4C78_gv_pM_SoAUnit[lp_player], "SOAAbilityDisable") == false)) {
+            UnitBehaviorAdd(lib15EF4C78_gv_pM_SoAUnit[lp_player], "AP_SOAAbilityDisable", lib15EF4C78_gv_pM_SoAUnit[lp_player], 1);
+        }
+
+    }
+    else {
+        lib15EF4C78_gv_pM_SoAPaused[0] = false;
+        UnitBehaviorRemove(lib15EF4C78_gv_pM_SoAUnit[lp_player], "AP_SOAAbilityDisable", 1);
+    }
+}
+
+void lib15EF4C78_gf_PM_SoACreateUnit (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SoACaster", c_unitCreateIgnorePlacement, lp_player, Point(0.0, 0.0));
+    lib15EF4C78_gv_pM_SoAUnit[lp_player] = UnitLastCreated();
+    UnitSetState(lib15EF4C78_gv_pM_SoAUnit[lp_player], c_unitStateSelectable, false);
+    lib15EF4C78_gf_PU_GPSetUnit(lib15EF4C78_gv_pM_SoAUnit[lp_player]);
+    lib15EF4C78_gf_PM_SoACasterUnitSet(lp_player, lib15EF4C78_gv_pM_SoAUnit[lp_player]);
+    if ((lib15EF4C78_gv_pM_SoAPaused[lp_player] == true)) {
+        UnitBehaviorAdd(lib15EF4C78_gv_pM_SoAUnit[lp_player], "AP_SOAAbilityDisable", lib15EF4C78_gv_pM_SoAUnit[lp_player], 1);
+    }
+
+    if ((lib15EF4C78_gf_AP_Player_isPlayerInCinematicMode(lp_player) == true)) {
+        lib15EF4C78_gv_pM_CinematicModeSoAEnergy[lp_player] = lib15EF4C78_gf_SpearofAdunEnergy(lp_player, lib15EF4C78_ge_SpearofAdunEnergyType_Absolute);
+    }
+
+}
+
+void lib15EF4C78_gf_AP_Player_CreateSoAUnit (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    lib15EF4C78_gf_PM_SoACreateUnit(lp_player);
+    lib15EF4C78_gv_pM_SoAEnabledForPlayer[lp_player] = true;
+    lib15EF4C78_gf_ShowSpearofAdunUI(true, c_transitionDurationDefault);
+    lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(true, c_transitionDurationDefault);
+}
+
+void lib15EF4C78_gf_SetScreenModeCampaign (int lp_mode, fixed lp_duration) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lib15EF4C78_gv_pM_ScreenMode == c_uiModeConsole) && (lp_mode != c_uiModeConsole)) {
+        lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(false, lp_duration);
+    }
+    else if ((lib15EF4C78_gv_pM_ScreenMode != c_uiModeConsole) && (lp_mode == c_uiModeConsole)) {
+        lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(true, lp_duration);
+    }
+    UISetMode(PlayerGroupAll(), lp_mode, lp_duration);
+    lib15EF4C78_gv_pM_ScreenMode = lp_mode;
+}
+
+void lib15EF4C78_gf_CinematicModeCampaign (int lp_player, bool lp_onOff, fixed lp_duration, bool lp_waitOptions) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_onOff == true)) {
+        lib15EF4C78_gv_pM_InCinematic = true;
+    }
+    else {
+        lib15EF4C78_gv_pM_InCinematic = false;
+    }
+    if ((lp_waitOptions == false)) {
+        lib15EF4C78_gf_PM_CinematicModeNoWait(lp_player, lp_onOff, lp_duration);
+    }
+    else {
+        lib15EF4C78_gf_PM_CinematicModeInternal(lp_player, lp_onOff, lp_duration);
+    }
+}
+
+trigger auto_lib15EF4C78_gf_PM_CinematicModeNoWait_Trigger = null;
+int auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_player;
+bool auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_onOff;
+fixed auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_duration;
+
+void lib15EF4C78_gf_PM_CinematicModeNoWait (int lp_player, bool lp_onOff, fixed lp_duration) {
+    auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_player = lp_player;
+    auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_onOff = lp_onOff;
+    auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_duration = lp_duration;
+
+    if (auto_lib15EF4C78_gf_PM_CinematicModeNoWait_Trigger == null) {
+        auto_lib15EF4C78_gf_PM_CinematicModeNoWait_Trigger = TriggerCreate("auto_lib15EF4C78_gf_PM_CinematicModeNoWait_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib15EF4C78_gf_PM_CinematicModeNoWait_Trigger, false, false);
+}
+
+bool auto_lib15EF4C78_gf_PM_CinematicModeNoWait_TriggerFunc (bool testConds, bool runActions) {
+    int lp_player = auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_player;
+    bool lp_onOff = auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_onOff;
+    fixed lp_duration = auto_lib15EF4C78_gf_PM_CinematicModeNoWait_lp_duration;
+
+    // Automatic Variable Declarations
+    // Implementation
+    lib15EF4C78_gf_PM_CinematicModeInternal(lp_player, lp_onOff, lp_duration);
+    return true;
+}
+
+void lib15EF4C78_gf_PM_CinematicModeInternal (int lp_player, bool lp_onOff, fixed lp_duration) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_onOff == true)) {
+        lib15EF4C78_gv_pM_CinematicModeSoAEnergy[lp_player] = lib15EF4C78_gf_SpearofAdunEnergy(lp_player, lib15EF4C78_ge_SpearofAdunEnergyType_Absolute);
+        lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(false, lp_duration);
+        TriggerExecute(lib15EF4C78_gt_PM_SoATargetingForceOff, true, false);
+        lib15EF4C78_gf_LotV_HideCampaignTeaching();
+        if ((lp_duration != c_transitionDurationImmediate)) {
+            UISetMode(PlayerGroupAll(), c_uiModeFullscreen, lp_duration);
+        }
+
+        if ((lp_duration > 0.0) && (lp_duration != c_transitionDurationImmediate)) {
+            Wait(lp_duration, c_timeReal);
+        }
+
+        lib15EF4C78_gf_PauseUnpauseSpearofAdunCooldowns(lp_player, true);
+        libNtve_gf_CinematicMode(true, PlayerGroupAll(), 0.0);
+        libNtve_gf_GlobalCinematicSetting(true);
+        lib15EF4C78_gv_pC_TimeMissionPaused = true;
+    }
+    else {
+        lib15EF4C78_gf_PauseUnpauseSpearofAdunCooldowns(lp_player, false);
+        lib15EF4C78_gf_SetSpearofAdunEnergy(lp_player, lib15EF4C78_gv_pM_CinematicModeSoAEnergy[lp_player], lib15EF4C78_ge_SpearofAdunEnergyType_Absolute);
+        libNtve_gf_CinematicMode(false, PlayerGroupAll(), lp_duration);
+        libNtve_gf_GlobalCinematicSetting(false);
+        lib15EF4C78_gv_pC_TimeMissionPaused = false;
+        lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(true, c_transitionDurationDefault);
+        lib15EF4C78_gf_LotV_ShowCampaignTeaching();
+        if ((lp_duration > 0.0) && (lp_duration != c_transitionDurationImmediate)) {
+            Wait(lp_duration, c_timeReal);
+        }
+
+    }
+}
+
+void lib15EF4C78_gf_SpearofAdunTargetingModeExited (trigger t, int lp_exitType) {
+    // Automatic Variable Declarations
+    // Implementation
+    DataTableSetInt(false, TriggerEventParamName(lib15EF4C78_gv_pMC_SoATargetingEventExited, lib15EF4C78_gv_pMC_SoATargetingParamReason), (lp_exitType));
+    TriggerAddEventGeneric(t, lib15EF4C78_gv_pMC_SoATargetingEventExited);
+}
+
+void lib15EF4C78_gf_PM_SoATargetingModeEnter (int lp_player) {
+    // Variable Declarations
+    int lv_count;
+
+    // Automatic Variable Declarations
+    const int auto57B462D8_n = 16;
+    int auto57B462D8_i;
+    playergroup auto59BD2BF5_g;
+    int auto59BD2BF5_var;
+    playergroup autoE2FBFA84_g;
+    int autoE2FBFA84_var;
+    unitgroup auto98274F60_g;
+    int auto98274F60_u;
+    unit auto98274F60_var;
+
+    // Variable Initialization
+
+    // Implementation
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingCancel, true);
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingClearAll, true);
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingForceOff, true);
+    while (!((lib15EF4C78_gv_pM_SoATargetingTransitioning == false))) {
+        Wait(0.0625, c_timeGame);
+    }
+    if ((lib15EF4C78_gf_AP_Player_isPlayerInCinematicMode(lp_player) == true)) {
+        return ;
+    }
+
+    lib15EF4C78_gv_pM_SoAExitInstantly = false;
+    lib15EF4C78_gv_pM_SoAForceExit = false;
+    UISetDragSelectEnabled(PlayerGroupAll(), false);
+    lib15EF4C78_gf_PU_TargetingSetCharges(lib15EF4C78_gv_pM_SoATargetingChargesTotal, lib15EF4C78_gv_pM_SoATargetingChargesTotal);
+    if ((lib15EF4C78_gv_pM_SoATargetingOrder != null)) {
+        UISetTargetingOrder(PlayerGroupSingle(lp_player), lib15EF4C78_gv_pU_GPCasterGroup, lib15EF4C78_gv_pM_SoATargetingOrder, false);
+    }
+
+    lib15EF4C78_gv_pM_SoATargetingCycling = false;
+    lib15EF4C78_gv_pM_SoATargetingTransitioning = true;
+    lib15EF4C78_gf_PU_TargetingUI_EnterTargetingMode(true, false);
+    lib15EF4C78_gf_PU_TargetingSetInstructionText(lib15EF4C78_gf_PC_PerkTargetingText(lib15EF4C78_gv_pM_SoATargetingAbilityInstance, 1));
+    lib15EF4C78_gf_PM_SetFogAlphaOverTime(lp_player, 100.0, 0.5);
+    CameraSetValue(lp_player, c_cameraValueDistance, 50.0, 1.0, -1, 10.0);
+    CameraSetValue(lp_player, c_cameraValuePitch, 70.0, 1.0, -1, 10.0);
+    CameraSetData(PlayerGroupAll(), "AP_SOATargetingModeCamera");
+    if ((lib15EF4C78_gf_PM_SoATargetingPauseEnabled() == true)) {
+        libNtve_gf_PauseUnit(lib15EF4C78_gv_sOA_CasterUnit[lp_player], true);
+        for (auto57B462D8_i = 1; auto57B462D8_i <= auto57B462D8_n; auto57B462D8_i += 1) {
+            if ((lib15EF4C78_gv_pM_SoAForceExit == true)) {
+                break;
+            }
+
+            auto59BD2BF5_g = PlayerGroupAll();
+            auto59BD2BF5_var = -1;
+            while (true) {
+                auto59BD2BF5_var = PlayerGroupNextPlayer(auto59BD2BF5_g, auto59BD2BF5_var);
+                if (auto59BD2BF5_var < 0) { break; }
+                if ((TechTreeUpgradeCount(auto59BD2BF5_var, "AP_SOAUIFreezePrevent", c_techCountCompleteOnly) < 8)) {
+                    TechTreeUpgradeAddLevel(auto59BD2BF5_var, "AP_SOAUIFreezePrevent", 1);
+                }
+
+            }
+            GameSetGlobalTimeScale((GameGetGlobalTimeScale() * 0.8178));
+            Wait(0.0625, c_timeGame);
+        }
+        autoE2FBFA84_g = PlayerGroupAll();
+        autoE2FBFA84_var = -1;
+        while (true) {
+            autoE2FBFA84_var = PlayerGroupNextPlayer(autoE2FBFA84_g, autoE2FBFA84_var);
+            if (autoE2FBFA84_var < 0) { break; }
+            libNtve_gf_SetUpgradeLevelForPlayer(autoE2FBFA84_var, "AP_SOAUIFreezePrevent", 8);
+        }
+        GameSetGlobalTimeScale(0.04);
+        if ((lib15EF4C78_gv_pM_SoAForceExit == true)) {
+            GameSetGlobalTimeScale(1.0);
+            TriggerExecute(lib15EF4C78_gt_PM_SoATargetingForceOff, true, false);
+            return ;
+        }
+
+        auto98274F60_g = UnitGroup(null, c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto98274F60_u = UnitGroupCount(auto98274F60_g, c_unitCountAll);
+        for (;; auto98274F60_u -= 1) {
+            auto98274F60_var = UnitGroupUnitFromEnd(auto98274F60_g, auto98274F60_u);
+            if (auto98274F60_var == null) { break; }
+            libNtve_gf_SendActorMessageToUnit(auto98274F60_var, "AnimSetPausedAll");
+            libNtve_gf_SendActorMessageToUnit(auto98274F60_var, "Signal SOATargetingOn");
+        }
+        UnitPauseAll(true);
+        lib15EF4C78_gf_PC_TimeMissionTemporarySet(true);
+        lib15EF4C78_gf_PC_TimeAITemporarySet(true);
+    }
+
+    lib15EF4C78_gv_pM_SoATargetingTransitioning = false;
+    lib15EF4C78_gv_soA_TargetingMode_TimesUsed += 1;
+    TimerStart(lib15EF4C78_gv_soA_TargetingMode_Timer, c_timerDurationInfinite, false, c_timeReal);
+}
+
+void lib15EF4C78_gf_PM_SoATargetingModeExit (int lp_player) {
+    // Automatic Variable Declarations
+    unitgroup auto03B3AAB1_g;
+    int auto03B3AAB1_u;
+    unit auto03B3AAB1_var;
+    const int auto2537729E_n = 8;
+    int auto2537729E_i;
+    playergroup auto28AFC8F8_g;
+    int auto28AFC8F8_var;
+    playergroup auto6DAE7815_g;
+    int auto6DAE7815_var;
+    unitgroup autoFA9B0798_g;
+    int autoFA9B0798_u;
+    unit autoFA9B0798_var;
+
+    // Implementation
+    if ((lib15EF4C78_gv_pM_SoAExitInstantly == false)) {
+        while (!((lib15EF4C78_gv_pM_SoATargetingTransitioning == false))) {
+            Wait(0.0625, c_timeGame);
+        }
+    }
+
+    lib15EF4C78_gv_pM_SoATargetingTransitioning = true;
+    UISetDragSelectEnabled(PlayerGroupAll(), true);
+    if ((lib15EF4C78_gv_pM_SoAExitInstantly == false)) {
+        lib15EF4C78_gf_PM_ResetFogAlphaOverTime(lp_player, 0.5);
+        CameraSetValue(lp_player, c_cameraValueDistance, 34.0, 0.5, -1, 10.0);
+        CameraSetValue(lp_player, c_cameraValuePitch, 56.0, 0.5, -1, 10.0);
+        lib15EF4C78_gf_PU_TargetingUI_EnterTargetingMode(false, false);
+    }
+    else {
+        VisResetFoWAlpha(lp_player);
+        CameraSetValue(lp_player, c_cameraValueDistance, 34.0, 0.0, -1, 10.0);
+        CameraSetValue(lp_player, c_cameraValuePitch, 56.0, 0.0, -1, 10.0);
+        lib15EF4C78_gf_PU_TargetingUI_EnterTargetingMode(false, true);
+    }
+    CameraSetData(PlayerGroupAll(), "Dflt");
+    libNtve_gf_RestoreUnitSelection(1);
+    if ((lib15EF4C78_gf_PM_SoATargetingPauseEnabled() == true)) {
+        auto03B3AAB1_g = UnitGroup(null, c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto03B3AAB1_u = UnitGroupCount(auto03B3AAB1_g, c_unitCountAll);
+        for (;; auto03B3AAB1_u -= 1) {
+            auto03B3AAB1_var = UnitGroupUnitFromEnd(auto03B3AAB1_g, auto03B3AAB1_u);
+            if (auto03B3AAB1_var == null) { break; }
+            libNtve_gf_SendActorMessageToUnit(auto03B3AAB1_var, "Signal SOATargetingOff");
+            libNtve_gf_SendActorMessageToUnit(auto03B3AAB1_var, "AnimSetPausedAll 0");
+        }
+        UnitPauseAll(false);
+        lib15EF4C78_gf_PC_TimeAITemporaryRestore();
+        lib15EF4C78_gf_PC_TimeMissionTemporaryRestore();
+        if ((lib15EF4C78_gv_pM_SoAExitInstantly == false)) {
+            for (auto2537729E_i = 1; auto2537729E_i <= auto2537729E_n; auto2537729E_i += 1) {
+                Wait(0.0625, c_timeGame);
+                GameSetGlobalTimeScale((GameGetGlobalTimeScale() * 1.4953));
+                auto28AFC8F8_g = PlayerGroupAll();
+                auto28AFC8F8_var = -1;
+                while (true) {
+                    auto28AFC8F8_var = PlayerGroupNextPlayer(auto28AFC8F8_g, auto28AFC8F8_var);
+                    if (auto28AFC8F8_var < 0) { break; }
+                    if ((TechTreeUpgradeCount(auto28AFC8F8_var, "AP_SOAUIFreezePrevent", c_techCountCompleteOnly) > 0)) {
+                        TechTreeUpgradeAddLevel(auto28AFC8F8_var, "AP_SOAUIFreezePrevent", -1);
+                    }
+
+                }
+            }
+        }
+
+        GameSetGlobalTimeScale(1.0);
+        auto6DAE7815_g = PlayerGroupAll();
+        auto6DAE7815_var = -1;
+        while (true) {
+            auto6DAE7815_var = PlayerGroupNextPlayer(auto6DAE7815_g, auto6DAE7815_var);
+            if (auto6DAE7815_var < 0) { break; }
+            libNtve_gf_SetUpgradeLevelForPlayer(auto6DAE7815_var, "AP_SOAUIFreezePrevent", 0);
+        }
+        autoFA9B0798_g = UnitGroup(null, c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoFA9B0798_u = UnitGroupCount(autoFA9B0798_g, c_unitCountAll);
+        for (;; autoFA9B0798_u -= 1) {
+            autoFA9B0798_var = UnitGroupUnitFromEnd(autoFA9B0798_g, autoFA9B0798_u);
+            if (autoFA9B0798_var == null) { break; }
+            libNtve_gf_SendActorMessageToUnit(autoFA9B0798_var, "AnimSetPausedAll 0");
+        }
+    }
+
+    lib15EF4C78_gv_pM_SoATargetingActivateAbility = null;
+    lib15EF4C78_gv_pM_SoATargetingTransitioning = false;
+    lib15EF4C78_gv_soA_TargetingMode_TimeSpent += FixedToInt(TimerGetElapsed(lib15EF4C78_gv_soA_TargetingMode_Timer));
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingForceOff, false);
+}
+
+void lib15EF4C78_gf_PM_SoATargetingCleanupActorsAndUnits () {
+    // Variable Declarations
+    int lv_index;
+
+    // Automatic Variable Declarations
+    const int auto5109D469_ae = lib15EF4C78_gv_pMC_SOATARGETCOUNTMAX;
+    const int auto5109D469_ai = 1;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_index = 1;
+    for ( ; ( (auto5109D469_ai >= 0 && lv_index <= auto5109D469_ae) || (auto5109D469_ai < 0 && lv_index >= auto5109D469_ae) ) ; lv_index += auto5109D469_ai ) {
+        if ((lib15EF4C78_gv_pM_SoATargetingActors[lv_index] != null)) {
+            ActorSend(lib15EF4C78_gv_pM_SoATargetingActors[lv_index], "Signal Destroy");
+            lib15EF4C78_gv_pM_SoATargetingActors[lv_index] = null;
+        }
+
+        if ((lib15EF4C78_gv_pM_SoATargetingUnit[lv_index] != null)) {
+            UnitRemove(lib15EF4C78_gv_pM_SoATargetingUnit[lv_index]);
+            lib15EF4C78_gv_pM_SoATargetingUnit[lv_index] = null;
+        }
+
+    }
+}
+
+void lib15EF4C78_gf_PM_SoACasterUnitSet (int lp_player, unit lp_unit) {
+    // Automatic Variable Declarations
+    // Implementation
+    lib15EF4C78_gv_sOA_CasterUnit[lp_player] = lp_unit;
+    lib15EF4C78_gv_pM_SoACasterGroup[lp_player] = libNtve_gf_ConvertUnitToUnitGroup(lp_unit);
+}
+
+bool lib15EF4C78_gf_PM_SoATargetingPauseEnabled () {
+    // Automatic Variable Declarations
+    // Implementation
+    return true;
+}
+
+trigger auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_Trigger = null;
+int auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_player;
+fixed auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_targetAlpha;
+fixed auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_duration;
+
+void lib15EF4C78_gf_PM_SetFogAlphaOverTime (int lp_player, fixed lp_targetAlpha, fixed lp_duration) {
+    auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_player = lp_player;
+    auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_targetAlpha = lp_targetAlpha;
+    auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_duration = lp_duration;
+
+    if (auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_Trigger == null) {
+        auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_Trigger = TriggerCreate("auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_Trigger, false, false);
+}
+
+bool auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_TriggerFunc (bool testConds, bool runActions) {
+    int lp_player = auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_player;
+    fixed lp_targetAlpha = auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_targetAlpha;
+    fixed lp_duration = auto_lib15EF4C78_gf_PM_SetFogAlphaOverTime_lp_duration;
+
+    // Variable Declarations
+    fixed lv_currentAlpha;
+    fixed lv_alphaIncrement;
+    fixed lv_incrementFrequency;
+    int lv_increments;
+
+    // Automatic Variable Declarations
+    int auto2D7B382E_n;
+    int auto2D7B382E_i;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_incrementFrequency = 0.05;
+    lv_currentAlpha = VisGetFoWAlpha(1);
+    lv_increments = AbsI(FixedToInt((lp_duration / lv_incrementFrequency)));
+    lv_alphaIncrement = ((lp_targetAlpha-lv_currentAlpha)/IntToFixed(lv_increments));
+    auto2D7B382E_n = lv_increments;
+    for (auto2D7B382E_i = 1; auto2D7B382E_i <= auto2D7B382E_n; auto2D7B382E_i += 1) {
+        Wait(lv_incrementFrequency, c_timeGame);
+        lv_currentAlpha += lv_alphaIncrement;
+        VisSetFoWAlpha(lp_player, lv_currentAlpha);
+    }
+    VisSetFoWAlpha(lp_player, lp_targetAlpha);
+    return true;
+}
+
+trigger auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_Trigger = null;
+int auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_lp_player;
+fixed auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_lp_duration;
+
+void lib15EF4C78_gf_PM_ResetFogAlphaOverTime (int lp_player, fixed lp_duration) {
+    auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_lp_player = lp_player;
+    auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_lp_duration = lp_duration;
+
+    if (auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_Trigger == null) {
+        auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_Trigger = TriggerCreate("auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_Trigger, false, false);
+}
+
+bool auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_TriggerFunc (bool testConds, bool runActions) {
+    int lp_player = auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_lp_player;
+    fixed lp_duration = auto_lib15EF4C78_gf_PM_ResetFogAlphaOverTime_lp_duration;
+
+    // Variable Declarations
+    fixed lv_currentAlpha;
+    fixed lv_alphaIncrement;
+    fixed lv_incrementFrequency;
+    int lv_increments;
+    fixed lv_targetAlpha;
+
+    // Automatic Variable Declarations
+    int auto5C07AF80_n;
+    int auto5C07AF80_i;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_incrementFrequency = 0.05;
+    lv_currentAlpha = VisGetFoWAlpha(lp_player);
+    VisResetFoWAlpha(lp_player);
+    lv_targetAlpha = VisGetFoWAlpha(lp_player);
+    lv_increments = AbsI(FixedToInt((lp_duration / lv_incrementFrequency)));
+    lv_alphaIncrement = ((lv_targetAlpha-lv_currentAlpha)/IntToFixed(lv_increments));
+    VisSetFoWAlpha(lp_player, lv_currentAlpha);
+    auto5C07AF80_n = lv_increments;
+    for (auto5C07AF80_i = 1; auto5C07AF80_i <= auto5C07AF80_n; auto5C07AF80_i += 1) {
+        Wait(lv_incrementFrequency, c_timeGame);
+        lv_currentAlpha += lv_alphaIncrement;
+        VisSetFoWAlpha(lp_player, lv_currentAlpha);
+    }
+    VisResetFoWAlpha(lp_player);
+    return true;
+}
+
+string lib15EF4C78_gf_SpearofAdunTargetingModeAbility () {
+    // Automatic Variable Declarations
+    // Implementation
+    return lib15EF4C78_gv_pM_SoATargetingAbilityInstance;
+}
+
+void lib15EF4C78_gf_CreateOrbitalStrikeTarget (int lp_targetIndex, point lp_targetPoint) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_targetIndex > 5)) {
+        return ;
+    }
+
+    lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lp_targetIndex] = lp_targetPoint;
+    libNtve_gf_CreateActorAtPoint("AP_SOAOrbitalStrikeTargetModel", lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lp_targetIndex]);
+    lib15EF4C78_gv_pM_SoAOrbitalStrike_Actors[lp_targetIndex] = libNtve_gf_ActorLastCreated();
+    libNtve_gf_CreateActorAtPoint("AP_SOATargetingModeConfirmationSound", lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lp_targetIndex]);
+}
+
+trigger auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_Trigger = null;
+int auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_lp_player;
+int auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_lp_targetIndex;
+
+void lib15EF4C78_gf_FireOrbitalStrikeAtTarget (int lp_player, int lp_targetIndex) {
+    auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_lp_player = lp_player;
+    auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_lp_targetIndex = lp_targetIndex;
+
+    if (auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_Trigger == null) {
+        auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_Trigger = TriggerCreate("auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_Trigger, false, false);
+}
+
+bool auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_TriggerFunc (bool testConds, bool runActions) {
+    int lp_player = auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_lp_player;
+    int lp_targetIndex = auto_lib15EF4C78_gf_FireOrbitalStrikeAtTarget_lp_targetIndex;
+
+    // Automatic Variable Declarations
+    // Implementation
+    if (((lp_targetIndex > 5) || (lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lp_targetIndex] == null))) {
+        return true;
+    }
+
+    UnitCreateEffectPoint(lib15EF4C78_gv_sOA_CasterUnit[lp_player], "AP_SOAOrbitalStrikeCP", lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lp_targetIndex]);
+    lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lp_targetIndex] = null;
+    ActorSend(lib15EF4C78_gv_pM_SoAOrbitalStrike_Actors[lp_targetIndex], "Signal Destroy");
+    return true;
+}
+
+void lib15EF4C78_gf_CleanUpOrbitalStrikeTargets () {
+    // Variable Declarations
+    int lv_indexActor;
+
+    // Automatic Variable Declarations
+    const int auto4652D7E3_ae = 5;
+    const int auto4652D7E3_ai = 1;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_indexActor = 1;
+    for ( ; ( (auto4652D7E3_ai >= 0 && lv_indexActor <= auto4652D7E3_ae) || (auto4652D7E3_ai < 0 && lv_indexActor >= auto4652D7E3_ae) ) ; lv_indexActor += auto4652D7E3_ai ) {
+        if ((lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lv_indexActor] != null)) {
+            lib15EF4C78_gv_pM_SoAOrbitalStrike_Points[lv_indexActor] = null;
+            ActorSend(lib15EF4C78_gv_pM_SoAOrbitalStrike_Actors[lv_indexActor], "Signal Destroy");
+        }
+
+    }
+}
+
+void lib15EF4C78_gf_EnterOrbitalStrikeTargetingMode (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    UnitIssueOrder(lib15EF4C78_gv_sOA_CasterUnit[lp_player], Order(AbilityCommand("SOAOrbitalStrikeActivate", 0)), c_orderQueueReplace);
+}
+
+void lib15EF4C78_gf_CreateGravitonBombTarget (int lp_targetIndex, point lp_targetPoint) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_targetIndex > 3)) {
+        return ;
+    }
+
+    lib15EF4C78_gv_sOA_GravitonBomb_Points[lp_targetIndex] = lp_targetPoint;
+    libNtve_gf_CreateActorAtPoint("AP_SOAGravitonBombTargetModel", lib15EF4C78_gv_sOA_GravitonBomb_Points[lp_targetIndex]);
+    lib15EF4C78_gv_sOA_GravitonBomb_Actors[lp_targetIndex] = libNtve_gf_ActorLastCreated();
+    libNtve_gf_CreateActorAtPoint("AP_SOAGravitonBombTargetSound", lib15EF4C78_gv_sOA_GravitonBomb_Points[lp_targetIndex]);
+}
+
+trigger auto_lib15EF4C78_gf_FireGravitonBombAtTarget_Trigger = null;
+int auto_lib15EF4C78_gf_FireGravitonBombAtTarget_lp_player;
+int auto_lib15EF4C78_gf_FireGravitonBombAtTarget_lp_targetIndex;
+
+void lib15EF4C78_gf_FireGravitonBombAtTarget (int lp_player, int lp_targetIndex) {
+    auto_lib15EF4C78_gf_FireGravitonBombAtTarget_lp_player = lp_player;
+    auto_lib15EF4C78_gf_FireGravitonBombAtTarget_lp_targetIndex = lp_targetIndex;
+
+    if (auto_lib15EF4C78_gf_FireGravitonBombAtTarget_Trigger == null) {
+        auto_lib15EF4C78_gf_FireGravitonBombAtTarget_Trigger = TriggerCreate("auto_lib15EF4C78_gf_FireGravitonBombAtTarget_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib15EF4C78_gf_FireGravitonBombAtTarget_Trigger, false, false);
+}
+
+bool auto_lib15EF4C78_gf_FireGravitonBombAtTarget_TriggerFunc (bool testConds, bool runActions) {
+    int lp_player = auto_lib15EF4C78_gf_FireGravitonBombAtTarget_lp_player;
+    int lp_targetIndex = auto_lib15EF4C78_gf_FireGravitonBombAtTarget_lp_targetIndex;
+
+    // Automatic Variable Declarations
+    // Implementation
+    if (((lp_targetIndex > 3) || (lib15EF4C78_gv_sOA_GravitonBomb_Points[lp_targetIndex] == null))) {
+        return true;
+    }
+
+    UnitCreateEffectPoint(lib15EF4C78_gv_sOA_CasterUnit[lp_player], "AP_SOAGravitonBombLM", lib15EF4C78_gv_sOA_GravitonBomb_Points[lp_targetIndex]);
+    lib15EF4C78_gv_sOA_GravitonBomb_Points[lp_targetIndex] = null;
+    Wait(0.125, c_timeGame);
+    ActorSend(lib15EF4C78_gv_sOA_GravitonBomb_Actors[lp_targetIndex], "Signal Destroy");
+    return true;
+}
+
+void lib15EF4C78_gf_EnterGravitonBombTargetingMode (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    UnitIssueOrder(lib15EF4C78_gv_sOA_CasterUnit[lp_player], Order(AbilityCommand("SOAGravitonBombActivate", 0)), c_orderQueueReplace);
+}
+
+void lib15EF4C78_gf_FireSingleThermalLanceShot (int lp_player, point lp_originPoint, point lp_targetPoint) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_UnitCreateFacingPoint(1, "AP_SOAThermalLanceTargeter", c_unitCreateIgnorePlacement, lp_player, lp_originPoint, lp_targetPoint);
+    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("AP_SOAThermalLanceExecute", 0), lp_targetPoint), c_orderQueueReplace);
+}
+
+void lib15EF4C78_gf_SOA_TimeFreezeVisual (int lp_player, fixed lp_cameraPOSX, fixed lp_cameraPOSY) {
+    // Automatic Variable Declarations
+    // Implementation
+    PlayerCreateEffectPoint(lp_player, "AP_SOATimeFreezeVisual", Point(lp_cameraPOSX, lp_cameraPOSY));
+}
+
+void lib15EF4C78_gf_PU_GPSetUnit (unit lp_casterUnit) {
+    // Automatic Variable Declarations
+    unitgroup autoBF0B8EC7_g;
+    int autoBF0B8EC7_u;
+    unit autoBF0B8EC7_var;
+
+    // Implementation
+    if ((lib15EF4C78_gv_pU_GPPanel == c_invalidDialogControlId)) {
+        TriggerExecute(lib15EF4C78_gt_PU_GPInit, true, true);
+    }
+
+    lib15EF4C78_gv_pU_GPUnit = lp_casterUnit;
+    autoBF0B8EC7_g = lib15EF4C78_gv_pU_GPCasterGroup;
+    autoBF0B8EC7_u = UnitGroupCount(autoBF0B8EC7_g, c_unitCountAll);
+    for (;; autoBF0B8EC7_u -= 1) {
+        autoBF0B8EC7_var = UnitGroupUnitFromEnd(autoBF0B8EC7_g, autoBF0B8EC7_u);
+        if (autoBF0B8EC7_var == null) { break; }
+        UnitGroupRemove(lib15EF4C78_gv_pU_GPCasterGroup, autoBF0B8EC7_var);
+    }
+    UnitGroupAdd(lib15EF4C78_gv_pU_GPCasterGroup, lp_casterUnit);
+    libNtve_gf_SetDialogItemUnitGroup(lib15EF4C78_gv_pU_GPCmdPanel, lib15EF4C78_gv_pU_GPCasterGroup, PlayerGroupAll());
+    lib15EF4C78_gf_PU_GPVitalsUpdate();
+}
+
+void lib15EF4C78_gf_ShowSpearofAdunUI (bool lp_showHide, fixed lp_duration) {
+    // Automatic Variable Declarations
+    // Implementation
+    lib15EF4C78_gv_pU_GPRequestedVisible = (lp_showHide == true);
+    lib15EF4C78_gf_PU_GPVisibilitySet(lp_showHide, lp_duration);
+}
+
+void lib15EF4C78_gf_PU_GPVisibilityAutoUpdate (bool lp_showHide, fixed lp_duration) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((((lib15EF4C78_gv_pU_GPRequestedVisible == false) && (lp_showHide == true)))) {
+        return ;
+    }
+
+    lib15EF4C78_gf_PU_GPVisibilitySet(lp_showHide, lp_duration);
+}
+
+void lib15EF4C78_gf_PU_GPVisibilitySet (bool lp_showHide, fixed lp_duration) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lib15EF4C78_gv_pU_GPPanel == c_invalidDialogControlId)) {
+        TriggerExecute(lib15EF4C78_gt_PU_GPInit, true, true);
+    }
+
+    if ((lp_showHide == true)) {
+        lib15EF4C78_gv_pU_GPActuallyVisible = true;
+        DialogControlSetVisible(lib15EF4C78_gv_pU_GPPanel, PlayerGroupAll(), lp_showHide);
+        DialogControlSetVisible(lib15EF4C78_gv_pU_GPHolder, PlayerGroupAll(), lp_showHide);
+        libNtve_gf_SetDialogItemCutscene(lib15EF4C78_gv_pU_GPCutscene, "Cutscenes\\AP\\ui_soamission.sc2cutscene", PlayerGroupAll());
+        CutsceneSetTime(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyGlassScene), 0);
+        CutsceneSetTime(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyBarScene), 0);
+        CutsceneSetTime(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPCutscene), 0);
+        CutscenePlay(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPCutscene));
+        DialogControlSetVisible(lib15EF4C78_gv_pU_GPCutscene, PlayerGroupAll(), true);
+        if ((lp_duration == c_transitionDurationImmediate)) {
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPCutscene), "LoopStart");
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyGlassScene), "LoopStart");
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyBarScene), "LoopStart");
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPCmdPanel, PlayerGroupAll(), lp_showHide);
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPEnergyLabel, PlayerGroupAll(), lp_showHide);
+        }
+        else {
+            lib15EF4C78_gv_pU_GPWaitingForBirth = true;
+            TriggerEnable(lib15EF4C78_gt_PU_GPBirthFinished, true);
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPCmdPanel, PlayerGroupAll(), false);
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPEnergyLabel, PlayerGroupAll(), false);
+        }
+    }
+    else {
+        lib15EF4C78_gv_pU_GPActuallyVisible = false;
+        if ((lp_duration == c_transitionDurationImmediate)) {
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPPanel, PlayerGroupAll(), lp_showHide);
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPHolder, PlayerGroupAll(), lp_showHide);
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPCmdPanel, PlayerGroupAll(), lp_showHide);
+            DialogControlSetVisible(lib15EF4C78_gv_pU_GPEnergyLabel, PlayerGroupAll(), lp_showHide);
+        }
+        else {
+            TriggerEnable(lib15EF4C78_gt_PU_GPDeathRemove2D, true);
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPCutscene), "Death");
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyBarScene), "Death");
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyGlassScene), "Death");
+        }
+    }
+}
+
+void lib15EF4C78_gf_TurnSpearofAdunSlotHighlightOnOff (int lp_slot, bool lp_onOff) {
+    // Variable Declarations
+    string lv_indexPerkGroup;
+    string lv_indexPerk;
+    abilcmd lv_indexCommand;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    if ((lp_onOff == true)) {
+        DialogControlSetVisible(lib15EF4C78_gv_pU_GPAbilityArrows[lp_slot], PlayerGroupAll(), true);
+    }
+    else {
+        DialogControlSetVisible(lib15EF4C78_gv_pU_GPAbilityArrows[lp_slot], PlayerGroupAll(), false);
+    }
+}
+
+void lib15EF4C78_gf_PU_GPVitalsUpdate () {
+    // Variable Declarations
+    fixed lv_energyFloored;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    lv_energyFloored = Floor(UnitGetPropertyFixed(lib15EF4C78_gv_pU_GPUnit, c_unitPropEnergy, c_unitPropCurrent));
+    if ((lv_energyFloored == lib15EF4C78_gv_pU_GPLastEnergyUpdate)) {
+        return ;
+    }
+
+    lib15EF4C78_gv_pU_GPLastEnergyUpdate = lv_energyFloored;
+    libNtve_gf_SetDialogItemText(lib15EF4C78_gv_pU_GPEnergyLabel, IntToText(FixedToInt(lv_energyFloored)), PlayerGroupAll());
+    DialogControlSendAnimationEvent(lib15EF4C78_gv_pU_GPEnergyBarScene, PlayerGroupAll(), "SetEnergyPlay");
+    DialogControlSetAnimationTime(lib15EF4C78_gv_pU_GPEnergyBarScene, PlayerGroupAll(), "EnergyLevel", UnitGetPropertyFixed(lib15EF4C78_gv_pU_GPUnit, c_unitPropEnergyPercent, c_unitPropCurrent));
+    DialogControlSendAnimationEvent(lib15EF4C78_gv_pU_GPEnergyBarScene, PlayerGroupAll(), "SetEnergyPause");
+    if ((UnitGetPropertyFixed(lib15EF4C78_gv_pU_GPUnit, c_unitPropEnergyPercent, c_unitPropCurrent) == 100.0)) {
+        lib15EF4C78_gf_PU_GPEnergyHighlight(true);
+    }
+    else {
+        lib15EF4C78_gf_PU_GPEnergyHighlight(false);
+    }
+}
+
+void lib15EF4C78_gf_PU_GPEnergyHighlight (bool lp_enable) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_enable == true)) {
+        lib15EF4C78_gv_pU_GPEnergyHighlighting = true;
+        if ((lib15EF4C78_gv_pU_GPWaitingForBirth == false) && (lib15EF4C78_gv_pU_GPActuallyVisible == true)) {
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyGlassScene), "PowerUp");
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyBarScene), "PowerUp");
+            CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPCutscene), "PowerUp");
+        }
+
+    }
+    else {
+        if ((lib15EF4C78_gv_pU_GPEnergyHighlighting == true)) {
+            if ((lib15EF4C78_gv_pU_GPWaitingForBirth == false) && (lib15EF4C78_gv_pU_GPActuallyVisible == true)) {
+                CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyGlassScene), "PowerDown");
+                CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPEnergyBarScene), "PowerDown");
+                CutsceneGoToBookmark(CutsceneGetTriggerControl(lib15EF4C78_gv_pU_GPCutscene), "PowerDown");
+            }
+
+            lib15EF4C78_gv_pU_GPEnergyHighlighting = false;
+        }
+
+    }
+}
+
+trigger auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_Trigger = null;
+string auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_lp_abilityIcon;
+fixed auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_lp_duration;
+
+void lib15EF4C78_gf_PU_SoAAbilityTimerCreate (string lp_abilityIcon, fixed lp_duration) {
+    auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_lp_abilityIcon = lp_abilityIcon;
+    auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_lp_duration = lp_duration;
+
+    if (auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_Trigger == null) {
+        auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_Trigger = TriggerCreate("auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_Trigger, false, false);
+}
+
+bool auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_TriggerFunc (bool testConds, bool runActions) {
+    string lp_abilityIcon = auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_lp_abilityIcon;
+    fixed lp_duration = auto_lib15EF4C78_gf_PU_SoAAbilityTimerCreate_lp_duration;
+
+    // Variable Declarations
+    fixed lv_updatewidth;
+    int lv_startwidth;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    DialogCreate(260, 100, c_anchorCenter, 0, -450, true);
+    lib15EF4C78_gv_sOA_TimeFreezeUI = DialogLastCreated();
+    DialogSetVisible(DialogLastCreated(), PlayerGroupAll(), true);
+    lv_startwidth = 150;
+    lv_updatewidth = 150.0;
+    libNtve_gf_CreateDialogItemImage(DialogLastCreated(), 55, 55, c_anchorLeft, 26, 3, StringToText(""), lp_abilityIcon, c_triggerImageTypeNormal, false, Color(100,100,100), c_triggerBlendModeNormal);
+    libNtve_gf_CreateDialogItemImage(DialogLastCreated(), lv_startwidth, 47, c_anchorLeft, 79, 3, StringToText(""), "", c_triggerImageTypeNormal, false, ColorWithAlpha(0.00, 0.00, 62.75, 74.90), c_triggerBlendModeNormal);
+    while ((DialogControlGetWidth(DialogControlLastCreated(), 1) > 0)) {
+        Wait(0.0625, c_timeGame);
+        lv_updatewidth -= ((lv_startwidth/lp_duration)*0.0625);
+        DialogControlSetSize(DialogControlLastCreated(), PlayerGroupAll(), FixedToInt(lv_updatewidth), 47);
+    }
+    DialogDestroy(lib15EF4C78_gv_sOA_TimeFreezeUI);
+    return true;
+}
+
+void lib15EF4C78_gf_PU_TargetingUI_EnterTargetingMode (bool lp_showHide, bool lp_instant) {
+    // Variable Declarations
+    int lv_index;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    lib15EF4C78_gf_PU_TargetingCreate();
+    if ((lp_showHide == true)) {
+        lib15EF4C78_gf_SetScreenModeCampaign(c_uiModeFullscreen, 0.35);
+        DialogSetVisible(lib15EF4C78_gv_pU_TargetingOverlayDialog, PlayerGroupAll(), true);
+        DialogSetVisible(lib15EF4C78_gv_pU_TargetingAbilityDialog, PlayerGroupAll(), true);
+        libNtve_gf_PlayAnimation(ActorFromDialogControl(lib15EF4C78_gv_pU_TargetingOverlayPortrait), c_animNameDefault, "Birth", 0, 0.0);
+        TriggerEnable(lib15EF4C78_gt_PU_TargetingCancelButtonUsed, true);
+        lib15EF4C78_gv_pU_TargetingActive = true;
+    }
+    else {
+        lib15EF4C78_gv_pU_TargetingCurrentCharges = 0;
+        if ((lp_instant == false)) {
+            lib15EF4C78_gf_SetScreenModeCampaign(c_uiModeConsole, 0.25);
+        }
+
+        TriggerEnable(lib15EF4C78_gt_PU_TargetingCancelButtonUsed, false);
+        DialogSetVisible(lib15EF4C78_gv_pU_TargetingOverlayDialog, PlayerGroupAll(), false);
+        DialogSetVisible(lib15EF4C78_gv_pU_TargetingAbilityDialog, PlayerGroupAll(), false);
+        lib15EF4C78_gv_pU_TargetingActive = false;
+    }
+}
+
+void lib15EF4C78_gf_PU_TargetingCreate () {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lib15EF4C78_gv_pU_TargetingAbilityDialog != c_invalidDialogId)) {
+        return ;
+    }
+
+    DialogCreate(500, 150, c_anchorBottom, 3, 160, true);
+    DialogSetFullscreen(DialogLastCreated(), true);
+    lib15EF4C78_gv_pU_TargetingAbilityDialog = DialogLastCreated();
+    DialogSetImageVisible(DialogLastCreated(), false);
+    DialogControlCreateFromTemplate(DialogLastCreated(), c_triggerControlTypePanel, "AP_LotV_GameUI/SoATargetingUITemplate");
+    lib15EF4C78_gv_pU_TargetingPanel = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingPanel, c_triggerControlTypeLabel, "Instructions");
+    lib15EF4C78_gv_pU_TargetingInstructionsLabel = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingPanel, c_triggerControlTypeButton, "CancelButton");
+    lib15EF4C78_gv_pU_TargetingCancelButton = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingPanel, c_triggerControlTypePanel, "ChargesContainer");
+    lib15EF4C78_gv_pU_TargetingChargesPanel = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingChargesPanel, c_triggerControlTypePanel, "Charge1");
+    lib15EF4C78_gv_pU_TargetingChargeSinglePanel[1] = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingChargesPanel, c_triggerControlTypePanel, "Charge2");
+    lib15EF4C78_gv_pU_TargetingChargeSinglePanel[2] = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingChargesPanel, c_triggerControlTypePanel, "Charge3");
+    lib15EF4C78_gv_pU_TargetingChargeSinglePanel[3] = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingChargesPanel, c_triggerControlTypePanel, "Charge4");
+    lib15EF4C78_gv_pU_TargetingChargeSinglePanel[4] = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_TargetingChargesPanel, c_triggerControlTypePanel, "Charge5");
+    lib15EF4C78_gv_pU_TargetingChargeSinglePanel[5] = DialogControlLastCreated();
+    DialogCreate(500, 400, c_anchorCenter, 0, 0, true);
+    lib15EF4C78_gv_pU_TargetingOverlayDialog = DialogLastCreated();
+    DialogSetFullscreen(DialogLastCreated(), true);
+    DialogSetImageVisible(DialogLastCreated(), false);
+    DialogControlCreateFromTemplate(DialogLastCreated(), c_triggerControlTypePortrait, "AP_LotV_GameUI/SoAOverlayTemplate");
+    PortraitUseTransition(PortraitGetTriggerControl(DialogControlLastCreated()), false);
+    libNtve_gf_SetDialogItemModel(DialogControlLastCreated(), "AP_SOA_Calldown_UI", PlayerGroupAll());
+    lib15EF4C78_gv_pU_TargetingOverlayPortrait = DialogControlLastCreated();
+}
+
+void lib15EF4C78_gf_PU_TargetingSetCharges (int lp_current, int lp_max) {
+    // Variable Declarations
+    int lv_indexCharge;
+
+    // Automatic Variable Declarations
+    int autoF213B88A_ae;
+    const int autoF213B88A_ai = 1;
+    int auto7B64BEED_ae;
+    const int auto7B64BEED_ai = 1;
+    const int auto62864147_ae = lib15EF4C78_gv_pMC_SOATARGETCOUNTMAX;
+    const int auto62864147_ai = 1;
+
+    // Variable Initialization
+
+    // Implementation
+    lib15EF4C78_gf_PU_TargetingCreate();
+    autoF213B88A_ae = lp_current;
+    lv_indexCharge = 1;
+    for ( ; ( (autoF213B88A_ai >= 0 && lv_indexCharge <= autoF213B88A_ae) || (autoF213B88A_ai < 0 && lv_indexCharge >= autoF213B88A_ae) ) ; lv_indexCharge += autoF213B88A_ai ) {
+        if ((lib15EF4C78_gv_pU_TargetingCurrentCharges < lv_indexCharge)) {
+            DialogControlSetVisible(lib15EF4C78_gv_pU_TargetingChargeSinglePanel[(lp_max-lv_indexCharge+1)], PlayerGroupAll(), false);
+            DialogControlSetVisible(lib15EF4C78_gv_pU_TargetingChargeSinglePanel[(lp_max-lv_indexCharge+1)], PlayerGroupAll(), true);
+        }
+
+    }
+    auto7B64BEED_ae = lp_max;
+    lv_indexCharge = (lp_current+1);
+    for ( ; ( (auto7B64BEED_ai >= 0 && lv_indexCharge <= auto7B64BEED_ae) || (auto7B64BEED_ai < 0 && lv_indexCharge >= auto7B64BEED_ae) ) ; lv_indexCharge += auto7B64BEED_ai ) {
+        if ((lv_indexCharge <= lib15EF4C78_gv_pU_TargetingCurrentCharges)) {
+            DialogControlSendAnimationEvent(lib15EF4C78_gv_pU_TargetingChargeSinglePanel[(lp_max-lv_indexCharge+1)], PlayerGroupAll(), "Consume");
+        }
+
+    }
+    lv_indexCharge = (lp_max+1);
+    for ( ; ( (auto62864147_ai >= 0 && lv_indexCharge <= auto62864147_ae) || (auto62864147_ai < 0 && lv_indexCharge >= auto62864147_ae) ) ; lv_indexCharge += auto62864147_ai ) {
+        DialogControlSetVisible(lib15EF4C78_gv_pU_TargetingChargeSinglePanel[lv_indexCharge], PlayerGroupAll(), false);
+    }
+    if ((lp_max == 3)) {
+        DialogControlSendAnimationEvent(lib15EF4C78_gv_pU_TargetingChargesPanel, PlayerGroupAll(), "ThreeCharges");
+    }
+    else {
+        DialogControlSendAnimationEvent(lib15EF4C78_gv_pU_TargetingChargesPanel, PlayerGroupAll(), "FiveCharges");
+    }
+    lib15EF4C78_gv_pU_TargetingCurrentCharges = lp_current;
+}
+
+void lib15EF4C78_gf_PU_TargetingSetInstructionText (text lp_instructions) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetDialogItemText(lib15EF4C78_gv_pU_TargetingInstructionsLabel, lp_instructions, PlayerGroupAll());
+}
+
+void lib15EF4C78_gf_PU_TargetingCancel (trigger t) {
+    // Automatic Variable Declarations
+    // Implementation
+    TriggerAddEventGeneric(t, lib15EF4C78_gv_pUC_TargetingEventCancel);
+}
+
+bool lib15EF4C78_gf_TargetingUIisActive () {
+    // Automatic Variable Declarations
+    // Implementation
+    return lib15EF4C78_gv_pU_TargetingActive;
+}
+
+void lib15EF4C78_gf_PauseAITimeCampaign (bool lp_pauseUnpause) {
+    // Automatic Variable Declarations
+    // Implementation
+    AITimePause(lp_pauseUnpause);
+    lib15EF4C78_gv_pC_TimeAIPaused = lp_pauseUnpause;
+}
+
+void lib15EF4C78_gf_PC_TimeAITemporarySet (bool lp_pauseUnpause) {
+    // Variable Declarations
+    bool lv_originalPauseState;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_originalPauseState = true;
+
+    // Implementation
+    lib15EF4C78_gv_pC_TimeAIOverrideCount += 1;
+    lv_originalPauseState = lib15EF4C78_gv_pC_TimeAIPaused;
+    lib15EF4C78_gf_PauseAITimeCampaign(lp_pauseUnpause);
+    lib15EF4C78_gv_pC_TimeAIPaused = lv_originalPauseState;
+}
+
+void lib15EF4C78_gf_PC_TimeAITemporaryRestore () {
+    // Automatic Variable Declarations
+    // Implementation
+    lib15EF4C78_gv_pC_TimeAIOverrideCount -= 1;
+    if ((lib15EF4C78_gv_pC_TimeAIOverrideCount <= 0)) {
+        lib15EF4C78_gf_PauseAITimeCampaign(lib15EF4C78_gv_pC_TimeAIPaused);
+    }
+
+}
+
+void lib15EF4C78_gf_PauseMissionTimeCampaign (bool lp_pauseUnpause) {
+    // Automatic Variable Declarations
+    // Implementation
+    GameSetMissionTimePaused(lp_pauseUnpause);
+    lib15EF4C78_gv_pC_TimeMissionPaused = lp_pauseUnpause;
+}
+
+void lib15EF4C78_gf_PC_TimeMissionTemporarySet (bool lp_pauseUnpause) {
+    // Variable Declarations
+    bool lv_originalPauseState;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_originalPauseState = true;
+
+    // Implementation
+    lv_originalPauseState = lib15EF4C78_gv_pC_TimeMissionPaused;
+    lib15EF4C78_gf_PauseMissionTimeCampaign(lp_pauseUnpause);
+    lib15EF4C78_gv_pC_TimeMissionPaused = lv_originalPauseState;
+}
+
+void lib15EF4C78_gf_PC_TimeMissionTemporaryRestore () {
+    // Automatic Variable Declarations
+    // Implementation
+    lib15EF4C78_gf_PauseMissionTimeCampaign(lib15EF4C78_gv_pC_TimeMissionPaused);
+}
+
+text lib15EF4C78_gf_PC_PerkTargetingText (string lp_campaignPerk, int lp_stage) {
+    // Automatic Variable Declarations
+    // Implementation
+    return UserDataGetText("AP_CampaignPerk", lp_campaignPerk, "TargetInstructions", lp_stage);
 }
 
 int lib15EF4C78_gf_AP_Player_OnPrimaryTownHallDeath__getPlayer () {
@@ -1442,6 +2540,30 @@ int lib15EF4C78_gf_AP_Player_getKerriganLevel (int lp_player) {
     return lib15EF4C78_gv_zS_KerriganLevel[lp_player];
 }
 
+void lib15EF4C78_gf_LotV_ShowCampaignTeaching () {
+    // Automatic Variable Declarations
+    // Implementation
+    ap_player_LotV_ShowCampaignTeaching();
+}
+
+void lib15EF4C78_gf_LotV_HideCampaignTeaching () {
+    // Automatic Variable Declarations
+    // Implementation
+    ap_player_LotV_HideCampaignTeaching();
+}
+
+bool lib15EF4C78_gf_AP_Player_isPlayerInCinematicMode (int lp_player) {
+    // Variable Declarations
+    bool lv_cinematicMode;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    lv_cinematicMode = ap_player_cinematicModeFunction(lp_player);
+    return lv_cinematicMode;
+}
+
 // Triggers
 //--------------------------------------------------------------------------------------------------
 // Trigger: ArchipelagoPlayerHandlersConstructor
@@ -2036,6 +3158,1071 @@ bool lib15EF4C78_gt_KerriganPsiStrike_Func (bool testConds, bool runActions) {
 void lib15EF4C78_gt_KerriganPsiStrike_Init () {
     lib15EF4C78_gt_KerriganPsiStrike = TriggerCreate("lib15EF4C78_gt_KerriganPsiStrike_Func");
     TriggerAddEventUnitAbility(lib15EF4C78_gt_KerriganPsiStrike, null, AbilityCommand("AP_PsiStrikeWalk", 0), c_abilEffectStageCast, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoAStatusWatch
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoAStatusWatch_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+
+    // Automatic Variable Declarations
+    playergroup autoC639B50B_g;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    while (true) {
+        autoC639B50B_g = PlayerGroupAll();
+        lv_player = -1;
+        while (true) {
+            lv_player = PlayerGroupNextPlayer(autoC639B50B_g, lv_player);
+            if (lv_player < 0) { break; }
+            if ((lib15EF4C78_gv_pM_SoAEnabledForPlayer[lv_player] == true)) {
+                if (((lib15EF4C78_gv_pM_SoAUnit[lv_player] == null) || (UnitIsAlive(lib15EF4C78_gv_pM_SoAUnit[lv_player]) == false))) {
+                    lib15EF4C78_gf_PM_SoACreateUnit(lv_player);
+                    UnitSetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lv_player], c_unitPropEnergy, lib15EF4C78_gv_pM_SoALastKnownEnergy);
+                }
+                else {
+                    lib15EF4C78_gv_pM_SoALastKnownEnergy = UnitGetPropertyFixed(lib15EF4C78_gv_pM_SoAUnit[lv_player], c_unitPropEnergy, c_unitPropCurrent);
+                }
+            }
+
+        }
+        Wait(0.5, c_timeGame);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoAStatusWatch_Init () {
+    lib15EF4C78_gt_PM_SoAStatusWatch = TriggerCreate("lib15EF4C78_gt_PM_SoAStatusWatch_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_CinematicModeOn
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_CinematicModeOn_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    playergroup autoCD42A560_g;
+    int autoCD42A560_var;
+    playergroup autoD3A5F363_g;
+    int autoD3A5F363_var;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libNtve_gf_PlayerInCinematicMode(1) == true)) {
+        lib15EF4C78_gv_pM_ScreenMode = c_uiModeLetterboxed;
+    }
+
+    autoCD42A560_g = PlayerGroupAll();
+    autoCD42A560_var = -1;
+    while (true) {
+        autoCD42A560_var = PlayerGroupNextPlayer(autoCD42A560_g, autoCD42A560_var);
+        if (autoCD42A560_var < 0) { break; }
+        PlayerScoreValueEnableAll(autoCD42A560_var, false);
+    }
+    autoD3A5F363_g = PlayerGroupAll();
+    autoD3A5F363_var = -1;
+    while (true) {
+        autoD3A5F363_var = PlayerGroupNextPlayer(autoD3A5F363_g, autoD3A5F363_var);
+        if (autoD3A5F363_var < 0) { break; }
+        libNtve_gf_SetUpgradeLevelForPlayer(autoD3A5F363_var, "AP_CinematicMode", 1);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_CinematicModeOn_Init () {
+    lib15EF4C78_gt_PM_CinematicModeOn = TriggerCreate("lib15EF4C78_gt_PM_CinematicModeOn_Func");
+    TriggerAddEventGeneric(lib15EF4C78_gt_PM_CinematicModeOn, "CinematicModeOn");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_CinematicModeOff
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_CinematicModeOff_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_group;
+
+    // Automatic Variable Declarations
+    playergroup auto957A1425_g;
+    int auto957A1425_var;
+    playergroup autoACCCB784_g;
+    int autoACCCB784_var;
+
+    // Variable Initialization
+    lv_group = UnitGroupEmpty();
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libNtve_gf_PlayerInCinematicMode(1) == false)) {
+        if ((UIFrameVisible(1, c_syncFrameTypeConsolePanel) == true)) {
+            lib15EF4C78_gv_pM_ScreenMode = c_uiModeConsole;
+        }
+        else {
+            lib15EF4C78_gv_pM_ScreenMode = c_uiModeFullscreen;
+        }
+    }
+    else {
+        lib15EF4C78_gv_pM_ScreenMode = c_uiModeLetterboxed;
+    }
+    auto957A1425_g = PlayerGroupAll();
+    auto957A1425_var = -1;
+    while (true) {
+        auto957A1425_var = PlayerGroupNextPlayer(auto957A1425_g, auto957A1425_var);
+        if (auto957A1425_var < 0) { break; }
+        PlayerScoreValueEnableAll(auto957A1425_var, true);
+    }
+    autoACCCB784_g = PlayerGroupAll();
+    autoACCCB784_var = -1;
+    while (true) {
+        autoACCCB784_var = PlayerGroupNextPlayer(autoACCCB784_g, autoACCCB784_var);
+        if (autoACCCB784_var < 0) { break; }
+        libNtve_gf_SetUpgradeLevelForPlayer(autoACCCB784_var, "AP_CinematicMode", 0);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_CinematicModeOff_Init () {
+    lib15EF4C78_gt_PM_CinematicModeOff = TriggerCreate("lib15EF4C78_gt_PM_CinematicModeOff_Func");
+    TriggerAddEventGeneric(lib15EF4C78_gt_PM_CinematicModeOff, "CinematicModeOff");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingForceOff
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingForceOff_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_currentPlayer;
+
+    // Automatic Variable Declarations
+    playergroup auto063CB9FE_g;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib15EF4C78_gv_pM_SoAExitInstantly = true;
+    lib15EF4C78_gv_pM_SoAForceExit = true;
+    TriggerExecute(lib15EF4C78_gt_PM_SoATargetingCancel, false, false);
+    auto063CB9FE_g = PlayerGroupAll();
+    lv_currentPlayer = -1;
+    while (true) {
+        lv_currentPlayer = PlayerGroupNextPlayer(auto063CB9FE_g, lv_currentPlayer);
+        if (lv_currentPlayer < 0) { break; }
+        lib15EF4C78_gv_pM_CinematicModeSoAEnergy[lv_currentPlayer] = lib15EF4C78_gf_SpearofAdunEnergy(lv_currentPlayer, lib15EF4C78_ge_SpearofAdunEnergyType_Absolute);
+    }
+    lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(false, c_transitionDurationImmediate);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingForceOff_Init () {
+    lib15EF4C78_gt_PM_SoATargetingForceOff = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingForceOff_Func");
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingForceOff, false);
+    TriggerAddEventGeneric(lib15EF4C78_gt_PM_SoATargetingForceOff, "CinematicModeOn");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingDeactivated
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingDeactivated_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = EventUnit();
+    lv_player = UnitGetOwner(lv_unit);
+    if (((lib15EF4C78_gv_pM_SoATargetingChargesSpent == 0) || ((lib15EF4C78_gf_PM_SoATargetingPauseEnabled() == true) && (lib15EF4C78_gv_pM_SoATargetingChargesSpent != lib15EF4C78_gv_pM_SoATargetingChargesTotal)))) {
+        DataTableSetInt(false, TriggerEventParamName(lib15EF4C78_gv_pMC_SoATargetingEventExited, lib15EF4C78_gv_pMC_SoATargetingParamReason), (lib15EF4C78_ge_SpearofAdunTargetingExitType_ByCanceling));
+        TriggerSendEvent(lib15EF4C78_gv_pMC_SoATargetingEventExited);
+    }
+    else {
+        DataTableSetInt(false, TriggerEventParamName(lib15EF4C78_gv_pMC_SoATargetingEventExited, lib15EF4C78_gv_pMC_SoATargetingParamReason), (lib15EF4C78_ge_SpearofAdunTargetingExitType_ByFiring));
+        TriggerSendEvent(lib15EF4C78_gv_pMC_SoATargetingEventExited);
+    }
+    UISetTargetingOrder(PlayerGroupSingle(lv_player), lib15EF4C78_gv_pU_GPCasterGroup, null, false);
+    lib15EF4C78_gv_pM_SoATargetingChargesSpent = 0;
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingCancel, false);
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingClearAll, false);
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingPointChosen, false);
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingDirectionChosen, false);
+    lib15EF4C78_gf_PM_SoATargetingModeExit(lv_player);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingDeactivated_Init () {
+    lib15EF4C78_gt_PM_SoATargetingDeactivated = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingDeactivated_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_PM_SoATargetingDeactivated, null, "AP_SOAOrbitalStrikeActivate", c_unitBehaviorChangeDeactivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_PM_SoATargetingDeactivated, null, "AP_SOAGravitonBombActivate", c_unitBehaviorChangeDeactivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_PM_SoATargetingDeactivated, null, "AP_SOAThermalLanceActivate", c_unitBehaviorChangeDeactivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_PM_SoATargetingDeactivated, null, "AP_SOAStrafeAttackActivate", c_unitBehaviorChangeDeactivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingPointChosen
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingPointChosen_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    point lv_targetPoint;
+    unit lv_unit;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((lib15EF4C78_gv_pM_SoATargetingChargesSpent < lib15EF4C78_gv_pM_SoATargetingChargesTotal))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = EventUnit();
+    lv_player = UnitGetOwner(lv_unit);
+    lv_targetPoint = OrderGetTargetPoint(EventUnitOrder());
+    if ((VisIsVisibleForPlayer(lv_player, lv_targetPoint) == false)) {
+        return true;
+    }
+
+    lib15EF4C78_gv_pM_SoATargetingCycling = true;
+    lib15EF4C78_gv_pM_SoATargetingChargesSpent += 1;
+    libNtve_gf_CreateActorAtPoint(lib15EF4C78_gv_pM_SoATargetingModel, lv_targetPoint);
+    lib15EF4C78_gv_pM_SoATargetingActors[lib15EF4C78_gv_pM_SoATargetingChargesSpent] = libNtve_gf_ActorLastCreated();
+    libNtve_gf_CreateActorAtPoint("AP_SOATargetingModeConfirmationSound", lv_targetPoint);
+    if ((lib15EF4C78_gv_pM_SoATargetingUnitType == null)) {
+        UnitIssueOrder(lib15EF4C78_gv_sOA_CasterUnit[lv_player], OrderTargetingPoint(lib15EF4C78_gv_pM_SoATargetingExecuteCommand, lv_targetPoint), c_orderQueueAddToEnd);
+        lib15EF4C78_gf_PU_TargetingSetCharges((lib15EF4C78_gv_pM_SoATargetingChargesTotal - lib15EF4C78_gv_pM_SoATargetingChargesSpent), lib15EF4C78_gv_pM_SoATargetingChargesTotal);
+        if ((lib15EF4C78_gv_pM_SoATargetingChargesSpent == lib15EF4C78_gv_pM_SoATargetingChargesTotal)) {
+            TriggerEnable(lib15EF4C78_gt_PM_SoATargetingCancel, false);
+            Wait(0.125, c_timeGame);
+            UnitBehaviorRemove(lib15EF4C78_gv_sOA_CasterUnit[lv_player], lib15EF4C78_gv_pM_SoATargetingBehavior, 1);
+            DataTableSetInt(true, ("AbilUsed_" + (lib15EF4C78_gv_pM_SoATargetingAbilityInstance)), (DataTableGetInt(true, ("AbilUsed_" + (lib15EF4C78_gv_pM_SoATargetingAbilityInstance)))+1));
+        }
+        else {
+            Wait(0.1, c_timeGame);
+            UISetTargetingOrder(PlayerGroupSingle(lv_player), lib15EF4C78_gv_pM_SoACasterGroup[lv_player], lib15EF4C78_gv_pM_SoATargetingOrder, false);
+        }
+    }
+    else {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, lib15EF4C78_gv_pM_SoATargetingUnitType, 0, lv_player, lv_targetPoint);
+        lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent] = UnitLastCreated();
+        lib15EF4C78_gv_pM_SoATargetingDirectionGroup = libNtve_gf_ConvertUnitToUnitGroup(lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent]);
+        if ((lib15EF4C78_gf_PM_SoATargetingPauseEnabled() == true)) {
+            libNtve_gf_PauseUnit(lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent], true);
+            UnitBehaviorAdd(lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent], "AP_SOAThermalLanceStun", lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent], 1);
+            UnitBehaviorSetDuration(lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent], "AP_SOAThermalLanceStun", (0.125 * lib15EF4C78_gv_pM_SoATargetingChargesSpent));
+        }
+
+        lib15EF4C78_gf_PU_TargetingSetInstructionText(lib15EF4C78_gf_PC_PerkTargetingText(lib15EF4C78_gv_pM_SoATargetingAbilityInstance, 2));
+        TriggerEnable(TriggerGetCurrent(), false);
+        Wait(0.1, c_timeGame);
+        UISetTargetingOrder(PlayerGroupSingle(lv_player), lib15EF4C78_gv_pM_SoATargetingDirectionGroup, OrderTargetingPoint(lib15EF4C78_gv_pM_SoATargetingExecuteCommand, UnitGetPosition(lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent])), false);
+        TriggerEnable(lib15EF4C78_gt_PM_SoATargetingDirectionChosen, true);
+    }
+    lib15EF4C78_gv_pM_SoATargetingCycling = false;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingPointChosen_Init () {
+    lib15EF4C78_gt_PM_SoATargetingPointChosen = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingPointChosen_Func");
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingPointChosen, false);
+    TriggerAddEventUnitOrder(lib15EF4C78_gt_PM_SoATargetingPointChosen, null, AbilityCommand("AP_SOAOrbitalStrikeTargetingDummy", 0));
+    TriggerAddEventUnitOrder(lib15EF4C78_gt_PM_SoATargetingPointChosen, null, AbilityCommand("AP_SOAThermalLanceTargetingDummy", 0));
+    TriggerAddEventUnitOrder(lib15EF4C78_gt_PM_SoATargetingPointChosen, null, AbilityCommand("AP_SOAGravitonBomb", 0));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingDirectionChosen
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingDirectionChosen_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    point lv_targetPoint;
+    unit lv_unit;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = EventUnit();
+    lv_player = UnitGetOwner(lv_unit);
+    lib15EF4C78_gv_pM_SoATargetingCycling = true;
+    lv_targetPoint = OrderGetTargetPoint(EventUnitOrder());
+    libNtve_gf_CreateActorAtPoint("AP_SOATargetingModeConfirmationSound", lv_targetPoint);
+    ActorSend(lib15EF4C78_gv_pM_SoATargetingActors[lib15EF4C78_gv_pM_SoATargetingChargesSpent], "Signal Destroy");
+    libNtve_gf_MakeUnitFacePoint(lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent], lv_targetPoint, 0.0);
+    if ((lib15EF4C78_gf_PM_SoATargetingPauseEnabled() == true)) {
+        libNtve_gf_SendActorMessageToUnit(lib15EF4C78_gv_pM_SoATargetingUnit[lib15EF4C78_gv_pM_SoATargetingChargesSpent], "Signal GuideOn");
+    }
+
+    lib15EF4C78_gf_PU_TargetingSetCharges((lib15EF4C78_gv_pM_SoATargetingChargesTotal - lib15EF4C78_gv_pM_SoATargetingChargesSpent), lib15EF4C78_gv_pM_SoATargetingChargesTotal);
+    if ((lib15EF4C78_gv_pM_SoATargetingChargesSpent == lib15EF4C78_gv_pM_SoATargetingChargesTotal)) {
+        TriggerEnable(lib15EF4C78_gt_PM_SoATargetingCancel, false);
+        UnitBehaviorRemove(lib15EF4C78_gv_sOA_CasterUnit[lv_player], lib15EF4C78_gv_pM_SoATargetingBehavior, 1);
+        Wait(0.1, c_timeGame);
+    }
+    else {
+        lib15EF4C78_gf_PU_TargetingSetInstructionText(lib15EF4C78_gf_PC_PerkTargetingText(lib15EF4C78_gv_pM_SoATargetingAbilityInstance, 1));
+        Wait(0.1, c_timeGame);
+        UISetTargetingOrder(PlayerGroupSingle(lv_player), lib15EF4C78_gv_pM_SoACasterGroup[lv_player], lib15EF4C78_gv_pM_SoATargetingOrder, false);
+        TriggerEnable(lib15EF4C78_gt_PM_SoATargetingPointChosen, true);
+        TriggerEnable(TriggerGetCurrent(), false);
+    }
+    lib15EF4C78_gv_pM_SoATargetingCycling = false;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingDirectionChosen_Init () {
+    lib15EF4C78_gt_PM_SoATargetingDirectionChosen = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingDirectionChosen_Func");
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingDirectionChosen, false);
+    TriggerAddEventUnitOrder(lib15EF4C78_gt_PM_SoATargetingDirectionChosen, null, AbilityCommand("AP_SOAThermalLanceExecute", 0));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingEffectFired
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingEffectFired_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_PM_SoATargetingCleanupActorsAndUnits();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingEffectFired_Init () {
+    lib15EF4C78_gt_PM_SoATargetingEffectFired = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingEffectFired_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_PM_SoATargetingEffectFired, c_playerAny, "AP_SOAOrbitalStrikeCP");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_PM_SoATargetingEffectFired, c_playerAny, "AP_SOAGravitonBombLM");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingClearAll
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingClearAll_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((lib15EF4C78_gv_pM_SoATargetingCycling == false))) {
+            return false;
+        }
+
+        if (!(((EventTargetModeAbilCmd() == AbilityCommand("AP_SOAOrbitalStrikeTargetingDummy", 0)) || (EventTargetModeAbilCmd() == AbilityCommand("AP_SOAThermalLanceTargetingDummy", 0)) || (EventTargetModeAbilCmd() == AbilityCommand("AP_SOAGravitonBomb", 0)) || (EventTargetModeAbilCmd() == AbilityCommand("AP_SOAThermalLanceExecute", 0))))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_player = EventPlayer();
+    if ((lib15EF4C78_gv_pM_SoATargetingChargesSpent != 0) && (lib15EF4C78_gf_PM_SoATargetingPauseEnabled() == true)) {
+        UnitIssueOrder(lib15EF4C78_gv_sOA_CasterUnit[lv_player], Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+        lib15EF4C78_gv_pM_SoATargetingChargesSpent = 0;
+        lib15EF4C78_gf_PU_TargetingSetInstructionText(lib15EF4C78_gf_PC_PerkTargetingText(lib15EF4C78_gv_pM_SoATargetingAbilityInstance, 1));
+        UISetTargetingOrder(PlayerGroupSingle(lv_player), lib15EF4C78_gv_pM_SoACasterGroup[lv_player], lib15EF4C78_gv_pM_SoATargetingOrder, false);
+        lib15EF4C78_gf_PM_SoATargetingCleanupActorsAndUnits();
+        lib15EF4C78_gf_PU_TargetingSetCharges(lib15EF4C78_gv_pM_SoATargetingChargesTotal, lib15EF4C78_gv_pM_SoATargetingChargesTotal);
+        TriggerEnable(lib15EF4C78_gt_PM_SoATargetingPointChosen, true);
+        TriggerEnable(lib15EF4C78_gt_PM_SoATargetingDirectionChosen, false);
+    }
+    else {
+        TriggerExecute(lib15EF4C78_gt_PM_SoATargetingCancel, false, false);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingClearAll_Init () {
+    lib15EF4C78_gt_PM_SoATargetingClearAll = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingClearAll_Func");
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingClearAll, false);
+    TriggerAddEventTargetModeUpdate(lib15EF4C78_gt_PM_SoATargetingClearAll, c_playerAny, null, c_targetModeStateOff);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingCancel
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingCancel_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_player = lib15EF4C78_gv_pU_TargetingCancel_player;
+    UnitIssueOrder(lib15EF4C78_gv_sOA_CasterUnit[lv_player], Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+    UISetTargetingOrder(PlayerGroupSingle(lv_player), lib15EF4C78_gv_pU_GPCasterGroup, null, false);
+    lib15EF4C78_gf_PM_SoATargetingCleanupActorsAndUnits();
+    if (((lib15EF4C78_gv_pM_SoATargetingChargesSpent == 0) || (lib15EF4C78_gf_PM_SoATargetingPauseEnabled() == true))) {
+        libNtve_gf_UnitAbilityRemoveCooldown(lib15EF4C78_gv_sOA_CasterUnit[lv_player], lib15EF4C78_gv_pM_SoATargetingActivateAbility, lib15EF4C78_gv_pM_SoATargetingCooldown);
+        UnitSetPropertyFixed(lib15EF4C78_gv_sOA_CasterUnit[lv_player], c_unitPropEnergy, (UnitGetPropertyFixed(lib15EF4C78_gv_sOA_CasterUnit[lv_player], c_unitPropEnergy, c_unitPropCurrent) + libNtve_gf_CostOfAbility(lib15EF4C78_gv_pM_SoATargetingActivateAbility, "Energy")));
+    }
+
+    UnitBehaviorRemove(lib15EF4C78_gv_sOA_CasterUnit[lv_player], lib15EF4C78_gv_pM_SoATargetingBehavior, 1);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingCancel_Init () {
+    lib15EF4C78_gt_PM_SoATargetingCancel = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingCancel_Func");
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingCancel, false);
+    TriggerAddEventGeneric(lib15EF4C78_gt_PM_SoATargetingCancel, lib15EF4C78_gv_pUC_TargetingEventCancel);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingCameraShake
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingCameraShake_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+    fixed lv_distance;
+    fixed[4] lv_cameraPosition;
+    fixed[4] lv_effectPosition;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_player = EventPlayer();
+    lv_cameraPosition[0] = PointGetX(CameraGetTarget(lv_player));
+    lv_cameraPosition[1] = (PointGetY(CameraGetTarget(lv_player))-(Cos(CameraGetPitch(lv_player))*CameraGetDistance(lv_player)));
+    lv_cameraPosition[2] = (WorldHeight(c_heightMapGround, CameraGetTarget(lv_player))+(Sin(CameraGetPitch(lv_player))*CameraGetDistance(lv_player)));
+    lv_effectPosition[0] = PointGetX(EventPlayerEffectUsedPoint(c_effectLocationTargetPoint));
+    lv_effectPosition[1] = PointGetY(EventPlayerEffectUsedPoint(c_effectLocationTargetPoint));
+    lv_effectPosition[2] = WorldHeight(c_heightMapGround, EventPlayerEffectUsedPoint(c_effectLocationTargetPoint));
+    lv_distance = SquareRoot((Pow((lv_cameraPosition[0]-lv_effectPosition[0]), 2.0) + Pow((lv_cameraPosition[1]-lv_effectPosition[1]), 2.0) + Pow((lv_cameraPosition[2]-lv_effectPosition[2]), 2.0)));
+    CameraShakeStart(lv_player, c_cameraPositionTarget, c_cameraDirectionZ, MaxF((1-(lv_distance/50)), 0.0), 2.5, 100.0, 0.1);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingCameraShake_Init () {
+    lib15EF4C78_gt_PM_SoATargetingCameraShake = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingCameraShake_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_PM_SoATargetingCameraShake, c_playerAny, "AP_SOAOrbitalStrikeImpactSearch");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_PM_SoATargetingCameraShake, c_playerAny, "AP_SOAGravitonBombCP");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoAOrbitalStrikeActivated
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoAOrbitalStrikeActivated_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = EventUnit();
+    lv_player = UnitGetOwner(lv_unit);
+    libNtve_gf_StoreUnitSelection(lv_player, libNtve_ge_UnitSelectionStoreOption_ClearUnitSelection);
+    lib15EF4C78_gv_pM_SoATargetingActivateAbility = "AP_SOAOrbitalStrikeActivate";
+    lib15EF4C78_gv_pM_SoATargetingExecuteCommand = AbilityCommand("AP_SOAOrbitalStrikeExecute", 0);
+    lib15EF4C78_gv_pM_SoATargetingCooldown = "Abil/AP_SOAOrbitalStrikeActivate";
+    lib15EF4C78_gv_pM_SoATargetingBehavior = "AP_SOAOrbitalStrikeActivate";
+    lib15EF4C78_gv_pM_SoATargetingModel = "AP_SOAOrbitalStrikeTargetModel";
+    lib15EF4C78_gv_pM_SoATargetingOrder = OrderTargetingPoint(AbilityCommand("AP_SOAOrbitalStrikeTargetingDummy", 0), UnitGetPosition(lib15EF4C78_gv_sOA_CasterUnit[lv_player]));
+    lib15EF4C78_gv_pM_SoATargetingAbilityInstance = "GPTier2Power1";
+    lib15EF4C78_gv_pM_SoATargetingUnitType = null;
+    lib15EF4C78_gv_pM_SoATargetingChargesTotal = 5;
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingPointChosen, true);
+    lib15EF4C78_gf_PM_SoATargetingModeEnter(lv_player);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoAOrbitalStrikeActivated_Init () {
+    lib15EF4C78_gt_PM_SoAOrbitalStrikeActivated = TriggerCreate("lib15EF4C78_gt_PM_SoAOrbitalStrikeActivated_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_PM_SoAOrbitalStrikeActivated, null, "AP_SOAOrbitalStrikeActivate", c_unitBehaviorChangeActivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoAGravitonBombActivated
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoAGravitonBombActivated_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = EventUnit();
+    lv_player = UnitGetOwner(lv_unit);
+    libNtve_gf_StoreUnitSelection(lv_player, libNtve_ge_UnitSelectionStoreOption_ClearUnitSelection);
+    lib15EF4C78_gv_pM_SoATargetingActivateAbility = "AP_SOAGravitonBombActivate";
+    lib15EF4C78_gv_pM_SoATargetingExecuteCommand = AbilityCommand("AP_SOAGravitonBombExecute", 0);
+    lib15EF4C78_gv_pM_SoATargetingCooldown = "Abil/AP_SOAGravitonBombActivate";
+    lib15EF4C78_gv_pM_SoATargetingBehavior = "AP_SOAGravitonBombActivate";
+    lib15EF4C78_gv_pM_SoATargetingModel = "AP_SOAGravitonBombTargetModel";
+    lib15EF4C78_gv_pM_SoATargetingOrder = OrderTargetingPoint(AbilityCommand("AP_SOAGravitonBomb", 0), UnitGetPosition(lib15EF4C78_gv_sOA_CasterUnit[lv_player]));
+    lib15EF4C78_gv_pM_SoATargetingAbilityInstance = "GPTier2Power2";
+    lib15EF4C78_gv_pM_SoATargetingUnitType = null;
+    lib15EF4C78_gv_pM_SoATargetingChargesTotal = 3;
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingPointChosen, true);
+    lib15EF4C78_gf_PM_SoATargetingModeEnter(lv_player);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoAGravitonBombActivated_Init () {
+    lib15EF4C78_gt_PM_SoAGravitonBombActivated = TriggerCreate("lib15EF4C78_gt_PM_SoAGravitonBombActivated_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_PM_SoAGravitonBombActivated, null, "AP_SOAGravitonBombActivate", c_unitBehaviorChangeActivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoAThermalLanceActivated
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoAThermalLanceActivated_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = EventUnit();
+    lv_player = UnitGetOwner(lv_unit);
+    libNtve_gf_StoreUnitSelection(lv_player, libNtve_ge_UnitSelectionStoreOption_ClearUnitSelection);
+    lib15EF4C78_gv_pM_SoATargetingActivateAbility = "AP_SOAThermalLanceActivate";
+    lib15EF4C78_gv_pM_SoATargetingExecuteCommand = AbilityCommand("AP_SOAThermalLanceExecute", 0);
+    lib15EF4C78_gv_pM_SoATargetingCooldown = "Abil/AP_SOAThermalLanceActivate";
+    lib15EF4C78_gv_pM_SoATargetingBehavior = "AP_SOAThermalLanceActivate";
+    lib15EF4C78_gv_pM_SoATargetingModel = "AP_SOAThermalLanceTargetingModel";
+    lib15EF4C78_gv_pM_SoATargetingOrder = OrderTargetingPoint(AbilityCommand("AP_SOAThermalLanceTargetingDummy", 0), UnitGetPosition(lib15EF4C78_gv_sOA_CasterUnit[lv_player]));
+    lib15EF4C78_gv_pM_SoATargetingAbilityInstance = "GPTier2Power3";
+    lib15EF4C78_gv_pM_SoATargetingUnitType = "AP_SOAThermalLanceTargeter";
+    lib15EF4C78_gv_pM_SoATargetingChargesTotal = 3;
+    TriggerEnable(lib15EF4C78_gt_PM_SoATargetingPointChosen, true);
+    lib15EF4C78_gf_PM_SoATargetingModeEnter(lv_player);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoAThermalLanceActivated_Init () {
+    lib15EF4C78_gt_PM_SoAThermalLanceActivated = TriggerCreate("lib15EF4C78_gt_PM_SoAThermalLanceActivated_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_PM_SoAThermalLanceActivated, null, "AP_SOAThermalLanceActivate", c_unitBehaviorChangeActivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATimeFreezeCast
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATimeFreezeCast_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    bool lv_originalPauseState;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_originalPauseState = true;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_player = EventPlayer();
+    lib15EF4C78_gf_SOA_TimeFreezeVisual(lv_player, PointGetX(CameraGetTarget(lv_player)), PointGetY(CameraGetTarget(lv_player)));
+    lib15EF4C78_gf_PC_TimeAITemporarySet(true);
+    Wait(IntToFixed(CatalogFieldValueGetAsInt(c_gameCatalogBehavior, "AP_SOATimeFreeze", "Duration", c_playerAny)), c_timeGame);
+    lib15EF4C78_gf_PC_TimeAITemporaryRestore();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATimeFreezeCast_Init () {
+    lib15EF4C78_gt_PM_SoATimeFreezeCast = TriggerCreate("lib15EF4C78_gt_PM_SoATimeFreezeCast_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_PM_SoATimeFreezeCast, c_playerAny, "AP_SOATimeFreeze");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingPurifierBeamOn
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingPurifierBeamOn_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_player = EventPlayer();
+    libNtve_gf_StoreUnitSelection(lv_player, libNtve_ge_UnitSelectionStoreOption_ClearUnitSelection);
+    lib15EF4C78_gv_pM_SoATargetingActivateAbility = "AP_SOAPurifierBeam";
+    lib15EF4C78_gv_pM_SoATargetingOrder = null;
+    lib15EF4C78_gv_pM_SoATargetingExecuteCommand = null;
+    lib15EF4C78_gv_pM_SoATargetingCooldown = "";
+    lib15EF4C78_gv_pM_SoATargetingBehavior = null;
+    lib15EF4C78_gv_pM_SoATargetingModel = null;
+    lib15EF4C78_gv_pM_SoATargetingAbilityInstance = "GPTier6Power1";
+    lib15EF4C78_gv_pM_SoATargetingUnitType = null;
+    lib15EF4C78_gv_pM_SoATargetingChargesTotal = 1;
+    lib15EF4C78_gf_PM_SoATargetingModeEnter(lv_player);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingPurifierBeamOn_Init () {
+    lib15EF4C78_gt_PM_SoATargetingPurifierBeamOn = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingPurifierBeamOn_Func");
+    TriggerAddEventTargetModeUpdate(lib15EF4C78_gt_PM_SoATargetingPurifierBeamOn, c_playerAny, AbilityCommand("AP_SOAPurifierBeam", 0), c_targetModeStateOn);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoATargetingPurifierBeamOff
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoATargetingPurifierBeamOff_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_player = EventPlayer();
+    lib15EF4C78_gf_PM_SoATargetingModeExit(lv_player);
+    Wait(0.03, c_timeGame);
+    if ((UnitAbilityGetCooldown(lib15EF4C78_gv_sOA_CasterUnit[lv_player], "AP_SOAPurifierBeam", "Abil/AP_SOAPurifierBeam") > 0.0)) {
+        DataTableSetInt(false, TriggerEventParamName(lib15EF4C78_gv_pMC_SoATargetingEventExited, lib15EF4C78_gv_pMC_SoATargetingParamReason), (lib15EF4C78_ge_SpearofAdunTargetingExitType_ByFiring));
+        TriggerSendEvent(lib15EF4C78_gv_pMC_SoATargetingEventExited);
+    }
+    else {
+        DataTableSetInt(false, TriggerEventParamName(lib15EF4C78_gv_pMC_SoATargetingEventExited, lib15EF4C78_gv_pMC_SoATargetingParamReason), (lib15EF4C78_ge_SpearofAdunTargetingExitType_ByCanceling));
+        TriggerSendEvent(lib15EF4C78_gv_pMC_SoATargetingEventExited);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoATargetingPurifierBeamOff_Init () {
+    lib15EF4C78_gt_PM_SoATargetingPurifierBeamOff = TriggerCreate("lib15EF4C78_gt_PM_SoATargetingPurifierBeamOff_Func");
+    TriggerAddEventTargetModeUpdate(lib15EF4C78_gt_PM_SoATargetingPurifierBeamOff, c_playerAny, AbilityCommand("AP_SOAPurifierBeam", 0), c_targetModeStateOff);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoAStrafeActivated
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoAStrafeActivated_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+    fixed lv_radius;
+    fixed lv_radiusMinimum;
+    fixed lv_radiusMaximum;
+    int lv_i;
+    point lv_targetPoint;
+    revealer lv_revealer;
+
+    // Automatic Variable Declarations
+    const int autoB1F5FA85_ae = 100;
+    const int autoB1F5FA85_ai = 1;
+
+    // Variable Initialization
+    lv_radiusMinimum = 2.0;
+    lv_radiusMaximum = 10.0;
+    lv_targetPoint = EventPlayerEffectUsedPoint(c_effectLocationTargetPoint);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_player = EventPlayer();
+    lv_i = 1;
+    for ( ; ( (autoB1F5FA85_ai >= 0 && lv_i <= autoB1F5FA85_ae) || (autoB1F5FA85_ai < 0 && lv_i >= autoB1F5FA85_ae) ) ; lv_i += autoB1F5FA85_ai ) {
+        lv_radius = (((lv_i / 100.0) * (lv_radiusMaximum - lv_radiusMinimum)) + lv_radiusMinimum);
+        UnitCreateEffectPoint(EventPlayerEffectUsedUnit(c_effectUnitCaster), "AP_SOAStrafeAttackDamage", RegionRandomPoint(RegionCircle(lv_targetPoint, lv_radius)));
+        UnitCreateEffectPoint(EventPlayerEffectUsedUnit(c_effectUnitCaster), "AP_SOAStrafeAttackDamage", RegionRandomPoint(RegionCircle(lv_targetPoint, lv_radius)));
+        VisRevealerCreate(lv_player, RegionCircle(lv_targetPoint, lv_radius));
+        lv_revealer = VisRevealerLastCreated();
+        Wait(0.15, c_timeGame);
+        while (!((lib15EF4C78_gv_pM_SoATargetingActivateAbility == null))) {
+            Wait(0.0625, c_timeGame);
+        }
+        VisRevealerDestroy(lv_revealer);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoAStrafeActivated_Init () {
+    lib15EF4C78_gt_PM_SoAStrafeActivated = TriggerCreate("lib15EF4C78_gt_PM_SoAStrafeActivated_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_PM_SoAStrafeActivated, c_playerAny, "AP_SOAStrafeAttackCreateTargeter");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoASuperShieldsActivated
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoASuperShieldsActivated_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    playergroup autoEEA508CA_g;
+    int autoEEA508CA_var;
+    unitgroup auto385DE9AE_g;
+    int auto385DE9AE_u;
+    unit auto385DE9AE_var;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoEEA508CA_g = PlayerGroupAll();
+    autoEEA508CA_var = -1;
+    while (true) {
+        autoEEA508CA_var = PlayerGroupNextPlayer(autoEEA508CA_g, autoEEA508CA_var);
+        if (autoEEA508CA_var < 0) { break; }
+        if ((TechTreeUpgradeCount(autoEEA508CA_var, "AP_SoASuperShield", c_techCountQueuedOrBetter) >= 1)) {
+            auto385DE9AE_g = UnitGroup(null, autoEEA508CA_var, RegionEntireMap(), UnitFilter((1 << c_targetFilterVisible), 0, (1 << c_targetFilterNeutral) | (1 << c_targetFilterEnemy) | (1 << c_targetFilterMissile) | (1 << c_targetFilterItem), (1 << (c_targetFilterStasis - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+            auto385DE9AE_u = UnitGroupCount(auto385DE9AE_g, c_unitCountAll);
+            for (;; auto385DE9AE_u -= 1) {
+                auto385DE9AE_var = UnitGroupUnitFromEnd(auto385DE9AE_g, auto385DE9AE_u);
+                if (auto385DE9AE_var == null) { break; }
+                UnitCreateEffectUnit(EventPlayerEffectUsedUnit(c_effectUnitCaster), "AP_SOASuperShieldApply", auto385DE9AE_var);
+            }
+        }
+
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoASuperShieldsActivated_Init () {
+    lib15EF4C78_gt_PM_SoASuperShieldsActivated = TriggerCreate("lib15EF4C78_gt_PM_SoASuperShieldsActivated_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_PM_SoASuperShieldsActivated, c_playerAny, "AP_SOASuperShieldDummy");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: SoAWarpInReinforcementsRandomize
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_SoAWarpInReinforcementsRandomize_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    string lv_unitType;
+    int lv_random;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = EventUnit();
+    lv_unitType = UnitGetType(lv_unit);
+    lv_random = RandomInt(0, 99);
+    lv_player = UnitGetOwner(lv_unit);
+    if ((lv_unitType == "AP_ZealotReinforcementDummy")) {
+        if ((lv_random < 25)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_ZealotAiur", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+        else if ((lv_random < 50)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_ZealotShakuras", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+        else if ((lv_random < 75)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_ZealotPurifier", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+        else if ((lv_random < 100)) {
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Supplicant", 0, lv_player, UnitGetPosition(lv_unit));
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Supplicant", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+    }
+    else if ((lv_unitType == "AP_StalkerReinforcementDummy")) {
+        if ((lv_random < 20)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_StalkerShakuras", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+        else if ((lv_random < 40)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_StalkerPurifier", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+        else if ((lv_random < 60)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Slayer", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+        else if ((lv_random < 80)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Dragoon", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+        else if ((lv_random < 100)) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Adept", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_SoAWarpInReinforcementsRandomize_Init () {
+    lib15EF4C78_gt_SoAWarpInReinforcementsRandomize = TriggerCreate("lib15EF4C78_gt_SoAWarpInReinforcementsRandomize_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_SoAWarpInReinforcementsRandomize, null, "AP_SOAWarpInReinforcements", c_unitBehaviorChangeDestroy);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PU_GPInit
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PU_GPInit_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_lastFrame;
+    int lv_buttonIndex;
+    string lv_buttonIndexStr;
+
+    // Automatic Variable Declarations
+    const int autoDE2FD004_ae = 12;
+    const int autoDE2FD004_ai = 1;
+
+    // Variable Initialization
+    lv_lastFrame = c_invalidDialogControlId;
+    lv_buttonIndexStr = "";
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    DialogControlHookupStandard(c_triggerControlTypePanel, "UIContainer/FullscreenUpperContainer/GlobalCastingPanel");
+    lib15EF4C78_gv_pU_GPHolder = DialogControlLastCreated();
+    DialogControlCreateInPanelFromTemplate(lib15EF4C78_gv_pU_GPHolder, c_triggerControlTypePanel, "AP_LotV_soamissionuipanel/SoAPanelTemplate");
+    lib15EF4C78_gv_pU_GPPanel = DialogControlLastCreated();
+    DialogControlCreateInPanel(DialogControlLastCreated(), c_triggerControlTypeTooltip);
+    DialogControlSetSize(DialogControlLastCreated(), PlayerGroupAll(), 1, 1);
+    DialogControlSetPosition(DialogControlLastCreated(), PlayerGroupAll(), c_anchorTopLeft, -100, -100);
+    lib15EF4C78_gv_pU_GPBlackTooltipAnchor = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_GPPanel, c_triggerControlTypeCutscene, "SoACommandCutscene");
+    lib15EF4C78_gv_pU_GPCutscene = DialogControlLastCreated();
+    DialogControlHookupStandard(c_triggerControlTypePanel, "UIContainer/ConsolePanel");
+    lv_lastFrame = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_GPPanel, c_triggerControlTypePanel, "SoAButtonHolder");
+    lv_lastFrame = DialogControlLastCreated();
+    DialogControlCreateInPanelFromTemplate(lv_lastFrame, c_triggerControlTypeCommandPanel, "AP_LotV_soamissionuipanel/SoACommandPanelTemplate");
+    lib15EF4C78_gv_pU_GPCmdPanel = DialogControlLastCreated();
+    lv_buttonIndex = 1;
+    for ( ; ( (autoDE2FD004_ai >= 0 && lv_buttonIndex <= autoDE2FD004_ae) || (autoDE2FD004_ai < 0 && lv_buttonIndex >= autoDE2FD004_ae) ) ; lv_buttonIndex += autoDE2FD004_ai ) {
+        if ((lv_buttonIndex <= 10)) {
+            lv_buttonIndexStr = "0" + IntToString(lv_buttonIndex-1);
+        }
+        else {
+            lv_buttonIndexStr = IntToString(lv_buttonIndex-1);
+        }
+        DialogControlHookup(lib15EF4C78_gv_pU_GPCmdPanel, c_triggerControlTypeButton, "CommandButton" + lv_buttonIndexStr);
+        lib15EF4C78_gv_pU_GPCmdButtons[lv_buttonIndex] = DialogControlLastCreated();
+        libNtve_gf_SetDialogItemModel(DialogControlLastCreated(), "AP_UI_SOA_ButtonActivate", PlayerGroupAll());
+        DialogControlHookup(lib15EF4C78_gv_pU_GPPanel, c_triggerControlTypePanel, "SoAAbilityArrow" + lv_buttonIndexStr);
+        lib15EF4C78_gv_pU_GPAbilityArrows[lv_buttonIndex] = DialogControlLastCreated();
+        DialogControlSetPositionRelative(lib15EF4C78_gv_pU_GPAbilityArrows[lv_buttonIndex], PlayerGroupAll(), c_anchorTop, lib15EF4C78_gv_pU_GPCmdButtons[lv_buttonIndex], c_anchorBottom, 0, 15);
+    }
+    DialogControlHookup(lib15EF4C78_gv_pU_GPPanel, c_triggerControlTypePanel, "SoAEnergyBarFill");
+    lib15EF4C78_gv_pU_GPEnergyBar = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_GPEnergyBar, c_triggerControlTypeCutscene, "SoAFillScene");
+    lib15EF4C78_gv_pU_GPEnergyBarScene = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_GPPanel, c_triggerControlTypeCutscene, "SoAOverlayCutscene");
+    lib15EF4C78_gv_pU_GPEnergyGlassScene = DialogControlLastCreated();
+    DialogControlHookup(lib15EF4C78_gv_pU_GPPanel, c_triggerControlTypeLabel, "SoAEnergyLabel");
+    lib15EF4C78_gv_pU_GPEnergyLabel = DialogControlLastCreated();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PU_GPInit_Init () {
+    lib15EF4C78_gt_PU_GPInit = TriggerCreate("lib15EF4C78_gt_PU_GPInit_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PU_GPVitalChanges
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PU_GPVitalChanges_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_PU_GPVitalsUpdate();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PU_GPVitalChanges_Init () {
+    lib15EF4C78_gt_PU_GPVitalChanges = TriggerCreate("lib15EF4C78_gt_PU_GPVitalChanges_Func");
+    TriggerAddEventUnitProperty(lib15EF4C78_gt_PU_GPVitalChanges, UnitRefFromVariable("lib15EF4C78_gv_pU_GPUnit"), c_unitPropEnergy);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PU_GPBirthFinished
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PU_GPBirthFinished_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    DialogControlSetVisible(lib15EF4C78_gv_pU_GPCmdPanel, PlayerGroupAll(), true);
+    DialogControlSetVisible(lib15EF4C78_gv_pU_GPEnergyLabel, PlayerGroupAll(), true);
+    lib15EF4C78_gv_pU_GPWaitingForBirth = false;
+    if ((lib15EF4C78_gv_pU_GPEnergyHighlighting == true)) {
+        lib15EF4C78_gf_PU_GPEnergyHighlight(true);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PU_GPBirthFinished_Init () {
+    lib15EF4C78_gt_PU_GPBirthFinished = TriggerCreate("lib15EF4C78_gt_PU_GPBirthFinished_Func");
+    TriggerAddEventCutsceneBookmarkFired(lib15EF4C78_gt_PU_GPBirthFinished, c_cutsceneNone, "2DBirth");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PU_GPDeathRemove2D
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PU_GPDeathRemove2D_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    DialogControlSetVisible(lib15EF4C78_gv_pU_GPCmdPanel, PlayerGroupAll(), false);
+    DialogControlSetVisible(lib15EF4C78_gv_pU_GPEnergyLabel, PlayerGroupAll(), false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PU_GPDeathRemove2D_Init () {
+    lib15EF4C78_gt_PU_GPDeathRemove2D = TriggerCreate("lib15EF4C78_gt_PU_GPDeathRemove2D_Func");
+    TriggerAddEventCutsceneBookmarkFired(lib15EF4C78_gt_PU_GPDeathRemove2D, c_cutsceneNone, "2DDeath");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: PU_TargetingCancelButtonUsed
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PU_TargetingCancelButtonUsed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((EventDialogControl() == lib15EF4C78_gv_pU_TargetingCancelButton))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gv_pU_TargetingCancel_player = EventPlayer();
+    TriggerSendEvent(lib15EF4C78_gv_pUC_TargetingEventCancel);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PU_TargetingCancelButtonUsed_Init () {
+    lib15EF4C78_gt_PU_TargetingCancelButtonUsed = TriggerCreate("lib15EF4C78_gt_PU_TargetingCancelButtonUsed_Func");
+    TriggerEnable(lib15EF4C78_gt_PU_TargetingCancelButtonUsed, false);
+    TriggerAddEventDialogControl(lib15EF4C78_gt_PU_TargetingCancelButtonUsed, c_playerAny, c_invalidDialogControlId, c_triggerControlEventTypeClick);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Confusion End Suicide
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_ConfusionEndSuicide_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    AISetUnitSuicide(EventPlayerEffectUsedUnit(c_effectUnitTarget), true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_ConfusionEndSuicide_Init () {
+    lib15EF4C78_gt_ConfusionEndSuicide = TriggerCreate("lib15EF4C78_gt_ConfusionEndSuicide_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_ConfusionEndSuicide, c_playerAny, "AP_IssueAIOrderSuicide");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2932,6 +5119,32 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_Set5SecondsMark_Init();
     lib15EF4C78_gt_ZerglingRespawnInit_Init();
     lib15EF4C78_gt_KerriganPsiStrike_Init();
+    lib15EF4C78_gt_PM_SoAStatusWatch_Init();
+    lib15EF4C78_gt_PM_CinematicModeOn_Init();
+    lib15EF4C78_gt_PM_CinematicModeOff_Init();
+    lib15EF4C78_gt_PM_SoATargetingForceOff_Init();
+    lib15EF4C78_gt_PM_SoATargetingDeactivated_Init();
+    lib15EF4C78_gt_PM_SoATargetingPointChosen_Init();
+    lib15EF4C78_gt_PM_SoATargetingDirectionChosen_Init();
+    lib15EF4C78_gt_PM_SoATargetingEffectFired_Init();
+    lib15EF4C78_gt_PM_SoATargetingClearAll_Init();
+    lib15EF4C78_gt_PM_SoATargetingCancel_Init();
+    lib15EF4C78_gt_PM_SoATargetingCameraShake_Init();
+    lib15EF4C78_gt_PM_SoAOrbitalStrikeActivated_Init();
+    lib15EF4C78_gt_PM_SoAGravitonBombActivated_Init();
+    lib15EF4C78_gt_PM_SoAThermalLanceActivated_Init();
+    lib15EF4C78_gt_PM_SoATimeFreezeCast_Init();
+    lib15EF4C78_gt_PM_SoATargetingPurifierBeamOn_Init();
+    lib15EF4C78_gt_PM_SoATargetingPurifierBeamOff_Init();
+    lib15EF4C78_gt_PM_SoAStrafeActivated_Init();
+    lib15EF4C78_gt_PM_SoASuperShieldsActivated_Init();
+    lib15EF4C78_gt_SoAWarpInReinforcementsRandomize_Init();
+    lib15EF4C78_gt_PU_GPInit_Init();
+    lib15EF4C78_gt_PU_GPVitalChanges_Init();
+    lib15EF4C78_gt_PU_GPBirthFinished_Init();
+    lib15EF4C78_gt_PU_GPDeathRemove2D_Init();
+    lib15EF4C78_gt_PU_TargetingCancelButtonUsed_Init();
+    lib15EF4C78_gt_ConfusionEndSuicide_Init();
     lib15EF4C78_gt_SupplicantWarpTrain_Init();
     lib15EF4C78_gt_SupplicantActualTrain_Init();
     lib15EF4C78_gt_SupplicantWarpFinish_Init();
@@ -2967,6 +5180,7 @@ void lib15EF4C78_InitLib () {
 
     lib15EF4C78_InitLibraries();
     lib15EF4C78_InitVariables();
+    lib15EF4C78_InitCustomScript();
     lib15EF4C78_InitTriggers();
 }
 
