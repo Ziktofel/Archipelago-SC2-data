@@ -21762,6 +21762,64 @@
         <HostLaunch Subject="::global.NanoRepairLaunch"/>
         <HostImpact Subject="::global.NanoRepairImpact"/>
     </CActorBeamSimple>
+    <CActorBeamSimple id="AP_ScienceVesselNanoRepairFirstBeam" parent="BeamSimpleAnimationStyleContinuous">
+        <Model value="AP_NanoRepairBeam"/>
+        <On Terms="Effect.AP_ScienceVesselNanoRepairDoubleHeal.TargetStart" Send="Create"/>
+        <On Terms="Effect.AP_ScienceVesselNanoRepairDoubleHeal.TargetStop" Send="Destroy"/>
+        <HostForProps Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <HostLaunch Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <HostImpact Subject="_Unit" Scope="Target" Actor="Find"/>
+        <HostLaunchSiteOps Ops="SOpAttachCenter"/>
+        <HostImpactSiteOps Ops="SOpAttachCenter"/>
+        <Inherits index="Visibility" value="1"/>
+    </CActorBeamSimple>
+    <CActorModel id="AP_ScienceVesselNanoRepairFirstModel" parent="ModelAnimationStyleContinuous">
+        <Model value="AP_NanoRepairBeamImpact"/>
+        <On Terms="ActorCreation" Send="$Birth PlayForever"/>
+        <On Terms="Effect.AP_ScienceVesselNanoRepairDoubleHeal.TargetStart; At Target" Send="Create"/>
+        <On Terms="Effect.AP_ScienceVesselNanoRepairDoubleHeal.TargetStop; At Target" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOverhead"/>
+    </CActorModel>
+    <CActorModel id="AP_ScienceVesselNanoRepairSecondModel" parent="ModelAnimationStyleOneShot">
+        <Model value="AP_NanoRepairBeamImpact"/>
+        <On Terms="ActorCreation" Send="$Birth PlayForever"/>
+        <On Terms="Effect.AP_ScienceVesselNanoRepairDoubleSecondHeal.TargetStart; At Target" Send="Create"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOverhead"/>
+    </CActorModel>
+    <CActorAction id="AP_ScienceVesselNanoRepairBeamAction" parent="GenericAttack" effectAttack="AP_ScienceVesselNanoRepairDoubleImpactDummy">
+        <BeamScope value="Caster"/>
+        <LaunchSiteOps Ops="SOpAttachCenter"/>
+        <ImpactSiteOps Ops="SOpAttachCenter"/>
+        <ActionFlags index="ImpactMonitorsTeleports" value="1"/>
+        <ShieldFlashType value="None"/>
+        <Beam value="AP_ScienceVesselNanoRepairSecondBeam"/>
+    </CActorAction>
+    <CActorBeamSimple id="AP_ScienceVesselNanoRepairSecondBeam" parent="BeamSimpleAnimationStyleOneShot">
+        <On Terms="ActorCreation" Send="TimerSet 0.500000 Beam"/>
+        <On Terms="TimerExpired; TimerName Beam" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="SetOpacity 0.500000"/>
+        <Model value="AP_NanoRepairBeam"/>
+    </CActorBeamSimple>
+    <CActorSound id="AP_ScienceVesselNanoRepairDoubleSoundLoop" parent="SoundContinuous">
+        <Sound value="Medivac_HealLoop"/>
+        <On Terms="Effect.AP_ScienceVesselNanoRepairDoubleHeal.TargetStart; At Target" Send="Create"/>
+        <On Terms="Effect.AP_ScienceVesselNanoRepairDoubleHeal.TargetStop; At Target" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create AP_ScienceVesselNanoRepairSoundStart"/>
+        <On Terms="ActorDestruction" Send="Create AP_ScienceVesselNanoRepairSoundStop"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOverhead"/>
+    </CActorSound>
+    <CActorSound id="AP_ScienceVesselNanoRepairSoundStop" parent="SoundOneShot">
+        <Sound value="Medivac_HealEnd"/>
+    </CActorSound>
+    <CActorSound id="AP_ScienceVesselNanoRepairSoundStart" parent="SoundOneShot">
+        <Sound value="Medivac_HealStart"/>
+    </CActorSound>
     <CActorModel id="AP_NanoRepairModel">
         <Model value="AP_NanoRepairBeamImpact"/>
         <On Terms="ActorCreation" Send="$Birth PlayForever"/>
@@ -21786,11 +21844,11 @@
         <Sound value="Medivac_HealStart"/>
     </CActorSound>
     <CActorSiteOpForward id="AP_SOpScienceVesselDeath">
-        <HostForward Subject="ScienceVesselRotateTurret" Actor="Find"/>
+        <HostForward Subject="AP_ScienceVesselRotateTurret" Actor="Find"/>
     </CActorSiteOpForward>
     <CActorUnit id="AP_ScienceVessel" parent="GenericUnitBase" unitName="AP_ScienceVessel">
         <Aliases value="_UnitHuge"/>
-        <On Terms="Abil.Irradiate.SourceCastStart" Send="$Spell"/>
+        <On Terms="Abil.AP_Irradiate.SourceCastStart" Send="$Spell"/>
         <DeathArray index="Normal" ModelLink="AP_ScienceVesselDeath" SoundLink=""/>
         <DeathActorModel value="AP_ScienceVesselDeathModel"/>
         <PortraitModel value="AP_ScienceVesselPortrait"/>
