@@ -1247,7 +1247,7 @@
     <CActorSound id="AP_MedicHealSoundStop" parent="SoundOneShot">
         <Sound value="AP_Medic_HealEnd"/>
     </CActorSound>
-    <CActorMissile id="AP_Reaper" parent="GenericUnitBase" unitName="AP_Reaper">
+    <CActorMissile default="1" id="AP_ReaperBase" parent="GenericUnitBase">
         <Aliases value="_MissileHybrids"/>
         <Macros value="D8ChargeAnim"/>
         <Macros value="UnloadDropAnim"/>
@@ -1262,10 +1262,19 @@
         <On Terms="Abil.attack.ReadyStart" Send="AnimGroupApply Ready"/>
         <On Terms="WeaponStart.AP_P38ScytheGuassPistol.AttackStart" Send="AnimBracketStart Attack Attack"/>
         <On Terms="WeaponStop.AP_P38ScytheGuassPistol.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="WeaponStart.AP_P38ScytheGuassPistolAir.AttackStart" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="WeaponStop.AP_P38ScytheGuassPistolAir.AttackStop" Send="AnimBracketStop Attack"/>
         <On Terms="WeaponStart.AP_D8Charge.AttackStart" Send="AnimBracketStart Attack Spell"/>
         <On Terms="WeaponStop.AP_D8Charge.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="WeaponStart.AP_D8ChargeAir.AttackStart" Send="AnimBracketStart Attack Spell"/>
+        <On Terms="WeaponStop.AP_D8ChargeAir.AttackStop" Send="AnimBracketStop Attack"/>
         <On Terms="Abil.attack.ReadyStop" Send="AnimGroupRemove Ready"/>
         <On Terms="UnitBirth.AP_ReaperPlacement" Send="Create"/>
+        <On Terms="Behavior.AP_HHReaperFlyingDuration.On" Send="AnimBracketStart Fly Jump,Start IGNORE Jump,End"/>
+        <On Terms="Behavior.AP_HHReaperFlyingDuration.Off" Send="AnimBracketStop Fly"/>
+        <On Terms="Behavior.AP_HHReaperFlyingDuration.On" Send="AnimBracketStart Cover Cover,Start Cover Cover,End"/>
+        <On Terms="Behavior.AP_HHReaperFlyingDuration.Off" Send="AnimBracketStop Cover"/>
+        <On Terms="ActorCreation; !ValidateUnit IsFlying" Target="FlyerHelperSplat" Send="Destroy"/>
         <Model value="Reaper"/>
         <ModelFlags index="OutlineEmitter" value="1"/>
         <BuildModel value="Reaper"/>
@@ -1294,6 +1303,34 @@
             <Image value="Assets\Textures\Wireframe-Terran-Reaper.dds"/>
         </Wireframe>
     </CActorMissile>
+    <CActorMissile id="AP_Reaper" parent="AP_ReaperBase" unitName="AP_Reaper">
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_Reaper" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_Reaper" Send="Destroy"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_HHReaper_Land_AS"/>
+    </CActorMissile>
+    <CActorMissile id="AP_ReaperFlying" parent="AP_ReaperBase" unitName="AP_ReaperFlying">
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_ReaperFlying" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ReaperFlying" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart Fly IGNORE IGNORE Jump,End"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart Cover IGNORE Cover Cover,End"/>
+        <On Terms="ActorCreation" Send="Create AP_HHReaper_JetPackOverdrive_Loop_AS"/>
+        <HighlightTooltip value="Unit/Name/AP_Reaper"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_HHReaperFlying_Land_AS"/>
+    </CActorMissile>
+    <CActorSound id="AP_HHReaper_JetPackOverdrive_Start_AS" parent="SoundOneShot">
+        <On Terms="Behavior.AP_HHReaperFlyingDuration.On" Send="Create"/>
+        <Host Subject="_Unit"/>
+        <Sound value="AP_HH_Reaper_JetPackOverdrive_Start"/>
+    </CActorSound>
+    <CActorSound id="AP_HHReaper_JetPackOverdrive_Loop_AS" parent="SoundContinuous">
+        <Sound value="AP_HH_Reaper_JetPackOverdrive_Loop"/>
+    </CActorSound>
+    <CActorSound id="AP_HHReaper_Land_AS" parent="SoundOneShot">
+        <Sound value="AP_HH_Reaper_Land"/>
+    </CActorSound>
+    <CActorSound id="AP_HHReaperFlying_Land_AS" parent="SoundOneShot">
+        <Sound value="AP_HH_ReaperFlying_Land"/>
+    </CActorSound>
     <CActorAction id="AP_ReaperAttack" parent="GenericAttack" effectAttack="AP_P38ScytheGuassPistol">
         <LaunchAttachQuery Methods="AMPatternReaper"/>
         <LaunchAssets Model="ReaperAttackLaunch" Sound="Reaper_AttackLaunch"/>
