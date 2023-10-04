@@ -8,6 +8,7 @@
 include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/CampaignLib"
+include "Lib15EF4C78"
 include "Lib88187CC2"
 include "Lib5BD4895D"
 include "LibABFE498B"
@@ -19,6 +20,7 @@ void InitLibs () {
     libNtve_InitLib();
     libLbty_InitLib();
     libCamp_InitLib();
+    lib15EF4C78_InitLib();
     lib88187CC2_InitLib();
     lib5BD4895D_InitLib();
     libABFE498B_InitLib();
@@ -182,6 +184,7 @@ trigger gt_onDifficultyBrutal;
 trigger gt_ObjectiveFindSecretresourceStashCreate;
 trigger gt_ObjectiveFindSecretresourceStashComplete;
 trigger gt_FindSecretResourceStashImpl;
+trigger gt_FindSecretResourceStashbylanding;
 trigger gt_FirstChysalis;
 trigger gt_SecondChysalis;
 trigger gt_ThirdChysalis;
@@ -742,6 +745,47 @@ bool gt_FindSecretResourceStashImpl_Func (bool testConds, bool runActions) {
 void gt_FindSecretResourceStashImpl_Init () {
     gt_FindSecretResourceStashImpl = TriggerCreate("gt_FindSecretResourceStashImpl_Func");
     TriggerAddEventUnitRegion(gt_FindSecretResourceStashImpl, null, RegionFromId(53), true);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Find SecretResource Stash by landing
+//--------------------------------------------------------------------------------------------------
+bool gt_FindSecretResourceStashbylanding_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(gt_FindSecretResourceStashImpl) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_unit = lib15EF4C78_gf_AP_PlayerTransfrormerLand_getTriggeringUnit();
+    if ((UnitGetOwner(lv_unit) == gv_p1_USER) && (UnitGroupCount(UnitGroup(null, gv_p1_USER, RegionFromId(53), UnitFilter((1 << c_targetFilterGround), 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_FindSecretResourceStashImpl, false, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FindSecretResourceStashbylanding_Init () {
+    gt_FindSecretResourceStashbylanding = TriggerCreate("gt_FindSecretResourceStashbylanding_Func");
+    TriggerAddEventGeneric(gt_FindSecretResourceStashbylanding, lib15EF4C78_gv_aP_PLAYER_TRANSFORMER_LAND_EVENT);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6864,6 +6908,7 @@ void InitTriggers () {
     gt_ObjectiveFindSecretresourceStashCreate_Init();
     gt_ObjectiveFindSecretresourceStashComplete_Init();
     gt_FindSecretResourceStashImpl_Init();
+    gt_FindSecretResourceStashbylanding_Init();
     gt_FirstChysalis_Init();
     gt_SecondChysalis_Init();
     gt_ThirdChysalis_Init();
