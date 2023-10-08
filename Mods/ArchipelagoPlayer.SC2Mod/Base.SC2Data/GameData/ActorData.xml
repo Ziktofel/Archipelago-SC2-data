@@ -3928,7 +3928,7 @@
         <StatusBarFlags index="Duration" value="0"/>
         <StatusBarFlags index="Magazine" value="0"/>
     </CActorUnit>
-    <CActorUnit id="AP_PlanetaryFortress" parent="TerranBuildingEx" unitName="AP_PlanetaryFortress">
+    <CActorUnit id="AP_PlanetaryFortress" parent="TerranBuildingFlyerEx" unitName="AP_PlanetaryFortress">
         <Aliases value="_UnitHuge"/>
         <Macros value="QueueAnim"/>
         <Macros value="BuildingFlattenTerrainMacro"/>
@@ -3944,6 +3944,26 @@
         <On Terms="UnitBirth.AP_PlanetaryFortress; PlayerHasTrophy" Send="Create TerranPlayerTrophy"/>
         <On Terms="Upgrade.AP_CommandCenterReactor.Add" Send="Create AP_CommandCenterReactor"/>
         <On Terms="Upgrade.AP_CommandCenterReactor.Add" Target="AP_CommandCenterReactor" Send="Signal FastBirth"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_PlanetaryFortressFlying; MorphTo AP_PlanetaryFortress" Send="HideWorkerCount"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_PlanetaryFortress; MorphTo AP_PlanetaryFortressFlying" Send="HideWorkerCount 1"/>
+        <On Terms="UnitDeathCustomize; AnimPlaying Morph; !ModelIsLowQuality" Send="Create AP_CommandCenterMorphDeath"/>
+        <On Terms="UnitDeathCustomize; AnimPlaying Morph" Send="DeathCustomize Variation2"/>
+        <On Terms="Abil.AP_PlanetaryFortressLiftOff.Start" Send="StatusSet FlyDeathAnim 1"/>
+        <On Terms="Abil.AP_PlanetaryFortressLiftOff.Start" Send="TimerSet 1.100000 FlyDeathAnimChange"/>
+        <On Terms="TimerExpired; TimerName FlyDeathAnimChange" Send="StatusSet FlyDeathAnim 2"/>
+        <On Terms="UnitBirth.AP_PlanetaryFortressFlying" Send="StatusSet FlyDeathAnim 2"/>
+        <On Terms="Abil.AP_PlanetaryFortressLand.Start" Send="TimerSet 0.700000 LandDeathAnimChange"/>
+        <On Terms="Abil.AP_PlanetaryFortressLand.Start" Send="TimerSet 1.100000 LandDeathAnimChangeB"/>
+        <On Terms="TimerExpired; TimerName LandDeathAnimChange" Send="StatusSet FlyDeathAnim 1"/>
+        <On Terms="TimerExpired; TimerName LandDeathAnimChangeB" Send="StatusSet FlyDeathAnim 0"/>
+        <On Terms="UnitDeathCustomize; IsStatus FlyDeathAnim 1" Send="DeathCustomize Variation3"/>
+        <On Terms="UnitDeathCustomize; IsStatus FlyDeathAnim 2" Send="DeathCustomize Flying"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_PlanetaryFortress; MorphTo AP_PlanetaryFortressFlying" Target="PlayerLogoDoodadList" Send="Destroy"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_PlanetaryFortressFlying; MorphTo AP_PlanetaryFortress" Send="Create PlayerLogoDoodadList"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_PlanetaryFortress; MorphTo AP_PlanetaryFortressFlying" Target="TerranClanFlag" Send="Signal DestroyFlag"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_PlanetaryFortressFlying; MorphTo AP_PlanetaryFortress; PlayerHasClanDecal" Send="Create TerranClanFlag"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_PlanetaryFortress; MorphTo AP_PlanetaryFortressFlying" Target="TerranPlayerTrophy" Send="Signal DestroyFlag"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_PlanetaryFortressFlying; MorphTo AP_PlanetaryFortress; PlayerHasTrophy" Send="Create TerranPlayerTrophy"/>
         <On Terms="UnitBirth.AP_PlanetaryFortress.EditorPlaced; ValidateUnit AP_CommandCenterReactorPurchased" Send="Create AP_CommandCenterReactor"/>
         <On Terms="UnitBirth.AP_PlanetaryFortress.EditorPlaced; ValidateUnit AP_CommandCenterReactorPurchased" Target="AP_CommandCenterReactor" Send="Signal FastBirth"/>
         <On Terms="UnitBirth.AP_PlanetaryFortress.Suppressed; ValidateUnit AP_CommandCenterReactorPurchased" Send="Create AP_CommandCenterReactor"/>
@@ -3951,6 +3971,7 @@
         <On Terms="UnitBirth.AP_PlanetaryFortress.Normal; ValidateUnit AP_CommandCenterReactorPurchased" Send="Create AP_CommandCenterReactor"/>
         <On Terms="UnitDeathCustomize; ValidateUnit AP_CommandCenterReactorPurchasedAndNotUnderConstruction" Send="Create AP_CommandCenterReactorDeath"/>
         <Model value="CommandCenter"/>
+        <PlacementModel value="CommandCenterPlacement"/>
         <DeathArray index="Normal" ModelLink="PlanetaryFortressDeath"/>
         <DeathArray index="UnderConstruction" ModelLink="TerranLargeBuildingDeath" SoundLink="PlanetaryFortress_Explode"/>
         <PortraitModel value="CommandCenterPortrait"/>
@@ -3962,8 +3983,15 @@
         </GroupIcon>
         <HeroIcon value="Assets\Textures\btn-building-terran-PlanetaryFortress.dds"/>
         <NameOffset value="150"/>
+        <SoundArray index="Birth" value="CommandCenterBirth"/>
+        <SoundArray index="Ready" value="CommandCenter_Ready"/>
+        <SoundArray index="Help" value="CommandCenterHelp"/>
         <SoundArray index="Ready" value="PlanetaryFortress_Ready"/>
         <SoundArray index="What" value="PlanetaryFortress_What"/>
+        <SoundArray index="Yes" value="CommandCenterYes"/>
+        <SoundArray index="Attack" value="CommandCenterYes"/>
+        <SoundArray index="Pissed" value="CommandCenterPissed"/>
+        <SoundArray index="Movement" value="OrbitalCommand_Movement"/>
         <StatusHarvesterData Text="UI/HarvesterCountMinerals" SearchFilters="HarvestableResource;Player,Ally,Enemy" SearchRadius="8"/>
         <UnitFlags index="StandAnimBirthVariation" value="0"/>
         <UnitIcon value="Assets\Textures\btn-building-terran-PlanetaryFortress.dds"/>
@@ -3972,6 +4000,12 @@
         </Wireframe>
     </CActorUnit>
     <CActorAction id="AP_PlanetaryFortressAttack" parent="GenericAttack" effectAttack="AP_TwinIbiksCannon">
+        <LaunchAttachQuery Methods="Weapon"/>
+        <LaunchAssets Model="PlanetaryFortressAttackLaunch" Sound="PlanetaryFortress_AttackLaunch"/>
+        <ImpactMap index="None" Model="PlanetaryFortressAttackImpact" Sound="PlanetaryFortress_AttackImpact"/>
+        <ImpactPhysics Name="IbiksCannonImpact" MatchKeys="Basic" Physics="PlanetaryFortressAttackForce"/>
+    </CActorAction>
+    <CActorAction id="AP_PlanetaryFortressAttackAir" parent="GenericAttack" effectAttack="AP_TwinIbiksCannonAir">
         <LaunchAttachQuery Methods="Weapon"/>
         <LaunchAssets Model="PlanetaryFortressAttackLaunch" Sound="PlanetaryFortress_AttackLaunch"/>
         <ImpactMap index="None" Model="PlanetaryFortressAttackImpact" Sound="PlanetaryFortress_AttackImpact"/>
@@ -4121,6 +4155,7 @@
     </CActorUnit>
     <CActorSound id="AP_OrbitalCommandLand" parent="SoundOneShot">
         <On Terms="AbilMorph.*.Start; MorphTo AP_OrbitalCommand; MorphFrom AP_OrbitalCommandFlying" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphTo AP_PlanetaryFortress; MorphFrom AP_PlanetaryFortressFlying" Send="Create"/>
         <Sound value="OrbitalCommand_Land"/>
     </CActorSound>
     <CActorSplat id="AP_OrbitalCommandSplat" parent="TerranBuildingMorphSplat" unitName="AP_OrbitalCommand">
@@ -25590,6 +25625,7 @@
         <On Terms="AbilMorph.*.Start; MorphTo AP_StarportFlying" Send="Create"/>
         <On Terms="AbilMorph.*.Start; MorphTo AP_OrbitalCommandFlying" Send="Create"/>
         <On Terms="AbilMorph.*.Start; MorphTo AP_CommandCenterFlying" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphTo AP_PlanetaryFortressFlying" Send="Create"/>
     </CActorSound>
     <CActorSound id="TerranBuildingLand">
         <!-- Override -->
