@@ -41,6 +41,7 @@ const int gv_pLAYER_07_Prisoners = 7;
 int gv_objectiveDestroyTheMothership;
 int gv_objectiveDestroyTheRipFieldGenerators;
 int gv_aliveRipGenerators;
+bool gv_temp_skip_victory;
 actor gv_outhouse;
 bool gv_inCinematic;
 bool gv_gameOver;
@@ -947,6 +948,9 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     unitgroup autoC1B63ED8_g;
     int autoC1B63ED8_u;
     unit autoC1B63ED8_var;
+    unitgroup autoF295C8C7_g;
+    int autoF295C8C7_u;
+    unit autoF295C8C7_var;
     unitgroup auto6DB6490A_g;
     int auto6DB6490A_u;
     unit auto6DB6490A_var;
@@ -956,9 +960,6 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     unitgroup auto6B610375_g;
     int auto6B610375_u;
     unit auto6B610375_var;
-    unitgroup autoF295C8C7_g;
-    int autoF295C8C7_u;
-    unit autoF295C8C7_var;
     unitgroup auto99B520EB_g;
     int auto99B520EB_u;
     unit auto99B520EB_var;
@@ -1000,6 +1001,15 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         }
 
     }
+    autoF295C8C7_g = UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(3), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoF295C8C7_u = UnitGroupCount(autoF295C8C7_g, c_unitCountAll);
+    for (;; autoF295C8C7_u -= 1) {
+        autoF295C8C7_var = UnitGroupUnitFromEnd(autoF295C8C7_g, autoF295C8C7_u);
+        if (autoF295C8C7_var == null) { break; }
+        libNtve_gf_ShowHideUnit(autoF295C8C7_var, false);
+        libNtve_gf_PauseUnit(autoF295C8C7_var, true);
+        UnitGroupAdd(gv_gROUPPlayersStartingBASE, autoF295C8C7_var);
+    }
     UnitGroupRemove(gv_gROUPUnitsnotinstart, UnitFromId(72));
     UnitGroupRemove(gv_gROUPUnitsnotinstart, UnitFromId(32));
     auto6DB6490A_g = gv_gROUPUnitsnotinstart;
@@ -1026,15 +1036,6 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         auto6B610375_var = UnitGroupUnitFromEnd(auto6B610375_g, auto6B610375_u);
         if (auto6B610375_var == null) { break; }
         libNtve_gf_ShowHideUnit(auto6B610375_var, false);
-    }
-    autoF295C8C7_g = UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(3), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-    autoF295C8C7_u = UnitGroupCount(autoF295C8C7_g, c_unitCountAll);
-    for (;; autoF295C8C7_u -= 1) {
-        autoF295C8C7_var = UnitGroupUnitFromEnd(autoF295C8C7_g, autoF295C8C7_u);
-        if (autoF295C8C7_var == null) { break; }
-        libNtve_gf_ShowHideUnit(autoF295C8C7_var, false);
-        libNtve_gf_PauseUnit(autoF295C8C7_var, true);
-        UnitGroupAdd(gv_gROUPPlayersStartingBASE, autoF295C8C7_var);
     }
     gv_gROUPPlayersStartingUNITS = UnitGroup("Battlecruiser", gv_pLAYER_01_USER, RegionFromId(33), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     gv_uNIT_RipFieldGeneratorINTRO = UnitFromId(37);
@@ -1460,7 +1461,6 @@ bool gt_YamatoTeachingDialogueQ_Func (bool testConds, bool runActions) {
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05Raynor00010", -1), c_transmissionDurationAdd, 0.0, false);
     UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/AD6487AA"), null, UnitFromId(159));
-    UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("Yamato", 0), true);
     TimerStart(gv_yamatoButtonFlashtimeout, 30.0, false, c_timeGame);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     TriggerQueueExit();
@@ -3434,7 +3434,6 @@ bool gt_TIPCampaignTipsQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateStorymodeTips();
     TriggerQueueExit();
     return true;
 }
@@ -3467,7 +3466,6 @@ bool gt_TIPBattlecruiserQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus05_BattleCruisers", libNtve_ge_TipType_NewUnit, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3501,7 +3499,6 @@ bool gt_TIPYamatoQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus05_Yamato", libNtve_ge_TipType_NewAbility, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3539,7 +3536,6 @@ bool gt_TIPFusionCoreQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus05_FusionCore", libNtve_ge_TipType_NewStructure, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3578,7 +3574,6 @@ bool gt_TIPRipFieldQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus05_RipFields", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3616,7 +3611,6 @@ bool gt_TIPPrisonersQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus05_Prisoners", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3654,7 +3648,6 @@ bool gt_TIPVortexQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus05_Vortex", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5306,9 +5299,12 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroSetup, true, true);
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5443,6 +5439,9 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
     unitgroup auto97D1B544_g;
     int auto97D1B544_u;
     unit auto97D1B544_var;
+    unitgroup auto694E6AFA_g;
+    int auto694E6AFA_u;
+    unit auto694E6AFA_var;
 
     // Variable Initialization
 
@@ -5466,9 +5465,20 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
         if (auto97D1B544_var == null) { break; }
         libNtve_gf_ShowHideUnit(auto97D1B544_var, true);
     }
+    auto694E6AFA_g = UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(3), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto694E6AFA_u = UnitGroupCount(auto694E6AFA_g, c_unitCountAll);
+    for (;; auto694E6AFA_u -= 1) {
+        auto694E6AFA_var = UnitGroupUnitFromEnd(auto694E6AFA_g, auto694E6AFA_u);
+        if (auto694E6AFA_var == null) { break; }
+        libNtve_gf_ShowHideUnit(auto694E6AFA_var, true);
+        libNtve_gf_PauseUnit(auto694E6AFA_var, false);
+    }
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(161), 0.0, -1, 10, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(161), 0.0, -1, 10, true);
+    }
+
     CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoDefault(), 0.0, -1, 10, false);
     TriggerExecute(gt_StartAI, true, false);
     TriggerStop(gt_IntroScene);
@@ -5484,7 +5494,10 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
     }
     libNtve_gf_CinematicMode(false, PlayerGroupAll(), 1.0);
     libNtve_gf_GlobalCinematicSetting(false);
-    CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    }
+
     gv_inCinematic = false;
     TriggerExecute(gt_StartGameStage1, true, false);
     return true;
@@ -5535,9 +5548,12 @@ bool gt_BaseMidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_BaseMidSetup, true, true);
-    TriggerExecute(gt_BaseMidCinematic, true, true);
-    TriggerExecute(gt_BaseMidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_BaseMidSetup, true, true);
+        TriggerExecute(gt_BaseMidCinematic, true, true);
+        TriggerExecute(gt_BaseMidCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_BaseMidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5763,8 +5779,11 @@ bool gt_BaseMidCleanup_Func (bool testConds, bool runActions) {
     UnitPauseAll(false);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     VisExploreArea(gv_pLAYER_01_USER, gv_mapAreaNormal, true, false);
     TriggerExecute(gt_StartAIWaves, true, false);
     TriggerExecute(gt_InitiatePatrols, true, false);
@@ -5796,7 +5815,10 @@ bool gt_BaseMidCleanup_Func (bool testConds, bool runActions) {
     }
     libNtve_gf_CinematicMode(false, PlayerGroupAll(), lv_fadeDuration);
     libNtve_gf_GlobalCinematicSetting(false);
-    CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    }
+
     gv_inCinematic = false;
     libCamp_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/76E5D544"));
     return true;
@@ -5950,10 +5972,20 @@ bool gt_PrisonersMidQ_Func (bool testConds, bool runActions) {
         Wait(0.2, c_timeGame);
     }
     TriggerQueueEnter();
-    TriggerExecute(gt_PrisonersMidSetup, true, true);
-    TriggerExecute(gt_PrisonersMidCinematic, true, true);
-    TriggerExecute(gt_PrisonersMidCinematicEnd, true, true);
-    TriggerExecute(gt_PrisonersMidCleanup, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_PrisonersMidSetup, true, true);
+        TriggerExecute(gt_PrisonersMidCinematic, true, true);
+        TriggerExecute(gt_PrisonersMidCinematicEnd, true, true);
+        TriggerExecute(gt_PrisonersMidCleanup, true, true);
+    }
+    else {
+        TriggerExecute(gt_PrisonersMidCleanup, true, true);
+        SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "TTychus05MusicEventA", c_soundtrackCueAny, c_soundtrackIndexAny, false);
+        // Transmission - SoundLink("TTychus05DarkTemplar00004", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05DarkTemplar00004", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("TTychus05DarkTemplar00008", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05DarkTemplar00008", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     TriggerQueueExit();
     return true;
 }
@@ -6142,8 +6174,11 @@ bool gt_PrisonersMidCleanup_Func (bool testConds, bool runActions) {
     UnitPauseAll(false);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     TimerPause(gv_tIMERVortexCooldown, false);
     TimerPause(gv_warpPrismTimer, false);
     VisRevealerCreate(1, RegionFromId(23));
@@ -6179,7 +6214,10 @@ bool gt_PrisonersMidCleanup_Func (bool testConds, bool runActions) {
     }
     libNtve_gf_CinematicMode(false, PlayerGroupAll(), lv_fadeDuration);
     libNtve_gf_GlobalCinematicSetting(false);
-    CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    }
+
     gv_inCinematic = false;
     libCamp_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/F960349D"));
     TriggerExecute(gt_ObjectivePrisonersCreateQ, true, false);
@@ -6223,10 +6261,22 @@ bool gt_MothershipMidQ_Func (bool testConds, bool runActions) {
         Wait(0.2, c_timeGame);
     }
     TriggerQueueEnter();
-    TriggerExecute(gt_MothershipMidSetup, true, true);
-    TriggerExecute(gt_MothershipMidCinematic, true, true);
-    TriggerExecute(gt_MothershipMidCinematicEnd, true, true);
-    TriggerExecute(gt_MothershipMidCleanup, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MothershipMidSetup, true, true);
+        TriggerExecute(gt_MothershipMidCinematic, true, true);
+        TriggerExecute(gt_MothershipMidCinematicEnd, true, true);
+        TriggerExecute(gt_MothershipMidCleanup, true, true);
+    }
+    else {
+        TriggerExecute(gt_MothershipMidCleanup, true, true);
+        SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "TTychus05MusicEventB", c_soundtrackCueAny, c_soundtrackIndexAny, false);
+        // Transmission - SoundLink("TTychus05Valerian00034", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05Valerian00034", -1), c_transmissionDurationAdd, 2.0, true);
+        // Transmission - SoundLink("TTychus05TalDarimExecutor00012", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05TalDarimExecutor00012", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("TTychus05Horner00032", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05Horner00032", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     TriggerQueueExit();
     return true;
 }
@@ -6423,8 +6473,11 @@ bool gt_MothershipMidCleanup_Func (bool testConds, bool runActions) {
     UnitPauseAll(false);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     libNtve_gf_PlayAnimation(libNtve_gf_MainActorofUnit(gv_uNITVault), c_animNameDefault, "Stand Work", c_animFlagPlayForever, c_animTimeDefault);
     TriggerExecute(gt_MothershipCreate, true, true);
     auto6C9F41C6_g = gv_mothershipMidSpawnedUnitGroup;
@@ -6442,7 +6495,10 @@ bool gt_MothershipMidCleanup_Func (bool testConds, bool runActions) {
     }
     libNtve_gf_CinematicMode(false, PlayerGroupAll(), lv_fadeDuration);
     libNtve_gf_GlobalCinematicSetting(false);
-    CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    }
+
     gv_inCinematic = false;
     libCamp_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/CC367D36"));
     return true;
@@ -6517,10 +6573,15 @@ bool gt_VictoryQ_Func (bool testConds, bool runActions) {
 
     gv_gameOver = true;
     TriggerQueueEnter();
-    TriggerExecute(gt_VictorySetup, true, true);
-    TriggerExecute(gt_VictoryCinematic, true, true);
-    TriggerExecute(gt_VictoryCinematicEnd, true, true);
-    TriggerExecute(gt_VictoryCleanup, true, true);
+    if ((gv_temp_skip_victory == false)) {
+        TriggerExecute(gt_VictorySetup, true, true);
+        TriggerExecute(gt_VictoryCinematic, true, true);
+        TriggerExecute(gt_VictoryCinematicEnd, true, true);
+        TriggerExecute(gt_VictoryCleanup, true, true);
+    }
+    else {
+        TriggerExecute(gt_Victory, true, false);
+    }
     TriggerQueueExit();
     return true;
 }

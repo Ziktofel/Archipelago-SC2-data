@@ -32,6 +32,9 @@ const int gv_p1_USER = 1;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
+bool gv_temp_gameplay_skip_flag;
+bool gv_temp_keep_transmissions_flag;
+bool gv_temp_skip_victory_flag;
 bool gv_gameOver;
 bool gv_inCinematic;
 int gv_p2_NE_PROTOSSMiddle;
@@ -941,7 +944,16 @@ bool gt_IntroSequence_Func (bool testConds, bool runActions) {
     CinematicFade(false, 0.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
     libNtve_gf_CinematicMode(true, PlayerGroupAll(), 0.0);
     libNtve_gf_GlobalCinematicSetting(true);
-    UnitIssueOrder(UnitFromId(317), OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), PointFromId(463)), c_orderQueueReplace);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == true)) {
+        UnitSetPropertyFixed(UnitFromId(317), c_unitPropBaseMovementSpeed, 50.0);
+        UnitAbilityAdd(UnitFromId(317), "AP_HerculesTransport");
+        UnitAbilityRemove(UnitFromId(317), "SpecOpsDropshipTransport");
+        UnitCargoCreate(UnitFromId(317), "AP_Marauder", 1);
+        UnitCargoCreate(UnitFromId(317), "AP_Marine", 4);
+        UnitCargoCreate(UnitFromId(317), "AP_Medic", 2);
+    }
+
+    UnitIssueOrder(UnitFromId(317), OrderTargetingPoint(AbilityCommand("AP_HerculesTransport", 2), PointFromId(463)), c_orderQueueReplace);
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/B8B156BC"), null, PointFromId(10));
     libNtve_gf_CinematicMode(false, PlayerGroupAll(), 1.5);
     libNtve_gf_GlobalCinematicSetting(false);
@@ -1229,7 +1241,10 @@ bool gt_SiegeTankIntroQ_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_SiegeTankCameraPan1, true, false);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    UnitGroupIssueOrder(UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
+        UnitGroupIssueOrder(UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+    }
+
     // Transmission - SoundLink("TTychus02Raynor00003", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00003", -1), c_transmissionDurationAdd, 0.0, true);
     // Transmission - SoundLink("TTychus02Swann00004", 0)
@@ -1255,15 +1270,27 @@ bool gt_SiegeTanksComeIn_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    Wait(4.0, c_timeReal);
+    if ((gv_temp_gameplay_skip_flag == false)) {
+        Wait(4.0, c_timeReal);
+    }
+
     libNtve_gf_CreateUnitsAtPoint2(1, "SpecialOpsDropship", 0, gv_p1_USER, PointFromId(348));
     gv_siegeTankDropship = UnitLastCreated();
     libNtve_gf_MakeUnitUncommandable(gv_siegeTankDropship, true);
     libNtve_gf_MakeUnitInvulnerable(gv_siegeTankDropship, true);
     UnitSetState(gv_siegeTankDropship, c_unitStateTargetable, false);
     UnitSetState(gv_siegeTankDropship, c_unitStateUsingSupply, false);
-    UnitCargoCreate(UnitLastCreated(), "AP_SiegeTank", 2);
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), PointFromId(530)), c_orderQueueReplace);
+    if ((gv_temp_gameplay_skip_flag == true)) {
+        UnitSetPropertyFixed(gv_siegeTankDropship, c_unitPropBaseMovementSpeed, 50.0);
+        UnitAbilityAdd(gv_siegeTankDropship, "AP_HerculesTransport");
+        UnitAbilityRemove(gv_siegeTankDropship, "SpecOpsDropshipTransport");
+        UnitCargoCreate(UnitLastCreated(), "AP_SiegeTank", 2);
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("AP_HerculesTransport", 2), PointFromId(530)), c_orderQueueReplace);
+    }
+    else {
+        UnitCargoCreate(UnitLastCreated(), "AP_SiegeTank", 2);
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), PointFromId(530)), c_orderQueueReplace);
+    }
     UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(1))), c_orderQueueAddToEnd);
     return true;
 }
@@ -1353,7 +1380,6 @@ bool gt_SiegeTankTipQ_Func (bool testConds, bool runActions) {
     // Transmission - SoundLink("TTychus02Swann00006", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Swann00006", -1), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus02_SiegeTanks", libNtve_ge_TipType_NewUnit, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -1376,6 +1402,13 @@ bool gt_SiegeTankCameraPan1_Func (bool testConds, bool runActions) {
     unitgroup autoB899A2E8_g;
     int autoB899A2E8_u;
     unit autoB899A2E8_var;
+
+    // Conditions
+    if (testConds) {
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
+            return false;
+        }
+    }
 
     // Actions
     if (!runActions) {
@@ -1489,6 +1522,13 @@ bool gt_SiegeTankCameraPan2_Func (bool testConds, bool runActions) {
     unitgroup autoE07EEE0D_g;
     int autoE07EEE0D_u;
     unit autoE07EEE0D_var;
+
+    // Conditions
+    if (testConds) {
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
+            return false;
+        }
+    }
 
     // Actions
     if (!runActions) {
@@ -1675,15 +1715,30 @@ bool gt_StartGameDefensePhase_Func (bool testConds, bool runActions) {
     libNtve_gf_CreatePingFacingAngle(PlayerGroupAll(), "PingObjective", PointFromId(316), ColorWithAlpha(0.00, 100.00, 0.00, 0.00), 0.0, 270.0);
     PingSetTooltip(PingLastCreated(), StringExternal("Param/Value/EFA780FD"));
     TriggerExecute(gt_CreateTempleDoorBossBar, true, false);
-    Wait(8.0, c_timeGame);
+    if ((gv_temp_gameplay_skip_flag == true)) {
+        gv_playerControlsLaserDrill = true;
+        UnitSetOwner(UnitFromId(409), gv_p1_USER, true);
+        libNtve_gf_MakeUnitUncommandable(gv_tHEONEDRILL, false);
+        // Transmission - SoundLink("TTychus02Horner00043", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Horner00043", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == true) && (gv_temp_keep_transmissions_flag == true)) {
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Adjutant00040", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Tychus00008", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Horner00039", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Horner00037", -1), c_transmissionDurationAdd, 2.0, true);
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00041", -1), c_transmissionDurationAdd, 1.0, true);
+    }
+    else {
+        Wait(8.0, c_timeGame);
+    }
     TriggerExecute(gt_WeneedTanksandBunkersQ15s, true, false);
     TriggerEnable(gt_PingDangerousUnits, true);
     TriggerEnable(gt_Laserisattackedbyenemy, true);
     TriggerEnable(gt_LaserisattackedbyplayerQ, true);
     TriggerEnable(gt_LaserkillsaplayerunitQ, true);
     TriggerEnable(gt_Laserkillsaprotossunit, true);
-    Wait(15.0, c_timeGame);
-    TriggerExecute(gt_CampaignTipsQ, true, false);
     return true;
 }
 
@@ -1725,7 +1780,6 @@ bool gt_WeneedTanksandBunkersQ15s_Func (bool testConds, bool runActions) {
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00009", -1), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus02_DefenseStrat", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -1828,23 +1882,28 @@ bool gt_UseLaserDrillQ360s_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    gv_playerControlsLaserDrill = true;
-    UnitSetOwner(UnitFromId(409), gv_p1_USER, true);
-    libNtve_gf_MakeUnitUncommandable(gv_tHEONEDRILL, false);
+    if ((gv_temp_gameplay_skip_flag == false)) {
+        gv_playerControlsLaserDrill = true;
+        UnitSetOwner(UnitFromId(409), gv_p1_USER, true);
+        libNtve_gf_MakeUnitUncommandable(gv_tHEONEDRILL, false);
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TTychus02TalDarimExecutor00023", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02TalDarimExecutor00023", -1), c_transmissionDurationAdd, 0.0, true);
     // Transmission - SoundLink("TTychus02Horner00042", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Horner00042", -1), c_transmissionDurationAdd, 0.0, true);
-    // Transmission - SoundLink("TTychus02Horner00043", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Horner00043", -1), c_transmissionDurationAdd, 0.0, true);
+    if ((gv_temp_gameplay_skip_flag == false)) {
+        // Transmission - SoundLink("TTychus02Horner00043", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Horner00043", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+
     // Transmission - SoundLink("TTychus02Raynor00016", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00016", -1), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     UIAlertUnit("Trigger", gv_p1_USER, StringToText(""), null, UnitFromId(409));
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus02_LaserDrillControl", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -1975,7 +2034,6 @@ bool gt_CampaignTipsQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateStorymodeTips();
     TriggerQueueExit();
     return true;
 }
@@ -2250,7 +2308,6 @@ bool gt_DrillisrepairabletipQ_Func (bool testConds, bool runActions) {
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00011", -1), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus02_LaserDrillRepair", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3299,7 +3356,6 @@ bool gt_IncomingPrismAttack01Q_Func (bool testConds, bool runActions) {
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00030", -1), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     Wait(libCamp_gv_campaignHintDelay, c_timeGame);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus02_LaserDrillAA", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeGame);
     TriggerQueueExit();
     return true;
@@ -4704,6 +4760,11 @@ bool gt_VictoryDestroyProtossDialogueQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    if ((gv_temp_skip_victory_flag == true) && (gv_temp_keep_transmissions_flag == false)) {
+        gv_gameOver = true;
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TTychus02Horner00044", 0)
@@ -5082,6 +5143,11 @@ bool gt_PrimaryObjectiveOpenShrineCompleted_Func (bool testConds, bool runAction
     TriggerExecute(gt_PrimaryObjectiveOpenShrineCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_primaryObjectiveLaserDrillMustSurvive);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_primaryObjectiveMeltOpenTemple);
+    if ((gv_temp_skip_victory_flag == true) && (gv_temp_keep_transmissions_flag == false)) {
+        gv_gameOver = true;
+        return true;
+    }
+
     return true;
 }
 
@@ -5112,7 +5178,6 @@ bool gt_ObjectiveRelicsCreateQ_Func (bool testConds, bool runActions) {
     ObjectiveCreate((StringExternal("Param/Value/DFB1F567") + IntToText((gv_bonusObjectiveCollectRelicsNeeded - gv_bonusObjectiveCollectRelicsFound)) + StringExternal("Param/Value/4F60EAB6")), StringExternal("Param/Value/54858326"), c_objectiveStateActive, false);
     gv_bonusObjectiveCollectRelics = ObjectiveLastCreated();
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Tychus02_RelicShrines", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5372,9 +5437,12 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5642,7 +5710,10 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
         if (auto08823487_var == null) { break; }
         AISetUnitSuicide(auto08823487_var, true);
     }
-    TriggerExecute(gt_MidMovePlayerUnits, true, false);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidMovePlayerUnits, true, false);
+    }
+
     UnitPauseAll(false);
     libNtve_gf_PauseUnit(gv_tHEONEDRILL, false);
     libNtve_gf_ShareVisionofUnit(gv_tHEONEDOOR, true, gv_p1_USER);
@@ -5670,9 +5741,12 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     GameTimeOfDayPause(false);
     GameSetBackground(c_backgroundFixed, null, 100.0);
     PlayerSetState(gv_p1_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_p1_USER);
-    CameraRestore(gv_p1_USER, 0.0, -1, 10);
-    libNtve_gf_SwooshCamera(gv_p1_USER, ((CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance)) + 8.0), CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance), UnitGetPosition(UnitFromId(508)), 1.5);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_p1_USER);
+        CameraRestore(gv_p1_USER, 0.0, -1, 10);
+        libNtve_gf_SwooshCamera(gv_p1_USER, ((CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance)) + 8.0), CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance), UnitGetPosition(UnitFromId(508)), 1.5);
+    }
+
     VisRevealArea(gv_p1_USER, RegionFromId(6), 0.0, false);
     VisRevealArea(gv_p1_USER, RegionFromId(5), 0.1, false);
     VisRevealArea(gv_p1_USER, RegionFromId(13), 0.1, false);
@@ -5686,7 +5760,10 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     }
     libNtve_gf_CinematicMode(false, PlayerGroupAll(), lv_fadeDuration);
     libNtve_gf_GlobalCinematicSetting(false);
-    CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
+    }
+
     gv_inCinematic = false;
     UISetFrameVisible(PlayerGroupAll(), c_syncFrameTypeResourcePanel, true);
     UISetFrameVisible(PlayerGroupAll(), c_syncFrameTypeSupply, true);
@@ -5844,10 +5921,15 @@ bool gt_VictoryQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_VictorySetup, true, true);
-    TriggerExecute(gt_VictoryCinematic, true, true);
-    TriggerExecute(gt_VictoryCinematicEnd, true, true);
-    TriggerExecute(gt_VictoryCleanup, true, true);
+    if ((gv_temp_skip_victory_flag == false)) {
+        TriggerExecute(gt_VictorySetup, true, true);
+        TriggerExecute(gt_VictoryCinematic, true, true);
+        TriggerExecute(gt_VictoryCinematicEnd, true, true);
+        TriggerExecute(gt_VictoryCleanup, true, true);
+    }
+    else {
+        TriggerExecute(gt_Victory, true, false);
+    }
     TriggerQueueExit();
     return true;
 }

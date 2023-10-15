@@ -28,6 +28,10 @@ void InitLibs () {
 // Global Variables
 //--------------------------------------------------------------------------------------------------
 int gv_objectiveCallTheSpecialDelivery;
+bool gv_reached_town;
+bool gv_temp_skip_victory;
+bool gv_temp_keep_transmissions;
+bool gv_temp_skip_gameplay;
 int gv_p1_USER;
 int gv_p2_DOMINION_RED;
 int gv_p3_RIKSVILLE_YELLOW;
@@ -1109,7 +1113,6 @@ bool gt_TutorialReviewQ_Func (bool testConds, bool runActions) {
             libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
             if ((gv_unitMovementTip == false) && (gv_inCinematic == false) && (gv_gameOver == false)) {
                 Wait(0.3, c_timeGame);
-                HelpPanelDisplayPage(PlayerGroupAll(), c_helpPanelPageTutorials);
                 Wait(0.3, c_timeGame);
                 gv_tutorialWindowclosed = true;
             }
@@ -1489,7 +1492,7 @@ bool gt_RoadblockAggroQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if (((PlayerDifficulty(1) == 1 || PlayerDifficulty(1) == 2) == true)) {
+    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false) && ((PlayerDifficulty(1) == 1 || PlayerDifficulty(1) == 2) == true)) {
         CameraPan(gv_p1_USER, CameraInfoGetTarget(CameraInfoFromId(2604)), 1.5, -1, 20, true);
     }
 
@@ -1681,6 +1684,10 @@ bool gt_WhereisEveryoneQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((gv_reached_town == false))) {
+            return false;
+        }
+
         if (!((gv_gameOver == false))) {
             return false;
         }
@@ -1733,6 +1740,10 @@ bool gt_MutteringJohnQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((gv_reached_town == false))) {
+            return false;
+        }
+
         if (!((gv_gameOver == false))) {
             return false;
         }
@@ -1811,6 +1822,10 @@ bool gt_ThisisuglyQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((gv_reached_town == false))) {
+            return false;
+        }
+
         if (!((gv_gameOver == false))) {
             return false;
         }
@@ -2065,6 +2080,8 @@ void gt_RiksvilleAutoSave01_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_RiksvilleTownSquareViewQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    const int auto7BC6095B_n = 10;
+    int auto7BC6095B_i;
     unitgroup auto2D370052_g;
     int auto2D370052_u;
     unit auto2D370052_var;
@@ -2085,6 +2102,10 @@ bool gt_RiksvilleTownSquareViewQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    gv_reached_town = true;
+    for (auto7BC6095B_i = 1; auto7BC6095B_i <= auto7BC6095B_n; auto7BC6095B_i += 1) {
+        TransmissionClearAll();
+    }
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     SoundPlay(SoundLink("TUIWarningPing", 0), PlayerGroupAll(), 100.0, 0.0);
@@ -2678,6 +2699,10 @@ bool gt_EscapeClearQ_Func (bool testConds, bool runActions) {
         libNtve_gf_ClearAnimation(libNtve_gf_MainActorofUnit(autoA91711A4_var), c_animNameDefault);
     }
     TriggerQueueEnter();
+    if ((gv_gameOver == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TRaynor01Raynor00044", 0)
@@ -2686,10 +2711,18 @@ bool gt_EscapeClearQ_Func (bool testConds, bool runActions) {
     UIAlertUnit("Trigger", gv_p1_USER, StringExternal("Param/Value/665F3043"), null, UnitFromId(216));
     // Transmission - SoundLink("TRaynor01Civilian200048", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01Civilian200048", -1), c_transmissionDurationAdd, 0.0, true);
+    if ((gv_gameOver == true)) {
+        return true;
+    }
+
     libNtve_gf_AttachActorToUnit(UnitFromId(728), "TalkIcon", "Ref_Origin");
     UIAlertUnit("Trigger", gv_p1_USER, StringExternal("Param/Value/9E5EA8B9"), null, UnitFromId(728));
     // Transmission - SoundLink("TRaynor01CivilianFemale200050", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01CivilianFemale200050", -1), c_transmissionDurationAdd, 0.0, true);
+    if ((gv_gameOver == true)) {
+        return true;
+    }
+
     Wait(0.2, c_timeGame);
     // Transmission - SoundLink("TRaynor01Raynor00051", 0)
     libCamp_gf_SendTransmissionCampaign(gv_raynor, SoundLink("TRaynor01Raynor00051", -1), c_transmissionDurationAdd, 0.0, true);
@@ -2938,12 +2971,7 @@ bool gt_CivilianSpawnCrowd_Func (bool testConds, bool runActions) {
         if (auto8A7E80E5_var == null) { break; }
         libNtve_gf_ShareVisionofUnit(auto8A7E80E5_var, true, gv_p1_USER);
     }
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
-        Wait(8.0, c_timeGame);
-    }
-    else {
-        Wait(3.0, c_timeGame);
-    }
+    Wait(8.0, c_timeGame);
     VisRevealerDestroy(lv_vis);
     return true;
 }
@@ -2989,6 +3017,10 @@ bool gt_CivilianMarchQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     Wait(0.2, c_timeGame);
+    if ((gv_gameOver == true)) {
+        return true;
+    }
+
     libNtve_gf_AttachActorToUnit(gv_civMarchSpeaker01, "TalkIcon", "Ref_Origin");
     UIAlertUnit("Trigger", gv_p1_USER, StringExternal("Param/Value/2807169B"), null, gv_civMarchSpeaker01);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
@@ -2996,6 +3028,10 @@ bool gt_CivilianMarchQ_Func (bool testConds, bool runActions) {
     // Transmission - SoundLink("TRaynor01Civilian4WhitewGoggles00005", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01Civilian4WhitewGoggles00005", -1), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+    if ((gv_gameOver == true)) {
+        return true;
+    }
+
     libNtve_gf_AttachActorToUnit(gv_civMarchSpeaker02, "TalkIcon", "Ref_Origin");
     UIAlertUnit("Trigger", gv_p1_USER, StringExternal("Param/Value/0AA42C42"), null, gv_civMarchSpeaker02);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
@@ -3150,11 +3186,19 @@ bool gt_DominionCompoundViewQ_Func (bool testConds, bool runActions) {
         UnitIssueOrder(autoAE00C3A6_var, OrderTargetingPoint(AbilityCommand("attack", 0), RegionRandomPoint(RegionFromId(17))), c_orderQueueReplace);
     }
     TriggerQueueEnter();
+    if ((gv_gameOver == true)) {
+        return true;
+    }
+
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/A8484597"), null, RegionGetCenter(RegionFromId(92)));
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TRaynor01DominionOfficer100054", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01DominionOfficer100054", -1), c_transmissionDurationAdd, 0.0, true);
+    if ((gv_gameOver == true)) {
+        return true;
+    }
+
     libNtve_gf_AttachActorToUnit(gv_civMarchSpeaker03, "TalkIcon", "Ref_Origin");
     UIAlertUnit("Trigger", gv_p1_USER, StringExternal("Param/Value/26D5D7A5"), null, gv_civMarchSpeaker03);
     // Transmission - SoundLink("TRaynor01Civilian800061", 0)
@@ -5225,6 +5269,10 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     }
     else {
         TriggerExecute(gt_IntroCleanupEscape, true, true);
+        if ((gv_temp_keep_transmissions == true)) {
+            libCamp_gf_SendTransmissionCampaign(gv_raynor, SoundLink("TRaynor01Raynor00028", 0), c_transmissionDurationAdd, 0.0, true);
+        }
+
     }
     TriggerQueueExit();
     return true;
@@ -5631,12 +5679,19 @@ bool gt_MidBillboardQ_Func (bool testConds, bool runActions) {
         TriggerExecute(gt_MidBillboardCinematic, true, true);
         TriggerExecute(gt_MidBillboardCinematicEnd, true, true);
         TriggerExecute(gt_MidBillboardCleanup, true, true);
+        TriggerExecute(gt_ObjectiveDestroyDominionHoloboardsCreate, true, true);
     }
     else {
         TriggerEnable(gt_PlayHoloboard01Q, true);
         UnitSetState(UnitFromId(1726), c_unitStateTargetable, true);
+        TriggerExecute(gt_ObjectiveDestroyDominionHoloboardsCreate, true, true);
+        if ((gv_temp_keep_transmissions == true)) {
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01Arcturus00013", 0), c_transmissionDurationAdd, 0.0, true);
+            gv_holoboardTransmission01 = TransmissionLastSent();
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01Adjutant00023", 0), c_transmissionDurationAdd, 0.0, true);
+        }
+
     }
-    TriggerExecute(gt_ObjectiveDestroyDominionHoloboardsCreate, true, true);
     TriggerQueueExit();
     return true;
 }
@@ -5829,10 +5884,6 @@ bool gt_MidEscapeQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    TransmissionClear(gv_holoboardTransmission01);
-    TransmissionClear(gv_holoboardTransmission02);
-    TransmissionClear(gv_holoboardTransmission03);
-    TransmissionClear(gv_holoboardTransmission04);
     TriggerQueueEnter();
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
         TriggerExecute(gt_MidEscapeSetup, true, true);
@@ -5840,7 +5891,16 @@ bool gt_MidEscapeQ_Func (bool testConds, bool runActions) {
         TriggerExecute(gt_MidEscapeCinematicEnd, true, true);
         TriggerExecute(gt_MidEscapeCleanup, true, true);
     }
+    else {
+        if ((gv_temp_keep_transmissions == true)) {
+            libCamp_gf_SendTransmissionCampaign(gv_raynor, SoundLink("TRaynor01Raynor00043", 0), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01DominionMarine100020", 0), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01Civilian600026", 0), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01DominionMarine900046", 0), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SendTransmissionCampaign(gv_raynor, SoundLink("TRaynor01Raynor00062", 0), c_transmissionDurationAdd, 0.0, true);
+        }
 
+    }
     TriggerQueueExit();
     return true;
 }
@@ -6089,7 +6149,7 @@ bool gt_VictoryQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((gv_temp_skip_victory == false)) {
         TriggerExecute(gt_VictorySetup, true, true);
         TriggerExecute(gt_VictoryCinematic, true, true);
         TriggerExecute(gt_VictoryCinematicEnd, true, true);

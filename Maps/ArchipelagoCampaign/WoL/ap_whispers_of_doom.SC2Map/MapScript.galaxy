@@ -37,6 +37,10 @@ const int gv_p5_XELNAGASHRINES = 5;
 // Global Variables
 //--------------------------------------------------------------------------------------------------
 string gv_stalkerUnitType;
+bool gv_interruptTransmissions;
+bool gv_temp_keep_transmissions;
+bool gv_temp_skip_victory;
+bool gv_temp_skip_gameplay;
 bool gv_gameOver;
 bool gv_inCinematic;
 unit gv_tHEONEZERATUL;
@@ -1344,7 +1348,6 @@ bool gt_StorymodeTipsQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateStorymodeTips();
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -1734,10 +1737,15 @@ bool gt_BlinkTeachQ_Func (bool testConds, bool runActions) {
     gv_blinkTeach1 = libNtve_gf_ActorLastCreated();
     libNtve_gf_CreateModelAtPoint("BriefingUnitSelectProtoss", PointFromId(1472));
     gv_blinkTeach2 = libNtve_gf_ActorLastCreated();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Zeratul00033", 0)
     libCamp_gf_SendTransmissionCampaign(gv_tHEONEZERATUL, SoundLink("TZeratul01Zeratul00033", -1), c_transmissionDurationAdd, 0.0, true);
+    gv_interruptableTransmission = TransmissionLastSent();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     Wait(libCamp_gv_campaignHintDelay, c_timeGame);
     Wait(libCamp_gv_campaignHintDelay, c_timeGame);
@@ -2009,6 +2017,10 @@ bool gt_VoidPrisonTeachQ_Func (bool testConds, bool runActions) {
     TechTreeAbilityAllow(gv_p1_USER, AbilityCommand("ZeratulStun", 0), true);
     TriggerExecute(gt_ButtonFlashVoidPrisonOn, true, false);
     gv_voidPrisonVictimActor = libNtve_gf_AttachModelToUnit(UnitFromId(36), "BriefingUnitSelectProtoss", "Head");
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Zeratul00069", 0)
@@ -2233,6 +2245,10 @@ bool gt_GuardedSporeCalloutQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/6B39D9A2"), null, UnitGetPosition(UnitFromId(223)));
@@ -2324,6 +2340,10 @@ bool gt_OverseerIntroActionsQ_Func (bool testConds, bool runActions) {
     SoundPlayAtPoint(SoundLink("Uni_RockExplosionLarge", 1), PlayerGroupAll(), PointFromId(216), 16.0, 100.0, 0.0);
     gf_ActivatePatrolAIForUnit(UnitFromId(221), PointFromId(849), 1.0);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Zeratul00068", 0)
@@ -2386,8 +2406,6 @@ void gt_OverseerHydralisksDeadRunAway_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveShrine1ReachedQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
-    const int auto5B8EFB10_n = 10;
-    int auto5B8EFB10_i;
     unitgroup autoE0198BAF_g;
     int autoE0198BAF_u;
     unit autoE0198BAF_var;
@@ -2412,9 +2430,8 @@ bool gt_ObjectiveShrine1ReachedQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    for (auto5B8EFB10_i = 1; auto5B8EFB10_i <= auto5B8EFB10_n; auto5B8EFB10_i += 1) {
-        TransmissionClearAll();
-    }
+    gv_interruptTransmissions = true;
+    TransmissionClear(gv_interruptableTransmission);
     TriggerExecute(gt_Shrine01, true, false);
     UIAlertClear(gv_p1_USER);
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/B3A926F4"), null, UnitGetPosition(UnitFromId(73)));
@@ -2464,6 +2481,7 @@ bool gt_ObjectiveShrine1ReachedQ_Func (bool testConds, bool runActions) {
         VisRevealerCreate(gv_p1_USER, RegionFromId(7));
         gv_tHEONEREVEALER = VisRevealerLastCreated();
     }
+    gv_interruptTransmissions = false;
     libNtve_gf_MakeUnitUncommandable(gv_tHEONEZERATUL, false);
     libNtve_gf_MakeUnitInvulnerable(gv_tHEONEZERATUL, false);
     UnitSetState(gv_tHEONEZERATUL, c_unitStateSelectable, true);
@@ -2709,6 +2727,10 @@ bool gt_KerriganTaunt12Q_Func (bool testConds, bool runActions) {
     SoundPlayAtPoint(SoundLink("Mutalisk_Attack", 9), PlayerGroupAll(), UnitGetPosition(gv_tHEONEZERATUL), 0.0, 100.0, 0.0);
     SoundWait(SoundLastPlayed(), 0.0, c_soundOffsetEnd);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     // Transmission - SoundLink("TZeratul01Zeratul00028", 0)
     libCamp_gf_SendTransmissionCampaign(gv_tHEONEZERATUL, SoundLink("TZeratul01Zeratul00028", -1), c_transmissionDurationAdd, 0.0, true);
@@ -2745,6 +2767,10 @@ bool gt_StalkersIntroWarpInQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Stalker00049", 0)
@@ -3078,6 +3104,10 @@ bool gt_StalkersRevealerTipQ_Func (bool testConds, bool runActions) {
     Wait(2.0, c_timeGame);
     TriggerQueueEnter();
     if ((UnitIsAlive(gv_tHEONEKARASS) == true) && (UnitGroupCount(UnitGroup(gv_stalkerUnitType, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
+        if ((gv_interruptTransmissions == true)) {
+            return true;
+        }
+
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
         libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
         // Transmission - SoundLink("TZeratul01Stalker00050", 0)
@@ -3171,6 +3201,10 @@ bool gt_StalkerCliffPewQ_Func (bool testConds, bool runActions) {
         gf_ActivatePatrolAIForUnit(UnitFromId(232), PointFromId(1840), 5.0);
     }
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Stalker00029", 0)
@@ -3360,6 +3394,10 @@ bool gt_BroodlordPatrolQ_Func (bool testConds, bool runActions) {
     gf_ActivatePatrolAIForUnit(UnitFromId(196), PointFromId(1191), 5.0);
     libLbty_gf_AutoRevealRegion(RegionFromId(72), RegionFromId(25), gv_p1_USER);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     UIAlertUnit("Trigger", gv_p1_USER, StringExternal("Param/Value/7DD02F27"), null, UnitFromId(170));
@@ -3528,6 +3566,10 @@ bool gt_AirAssaultQ_Func (bool testConds, bool runActions) {
     SoundPlayAtPoint(SoundLink("Mutalisk_Attack", 9), PlayerGroupAll(), UnitGetPosition(gv_tHEONEZERATUL), 0.0, 100.0, 0.0);
     SoundWait(SoundLastPlayed(), 0.0, c_soundOffsetEnd);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Zeratul00071", 0)
@@ -4018,6 +4060,10 @@ bool gt_HatcheryDiscovered1Q_Func (bool testConds, bool runActions) {
         UnitBehaviorAdd(autoC2AE3C4B_var, "InstallationZergWander", autoC2AE3C4B_var, 1);
     }
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/12A43ADF"), null, UnitGetPosition(UnitFromId(28)));
@@ -4044,8 +4090,6 @@ void gt_HatcheryDiscovered1Q_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveShrine2ReachedQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
-    const int autoF75EB326_n = 10;
-    int autoF75EB326_i;
     unitgroup auto6244EC10_g;
     int auto6244EC10_u;
     unit auto6244EC10_var;
@@ -4070,9 +4114,8 @@ bool gt_ObjectiveShrine2ReachedQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    for (autoF75EB326_i = 1; autoF75EB326_i <= autoF75EB326_n; autoF75EB326_i += 1) {
-        TransmissionClearAll();
-    }
+    gv_interruptTransmissions = true;
+    TransmissionClear(gv_interruptableTransmission);
     TriggerExecute(gt_Shrine02, true, false);
     UIAlertClear(gv_p1_USER);
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/8A457DB9"), null, UnitGetPosition(UnitFromId(7)));
@@ -4120,6 +4163,7 @@ bool gt_ObjectiveShrine2ReachedQ_Func (bool testConds, bool runActions) {
 
     VisRevealerCreate(1, RegionFromId(16));
     gv_tHEONEREVEALER = VisRevealerLastCreated();
+    gv_interruptTransmissions = false;
     UnitSetState(gv_tHEONEZERATUL, c_unitStateMoveSuppressed, true);
     libNtve_gf_MakeUnitUncommandable(gv_tHEONEZERATUL, false);
     libNtve_gf_MakeUnitInvulnerable(gv_tHEONEZERATUL, false);
@@ -4218,6 +4262,10 @@ bool gt_KerriganTaunt2Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     // Transmission - SoundLink("TZeratul01Kerrigan00035", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul01Kerrigan00035", -1), c_transmissionDurationAdd, 0.0, true);
@@ -4269,6 +4317,10 @@ bool gt_HeavyHitterPuzzleInitQ_Func (bool testConds, bool runActions) {
     gf_ActivatePatrolAIForUnit(UnitFromId(324), PointFromId(704), 5.0);
     TriggerExecute(gt_HeavyHitterPuzzleBurrowedUltraliskInit, true, false);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Zeratul00023", 0)
@@ -4367,6 +4419,10 @@ bool gt_BanelingPuzzleIntroQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/63A7E1EE"), null, PointFromId(337));
     if ((UnitGroupCount(UnitGroup(gv_stalkerUnitType, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
         TriggerQueueEnter();
+        if ((gv_interruptTransmissions == true)) {
+            return true;
+        }
+
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
         libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
         // Transmission - SoundLink("TZeratul01Zeratul00072", 0)
@@ -4560,6 +4616,10 @@ bool gt_HatcheryDiscovered2UltralisksQ_Func (bool testConds, bool runActions) {
     libNtve_gf_ShowHideUnit(UnitFromId(336), true);
     gf_ActivatePatrolAIForUnit(UnitFromId(336), PointFromId(229), 5.0);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/F3C65CBC"), null, UnitGetPosition(UnitFromId(205)));
@@ -4796,6 +4856,10 @@ bool gt_CrawlersQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Zeratul00015", 0)
@@ -4843,6 +4907,10 @@ bool gt_CrawlersDestroyedQ_Func (bool testConds, bool runActions) {
     gv_tHEONEPING = PingLastCreated();
     if ((UnitGroupCount(UnitGroup(gv_stalkerUnitType, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
         TriggerQueueEnter();
+        if ((gv_interruptTransmissions == true)) {
+            return true;
+        }
+
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
         libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
         // Transmission - SoundLink("TZeratul01Stalker00067", 0)
@@ -4867,9 +4935,6 @@ void gt_CrawlersDestroyedQ_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_MeetKarass_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
-    const int auto8BA8E00F_n = 10;
-    int auto8BA8E00F_i;
-
     // Conditions
     if (testConds) {
         if (!((UnitTypeTestFlag(UnitGetType(EventUnit()), c_unitFlagMissile) == false))) {
@@ -4894,9 +4959,8 @@ bool gt_MeetKarass_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    for (auto8BA8E00F_i = 1; auto8BA8E00F_i <= auto8BA8E00F_n; auto8BA8E00F_i += 1) {
-        TransmissionClearAll();
-    }
+    gv_interruptTransmissions = true;
+    TransmissionClear(gv_interruptableTransmission);
     TriggerExecute(gt_CinematicKarassMidQ, true, false);
     return true;
 }
@@ -5174,6 +5238,10 @@ bool gt_StunnedUltraliskQ_Func (bool testConds, bool runActions) {
 
     TriggerQueueEnter();
     if ((UnitIsAlive(gv_tHEONEKARASS) == true)) {
+        if ((gv_interruptTransmissions == true)) {
+            return true;
+        }
+
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
         libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
         // Transmission - SoundLink("TZeratul01Zeratul00074", 0)
@@ -5255,6 +5323,10 @@ bool gt_AntiAirRequestQ_Func (bool testConds, bool runActions) {
 
     TriggerQueueEnter();
     if ((UnitGroupCount(UnitGroup(gv_stalkerUnitType, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) && (UnitIsAlive(gv_tHEONEKARASS) == true)) {
+        if ((gv_interruptTransmissions == true)) {
+            return true;
+        }
+
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
         libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
         // Transmission - SoundLink("TZeratul01Karass00075", 0)
@@ -5312,6 +5384,10 @@ bool gt_KarassKilledBeforeRunoutQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     UIAlertPoint("Trigger", gv_p1_USER, StringToText(""), null, UnitGetPosition(EventUnit()));
@@ -5454,12 +5530,20 @@ bool gt_NydusSpawningQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Zeratul00012", 0)
     libCamp_gf_SendTransmissionCampaign(gv_tHEONEZERATUL, SoundLink("TZeratul01Zeratul00012", -1), c_transmissionDurationAdd, 0.0, true);
     gv_interruptableTransmission = TransmissionLastSent();
     if ((UnitGroupCount(UnitGroup(gv_stalkerUnitType, gv_p1_USER, RegionFromId(79), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0) && (UnitGroupCount(UnitGroup(gv_stalkerUnitType, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
+        if ((gv_interruptTransmissions == true)) {
+            return true;
+        }
+
         libNtve_gf_CreateModelAtPoint("BriefingUnitSelectProtoss", PointFromId(851));
         lv_ping = libNtve_gf_ActorLastCreated();
         // Transmission - SoundLink("TZeratul01Zeratul00076", 0)
@@ -5848,6 +5932,10 @@ bool gt_HatcheryDiscovered3RumbleQ_Func (bool testConds, bool runActions) {
     libNtve_gf_PauseUnit(UnitFromId(134), false);
     libNtve_gf_PauseUnit(UnitFromId(173), false);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     UIAlertPoint("Trigger", gv_p1_USER, StringExternal("Param/Value/68DEA97C"), null, UnitGetPosition(UnitFromId(445)));
@@ -5924,9 +6012,6 @@ void gt_Hatchery3Roacheggs_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveShrine3Reached_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
-    const int autoA04A4907_n = 10;
-    int autoA04A4907_i;
-
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -5948,10 +6033,9 @@ bool gt_ObjectiveShrine3Reached_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(gt_ZeratulsTheOnlyOneAlive, false);
-    for (autoA04A4907_i = 1; autoA04A4907_i <= autoA04A4907_n; autoA04A4907_i += 1) {
-        TransmissionClearAll();
-    }
     TriggerEnable(gt_Enemiesare99999Staggered, false);
+    gv_interruptTransmissions = true;
+    TransmissionClear(gv_interruptableTransmission);
     libNtve_gf_MakeUnitUncommandable(gv_tHEONEZERATUL, true);
     libNtve_gf_MakeUnitInvulnerable(gv_tHEONEZERATUL, true);
     UnitSetState(gv_tHEONEZERATUL, c_unitStateSelectable, false);
@@ -5966,6 +6050,7 @@ bool gt_ObjectiveShrine3Reached_Func (bool testConds, bool runActions) {
     UnitIssueOrder(UnitFromId(1), Order(AbilityCommand("move", 2)), c_orderQueueReplace);
     libNtve_gf_PauseUnit(UnitFromId(1), true);
     Wait(2.0, c_timeGame);
+    gv_interruptTransmissions = false;
     TriggerExecute(gt_CinematicKerriganQ, true, false);
     return true;
 }
@@ -6837,13 +6922,23 @@ bool gt_KarassFelledLineQ_Func (bool testConds, bool runActions) {
 
     UnitIssueOrder(gv_tHEONEKERRIGAN, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(215)), c_orderQueueReplace);
     TriggerQueueEnter();
+    if ((gv_interruptTransmissions == true)) {
+        return true;
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul01Karass00062", 0)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul01Karass00062", -1), c_transmissionDurationAdd, 1.0, false);
+    gv_interruptableTransmission = TransmissionLastSent();
     if (((libNtve_gf_UnitInRegion(gv_tHEONEZERATUL, RegionFromId(101)) == false) && (libNtve_gf_UnitInRegion(gv_tHEONEZERATUL, RegionPlayableMap()) == true))) {
+        if ((gv_interruptTransmissions == true)) {
+            return true;
+        }
+
         // Transmission - SoundLink("TZeratul01Zeratul00044", 0)
         libCamp_gf_SendTransmissionCampaign(gv_tHEONEZERATUL, SoundLink("TZeratul01Zeratul00044", -1), c_transmissionDurationAdd, 1.0, false);
+        gv_interruptableTransmission = TransmissionLastSent();
     }
 
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
@@ -8858,6 +8953,8 @@ bool gt_ObjectiveVoidSeekerComplete_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    gv_interruptTransmissions = true;
+    TransmissionClear(gv_interruptableTransmission);
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveVoidSeekerObjectivesQ, true, false);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -9105,6 +9202,7 @@ bool gt_CinematicKarassMidQ_Func (bool testConds, bool runActions) {
         libNtve_gf_ShowHideUnit(UnitFromId(483), true);
         UnitPauseAll(false);
         gf_RefreshPlayersHPandShields();
+        gv_interruptTransmissions = false;
         TriggerExecute(gt_RumbleInit, true, false);
     }
     TriggerQueueExit();
@@ -9470,6 +9568,7 @@ bool gt_CinematicKarassMidCleanup_Func (bool testConds, bool runActions) {
     libNtve_gf_SwooshCamera(gv_p1_USER, 42.0, CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance), PointFromId(854), lv_fadeDuration);
     CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
     gv_inCinematic = false;
+    gv_interruptTransmissions = false;
     libCamp_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/36A1A43A"));
     gf_RefreshPlayersHPandShields();
     TriggerExecute(gt_RumbleInit, true, false);
@@ -10103,7 +10202,7 @@ bool gt_VictoryQ_Func (bool testConds, bool runActions) {
 
     gv_gameOver = true;
     TriggerQueueEnter();
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((gv_temp_skip_victory == false)) {
         TriggerExecute(gt_VictorySetup, true, true);
         TriggerExecute(gt_VictoryCinematic, true, true);
         TriggerExecute(gt_VictoryCinematicEnd, true, true);
