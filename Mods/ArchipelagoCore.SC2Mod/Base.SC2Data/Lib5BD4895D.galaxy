@@ -26,6 +26,7 @@ void lib5BD4895D_InitVariables () {
     for (init_i = 0; init_i <= 20; init_i += 1) {
         lib5BD4895D_gv_aP_Core_playerFactions[init_i] = "";
     }
+    lib5BD4895D_gv_aP_Core_primalZergColor = 4;
     lib5BD4895D_gv_aP_Core_chatboxAnchor = c_anchorTopRight;
     lib5BD4895D_gv_aP_Core_chatbox_x = 500;
     lib5BD4895D_gv_aP_Core_chatbox_y = 350;
@@ -34,6 +35,7 @@ void lib5BD4895D_InitVariables () {
     lib5BD4895D_gv_aP_Core_Faction_TERRAN_DOMINION = "td";
     lib5BD4895D_gv_aP_Core_Faction_PRIMAL_ZERG = "pz";
     lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM = "ks";
+    lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM_SWITCHABLE_TO_PRIMAL_ZERG = "ks_pz";
     lib5BD4895D_gv_aP_Core_Faction_DAELAAM = "da";
     lib5BD4895D_gv_chatbox.lv_mainpanel = c_invalidDialogId;
     lib5BD4895D_gv_chatbox.lv_chatpanel = c_invalidDialogId;
@@ -50,6 +52,9 @@ void lib5BD4895D_InitVariables () {
     lib5BD4895D_gv_chatbox.lv_countlabel = c_invalidDialogControlId;
     lib5BD4895D_gv_chatbox.lv_hidebtn = c_invalidDialogControlId;
     lib5BD4895D_gv_chatbox.lv_showbtn = c_invalidDialogControlId;
+    for (init_i = 0; init_i <= 7; init_i += 1) {
+        lib5BD4895D_gv_aP_Core_rainbowColors[init_i] = 1;
+    }
 }
 
 // Functions
@@ -62,7 +67,13 @@ void lib5BD4895D_gf_AP_Core_MapConfig_setAffectedPlayers (playergroup lp_players
 void lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction (int lp_player, string lp_faction) {
     // Automatic Variable Declarations
     // Implementation
-    lib5BD4895D_gv_aP_Core_playerFactions[lp_player] = lp_faction;
+    if ((lp_faction == lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM_SWITCHABLE_TO_PRIMAL_ZERG)) {
+        lib5BD4895D_gv_aP_Core_playerFactions[lp_player] = lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM;
+        lib5BD4895D_gv_aP_Core_playerSwitchableFaction[lp_player] = true;
+    }
+    else {
+        lib5BD4895D_gv_aP_Core_playerFactions[lp_player] = lp_faction;
+    }
 }
 
 void lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition (int lp_anchor, int lp_x, int lp_y, int lp_offsetX, int lp_offsetY) {
@@ -223,23 +234,23 @@ void lib5BD4895D_gf_sendchatmessage (int lp_fromplayer, string lp_message) {
 }
 
 void lib5BD4895D_gf_AP_Core_rainbowController (int lp_player) {
+    // Variable Declarations
+    int lv_colorIndex;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+
     // Implementation
-    PlayerSetColorIndex(lp_player, 1, true);
-    Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
-    PlayerSetColorIndex(lp_player, 6, true);
-    Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
-    PlayerSetColorIndex(lp_player, 5, true);
-    Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
-    PlayerSetColorIndex(lp_player, 7, true);
-    Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
-    PlayerSetColorIndex(lp_player, 3, true);
-    Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
-    PlayerSetColorIndex(lp_player, 2, true);
-    Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
-    PlayerSetColorIndex(lp_player, 4, true);
-    Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
-    lib5BD4895D_gf_AP_Core_rainbowController(lp_player);
+    lib5BD4895D_gv_aP_Core_rainbowKiller[lp_player] = false;
+    while (true) {
+        if ((lib5BD4895D_gv_aP_Core_rainbowKiller[lp_player] == true)) {
+            break;
+        }
+
+        PlayerSetColorIndex(lp_player, lib5BD4895D_gv_aP_Core_rainbowColors[lv_colorIndex], true);
+        Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
+        lv_colorIndex = ModI((lv_colorIndex + 1), 7);
+    }
 }
 
 int lib5BD4895D_gf_AP_Core_getPlayerColorByIndex (int lp_colorIndex) {
@@ -282,6 +293,10 @@ void lib5BD4895D_gf_AP_Core_setFactionColor (string lp_faction, int lp_colorInde
     lv_color = 1;
 
     // Implementation
+    if ((lp_faction == lib5BD4895D_gv_aP_Core_Faction_PRIMAL_ZERG) && (lp_colorIndex <= 16)) {
+        lib5BD4895D_gv_aP_Core_primalZergColor = lp_colorIndex;
+    }
+
     if ((lp_colorIndex <= 15)) {
         lv_color = lib5BD4895D_gf_AP_Core_getPlayerColorByIndex(lp_colorIndex);
         autoC0E582B5_g = PlayerGroupAll();
@@ -330,6 +345,40 @@ void lib5BD4895D_gf_AP_Core_onLoadFinished () {
     TriggerExecute(lib5BD4895D_gv_aP_Core_mapInit, true, false);
     lib5BD4895D_gv_aP_Core_initFinished = true;
     lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationInit);
+}
+
+void lib5BD4895D_gf_AP_Core_SwitchKerriganSwarmToPrimalZerg () {
+    // Variable Declarations
+    int lv_currentPlayer;
+    int lv_color;
+
+    // Automatic Variable Declarations
+    playergroup auto7DAD13F7_g;
+
+    // Variable Initialization
+    lv_color = 1;
+
+    // Implementation
+    auto7DAD13F7_g = PlayerGroupAll();
+    lv_currentPlayer = -1;
+    while (true) {
+        lv_currentPlayer = PlayerGroupNextPlayer(auto7DAD13F7_g, lv_currentPlayer);
+        if (lv_currentPlayer < 0) { break; }
+        if ((lib5BD4895D_gv_aP_Core_playerSwitchableFaction[lv_currentPlayer] == true) && (lib5BD4895D_gv_aP_Core_playerFactions[lv_currentPlayer] == lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM)) {
+            lib5BD4895D_gv_aP_Core_playerFactions[lv_currentPlayer] = lib5BD4895D_gv_aP_Core_Faction_PRIMAL_ZERG;
+            lib5BD4895D_gv_aP_Core_rainbowKiller[lv_currentPlayer] = true;
+            Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
+            Wait(lib5BD4895D_gv_aP_Core_rainbowCyclePeriod, c_timeReal);
+            if ((lib5BD4895D_gv_aP_Core_primalZergColor <= 15)) {
+                lv_color = lib5BD4895D_gf_AP_Core_getPlayerColorByIndex(lib5BD4895D_gv_aP_Core_primalZergColor);
+                PlayerSetColorIndex(lv_currentPlayer, lv_color, true);
+            }
+            else if ((lib5BD4895D_gv_aP_Core_primalZergColor == 16)) {
+                lib5BD4895D_gf_AP_Core_rainbowController(lv_currentPlayer);
+            }
+        }
+
+    }
 }
 
 void lib5BD4895D_gf_AP_Core_setObjectiveCompleted (int lp_objective) {
@@ -564,6 +613,32 @@ void lib5BD4895D_gt_chatboxshow_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_Core_rainbowColorsInit
+//--------------------------------------------------------------------------------------------------
+bool lib5BD4895D_gt_AP_Core_rainbowColorsInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gv_aP_Core_rainbowColors[0] = 1;
+    lib5BD4895D_gv_aP_Core_rainbowColors[1] = 6;
+    lib5BD4895D_gv_aP_Core_rainbowColors[2] = 5;
+    lib5BD4895D_gv_aP_Core_rainbowColors[3] = 7;
+    lib5BD4895D_gv_aP_Core_rainbowColors[4] = 3;
+    lib5BD4895D_gv_aP_Core_rainbowColors[5] = 2;
+    lib5BD4895D_gv_aP_Core_rainbowColors[6] = 4;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib5BD4895D_gt_AP_Core_rainbowColorsInit_Init () {
+    lib5BD4895D_gt_AP_Core_rainbowColorsInit = TriggerCreate("lib5BD4895D_gt_AP_Core_rainbowColorsInit_Func");
+    TriggerAddEventMapInit(lib5BD4895D_gt_AP_Core_rainbowColorsInit);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Core_giveStartingResources
 //--------------------------------------------------------------------------------------------------
 bool lib5BD4895D_gt_AP_Core_giveStartingResources_Func (bool testConds, bool runActions) {
@@ -680,6 +755,7 @@ void lib5BD4895D_InitTriggers () {
     lib5BD4895D_gt_updatechatbox_Init();
     lib5BD4895D_gt_chatboxbuttons_Init();
     lib5BD4895D_gt_chatboxshow_Init();
+    lib5BD4895D_gt_AP_Core_rainbowColorsInit_Init();
     lib5BD4895D_gt_AP_Core_giveStartingResources_Init();
     lib5BD4895D_gt_AP_Core_setFactionColorHandler_Init();
     lib5BD4895D_gt_AP_Triggers_loadFinished_Init();
