@@ -10,7 +10,9 @@ include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "TriggerLibs/SwarmCampaignLib"
 include "TriggerLibs/SwarmCampaignDataHelperLib"
-include "LibC6542F50"
+include "Lib15EF4C78"
+include "Lib5BD4895D"
+include "LibABFE498B"
 
 //--------------------------------------------------------------------------------------------------
 // Library Initialization
@@ -21,7 +23,9 @@ void InitLibs () {
     libHots_InitLib();
     libSwaC_InitLib();
     libSCDH_InitLib();
-    libC6542F50_InitLib();
+    lib15EF4C78_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -507,8 +511,10 @@ trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryMusic;
 trigger gt_VictoryCinematicDropPods;
-trigger gt_ArchipelagoInitialization;
-trigger gt_KerriganFix;
+trigger gt_onDifficultyCasual;
+trigger gt_onDifficultyNormal;
+trigger gt_onDifficultyHard;
+trigger gt_onDifficultyBrutal;
 trigger gt_ArchInit;
 trigger gt_SetMineralCount;
 
@@ -850,9 +856,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libSwaC_gf_ULoadCampaignData("ZLab2");
     TriggerExecute(gt_Init01Technology, true, true);
-    libSwaC_gf_PurchaseStorymodeTech();
     TriggerExecute(gt_Init04MusicSound, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
@@ -877,11 +881,15 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libSwaC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("ExperimentalPlasmaGun", 0), false);
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("TossGrenade", 0), false);
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("TheMorosDevice", 0), false);
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("RaynorC4", 0), false);
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_grantStoryTech == true))) {
+        libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "AP_K5CrushingGrip", 1);
+        libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "AP_K5MindBolt", 1);
+    }
+
     TechTreeAbilityAllow(gv_pLAYER_02_DOMINION, AbilityCommand("Snipe", 0), false);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION, "ShieldWall", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION, "SiegeTech", 1);
@@ -1043,8 +1051,7 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
 
     gv_kerrigan = UnitFromId(1984436791);
     libSwaC_gf_RegisterCampaignKerrigan(gv_kerrigan);
-    UnitSetTeamColorIndex(gv_kerrigan, 6);
-    libSwaC_gf_SetHeroPanelUnit(1, gv_kerrigan);
+    lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_pLAYER_01_USER);
     UnitMagazineArm(gv_kerrigan, AbilityCommand("RaynorLabMagazine", 0), 1);
     autoC4ECCD0A_g = UnitGroup("RaynorLab", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     autoC4ECCD0A_u = UnitGroupCount(autoC4ECCD0A_g, c_unitCountAll);
@@ -1913,7 +1920,6 @@ bool gt_StartGameStage4Q_Func (bool testConds, bool runActions) {
     VisRevealArea(gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(UnitFromId(653)), 3.0), 3.0, false);
     libSwaC_gf_CreateObjectivePing(true, UnitGetPosition(UnitFromId(653)), StringExternal("Param/Value/C874A459"));
     gv_s4_ObjectivePing = PingLastCreated();
-    TriggerExecute(gt_KerriganFix, true, false);
     Wait(2.0, c_timeReal);
     TriggerQueueEnter();
     TriggerExecute(gt_ObjectiveReachTheSpaceportCreate, true, true);
@@ -2666,7 +2672,7 @@ bool gt_FirstDominionEncounterQ2_Func (bool testConds, bool runActions) {
     Wait(0.5, c_timeGame);
     libNtve_gf_MakeUnitUncommandable(gv_kerrigan, false);
     CameraLockInput(gv_pLAYER_01_USER, false);
-    libC6542F50_gf_APArchipelagoSendData(3);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     TriggerQueueEnter();
     TriggerExecute(gt_ButtonFlashKineticBlastOn, true, false);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
@@ -3361,7 +3367,7 @@ bool gt_TeachCrushingGripQ2_Func (bool testConds, bool runActions) {
     Wait(1.0, c_timeGame);
     libNtve_gf_MakeUnitUncommandable(gv_kerrigan, false);
     CameraLockInput(gv_pLAYER_01_USER, false);
-    libC6542F50_gf_APArchipelagoSendData(4);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     TransmissionClearAll();
     TriggerQueueEnter();
     if ((UnitGroupCount(gv_s1_BridgeCrushingGripDominion, c_unitCountAlive) > 0)) {
@@ -4748,7 +4754,7 @@ bool gt_SublevelDoorSecured_Func (bool testConds, bool runActions) {
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
     Wait(2.0, c_timeGame);
     TriggerExecute(gt_ObjectiveHoldOutAtDoorComplete, true, true);
-    libC6542F50_gf_APArchipelagoSendData(5);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     Wait(1.0, c_timeGame);
     libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/3248DA7C"));
     TriggerExecute(gt_MidQStage2, true, false);
@@ -7227,6 +7233,7 @@ bool gt_CreateDestinationTimer_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_TransmissionTramAlmostThereQ, true, false);
+    TriggerExecute(gt_TramSuccessfullyDefended, true, false);
     return true;
 }
 
@@ -8085,11 +8092,24 @@ bool gt_TramSuccessfullyDefended_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libC6542F50_gf_APArchipelagoSendData(2);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     TriggerEnable(gt_TramAt40Health, false);
     TriggerEnable(gt_TramAt75Health, false);
-    while (!((UnitGroupCount(gv_s3_TramAttackGroup, c_unitCountAlive) == 0) && (libSwaC_gf_PlayerIsInCombatCampaign(gv_pLAYER_01_USER) == false))) {
-        Wait(1.0, c_timeGame);
+    while (true) {
+        if ((UnitGroupCount(gv_s3_TramAttackGroup, c_unitCountAlive) == 0) && (libSwaC_gf_PlayerIsInCombatCampaign(gv_pLAYER_01_USER) == false)) {
+            break;
+        }
+        else {
+            if ((UnitGroupCount(gv_s3_TramAttackGroup, c_unitCountAlive) == 0)) {
+                Wait(4.0, c_timeGame);
+                if ((UnitGroupCount(gv_s3_TramAttackGroup, c_unitCountAlive) == 0)) {
+                    break;
+                }
+
+            }
+
+            Wait(1.0, c_timeGame);
+        }
     }
     if ((gv_gameOver == true)) {
         return true;
@@ -8105,11 +8125,6 @@ bool gt_TramSuccessfullyDefended_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDefendTheTramComplete, true, true);
     libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/966206AB"));
     gv_aPArchangelSection = true;
-    if (((TechTreeAbilityIsAllowed(1, AbilityCommand("MindBolt", 0)) == false) || (TechTreeUpgradeCount(1, "K5MindBolt", c_techCountCompleteOnly) == 0)) && (TechTreeUpgradeCount(1, "K5PrimalSlash", c_techCountCompleteOnly) == 0)) {
-        TechTreeUpgradeAddLevel(1, "K5MindBolt", 1);
-        TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("MindBolt", 0), true);
-    }
-
     TriggerExecute(gt_MidQStage4, true, false);
     return true;
 }
@@ -10274,7 +10289,7 @@ bool gt_VictoryArchangelDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libC6542F50_gf_APArchipelagoSendData(1);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libNtve_gf_MakeUnitInvulnerable(gv_kerrigan, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "VictoryMusic", c_soundtrackCueAny, c_soundtrackIndexAny, true);
     TriggerExecute(gt_VictorySequence, true, false);
@@ -10494,6 +10509,7 @@ bool gt_ObjectiveGettoSublevelDoorComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveGettoSublevelDoorCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10522,7 +10538,7 @@ bool gt_ObjectiveGettoSublevelDoorFailed_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveGettoSublevelDoorCreate, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
     return true;
 }
 
@@ -10580,6 +10596,7 @@ bool gt_ObjectiveHoldOutAtDoorComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveHoldOutAtDoorCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10608,7 +10625,7 @@ bool gt_ObjectiveHoldOutAtDoorFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveHoldOutAtDoorCreate, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase2, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
     return true;
 }
 
@@ -10666,6 +10683,7 @@ bool gt_ObjectiveEscapeThroughSublevelComplete_Func (bool testConds, bool runAct
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEscapeThroughSublevelCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10694,7 +10712,7 @@ bool gt_ObjectiveEscapeThroughSublevelFailed_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEscapeThroughSublevelCreate, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase22, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase22);
     return true;
 }
 
@@ -10752,6 +10770,7 @@ bool gt_ObjectiveDefendTheTramComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDefendTheTramCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase222);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10780,7 +10799,7 @@ bool gt_ObjectiveDefendTheTramFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDefendTheTramCreate, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase222, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(c_invalidObjectiveId);
     return true;
 }
 
@@ -10838,6 +10857,7 @@ bool gt_ObjectiveReachTheSpaceportComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveReachTheSpaceportCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2222);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10866,7 +10886,7 @@ bool gt_ObjectiveReachTheSpaceportFailed_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveReachTheSpaceportCreate, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase2222, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2222);
     return true;
 }
 
@@ -10924,6 +10944,7 @@ bool gt_ObjectiveDestroytheArchangelComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroytheArchangelCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22222);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10952,7 +10973,7 @@ bool gt_ObjectiveDestroytheArchangelFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroytheArchangelCreate, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase22222, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase22222);
     return true;
 }
 
@@ -11010,6 +11031,7 @@ bool gt_ObjectiveKerriganMustSurviveComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKerriganMustSurviveCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22223);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -11038,7 +11060,7 @@ bool gt_ObjectiveKerriganMustSurviveFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKerriganMustSurviveCreate, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase22223, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase22223);
     return true;
 }
 
@@ -11066,12 +11088,10 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_IntroSetup, true, true);
     TriggerExecute(gt_IntroCinematic, true, true);
     TriggerExecute(gt_IntroCinematicEnd, true, true);
     TriggerExecute(gt_IntroCleanup, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -11421,12 +11441,10 @@ bool gt_MidQStage2_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_MidSetupStage2, true, true);
     TriggerExecute(gt_MidCinematicStage2, true, true);
     TriggerExecute(gt_MidCinematicEndStage2, true, true);
     TriggerExecute(gt_MidCleanupStage2, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -11808,12 +11826,10 @@ bool gt_MidQStage3_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_MidSetupStage3, true, true);
     TriggerExecute(gt_MidCinematicStage3, true, true);
     TriggerExecute(gt_MidCinematicEndStage3, true, true);
     TriggerExecute(gt_MidCleanupStage3, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -12099,12 +12115,10 @@ bool gt_MidQStage4_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_MidSetupStage4, true, true);
     TriggerExecute(gt_MidCinematicStage4, true, true);
     TriggerExecute(gt_MidCinematicEndStage4, true, true);
     TriggerExecute(gt_MidCleanupStage4, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -12532,12 +12546,10 @@ bool gt_MidQArchangel_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_MidSetupArchangel, true, true);
     TriggerExecute(gt_MidCinematicArchangel, true, true);
     TriggerExecute(gt_MidCinematicEndArchangel, true, true);
     TriggerExecute(gt_MidCleanupArchangel, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -13596,158 +13608,154 @@ void gt_VictoryCinematicDropPods_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Archipelago Initialization
+// Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
-bool gt_ArchipelagoInitialization_Func (bool testConds, bool runActions) {
+bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
     // Variable Declarations
-    unit lv_terminal;
-    unitgroup lv_noRemoval;
-    int lv_difficulty;
+    unit lv_currentUnit;
 
     // Automatic Variable Declarations
-    unitgroup autoD0A211EC_g;
-    int autoD0A211EC_u;
-    unitgroup autoF3AF7B09_g;
-    int autoF3AF7B09_u;
-    unit autoF3AF7B09_var;
-    unitgroup auto3BE69BA3_g;
-    int auto3BE69BA3_u;
-    playergroup autoC75231B0_g;
-    int autoC75231B0_var;
+    unitgroup auto093B002B_g;
+    int auto093B002B_u;
 
     // Variable Initialization
-    lv_noRemoval = UnitGroupEmpty();
-    lv_difficulty = 2;
 
     // Actions
     if (!runActions) {
         return true;
     }
 
-    autoD0A211EC_g = UnitGroupFilter("HealthDispenser", c_playerAny, UnitGroupFromId(3), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-    autoD0A211EC_u = UnitGroupCount(autoD0A211EC_g, c_unitCountAll);
-    for (;; autoD0A211EC_u -= 1) {
-        lv_terminal = UnitGroupUnitFromEnd(autoD0A211EC_g, autoD0A211EC_u);
-        if (lv_terminal == null) { break; }
-        autoF3AF7B09_g = UnitGroupSearch("HealthDispenserPickup", c_playerAny, UnitGetPosition(lv_terminal), 10.0, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1);
-        autoF3AF7B09_u = UnitGroupCount(autoF3AF7B09_g, c_unitCountAll);
-        for (;; autoF3AF7B09_u -= 1) {
-            autoF3AF7B09_var = UnitGroupUnitFromEnd(autoF3AF7B09_g, autoF3AF7B09_u);
-            if (autoF3AF7B09_var == null) { break; }
-            UnitRemove(autoF3AF7B09_var);
-        }
+    auto093B002B_g = UnitGroupFromId(1);
+    auto093B002B_u = UnitGroupCount(auto093B002B_g, c_unitCountAll);
+    for (;; auto093B002B_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(auto093B002B_g, auto093B002B_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
     }
-    lv_difficulty = libC6542F50_gf_APSetDifficulty(StringWord(EventChatMessage(false), 2), UnitGroupFromId(1), UnitGroupFromId(2), UnitGroupFromId(4), UnitGroupFromId(3));
-    auto3BE69BA3_g = UnitGroupFilter("HealthDispenser", c_playerAny, UnitGroupFromId(3), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-    auto3BE69BA3_u = UnitGroupCount(auto3BE69BA3_g, c_unitCountAll);
-    for (;; auto3BE69BA3_u -= 1) {
-        lv_terminal = UnitGroupUnitFromEnd(auto3BE69BA3_g, auto3BE69BA3_u);
-        if (lv_terminal == null) { break; }
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "HealthDispenserPickup", 0, UnitGetOwner(lv_terminal), PointWithOffsetPolar(UnitGetPosition(lv_terminal), 1.5, UnitGetFacing(lv_terminal)));
-    }
-    autoC75231B0_g = PlayerGroupAll();
-    autoC75231B0_var = -1;
-    while (true) {
-        autoC75231B0_var = PlayerGroupNextPlayer(autoC75231B0_g, autoC75231B0_var);
-        if (autoC75231B0_var < 0) { break; }
-        PlayerSetDifficulty(autoC75231B0_var, lv_difficulty);
-    }
-    TriggerExecute(libC6542F50_gt_APPreInitMap, true, true);
-    TriggerExecute(gt_Initialization, true, true);
-    libC6542F50_gf_initchatbox(c_anchorTopRight, 500, 350, 0, 50);
-    libC6542F50_gf_showhidechatbox(1, true);
-    TechTreeRestrictionsEnable(1, true);
-    TriggerExecute(libC6542F50_gt_APClearTech, true, false);
-    libC6542F50_gf_APOptions(StringWord(EventChatMessage(false), 12));
-    libC6542F50_gf_APUnlockUnits(StringWord(EventChatMessage(false), 3), "");
-    libC6542F50_gf_APUnlockMutations(StringWord(EventChatMessage(false), 5), "");
-    libC6542F50_gf_APUnlockStrains(StringWord(EventChatMessage(false), 6), "");
-    libC6542F50_gf_APUnlockUpgrades(StringWord(EventChatMessage(false), 4), "");
-    libC6542F50_gf_APSetColors(StringWord(EventChatMessage(false), 13), StringWord(EventChatMessage(false), 14));
-    libC6542F50_gf_APPrimalKerriganTech(false);
-    TriggerExecute(gt_KerriganFix, true, true);
-    libC6542F50_gf_APSetKerriganLevel("0", "");
-    libC6542F50_gv_aPSkipKerriganActives = false;
-    libC6542F50_gv_aPKerriganBaseLevel += 1;
-    libC6542F50_gf_APSetKerriganLevel(StringWord(EventChatMessage(false), 8), "");
-    libC6542F50_gf_APUnlockKerriganAbilities(StringWord(EventChatMessage(false), 7), libC6542F50_gv_aPSkipKerriganActives, "");
-    if ((libC6542F50_gv_aPKerriganless == true)) {
-        TechTreeUpgradeAddLevel(1, "K5MindBolt", 1);
-        TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("MindBolt", 0), true);
-        TechTreeUpgradeAddLevel(1, "K5CrushingGrip", 1);
-        TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("PsionicLift", 0), true);
-    }
-
-    libC6542F50_gf_GiveMineralsAndVespene(StringToInt(StringWord(EventChatMessage(false), 9)), StringToInt(StringWord(EventChatMessage(false), 10)), "");
-    TriggerExecute(libC6542F50_gt_APSetInitFinished, true, true);
-    libC6542F50_gf_APArchipelagoSendData(0);
-    TriggerEnable(TriggerGetCurrent(), false);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ArchipelagoInitialization_Init () {
-    gt_ArchipelagoInitialization = TriggerCreate("gt_ArchipelagoInitialization_Func");
-    TriggerAddEventChatMessage(gt_ArchipelagoInitialization, c_playerAny, "ArchipelagoLoad", false);
+void gt_onDifficultyCasual_Init () {
+    gt_onDifficultyCasual = TriggerCreate("gt_onDifficultyCasual_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Kerrigan Fix
+// Trigger: onDifficultyNormal
 //--------------------------------------------------------------------------------------------------
-bool gt_KerriganFix_Func (bool testConds, bool runActions) {
+bool gt_onDifficultyNormal_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
     // Automatic Variable Declarations
-    unitgroup auto62DB5EE0_g;
-    int auto62DB5EE0_u;
-    unit auto62DB5EE0_var;
-    unitgroup autoBF9C34E7_g;
-    int autoBF9C34E7_u;
-    unit autoBF9C34E7_var;
+    unitgroup auto3FFA9641_g;
+    int auto3FFA9641_u;
+
+    // Variable Initialization
 
     // Actions
     if (!runActions) {
         return true;
     }
 
-    Wait(0.1, c_timeGame);
-    if ((libC6542F50_gf_APKerriganisPrimal() == false)) {
-        libNtve_gf_SetUpgradeLevelForPlayer(1, "KerriganPostLabSounds", 0);
-        auto62DB5EE0_g = UnitGroup("K5Kerrigan", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, 0, 0), 0);
-        auto62DB5EE0_u = UnitGroupCount(auto62DB5EE0_g, c_unitCountAll);
-        for (;; auto62DB5EE0_u -= 1) {
-            auto62DB5EE0_var = UnitGroupUnitFromEnd(auto62DB5EE0_g, auto62DB5EE0_u);
-            if (auto62DB5EE0_var == null) { break; }
-            libNtve_gf_SendActorMessageToUnit(auto62DB5EE0_var, "SetSoundSuffix");
-            libNtve_gf_SendActorMessageToUnit(auto62DB5EE0_var, "StatusSet SoundRank 0");
-        }
-        autoBF9C34E7_g = UnitGroup("K5KerriganBurrowed", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, 0, 0), 0);
-        autoBF9C34E7_u = UnitGroupCount(autoBF9C34E7_g, c_unitCountAll);
-        for (;; autoBF9C34E7_u -= 1) {
-            autoBF9C34E7_var = UnitGroupUnitFromEnd(autoBF9C34E7_g, autoBF9C34E7_u);
-            if (autoBF9C34E7_var == null) { break; }
-            libNtve_gf_SendActorMessageToUnit(autoBF9C34E7_var, "SetSoundSuffix");
-            libNtve_gf_SendActorMessageToUnit(autoBF9C34E7_var, "StatusSet SoundRank 0");
-        }
+    auto3FFA9641_g = UnitGroupFromId(2);
+    auto3FFA9641_u = UnitGroupCount(auto3FFA9641_g, c_unitCountAll);
+    for (;; auto3FFA9641_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(auto3FFA9641_g, auto3FFA9641_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
     }
-
-    if ((libC6542F50_gv_aPKerriganless == true)) {
-        TechTreeUpgradeAddLevel(1, "K5MindBolt", 1);
-        TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("MindBolt", 0), true);
-        TechTreeUpgradeAddLevel(1, "K5CrushingGrip", 1);
-        TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("PsionicLift", 0), true);
-    }
-
-    if ((gv_aPArchangelSection == true) && ((TechTreeAbilityIsAllowed(1, AbilityCommand("MindBolt", 0)) == false) || (TechTreeUpgradeCount(1, "K5MindBolt", c_techCountCompleteOnly) == 0)) && (TechTreeUpgradeCount(1, "K5PrimalSlash", c_techCountCompleteOnly) == 0)) {
-        TechTreeUpgradeAddLevel(1, "K5MindBolt", 1);
-        TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("MindBolt", 0), true);
-    }
-
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_KerriganFix_Init () {
-    gt_KerriganFix = TriggerCreate("gt_KerriganFix_Func");
-    TriggerAddEventChatMessage(gt_KerriganFix, c_playerAny, "UpdateTech", false);
+void gt_onDifficultyNormal_Init () {
+    gt_onDifficultyNormal = TriggerCreate("gt_onDifficultyNormal_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyHard
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyHard_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup autoCFF8B480_g;
+    int autoCFF8B480_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoCFF8B480_g = UnitGroupFromId(4);
+    autoCFF8B480_u = UnitGroupCount(autoCFF8B480_g, c_unitCountAll);
+    for (;; autoCFF8B480_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(autoCFF8B480_g, autoCFF8B480_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyHard_Init () {
+    gt_onDifficultyHard = TriggerCreate("gt_onDifficultyHard_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyBrutal
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyBrutal_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_terminal;
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup auto04DEA408_g;
+    int auto04DEA408_u;
+    unitgroup auto9ECC4F26_g;
+    int auto9ECC4F26_u;
+    unit auto9ECC4F26_var;
+    unitgroup auto7F24803A_g;
+    int auto7F24803A_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto04DEA408_g = UnitGroupFilter("HealthDispenser", c_playerAny, UnitGroupFromId(3), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto04DEA408_u = UnitGroupCount(auto04DEA408_g, c_unitCountAll);
+    for (;; auto04DEA408_u -= 1) {
+        lv_terminal = UnitGroupUnitFromEnd(auto04DEA408_g, auto04DEA408_u);
+        if (lv_terminal == null) { break; }
+        auto9ECC4F26_g = UnitGroupSearch("HealthDispenserPickup", c_playerAny, UnitGetPosition(lv_terminal), 10.0, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1);
+        auto9ECC4F26_u = UnitGroupCount(auto9ECC4F26_g, c_unitCountAll);
+        for (;; auto9ECC4F26_u -= 1) {
+            auto9ECC4F26_var = UnitGroupUnitFromEnd(auto9ECC4F26_g, auto9ECC4F26_u);
+            if (auto9ECC4F26_var == null) { break; }
+            UnitRemove(auto9ECC4F26_var);
+        }
+    }
+    auto7F24803A_g = UnitGroupFromId(3);
+    auto7F24803A_u = UnitGroupCount(auto7F24803A_g, c_unitCountAll);
+    for (;; auto7F24803A_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(auto7F24803A_g, auto7F24803A_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyBrutal_Init () {
+    gt_onDifficultyBrutal = TriggerCreate("gt_onDifficultyBrutal_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -13763,6 +13771,13 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
     libSwaC_gf_DisplayArmyButton(false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionBuild(false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(false, true);
+    lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM_SWITCHABLE_TO_PRIMAL_ZERG);
+    lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_02_DOMINION, lib5BD4895D_gv_aP_Core_Faction_TERRAN_DOMINION);
+    lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_02_DOMINION222, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+    libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     return true;
 }
 
@@ -14042,8 +14057,10 @@ void InitTriggers () {
     gt_VictoryCleanup_Init();
     gt_VictoryMusic_Init();
     gt_VictoryCinematicDropPods_Init();
-    gt_ArchipelagoInitialization_Init();
-    gt_KerriganFix_Init();
+    gt_onDifficultyCasual_Init();
+    gt_onDifficultyNormal_Init();
+    gt_onDifficultyHard_Init();
+    gt_onDifficultyBrutal_Init();
     gt_ArchInit_Init();
     gt_SetMineralCount_Init();
 }
