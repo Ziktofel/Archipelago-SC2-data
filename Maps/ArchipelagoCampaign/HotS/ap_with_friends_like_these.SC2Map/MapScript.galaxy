@@ -9,7 +9,8 @@ include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "TriggerLibs/SwarmCampaignLib"
-include "LibC6542F50"
+include "Lib5BD4895D"
+include "LibABFE498B"
 
 //--------------------------------------------------------------------------------------------------
 // Library Initialization
@@ -19,7 +20,8 @@ void InitLibs () {
     libLbty_InitLib();
     libHots_InitLib();
     libSwaC_InitLib();
-    libC6542F50_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -359,7 +361,10 @@ trigger gt_VictoryCinematic;
 trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryFadeBookmark;
-trigger gt_ArchipelagoInitialization;
+trigger gt_onDifficultyCasual;
+trigger gt_onDifficultyNormal;
+trigger gt_onDifficultyHard;
+trigger gt_onDifficultyBrutal;
 trigger gt_ArchInit;
 trigger gt_SetMineralCount;
 trigger gt_MineralPickupChecks;
@@ -1172,9 +1177,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libSwaC_gf_ULoadCampaignData("ZSpace1");
     TriggerExecute(gt_Init01Technology, true, true);
-    libSwaC_gf_PurchaseStorymodeTech();
     TriggerExecute(gt_Init04MusicSound, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
@@ -1199,9 +1202,9 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libSwaC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "SJHyperionOutOfCombat", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "SJHyperionHangerCheck", 1);
+    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("AP_AssaultMode", 0), false);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_03_PIRATE, "SJPirateYamato", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_03_PIRATE, "SJHyperionLightningStorm2", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "BattlecruiserEnableSpecializations", 1);
@@ -1313,7 +1316,6 @@ bool gt_Init02Players_Func (bool testConds, bool runActions) {
     UISetAlertTypeVisible(PlayerGroupAll(), "AttackUnitAlly_Prot", false);
     UISetAlertTypeVisible(PlayerGroupAll(), "AttackUnitAlly_Terr", false);
     UISetAlertTypeVisible(PlayerGroupAll(), "AttackUnitAlly_Zerg", false);
-    UISetFrameVisible(PlayerGroupSingle(gv_pLAYER_01_USER), c_syncFrameTypeSupply, false);
     UISetResourceVisible(PlayerGroupAll(), c_resourceTypeMinerals, false);
     UISetResourceVisible(PlayerGroupAll(), c_resourceTypeVespene, false);
     return true;
@@ -1938,6 +1940,7 @@ bool gt_HyperionBlinkUsedQ_Func (bool testConds, bool runActions) {
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     TriggerQueueExit();
     VisRevealerDestroy(gv_blinkRevealer);
+    libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "AP_HyperionAllowBuild", 1);
     return true;
 }
 
@@ -4621,7 +4624,7 @@ bool gt_PirateCapitalShipDestroyedQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libC6542F50_gf_APArchipelagoSendData(2);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     libNtve_gf_CreateUnitsAtPoint2(1, "SJPickupHealth500", 0, 0, UnitGetPosition(gv_pirateCapitalShip));
     PingDestroy(gv_pirateBossPing);
     TriggerExecute(gt_ObjectivePirateCapitalShipComplete, true, true);
@@ -5437,7 +5440,7 @@ bool gt_VictoryMainObjectiveCompleted_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libC6542F50_gf_APArchipelagoSendData(1);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libSwaC_gf_ShowHideSingularBossBarSwarmCampaign(false);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
@@ -5670,6 +5673,7 @@ bool gt_ObjectiveSetupSpaceStationComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSetupSpaceStationCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5754,6 +5758,7 @@ bool gt_ObjectiveDestroyMercenarySpaceStationComplete_Func (bool testConds, bool
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyMercenarySpaceStationCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5812,6 +5817,7 @@ bool gt_ObjectiveHyperionMustSurviveComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveHyperionMustSurviveCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5840,7 +5846,7 @@ bool gt_ObjectiveHyperionMustSurviveFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveHyperionMustSurviveCreate, true, false);
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZSaveRaynor01Objective04", libSwaC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
     return true;
 }
 
@@ -5869,6 +5875,7 @@ bool gt_ObjectiveMineralFieldsCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSaveRaynor01Objective03");
     gv_objectiveMineralFields = ObjectiveLastCreated();
+    libSwaC_gf_SetMissionObjectiveProgress2("ZSaveRaynor01Objective03", gv_objectiveMineralFieldsCount, true, null, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5902,6 +5909,7 @@ bool gt_ObjectiveMineralFieldsUpdate_Func (bool testConds, bool runActions) {
         TriggerExecute(gt_ObjectiveMineralFieldsComplete, true, false);
     }
     else {
+        libSwaC_gf_SetMissionObjectiveProgress2("ZSaveRaynor01Objective03", gv_objectiveMineralFieldsCount, true, null, true);
         TriggerExecute(gt_TransmissionMineralFieldUpdateQ, true, false);
     }
     return true;
@@ -5931,6 +5939,7 @@ bool gt_ObjectiveMineralFieldsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveMineralFieldsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveMineralFields);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_TransmissionMineralFieldCompleteQ, true, false);
     return true;
@@ -6005,6 +6014,7 @@ bool gt_TransmissionMineralFieldCompleteQ_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveMineralFields);
     TriggerQueueEnter();
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     gf_WaitforCriticalTransmissionFinished();
@@ -6067,6 +6077,7 @@ bool gt_ObjectivePirateCapitalShipComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectivePirateCapitalShipCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectivePirateCapitalShip);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6095,12 +6106,10 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_IntroSetup, true, true);
     TriggerExecute(gt_IntroCinematic, true, true);
     TriggerExecute(gt_IntroCinematicEnd, true, true);
     TriggerExecute(gt_IntroCleanup, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -6437,12 +6446,10 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_MidSetup, true, true);
     TriggerExecute(gt_MidCinematic, true, true);
     TriggerExecute(gt_MidCinematicEnd, true, true);
     TriggerExecute(gt_MidCleanup, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -6989,70 +6996,135 @@ void gt_VictoryFadeBookmark_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Archipelago Initialization
+// Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
-bool gt_ArchipelagoInitialization_Func (bool testConds, bool runActions) {
+bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
     // Variable Declarations
-    unitgroup lv_noRemoval;
-    int lv_difficulty;
+    unit lv_currentUnit;
 
     // Automatic Variable Declarations
-    playergroup auto05AD4415_g;
-    int auto05AD4415_var;
+    unitgroup auto20E4C833_g;
+    int auto20E4C833_u;
 
     // Variable Initialization
-    lv_noRemoval = UnitGroupEmpty();
-    lv_difficulty = 2;
 
     // Actions
     if (!runActions) {
         return true;
     }
 
-    lv_difficulty = libC6542F50_gf_APSetDifficulty(StringWord(EventChatMessage(false), 2), UnitGroupFromId(1), UnitGroupFromId(2), UnitGroupFromId(3), UnitGroupFromId(4));
-    auto05AD4415_g = PlayerGroupAll();
-    auto05AD4415_var = -1;
-    while (true) {
-        auto05AD4415_var = PlayerGroupNextPlayer(auto05AD4415_g, auto05AD4415_var);
-        if (auto05AD4415_var < 0) { break; }
-        PlayerSetDifficulty(auto05AD4415_var, lv_difficulty);
+    auto20E4C833_g = UnitGroupFromId(1);
+    auto20E4C833_u = UnitGroupCount(auto20E4C833_g, c_unitCountAll);
+    for (;; auto20E4C833_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(auto20E4C833_g, auto20E4C833_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
     }
-    TriggerExecute(libC6542F50_gt_APPreInitMap, true, true);
-    TriggerExecute(gt_Initialization, true, true);
-    libC6542F50_gf_initchatbox(c_anchorTopRight, 500, 350, 0, 50);
-    libC6542F50_gf_showhidechatbox(1, true);
-    TechTreeRestrictionsEnable(1, true);
-    TriggerExecute(libC6542F50_gt_APClearTech, true, false);
-    libC6542F50_gf_APOptions(StringWord(EventChatMessage(false), 12));
-    libC6542F50_gf_APUnlockUnits(StringWord(EventChatMessage(false), 3), "");
-    libC6542F50_gf_APUnlockMutations(StringWord(EventChatMessage(false), 5), "");
-    libC6542F50_gf_APUnlockStrains(StringWord(EventChatMessage(false), 6), "");
-    libC6542F50_gf_APUnlockUpgrades(StringWord(EventChatMessage(false), 4), "");
-    libC6542F50_gv_aPSkipKerriganActives = true;
-    libC6542F50_gf_APSetColors(StringWord(EventChatMessage(false), 13), StringWord(EventChatMessage(false), 14));
-    libC6542F50_gf_APPrimalKerriganTech(true);
-    if ((libC6542F50_gv_aPColorPrimal == 4)) {
-        PlayerSetColorIndex(1, 2, true);
-        libC6542F50_gv_aPColorPrimal = 2;
-    }
-
-    if ((libC6542F50_gv_aPColorPrimal == 2)) {
-        PlayerSetColorIndex(1, 4, true);
-        libC6542F50_gv_aPColorPrimal = 4;
-    }
-
-    libC6542F50_gf_APSetKerriganLevel(StringWord(EventChatMessage(false), 8), "");
-    libC6542F50_gf_APUnlockKerriganAbilities(StringWord(EventChatMessage(false), 7), libC6542F50_gv_aPSkipKerriganActives, "");
-    TriggerExecute(libC6542F50_gt_APSetInitFinished, true, true);
-    libC6542F50_gf_APArchipelagoSendData(0);
-    TriggerEnable(TriggerGetCurrent(), false);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ArchipelagoInitialization_Init () {
-    gt_ArchipelagoInitialization = TriggerCreate("gt_ArchipelagoInitialization_Func");
-    TriggerAddEventChatMessage(gt_ArchipelagoInitialization, c_playerAny, "ArchipelagoLoad", false);
+void gt_onDifficultyCasual_Init () {
+    gt_onDifficultyCasual = TriggerCreate("gt_onDifficultyCasual_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyNormal
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyNormal_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup autoFEFE10A7_g;
+    int autoFEFE10A7_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoFEFE10A7_g = UnitGroupFromId(2);
+    autoFEFE10A7_u = UnitGroupCount(autoFEFE10A7_g, c_unitCountAll);
+    for (;; autoFEFE10A7_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(autoFEFE10A7_g, autoFEFE10A7_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyNormal_Init () {
+    gt_onDifficultyNormal = TriggerCreate("gt_onDifficultyNormal_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyHard
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyHard_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup autoC2C01BA9_g;
+    int autoC2C01BA9_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoC2C01BA9_g = UnitGroupFromId(3);
+    autoC2C01BA9_u = UnitGroupCount(autoC2C01BA9_g, c_unitCountAll);
+    for (;; autoC2C01BA9_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(autoC2C01BA9_g, autoC2C01BA9_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyHard_Init () {
+    gt_onDifficultyHard = TriggerCreate("gt_onDifficultyHard_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyBrutal
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyBrutal_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup autoC5D4CCB6_g;
+    int autoC5D4CCB6_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoC5D4CCB6_g = UnitGroupFromId(4);
+    autoC5D4CCB6_u = UnitGroupCount(autoC5D4CCB6_g, c_unitCountAll);
+    for (;; autoC5D4CCB6_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(autoC5D4CCB6_g, autoC5D4CCB6_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyBrutal_Init () {
+    gt_onDifficultyBrutal = TriggerCreate("gt_onDifficultyBrutal_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7067,6 +7139,11 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionBuild(false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(false, true);
+    lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+    libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     return true;
 }
 
@@ -7132,13 +7209,13 @@ bool gt_MineralPickupChecks_Func (bool testConds, bool runActions) {
     }
     autoA56FB6C6_val = lv_minedOutMineralGroup;
     if (autoA56FB6C6_val == 1) {
-        libC6542F50_gf_APArchipelagoSendData(3);
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     }
     else if (autoA56FB6C6_val == 2) {
-        libC6542F50_gf_APArchipelagoSendData(4);
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     }
     else if (autoA56FB6C6_val == 3) {
-        libC6542F50_gf_APArchipelagoSendData(5);
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     }
     else {
     }
@@ -7298,7 +7375,10 @@ void InitTriggers () {
     gt_VictoryCinematicEnd_Init();
     gt_VictoryCleanup_Init();
     gt_VictoryFadeBookmark_Init();
-    gt_ArchipelagoInitialization_Init();
+    gt_onDifficultyCasual_Init();
+    gt_onDifficultyNormal_Init();
+    gt_onDifficultyHard_Init();
+    gt_onDifficultyBrutal_Init();
     gt_ArchInit_Init();
     gt_SetMineralCount_Init();
     gt_MineralPickupChecks_Init();
