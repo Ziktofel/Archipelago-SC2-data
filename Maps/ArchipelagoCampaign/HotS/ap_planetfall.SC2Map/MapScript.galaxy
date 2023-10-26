@@ -9,7 +9,9 @@ include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "TriggerLibs/SwarmCampaignLib"
-include "LibC6542F50"
+include "Lib15EF4C78"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "aiAC1D4E5B"
 include "ai62C4CA14"
 include "ai8E40AF2E"
@@ -23,7 +25,9 @@ void InitLibs () {
     libLbty_InitLib();
     libHots_InitLib();
     libSwaC_InitLib();
-    libC6542F50_InitLib();
+    lib15EF4C78_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -315,7 +319,10 @@ trigger gt_VictoryDropPods;
 trigger gt_VictorySounds;
 trigger gt_VictoryDropPodSounds;
 trigger gt_VictoryMusic;
-trigger gt_ArchipelagoInitialization;
+trigger gt_onDifficultyCasual;
+trigger gt_onDifficultyNormal;
+trigger gt_onDifficultyHard;
+trigger gt_onDifficultyBrutal;
 trigger gt_RaiseHiddenMutas;
 trigger gt_ArchInit;
 trigger gt_SetMineralCount;
@@ -738,7 +745,7 @@ bool auto_gf_DropCreepTumor_TriggerFunc (bool testConds, bool runActions) {
     // Implementation
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, lp_dROP_LOCATION, UnitGroupEmpty(), false, gv_pLAYER_01_USER);
     Wait(2.5, c_timeGame);
-    libNtve_gf_CreateUnitsWithDefaultFacing(1, "CreepTumor", 0, gv_pLAYER_01_USER, lp_dROP_LOCATION);
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_CreepTumor", 0, gv_pLAYER_01_USER, lp_dROP_LOCATION);
     return true;
 }
 
@@ -762,7 +769,7 @@ bool auto_gf_DropSpineCrawler_TriggerFunc (bool testConds, bool runActions) {
     // Implementation
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, lp_dROP_LOCATION, UnitGroupEmpty(), false, gv_pLAYER_01_USER);
     Wait(2.5, c_timeGame);
-    libNtve_gf_CreateUnitsWithDefaultFacing(1, "SpineCrawlerUprooted", 0, gv_pLAYER_01_USER, lp_dROP_LOCATION);
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SpineCrawlerUprooted", 0, gv_pLAYER_01_USER, lp_dROP_LOCATION);
     return true;
 }
 
@@ -996,7 +1003,7 @@ bool auto_gf_VictoryDropPodHatchery_TriggerFunc (bool testConds, bool runActions
         if (autoC550E738_var == null) { break; }
         UnitKill(autoC550E738_var);
     }
-    libNtve_gf_CreateUnitsWithDefaultFacing(1, "Hatchery", c_unitCreateIgnorePlacement, gv_pLAYER_01_USER, lp_location);
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hatchery", c_unitCreateIgnorePlacement, gv_pLAYER_01_USER, lp_location);
     libNtve_gf_PlayAnimation(libNtve_gf_MainActorofUnit(UnitLastCreated()), c_animNameDefault, "Build D Start", 0, c_animTimeDefault);
     return true;
 }
@@ -1004,13 +1011,11 @@ bool auto_gf_VictoryDropPodHatchery_TriggerFunc (bool testConds, bool runActions
 void gf_HideKerrigan () {
     // Automatic Variable Declarations
     // Implementation
-    if ((libC6542F50_gv_aPKerriganless == true)) {
+    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
     }
-    else {
-        libC6542F50_gf_APResetKerriganAbilities();
-    }
+
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1023,15 +1028,18 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libSwaC_gf_ULoadCampaignData("ZKorhal1");
     TriggerExecute(gt_Init01Technology, true, true);
-    libSwaC_gf_PurchaseStorymodeTech();
     TriggerExecute(gt_Init04MusicSound, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
     TriggerExecute(gt_Init07Help, true, true);
     TriggerExecute(gt_IntroQ, true, true);
     TriggerExecute(gt_StartGameQ, true, false);
+    gf_HideKerrigan();
+    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
+        lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_pLAYER_01_USER);
+    }
+
     return true;
 }
 
@@ -1045,12 +1053,6 @@ void gt_Initialization_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_Init01Technology_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    libSwaC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     return true;
 }
 
@@ -1170,9 +1172,9 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     }
 
     gv_dominionStructuresTotal = (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION2, RegionPlayableMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) + UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionPlayableMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive));
-    libSwaC_gf_CreateHero2(PointFromId(3), gv_pLAYER_01_USER, libSwaC_ge_HeroUnit_Kerrigan, 270.0, 0, libSwaC_ge_KerriganCreatePurpose_GamePlay);
+    libNtve_gf_CreateUnitsAtPoint2(1, "AP_K5Kerrigan", 0, 1, PointFromId(3));
     gv_kerrigan = UnitLastCreated();
-    libSwaC_gf_SetHeroPanelUnit(1, UnitLastCreated());
+    libSwaC_gf_RegisterCampaignKerrigan(gv_kerrigan);
     autoD5955FDB_g = UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(9), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     autoD5955FDB_u = UnitGroupCount(autoD5955FDB_g, c_unitCountAll);
     for (;; autoD5955FDB_u -= 1) {
@@ -1526,7 +1528,7 @@ bool gt_StartHarvesting_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libSwaC_gf_StartingWorkersAutoHarvest(RegionFromId(49), RegionFromId(50));
+    lib15EF4C78_gf_StartingWorkersAutoHarvest(1, RegionFromId(49), RegionFromId(50));
     return true;
 }
 
@@ -1599,7 +1601,7 @@ bool gt_Gate01DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libC6542F50_gf_APArchipelagoSendData(2);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     TriggerEnable(gt_RemoveInvadersAtGate01, true);
     gv_gatesDestroyed += 1;
     if ((gv_achievementLauncherCount < 5)) {
@@ -1615,32 +1617,32 @@ bool gt_Gate01DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     VisRevealArea(gv_pLAYER_01_USER, RegionCircle(PointFromId(344), 6.0), 6.0, false);
-    gf_DropP07ZergUnits(12, "Zergling", 6, "Baneling", PointFromId(342), PointFromId(347));
+    gf_DropP07ZergUnits(12, "AP_Zergling", 6, "AP_Baneling", PointFromId(342), PointFromId(347));
     Wait(1.0, c_timeGame);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(12, "Zergling", 6, "Baneling", PointFromId(343), PointFromId(347));
+    gf_DropP07ZergUnits(12, "AP_Zergling", 6, "AP_Baneling", PointFromId(343), PointFromId(347));
     Wait(1.0, c_timeGame);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(6, "Baneling", 6, "Baneling", PointFromId(344), PointFromId(347));
+    gf_DropP07ZergUnits(6, "AP_Baneling", 6, "AP_Baneling", PointFromId(344), PointFromId(347));
     Wait(1.5, c_timeGame);
     SoundPlayAtPoint(SoundLink("ZergArmy_Cheer_StormGates", -1), PlayerGroupAll(), Point(147.5, 71.5), 0.0, 100.0, 0.0);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(11, "Hydralisk", 8, "Roach", PointFromId(361), PointFromId(347));
+    gf_DropP07ZergUnits(11, "AP_Hydralisk", 8, "AP_Roach", PointFromId(361), PointFromId(347));
     Wait(1.5, c_timeGame);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
     if ((gv_gatesDestroyed == 3)) {
-        gf_DropP07ZergUnits(10, "Zergling", 1, "ZaGara", PointFromId(362), PointFromId(347));
+        gf_DropP07ZergUnits(10, "AP_Zergling", 1, "ZaGara", PointFromId(362), PointFromId(347));
     }
     else {
-        gf_DropP07ZergUnits(10, "Zergling", 0, null, PointFromId(362), PointFromId(347));
+        gf_DropP07ZergUnits(10, "AP_Zergling", 0, null, PointFromId(362), PointFromId(347));
     }
     return true;
 }
@@ -1673,7 +1675,7 @@ bool gt_Gate02DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libC6542F50_gf_APArchipelagoSendData(3);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     TriggerEnable(gt_RemoveInvadersAtGate02, true);
     gv_gatesDestroyed += 1;
     if ((gv_achievementLauncherCount < 5)) {
@@ -1699,13 +1701,13 @@ bool gt_Gate02DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(5, "Infestor", 3, "InfestedAbomination", PointFromId(427), PointFromId(437));
+    gf_DropP07ZergUnits(5, "AP_Infestor", 3, "AP_InfestedAbomination", PointFromId(427), PointFromId(437));
     Wait(1.5, c_timeGame);
     SoundPlayAtPoint(SoundLink("ZergArmy_Cheer_StormGates", -1), PlayerGroupAll(), Point(33.5, 126.5), 0.0, 100.0, 0.0);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(12, "InfestedCivilian", 3, "InfestedAbomination", PointFromId(428), PointFromId(437));
+    gf_DropP07ZergUnits(12, "InfestedCivilian", 3, "AP_InfestedAbomination", PointFromId(428), PointFromId(437));
     Wait(1.5, c_timeGame);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
@@ -1753,7 +1755,7 @@ bool gt_Gate03DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libC6542F50_gf_APArchipelagoSendData(4);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     TriggerEnable(gt_RemoveInvadersAtGate03, true);
     gv_gatesDestroyed += 1;
     if ((gv_achievementLauncherCount < 5)) {
@@ -1774,24 +1776,24 @@ bool gt_Gate03DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(2, "Ultralisk", 1, "Ultralisk", PointFromId(440), PointFromId(438));
+    gf_DropP07ZergUnits(2, "AP_Ultralisk", 1, "AP_Ultralisk", PointFromId(440), PointFromId(438));
     Wait(1.0, c_timeGame);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(8, "Zergling", 5, "Hydralisk", PointFromId(441), PointFromId(438));
+    gf_DropP07ZergUnits(8, "AP_Zergling", 5, "AP_Hydralisk", PointFromId(441), PointFromId(438));
     Wait(1.5, c_timeGame);
     SoundPlayAtPoint(SoundLink("ZergArmy_Cheer_StormGates", -1), PlayerGroupAll(), Point(98.5, 138.5), 0.0, 100.0, 0.0);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
-    gf_DropP07ZergUnits(2, "Ultralisk", 1, "Ultralisk", PointFromId(444), PointFromId(438));
+    gf_DropP07ZergUnits(2, "AP_Ultralisk", 1, "AP_Ultralisk", PointFromId(444), PointFromId(438));
     Wait(1.5, c_timeGame);
     while (!((gv_inCinematic == false))) {
         Wait(1.0, c_timeGame);
     }
     if ((gv_gatesDestroyed == 3)) {
-        gf_DropP07ZergUnits(8, "Zergling", 1, "ZaGara", PointFromId(445), PointFromId(438));
+        gf_DropP07ZergUnits(8, "AP_Zergling", 1, "ZaGara", PointFromId(445), PointFromId(438));
     }
 
     return true;
@@ -2396,9 +2398,9 @@ bool gt_DropBileLauncher01_Func (bool testConds, bool runActions) {
         libNtve_gf_ShowHideUnit(UnitLastCreated(), true);
     }
     Wait(libHots_gf_DifficultyValueFixed2(1.3, 1.3, 1.4), c_timeGame);
-    gf_DropZergUnits(libNtve_gf_DifficultyValueInt(1, 1, 1, 2), libNtve_gf_DifficultyValueUnitType(libC6542F50_gv_aPRoach, libC6542F50_gv_aPRoach, libC6542F50_gv_aPRoach, libC6542F50_gv_aPZergling), PointFromId(246));
+    gf_DropZergUnits(libNtve_gf_DifficultyValueInt(1, 1, 1, 2), libNtve_gf_DifficultyValueUnitType("AP_Roach", "AP_Roach", "AP_Roach", "AP_Zergling"), PointFromId(246));
     Wait(1.5, c_timeGame);
-    gf_DropZergUnits(libNtve_gf_DifficultyValueInt(4, 4, 4, 2), libC6542F50_gv_aPZergling, PointFromId(245));
+    gf_DropZergUnits(libNtve_gf_DifficultyValueInt(4, 4, 4, 2), "AP_Zergling", PointFromId(245));
     Wait(5.0, c_timeGame);
     gf_DropBileLauncher(1, PointFromId(243));
     Wait(1.0, c_timeGame);
@@ -2440,7 +2442,7 @@ bool gt_DropBileLauncher02_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     gf_DropCreepTumor(PointFromId(112));
     Wait(2.0, c_timeGame);
-    gf_DropZergUnits(libNtve_gf_DifficultyValueInt(3, 3, 2, 2), libNtve_gf_DifficultyValueUnitType(libC6542F50_gv_aPHydralisk, libC6542F50_gv_aPHydralisk, libC6542F50_gv_aPHydralisk, libC6542F50_gv_aPZergling), PointFromId(248));
+    gf_DropZergUnits(libNtve_gf_DifficultyValueInt(3, 3, 2, 2), libNtve_gf_DifficultyValueUnitType("AP_Hydralisk", "AP_Hydralisk", "AP_Hydralisk", "AP_Zergling"), PointFromId(248));
     Wait(5.0, c_timeGame);
     gf_DropBileLauncher(2, PointFromId(113));
     Wait(1.0, c_timeGame);
@@ -2485,7 +2487,7 @@ bool gt_DropBileLauncher03_Func (bool testConds, bool runActions) {
     gf_DropCreepTumor(PointFromId(78));
     auto6767A8C2_n = libNtve_gf_DifficultyValueInt(3, 3, 2, 0);
     for (auto6767A8C2_i = 1; auto6767A8C2_i <= auto6767A8C2_n; auto6767A8C2_i += 1) {
-        UnitCreate(1, "Overlord", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(22)), libNtve_gf_RandomAngle());
+        UnitCreate(1, "AP_Overlord", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(22)), libNtve_gf_RandomAngle());
         libNtve_gf_ShowHideUnit(UnitLastCreated(), false);
         UnitSetHeight(UnitLastCreated(), 10.0, 0.0);
         UnitSetHeight(UnitLastCreated(), 3.75, 2.0);
@@ -2494,12 +2496,12 @@ bool gt_DropBileLauncher03_Func (bool testConds, bool runActions) {
     }
     Wait(libHots_gf_DifficultyValueFixed2(1.2, 1.2, 1.3), c_timeGame);
     if ((libNtve_gf_DifficultyValueInt(1, 1, 1, 0) == 1)) {
-        gf_DropZergUnits(libNtve_gf_DifficultyValueInt(1, 1, 1, 0), libC6542F50_gv_aPUltralisk, PointFromId(715));
+        gf_DropZergUnits(libNtve_gf_DifficultyValueInt(1, 1, 1, 0), "AP_Ultralisk", PointFromId(715));
     }
 
     Wait(1.0, c_timeGame);
     if ((libNtve_gf_DifficultyValueInt(1, 1, 1, 0) == 1)) {
-        gf_DropZergUnits(libNtve_gf_DifficultyValueInt(1, 1, 1, 0), libC6542F50_gv_aPUltralisk, PointFromId(181));
+        gf_DropZergUnits(libNtve_gf_DifficultyValueInt(1, 1, 1, 0), "AP_Ultralisk", PointFromId(181));
     }
 
     Wait(5.0, c_timeGame);
@@ -2932,30 +2934,30 @@ bool gt_RandomZergLandings_Func (bool testConds, bool runActions) {
     if (autoAD8CB3EE_val == RegionFromId(19)) {
         if ((gv_outpostDrop[1] == false)) {
             gv_outpostDrop[1] = true;
-            gf_DropZergUnits(3, libC6542F50_gv_aPRoach, PointFromId(626));
+            gf_DropZergUnits(3, "AP_Roach", PointFromId(626));
         }
 
     }
     else if (autoAD8CB3EE_val == RegionFromId(21)) {
         if ((gv_outpostDrop[2] == false)) {
             gv_outpostDrop[2] = true;
-            gf_DropZergUnits(5, libC6542F50_gv_aPZergling, PointFromId(628));
+            gf_DropZergUnits(5, "AP_Zergling", PointFromId(628));
         }
 
     }
     else if (autoAD8CB3EE_val == RegionFromId(18)) {
         if ((gv_outpostDrop[5] == false)) {
             gv_outpostDrop[5] = true;
-            gf_DropZergUnits(6, libC6542F50_gv_aPZergling, PointFromId(565));
+            gf_DropZergUnits(6, "AP_Zergling", PointFromId(565));
         }
 
     }
     else if (autoAD8CB3EE_val == RegionFromId(23)) {
         if ((gv_outpostDrop[6] == false)) {
             gv_outpostDrop[6] = true;
-            gf_DropZergUnits(5, libC6542F50_gv_aPZergling, PointFromId(630));
+            gf_DropZergUnits(5, "AP_Zergling", PointFromId(630));
             Wait(2.0, c_timeGame);
-            gf_DropZergUnits(3, libC6542F50_gv_aPHydralisk, PointFromId(631));
+            gf_DropZergUnits(3, "AP_Hydralisk", PointFromId(631));
         }
 
     }
@@ -3140,22 +3142,22 @@ bool gt_GivePlayerForcesIfNeeded_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libNtve_gf_CreateUnitsWithDefaultFacing(12, libC6542F50_gv_aPZergling, 0, gv_pLAYER_01_USER, PointFromId(247));
+    libNtve_gf_CreateUnitsWithDefaultFacing(12, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(247));
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(138), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
     Wait(1.5, c_timeGame);
-    libNtve_gf_CreateUnitsWithDefaultFacing(2, libC6542F50_gv_aPUltralisk, 0, gv_pLAYER_01_USER, PointFromId(247));
+    libNtve_gf_CreateUnitsWithDefaultFacing(2, "AP_Ultralisk", 0, gv_pLAYER_01_USER, PointFromId(247));
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(1050), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
     Wait(1.5, c_timeGame);
-    libNtve_gf_CreateUnitsWithDefaultFacing(6, libC6542F50_gv_aPHydralisk, 0, gv_pLAYER_01_USER, PointFromId(247));
+    libNtve_gf_CreateUnitsWithDefaultFacing(6, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(247));
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(1401), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
     Wait(1.5, c_timeGame);
-    libNtve_gf_CreateUnitsWithDefaultFacing(12, libC6542F50_gv_aPZergling, 0, gv_pLAYER_01_USER, PointFromId(247));
+    libNtve_gf_CreateUnitsWithDefaultFacing(12, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(247));
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(1402), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
     Wait(1.5, c_timeGame);
-    libNtve_gf_CreateUnitsWithDefaultFacing(2, libC6542F50_gv_aPUltralisk, 0, gv_pLAYER_01_USER, PointFromId(247));
+    libNtve_gf_CreateUnitsWithDefaultFacing(2, "AP_Ultralisk", 0, gv_pLAYER_01_USER, PointFromId(247));
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(1403), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
     Wait(1.5, c_timeGame);
-    libNtve_gf_CreateUnitsWithDefaultFacing(6, libC6542F50_gv_aPHydralisk, 0, gv_pLAYER_01_USER, PointFromId(247));
+    libNtve_gf_CreateUnitsWithDefaultFacing(6, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(247));
     libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(1404), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
     return true;
 }
@@ -3302,7 +3304,7 @@ bool gt_LeviathanSafety_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "HotSLeviathan"))) {
+        if (!((UnitGetType(EventUnit()) == "AP_HotSLeviathan"))) {
             return false;
         }
 
@@ -4542,7 +4544,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     gv_gameOver = true;
-    libC6542F50_gf_APArchipelagoSendData(1);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     if ((UnitIsAlive(gv_kerrigan) == true)) {
         libNtve_gf_MakeUnitInvulnerable(gv_kerrigan, true);
     }
@@ -4794,6 +4796,7 @@ bool gt_ObjectiveDeployBileLauncherComplete_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDeployBileLauncherCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4853,7 +4856,7 @@ bool gt_ObjectiveDeployBileLauncherFailed_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDeployBileLauncherCreate, true, false);
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZKorhal01Objective01", libSwaC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
     return true;
 }
 
@@ -4911,6 +4914,7 @@ bool gt_ObjectiveBileLauncherLossComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveBileLauncherLossCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4970,7 +4974,7 @@ bool gt_ObjectiveBileLauncherLossFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveBileLauncherLossCreate, true, false);
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZKorhal01Objective02", libSwaC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase22);
     return true;
 }
 
@@ -4999,6 +5003,7 @@ bool gt_ObjectiveDestroyDominionBaseCreate_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal01Objective04");
     gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
+    libSwaC_gf_SetMissionObjectiveProgress2("ZKorhal01Objective04", 0, true, null, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5027,6 +5032,7 @@ bool gt_ObjectiveDestroyDominionBaseComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyDominionBaseCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5047,6 +5053,10 @@ bool gt_ObjectiveDestroyDominionBaseUpdate_Func (bool testConds, bool runActions
     }
 
     TriggerExecute(gt_ObjectiveDestroyDominionBaseCreate, true, false);
+    if ((gv_dominionBasesDestroyed < 2)) {
+        libSwaC_gf_SetMissionObjectiveProgress2("ZKorhal01Objective04", gv_dominionBasesDestroyed, true, null, true);
+    }
+
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5075,7 +5085,7 @@ bool gt_ObjectiveDestroyDominionBaseFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyDominionBaseCreate, true, false);
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZKorhal01Objective04", libSwaC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
     return true;
 }
 
@@ -5104,6 +5114,7 @@ bool gt_ObjectiveDestroyGatesCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal01Objective03");
     gv_objectiveDestroyDominionBase222 = ObjectiveLastCreated();
+    libSwaC_gf_SetMissionObjectiveProgress2("ZKorhal01Objective03", 0, true, null, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5140,7 +5151,9 @@ bool gt_ObjectiveDestroyGatesUpdate_Func (bool testConds, bool runActions) {
         TriggerExecute(gt_ObjectiveDestroyGatesComplete, true, false);
         TriggerExecute(gt_AchievementGatesBeforeLaunchersNH, true, false);
     }
-
+    else {
+        libSwaC_gf_SetMissionObjectiveProgress2("ZKorhal01Objective03", gv_gatesDestroyed, true, null, true);
+    }
     return true;
 }
 
@@ -5168,6 +5181,7 @@ bool gt_ObjectiveDestroyGatesComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyGatesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase222);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5196,12 +5210,10 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_IntroSetup, true, true);
     TriggerExecute(gt_IntroCinematic, true, true);
     TriggerExecute(gt_IntroCinematicEnd, true, true);
     TriggerExecute(gt_IntroCleanup, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -5486,7 +5498,7 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
         if (auto524D027D_var == null) { break; }
         UnitRemove(auto524D027D_var);
     }
-    auto7FFD1ACC_g = UnitGroup("Larva", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto7FFD1ACC_g = UnitGroup("AP_Larva", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto7FFD1ACC_u = UnitGroupCount(auto7FFD1ACC_g, c_unitCountAll);
     for (;; auto7FFD1ACC_u -= 1) {
         auto7FFD1ACC_var = UnitGroupUnitFromEnd(auto7FFD1ACC_g, auto7FFD1ACC_u);
@@ -5836,12 +5848,10 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libC6542F50_gv_aPDelayUpdate = true;
     TriggerExecute(gt_MidSetup, true, true);
     TriggerExecute(gt_MidCinematic, true, true);
     TriggerExecute(gt_MidCinematicEnd, true, true);
     TriggerExecute(gt_MidCleanup, true, true);
-    libC6542F50_gv_aPDelayUpdate = false;
     TriggerQueueExit();
     return true;
 }
@@ -6534,67 +6544,135 @@ void gt_VictoryMusic_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Archipelago Initialization
+// Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
-bool gt_ArchipelagoInitialization_Func (bool testConds, bool runActions) {
+bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
     // Variable Declarations
-    unitgroup lv_noRemoval;
-    int lv_difficulty;
+    unit lv_currentUnit;
 
     // Automatic Variable Declarations
-    playergroup auto6E38A28A_g;
-    int auto6E38A28A_var;
+    unitgroup auto6B891E2D_g;
+    int auto6B891E2D_u;
 
     // Variable Initialization
-    lv_noRemoval = UnitGroupEmpty();
-    lv_difficulty = 2;
 
     // Actions
     if (!runActions) {
         return true;
     }
 
-    lv_difficulty = libC6542F50_gf_APSetDifficulty(StringWord(EventChatMessage(false), 2), UnitGroupFromId(1), UnitGroupFromId(2), UnitGroupFromId(4), UnitGroupFromId(3));
-    auto6E38A28A_g = PlayerGroupAll();
-    auto6E38A28A_var = -1;
-    while (true) {
-        auto6E38A28A_var = PlayerGroupNextPlayer(auto6E38A28A_g, auto6E38A28A_var);
-        if (auto6E38A28A_var < 0) { break; }
-        PlayerSetDifficulty(auto6E38A28A_var, lv_difficulty);
+    auto6B891E2D_g = UnitGroupFromId(1);
+    auto6B891E2D_u = UnitGroupCount(auto6B891E2D_g, c_unitCountAll);
+    for (;; auto6B891E2D_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(auto6B891E2D_g, auto6B891E2D_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
     }
-    TriggerExecute(libC6542F50_gt_APPreInitMap, true, true);
-    TriggerExecute(gt_Initialization, true, true);
-    libC6542F50_gf_initchatbox(c_anchorTopRight, 500, 350, 0, 50);
-    libC6542F50_gf_showhidechatbox(1, true);
-    TechTreeRestrictionsEnable(1, true);
-    TriggerExecute(libC6542F50_gt_APClearTech, true, false);
-    libC6542F50_gf_APOptions(StringWord(EventChatMessage(false), 12));
-    libC6542F50_gv_aPUnitVarCallback = gt_RaiseHiddenMutas;
-    libC6542F50_gf_APUnlockUnits(StringWord(EventChatMessage(false), 3), "");
-    libC6542F50_gf_APUnlockMutations(StringWord(EventChatMessage(false), 5), "");
-    libC6542F50_gf_APUnlockStrains(StringWord(EventChatMessage(false), 6), "");
-    libC6542F50_gf_APUnlockUpgrades(StringWord(EventChatMessage(false), 4), "");
-    libC6542F50_gv_aPSkipKerriganActives = false;
-    libC6542F50_gf_APSetColors(StringWord(EventChatMessage(false), 13), StringWord(EventChatMessage(false), 14));
-    libC6542F50_gf_APPrimalKerriganTech(true);
-    libC6542F50_gf_APSetKerriganLevel("0", "");
-    libC6542F50_gv_aPKerriganBaseLevel = UnitGetPropertyInt(gv_kerrigan, c_unitPropXP, c_unitPropCurrent);
-    libC6542F50_gf_APSetKerriganLevel(StringWord(EventChatMessage(false), 8), "");
-    libC6542F50_gf_APUnlockKerriganAbilities(StringWord(EventChatMessage(false), 7), libC6542F50_gv_aPSkipKerriganActives, "");
-    libSwaC_gf_StartingWorkersAutoHarvest(RegionFromId(49), RegionFromId(50));
-    gf_HideKerrigan();
-    libC6542F50_gf_GiveMineralsAndVespene(StringToInt(StringWord(EventChatMessage(false), 9)), StringToInt(StringWord(EventChatMessage(false), 10)), "");
-    libC6542F50_gf_APBonusSupply(StringToInt(StringWord(EventChatMessage(false), 11)));
-    TriggerExecute(libC6542F50_gt_APSetInitFinished, true, true);
-    libC6542F50_gf_APArchipelagoSendData(0);
-    TriggerEnable(TriggerGetCurrent(), false);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ArchipelagoInitialization_Init () {
-    gt_ArchipelagoInitialization = TriggerCreate("gt_ArchipelagoInitialization_Func");
-    TriggerAddEventChatMessage(gt_ArchipelagoInitialization, c_playerAny, "ArchipelagoLoad", false);
+void gt_onDifficultyCasual_Init () {
+    gt_onDifficultyCasual = TriggerCreate("gt_onDifficultyCasual_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyNormal
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyNormal_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup auto61F11B3B_g;
+    int auto61F11B3B_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto61F11B3B_g = UnitGroupFromId(2);
+    auto61F11B3B_u = UnitGroupCount(auto61F11B3B_g, c_unitCountAll);
+    for (;; auto61F11B3B_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(auto61F11B3B_g, auto61F11B3B_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyNormal_Init () {
+    gt_onDifficultyNormal = TriggerCreate("gt_onDifficultyNormal_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyHard
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyHard_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup autoBFE66DED_g;
+    int autoBFE66DED_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoBFE66DED_g = UnitGroupFromId(4);
+    autoBFE66DED_u = UnitGroupCount(autoBFE66DED_g, c_unitCountAll);
+    for (;; autoBFE66DED_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(autoBFE66DED_g, autoBFE66DED_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyHard_Init () {
+    gt_onDifficultyHard = TriggerCreate("gt_onDifficultyHard_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDifficultyBrutal
+//--------------------------------------------------------------------------------------------------
+bool gt_onDifficultyBrutal_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_currentUnit;
+
+    // Automatic Variable Declarations
+    unitgroup auto3922EED4_g;
+    int auto3922EED4_u;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto3922EED4_g = UnitGroupFromId(3);
+    auto3922EED4_u = UnitGroupCount(auto3922EED4_g, c_unitCountAll);
+    for (;; auto3922EED4_u -= 1) {
+        lv_currentUnit = UnitGroupUnitFromEnd(auto3922EED4_g, auto3922EED4_u);
+        if (lv_currentUnit == null) { break; }
+        UnitRemove(lv_currentUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onDifficultyBrutal_Init () {
+    gt_onDifficultyBrutal = TriggerCreate("gt_onDifficultyBrutal_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6630,7 +6708,16 @@ void gt_RaiseHiddenMutas_Init () {
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    playergroup lv_playerGroup;
+    int lv_currentPlayer;
+
     // Automatic Variable Declarations
+    playergroup autoF997647A_g;
+
+    // Variable Initialization
+    lv_playerGroup = PlayerGroupEmpty();
+
     // Actions
     if (!runActions) {
         return true;
@@ -6638,6 +6725,20 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(true, true);
+    libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
+    lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM_SWITCHABLE_TO_PRIMAL_ZERG);
+    autoF997647A_g = gv_dominionPlayerGroup;
+    lv_currentPlayer = -1;
+    while (true) {
+        lv_currentPlayer = PlayerGroupNextPlayer(autoF997647A_g, lv_currentPlayer);
+        if (lv_currentPlayer < 0) { break; }
+        lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(lv_currentPlayer, lib5BD4895D_gv_aP_Core_Faction_TERRAN_DOMINION);
+    }
+    lv_playerGroup = PlayerGroupSingle(gv_pLAYER_01_USER);
+    PlayerGroupAdd(lv_playerGroup, gv_pLAYER_02_DOMINION422);
+    lib5BD4895D_gf_AP_Core_MapConfig_setAffectedPlayers(lv_playerGroup);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     return true;
 }
 
@@ -6793,7 +6894,10 @@ void InitTriggers () {
     gt_VictorySounds_Init();
     gt_VictoryDropPodSounds_Init();
     gt_VictoryMusic_Init();
-    gt_ArchipelagoInitialization_Init();
+    gt_onDifficultyCasual_Init();
+    gt_onDifficultyNormal_Init();
+    gt_onDifficultyHard_Init();
+    gt_onDifficultyBrutal_Init();
     gt_RaiseHiddenMutas_Init();
     gt_ArchInit_Init();
     gt_SetMineralCount_Init();
