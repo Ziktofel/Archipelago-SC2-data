@@ -10,6 +10,7 @@ include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "TriggerLibs/SwarmCampaignLib"
 include "Lib15EF4C78"
+include "LibA472B13C"
 include "Lib5BD4895D"
 include "LibABFE498B"
 include "aiFCA8F95A"
@@ -25,6 +26,7 @@ void InitLibs () {
     libHots_InitLib();
     libSwaC_InitLib();
     lib15EF4C78_InitLib();
+    libA472B13C_InitLib();
     lib5BD4895D_InitLib();
     libABFE498B_InitLib();
 }
@@ -169,7 +171,6 @@ trigger gt_PerformanceHandler;
 trigger gt_ShowMapCheatUsed;
 trigger gt_PlayerIsInCombat;
 trigger gt_PlayerIsInCombatIndicatorDiminish;
-trigger gt_HandleKerriganDeath;
 trigger gt_StartGameQ;
 trigger gt_FirstHybridBehavior;
 trigger gt_TransmissionHybridIntroQ;
@@ -1801,37 +1802,6 @@ bool gt_PlayerIsInCombatIndicatorDiminish_Func (bool testConds, bool runActions)
 void gt_PlayerIsInCombatIndicatorDiminish_Init () {
     gt_PlayerIsInCombatIndicatorDiminish = TriggerCreate("gt_PlayerIsInCombatIndicatorDiminish_Func");
     TriggerAddEventTimePeriodic(gt_PlayerIsInCombatIndicatorDiminish, 1.0, c_timeGame);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Handle Kerrigan Death
-//--------------------------------------------------------------------------------------------------
-bool gt_HandleKerriganDeath_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    libSwaC_gf_StartKerriganReviveCooldown();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_HandleKerriganDeath_Init () {
-    gt_HandleKerriganDeath = TriggerCreate("gt_HandleKerriganDeath_Func");
-    TriggerAddEventUnitDied(gt_HandleKerriganDeath, UnitRefFromVariable("gv_kerrigan"));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4484,7 +4454,6 @@ bool gt_DefeatPrimaryObjectiveFailed_Func (bool testConds, bool runActions) {
     TriggerQueueClear(c_triggerQueueRemove);
     Wait(2.0, c_timeReal);
     UnitCreateEffectPoint(gv_kerrigan, "EnergyNovaPersistent", UnitGetPosition(gv_kerrigan));
-    TriggerEnable(gt_HandleKerriganDeath, false);
     UnitKill(gv_kerrigan);
     TriggerExecute(gt_ObjectiveDestroyAllHybridFailed, true, false);
     libSwaC_gf_DisplayCampaignMessage(PlayerGroupAll(), libSwaC_ge_CampaignMessageType_MissionFailed, StringExternal("Param/Value/6606CB90"), libSwaC_ge_CampaignMessageFormatNotFormat_FormatMessage);
@@ -6164,6 +6133,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    TriggerExecute(libA472B13C_gt_AP_HotS_Constructor, true, false);
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
     libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(true, true);
@@ -6224,7 +6194,6 @@ void InitTriggers () {
     gt_ShowMapCheatUsed_Init();
     gt_PlayerIsInCombat_Init();
     gt_PlayerIsInCombatIndicatorDiminish_Init();
-    gt_HandleKerriganDeath_Init();
     gt_StartGameQ_Init();
     gt_FirstHybridBehavior_Init();
     gt_TransmissionHybridIntroQ_Init();

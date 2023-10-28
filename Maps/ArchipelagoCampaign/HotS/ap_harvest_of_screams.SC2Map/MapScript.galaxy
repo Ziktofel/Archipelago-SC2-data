@@ -10,6 +10,7 @@ include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "TriggerLibs/SwarmCampaignLib"
 include "Lib15EF4C78"
+include "LibA472B13C"
 include "Lib5BD4895D"
 include "LibABFE498B"
 include "ai3DE93F0F"
@@ -27,6 +28,7 @@ void InitLibs () {
     libHots_InitLib();
     libSwaC_InitLib();
     lib15EF4C78_InitLib();
+    libA472B13C_InitLib();
     lib5BD4895D_InitLib();
     libABFE498B_InitLib();
 }
@@ -192,7 +194,6 @@ trigger gt_DEBUGStartSnow;
 trigger gt_DEBUGStopSnow;
 trigger gt_StartGameStage1Q;
 trigger gt_StartGameStage2Q;
-trigger gt_PrepareKerriganRevive;
 trigger gt_UnitDiesGiveEssenceUpdateStats;
 trigger gt_GlobalFlashFreezeBehavior;
 trigger gt_CreateFlashFreezeDurationTimerWindow;
@@ -1911,41 +1912,6 @@ bool gt_StartGameStage2Q_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_StartGameStage2Q_Init () {
     gt_StartGameStage2Q = TriggerCreate("gt_StartGameStage2Q_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Prepare Kerrigan Revive
-//--------------------------------------------------------------------------------------------------
-bool gt_PrepareKerriganRevive_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_baseRescued == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    libSwaC_gf_StartKerriganReviveCooldown();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_PrepareKerriganRevive_Init () {
-    gt_PrepareKerriganRevive = TriggerCreate("gt_PrepareKerriganRevive_Func");
-    TriggerAddEventUnitDied(gt_PrepareKerriganRevive, UnitRefFromVariable("gv_kerrigan"));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7692,7 +7658,7 @@ bool gt_MidRecoverBroodCleanup_Func (bool testConds, bool runActions) {
         AISetUnitScriptControlled(auto1FD7D7EE_var, false);
     }
     libSwaC_gf_SetHatcheryRallyPoint(gv_startingHatchery, PointFromId(437));
-    lib15EF4C78_gf_SpawnLarvaForHatchery(gv_startingHatchery, 3);
+    lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(gv_startingHatchery, 3);
     lib15EF4C78_gf_StartingWorkersAutoHarvest(gv_pLAYER_01_USER, RegionFromId(27), RegionFromId(70));
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
@@ -8323,6 +8289,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    TriggerExecute(libA472B13C_gt_AP_HotS_Constructor, true, false);
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
     libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(false, true);
@@ -8414,7 +8381,6 @@ void InitTriggers () {
     gt_DEBUGStopSnow_Init();
     gt_StartGameStage1Q_Init();
     gt_StartGameStage2Q_Init();
-    gt_PrepareKerriganRevive_Init();
     gt_UnitDiesGiveEssenceUpdateStats_Init();
     gt_GlobalFlashFreezeBehavior_Init();
     gt_CreateFlashFreezeDurationTimerWindow_Init();
