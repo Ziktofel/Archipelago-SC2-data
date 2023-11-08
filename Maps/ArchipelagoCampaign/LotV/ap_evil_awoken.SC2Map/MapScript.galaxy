@@ -9,6 +9,9 @@ include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "LibA3DDD02B"
+include "Lib2F7F8645"
+include "Lib5BD4895D"
+include "LibABFE498B"
 
 //--------------------------------------------------------------------------------------------------
 // Library Initialization
@@ -18,6 +21,9 @@ void InitLibs () {
     libLbty_InitLib();
     libHots_InitLib();
     libA3DDD02B_InitLib();
+    lib2F7F8645_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -194,6 +200,7 @@ void gf_BOFlyAwayWarpPrism (unit lp_warpPrism, region lp_despawnRegion);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -868,6 +875,31 @@ bool auto_gf_BOFlyAwayWarpPrism_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(lib2F7F8645_gt_AP_Player_LotVPrologueConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_PROTOSS_NOT_LOTV_MAIN);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionBuild(false);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -877,11 +909,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libA3DDD02B_gf_ULoadCampaignData("VoidPrologue03");
     TriggerExecute(gt_Init01Technology, true, true);
-    libA3DDD02B_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, true);
-    TriggerExecute(gt_Init03Units, true, true);
     TriggerExecute(gt_Init04MusicSound, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
@@ -894,7 +922,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -907,11 +934,7 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libA3DDD02B_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     TechTreeUpgradeAddLevel(0, "DarkProtoss", 1);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Stalker", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "HighTemplar", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Archon", gv_pLAYER_01_USER);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_TALDARIM, "DarkProtoss", 1);
     return true;
 }
@@ -3482,6 +3505,7 @@ bool gt_S1ZeratulReachesFirstBeacon_Func (bool testConds, bool runActions) {
     UnitIssueOrder(gv_zeratul, OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(47))), c_orderQueueReplace);
     UnitIssueOrder(gv_zeratul, OrderTargetingPoint(AbilityCommand("move", 4), PointWithOffsetPolar(RegionGetCenter(RegionFromId(47)), 1.0, 0.0)), c_orderQueueAddToEnd);
     UnitIssueOrder(gv_zeratul, Order(AbilityCommand("move", 2)), c_orderQueueAddToEnd);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     Wait(2.0, c_timeGame);
     TriggerExecute(gt_ObjectiveInvestigateTempleComplete, true, false);
     Wait(2.0, c_timeGame);
@@ -3517,21 +3541,21 @@ bool gt_StartGameSection2Q_Func (bool testConds, bool runActions) {
 
     libA3DDD02B_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/7846AA95"));
     UnitSelect(gv_zeratul, gv_pLAYER_01_USER, true);
-    auto03D406C4_g = UnitGroup("Stalker", gv_pLAYER_01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto03D406C4_g = UnitGroup("AP_Stalker", gv_pLAYER_01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto03D406C4_u = UnitGroupCount(auto03D406C4_g, c_unitCountAll);
     for (;; auto03D406C4_u -= 1) {
         auto03D406C4_var = UnitGroupUnitFromEnd(auto03D406C4_g, auto03D406C4_u);
         if (auto03D406C4_var == null) { break; }
         UnitSelect(auto03D406C4_var, gv_pLAYER_01_USER, true);
     }
-    auto92E00B65_g = UnitGroup("HighTemplar", gv_pLAYER_01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto92E00B65_g = UnitGroup("AP_HighArchonTemplar", gv_pLAYER_01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto92E00B65_u = UnitGroupCount(auto92E00B65_g, c_unitCountAll);
     for (;; auto92E00B65_u -= 1) {
         auto92E00B65_var = UnitGroupUnitFromEnd(auto92E00B65_g, auto92E00B65_u);
         if (auto92E00B65_var == null) { break; }
         UnitSelect(auto92E00B65_var, gv_pLAYER_01_USER, true);
     }
-    auto5E9B51B6_g = UnitGroup("Archon", gv_pLAYER_01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto5E9B51B6_g = UnitGroup("AP_Archon", gv_pLAYER_01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto5E9B51B6_u = UnitGroupCount(auto5E9B51B6_g, c_unitCountAll);
     for (;; auto5E9B51B6_u -= 1) {
         auto5E9B51B6_var = UnitGroupUnitFromEnd(auto5E9B51B6_g, auto5E9B51B6_u);
@@ -4898,6 +4922,7 @@ bool gt_S2VoidCatalystDiesQ_Func (bool testConds, bool runActions) {
     PingDestroy(gv_s2_VoidCatalystPing);
     TriggerExecute(gt_ObjectiveInvestigateTempleComplete, true, false);
     TriggerExecute(gt_ObjectiveDestroyCatalystComplete, true, true);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     TriggerQueueEnter();
     if ((gv_gameOver == true)) {
         return true;
@@ -7197,7 +7222,7 @@ bool gt_BOOutsideTerrace01_Func (bool testConds, bool runActions) {
         Wait(0.5, c_timeAI);
     }
     for (auto8C2DEC3E_i = 1; auto8C2DEC3E_i <= auto8C2DEC3E_n; auto8C2DEC3E_i += 1) {
-        UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 1), RegionRandomPoint(RegionFromId(24))), c_orderQueueReplace);
+        UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), RegionRandomPoint(RegionFromId(24))), c_orderQueueReplace);
         Wait(0.25, c_timeGame);
     }
     Wait(7.0, c_timeAI);
@@ -7292,11 +7317,11 @@ bool gt_BOOutsideTerrace02_Func (bool testConds, bool runActions) {
         Wait(0.5, c_timeAI);
     }
     for (auto30329511_i = 1; auto30329511_i <= auto30329511_n; auto30329511_i += 1) {
-        UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 1), RegionRandomPoint(RegionFromId(64))), c_orderQueueReplace);
+        UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), RegionRandomPoint(RegionFromId(64))), c_orderQueueReplace);
         Wait(0.25, c_timeGame);
     }
     for (autoD7CD8A4A_i = 1; autoD7CD8A4A_i <= autoD7CD8A4A_n; autoD7CD8A4A_i += 1) {
-        UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 3), RegionRandomPoint(RegionFromId(64))), c_orderQueueReplace);
+        UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 3), RegionRandomPoint(RegionFromId(64))), c_orderQueueReplace);
         Wait(0.25, c_timeGame);
     }
     Wait(7.0, c_timeAI);
@@ -7396,11 +7421,11 @@ bool gt_BOOutsideTerrace03_Func (bool testConds, bool runActions) {
             Wait(0.5, c_timeAI);
         }
         for (autoDEA42335_i = 1; autoDEA42335_i <= autoDEA42335_n; autoDEA42335_i += 1) {
-            UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 1), RegionRandomPoint(RegionFromId(25))), c_orderQueueReplace);
+            UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), RegionRandomPoint(RegionFromId(25))), c_orderQueueReplace);
             Wait(0.25, c_timeGame);
         }
         for (auto2FD10033_i = 1; auto2FD10033_i <= auto2FD10033_n; auto2FD10033_i += 1) {
-            UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 3), RegionRandomPoint(RegionFromId(25))), c_orderQueueReplace);
+            UnitIssueOrder(UnitFromId(565), OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 3), RegionRandomPoint(RegionFromId(25))), c_orderQueueReplace);
             Wait(0.25, c_timeGame);
         }
         Wait(7.0, c_timeAI);
@@ -7551,6 +7576,7 @@ bool gt_BOParticleCannon01DestroyedQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     gv_particleCannonsDestroyed += 1;
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsUpdate, true, false);
     if ((gv_particleCannonsDestroyed == 3)) {
@@ -7621,6 +7647,7 @@ bool gt_BOParticleCannon02DestroyedQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_particleCannonsDestroyed += 1;
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsUpdate, true, false);
     if ((gv_particleCannonsDestroyed == 3)) {
         TriggerExecute(gt_ObjectiveDestroyParticleCannonsComplete, true, false);
@@ -7690,6 +7717,7 @@ bool gt_BOParticleCannon03DestroyedQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_particleCannonsDestroyed += 1;
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsUpdate, true, false);
     if ((gv_particleCannonsDestroyed == 3)) {
         TriggerExecute(gt_ObjectiveDestroyParticleCannonsComplete, true, false);
@@ -8170,6 +8198,7 @@ bool gt_VictoryEscapeComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     UnitKill(UnitFromId(1651));
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
@@ -8383,7 +8412,7 @@ bool gt_ObjectiveInvestigateTempleComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveInvestigateTempleCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary01", libA3DDD02B_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_InvestigateTemple);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8442,7 +8471,7 @@ bool gt_ObjectiveDestroyCatalystComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyCatalystCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary02", libA3DDD02B_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_DestroyCatalyst);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8501,7 +8530,7 @@ bool gt_ObjectiveEscapeComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEscapeCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary04", libA3DDD02B_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Escape);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8588,7 +8617,7 @@ bool gt_ObjectiveZeratulMustSurviveComplete_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveZeratulMustSurviveCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary05", libA3DDD02B_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_ZeratulMustSurvive);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8675,7 +8704,10 @@ bool gt_ObjectiveDestroyParticleCannonsUpdate_Func (bool testConds, bool runActi
     }
 
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsCreate, true, false);
-    libA3DDD02B_gf_SetMissionObjectiveProgress2("PPrologue03Bonus01", gv_particleCannonsDestroyed, true, null, true);
+    if ((gv_particleCannonsDestroyed < 3)) {
+        libA3DDD02B_gf_SetMissionObjectiveProgress2("PPrologue03Bonus01", gv_particleCannonsDestroyed, true, null, true);
+    }
+
     return true;
 }
 
@@ -8704,8 +8736,7 @@ bool gt_ObjectiveDestroyParticleCannonsComplete_Func (bool testConds, bool runAc
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerEnable(gt_ObjectiveDestroyParticleCannonsUpdate, false);
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsCreate, true, false);
-    libA3DDD02B_gf_SetMissionObjectiveProgress2("PPrologue03Bonus01", gv_particleCannonsDestroyed, true, null, true);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Bonus01", libA3DDD02B_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyParticleCannons);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8780,7 +8811,7 @@ bool gt_IntroSetup_Func (bool testConds, bool runActions) {
     UnitGroupAdd(gv_cinematicTempUnits, UnitFromId(313));
     UnitSetState(UnitFromId(313), c_unitStateFidget, false);
     UnitIssueOrder(UnitFromId(313), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(317)), c_orderQueueReplace);
-    auto63F60915_g = UnitGroup("Stalker", gv_pLAYER_01_USER, RegionFromId(2), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto63F60915_g = UnitGroup("AP_Stalker", gv_pLAYER_01_USER, RegionFromId(2), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto63F60915_u = UnitGroupCount(auto63F60915_g, c_unitCountAll);
     for (;; auto63F60915_u -= 1) {
         auto63F60915_var = UnitGroupUnitFromEnd(auto63F60915_g, auto63F60915_u);
@@ -8962,7 +8993,7 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
         UnitIssueOrder(gv_zeratul, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
         UnitSetPosition(gv_zeratul, PointFromId(332), false);
         UnitSetFacing(gv_zeratul, 0.0, 0.0);
-        autoD1B6C23D_g = UnitGroup("Stalker", gv_pLAYER_01_USER, RegionFromId(2), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoD1B6C23D_g = UnitGroup("AP_Stalker", gv_pLAYER_01_USER, RegionFromId(2), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
         autoD1B6C23D_u = UnitGroupCount(autoD1B6C23D_g, c_unitCountAll);
         for (;; autoD1B6C23D_u -= 1) {
             autoD1B6C23D_var = UnitGroupUnitFromEnd(autoD1B6C23D_g, autoD1B6C23D_u);
@@ -9355,7 +9386,7 @@ bool gt_MidAntechamberCleanup_Func (bool testConds, bool runActions) {
     for (;; autoC54BC2B0_u -= 1) {
         autoC54BC2B0_var = UnitGroupUnitFromEnd(autoC54BC2B0_g, autoC54BC2B0_u);
         if (autoC54BC2B0_var == null) { break; }
-        if (((UnitGetType(autoC54BC2B0_var) == "Stalker") || (UnitGetType(autoC54BC2B0_var) == "HighTemplar") || (UnitGetType(autoC54BC2B0_var) == "Archon"))) {
+        if (((UnitGetType(autoC54BC2B0_var) == "AP_Stalker") || (UnitGetType(autoC54BC2B0_var) == "AP_HighArchonTemplar") || (UnitGetType(autoC54BC2B0_var) == "AP_Archon"))) {
             UnitSetState(autoC54BC2B0_var, c_unitStateFidget, true);
             UnitSetPosition(autoC54BC2B0_var, RegionRandomPoint(RegionFromId(81)), false);
             UnitIssueOrder(autoC54BC2B0_var, OrderTargetingPoint(AbilityCommand("move", 4), PointFromId(900)), c_orderQueueReplace);
@@ -9801,7 +9832,7 @@ bool gt_MidVoidCatalystDestroyedCleanup_Func (bool testConds, bool runActions) {
         }
     }
 
-    auto992F18D5_g = UnitGroup("Stalker", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_zeratul), 16.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto992F18D5_g = UnitGroup("AP_Stalker", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_zeratul), 16.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto992F18D5_u = UnitGroupCount(auto992F18D5_g, c_unitCountAll);
     for (;; auto992F18D5_u -= 1) {
         auto992F18D5_var = UnitGroupUnitFromEnd(auto992F18D5_g, auto992F18D5_u);
@@ -10334,6 +10365,7 @@ void gt_VictoryEarthquake_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
