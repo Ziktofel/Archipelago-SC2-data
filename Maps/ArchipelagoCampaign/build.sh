@@ -24,7 +24,7 @@ for map in HotS/*.SC2Map ; do
         done
     popd
 done
-rm -rf LotVbuild
+rm -rf LotV_build
 mkdir -p LotV_build
 for map in LotV/*.SC2Map ; do
     mpqfile=LotV_build/$(sed 's/^LotV\///g' <<< "$map")
