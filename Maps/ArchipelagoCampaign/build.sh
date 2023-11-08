@@ -24,3 +24,15 @@ for map in HotS/*.SC2Map ; do
         done
     popd
 done
+rm -rf LotVbuild
+mkdir -p LotV_build
+for map in LotV/*.SC2Map ; do
+    mpqfile=LotV_build/$(sed 's/^LotV\///g' <<< "$map")
+    smpq -c $mpqfile
+    pushd $map
+        for file in $(find . -type f) ; do
+            file=$(cut -c 3- <<< "$file")
+            smpq -a ../../$mpqfile $file
+        done
+    popd
+done
