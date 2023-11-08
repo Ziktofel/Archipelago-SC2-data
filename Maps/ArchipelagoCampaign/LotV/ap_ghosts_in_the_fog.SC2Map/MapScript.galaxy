@@ -9,6 +9,9 @@ include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "LibA3DDD02B"
+include "Lib2F7F8645"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "ai581A6995"
 include "aiA75EDF23"
 include "aiD880E95D"
@@ -21,6 +24,9 @@ void InitLibs () {
     libLbty_InitLib();
     libHots_InitLib();
     libA3DDD02B_InitLib();
+    lib2F7F8645_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -133,6 +139,7 @@ void gf_AnimateVespeneDistributioncinematic (unitgroup lp_vespeneUnits);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -967,6 +974,30 @@ bool auto_gf_AnimateVespeneDistributioncinematic_TriggerFunc (bool testConds, bo
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(lib2F7F8645_gt_AP_Player_LotVPrologueConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_PROTOSS_NOT_LOTV_MAIN);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -976,11 +1007,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libA3DDD02B_gf_ULoadCampaignData("VoidPrologue02");
     TriggerExecute(gt_Init01Technology, true, true);
-    libA3DDD02B_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, true);
-    TriggerExecute(gt_Init03Units, true, true);
     TriggerExecute(gt_Init04MusicSound, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
@@ -1006,28 +1033,9 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libA3DDD02B_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Zealot", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Sentry", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Stalker", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "DarkTemplar", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "HighTemplar", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Archon", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Immortal", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Colossus", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "VoidRay", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Phoenix", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Carrier", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "Tempest", gv_pLAYER_01_USER);
-    libA3DDD02B_gf_EnableCampaignTechUnit(true, "WarpGate", gv_pLAYER_01_USER);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "BlinkTech", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_TALDARIM, "BlinkTech", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_03_TALDARIM, "BlinkTech", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_04_TALDARIM, "BlinkTech", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "Charge", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "WarpGateResearch", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "CarrierLaunchSpeedUpgrade", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "ExtendedThermalLance", 1);
     return true;
 }
 
@@ -1999,6 +2007,7 @@ bool gt_BonusObjectiveProgressTracker_Func (bool testConds, bool runActions) {
                 AISetUnitScriptControlled(auto915B626E_var, false);
             }
             gv_bonusObjectiveActivated[lv_bonusIndex] = true;
+            lib5BD4895D_gf_AP_Core_sendLocationLocal(lv_bonusIndex);
             PingDestroy(gv_bonusObjectivePing[lv_bonusIndex]);
             TriggerExecute(gt_BonusObjectiveRockFormationsUpdate, true, false);
             gf_UnlockVespeneBreach(gv_bonusObjectiveVespeneLeak[lv_bonusIndex]);
@@ -2622,6 +2631,7 @@ bool gt_VictoryBreachtheTempleEntranceCompleted_Func (bool testConds, bool runAc
         return true;
     }
 
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
@@ -3035,7 +3045,7 @@ bool gt_ObjectiveBreachtheTempleEntranceComplete_Func (bool testConds, bool runA
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveBreachtheTempleEntranceCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue02Primary01", libA3DDD02B_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveBreachTempleEntrance);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3064,7 +3074,7 @@ bool gt_ObjectiveBreachtheTempleEntranceFailed_Func (bool testConds, bool runAct
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveBreachtheTempleEntranceCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue02Primary01", libA3DDD02B_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveBreachTempleEntrance);
     return true;
 }
 
@@ -3122,12 +3132,13 @@ bool gt_BonusObjectiveRockFormationsUpdate_Func (bool testConds, bool runActions
 
     TriggerExecute(gt_BonusObjectiveRockFormationsCreate, true, false);
     gv_bonusObjectivesObtained += 1;
-    libA3DDD02B_gf_SetMissionObjectiveProgress2("PPrologue02Bonus01", gv_bonusObjectivesObtained, true, null, true);
     if ((gv_bonusObjectivesObtained >= 3)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_BonusObjectiveRockFormationsComplete, true, false);
     }
-
+    else {
+        libA3DDD02B_gf_SetMissionObjectiveProgress2("PPrologue02Bonus01", gv_bonusObjectivesObtained, true, null, true);
+    }
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3156,7 +3167,7 @@ bool gt_BonusObjectiveRockFormationsComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_BonusObjectiveRockFormationsCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue02Bonus01", libA3DDD02B_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_bonusObjectiveRockFormations);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3819,6 +3830,7 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
