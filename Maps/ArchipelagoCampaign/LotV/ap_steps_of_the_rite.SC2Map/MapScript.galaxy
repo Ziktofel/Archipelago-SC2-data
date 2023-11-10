@@ -12,6 +12,9 @@ include "TriggerLibs/VoidLib"
 include "TriggerLibs/VoidCampaignLib"
 include "TriggerLibs/VoidCampaignMissionLib"
 include "TriggerLibs/VoidCampaignUILib"
+include "Lib30B9E51A"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "ai7AEF50D9"
 include "ai46315C0D"
 include "ai8487A584"
@@ -28,6 +31,9 @@ void InitLibs () {
     libVoiC_InitLib();
     libVCMI_InitLib();
     libVCUI_InitLib();
+    lib30B9E51A_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -156,6 +162,9 @@ void gf_AscendantBehaviour (unit lp_ascendant);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
+trigger gt_SouthMothership;
+trigger gt_NorthMothership;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -782,6 +791,73 @@ bool auto_gf_AscendantBehaviour_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS);
+    lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 175);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: SouthMothership
+//--------------------------------------------------------------------------------------------------
+bool gt_SouthMothership_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SouthMothership_Init () {
+    gt_SouthMothership = TriggerCreate("gt_SouthMothership_Func");
+    TriggerAddEventUnitDied(gt_SouthMothership, UnitRefFromVariable("gv_mothership[1]"));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: NorthMothership
+//--------------------------------------------------------------------------------------------------
+bool gt_NorthMothership_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_NorthMothership_Init () {
+    gt_NorthMothership = TriggerCreate("gt_NorthMothership_Func");
+    TriggerAddEventUnitDied(gt_NorthMothership, UnitRefFromVariable("gv_mothership[2]"));
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -791,11 +867,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_ULoadCampaignData("PTaldarim01");
     TriggerExecute(gt_Init01Technology, true, false);
-    libVoiC_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
@@ -808,7 +880,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -821,7 +892,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     TechTreeAbilityAllow(gv_pLAYER_07_VOID_EAST, AbilityCommand("Charge", 0), false);
     TechTreeAbilityAllow(gv_pLAYER_08_VOID_SOUTH, AbilityCommand("Charge", 0), false);
     TechTreeAbilityAllow(gv_pLAYER_09_VOID_WEST, AbilityCommand("Charge", 0), false);
@@ -1421,12 +1491,12 @@ bool gt_VoidRayIntro_Func (bool testConds, bool runActions) {
     libVoiC_gf_EnableCampaignTechUnit(true, "Void Ray", gv_pLAYER_01_USER);
     TriggerExecute(gt_TransmissionVoidRayIntroQ, true, false);
     Wait(2.0, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "VoidRay", 0, gv_pLAYER_01_USER, PointFromId(47));
+    libNtve_gf_CreateUnitsAtPoint2(1, "AP_VoidRayShakuras", 0, gv_pLAYER_01_USER, PointFromId(47));
     UnitSetOwner(UnitLastCreated(), gv_pLAYER_06_VOIDRAY, true);
     lv_voidRay01 = UnitLastCreated();
     UnitSetHeight(lv_voidRay01, 8.0, 0.0);
     UnitSetHeight(lv_voidRay01, 3.75, 3.0);
-    libNtve_gf_CreateUnitsAtPoint2(1, "VoidRay", 0, gv_pLAYER_01_USER, PointFromId(35));
+    libNtve_gf_CreateUnitsAtPoint2(1, "AP_VoidRayShakuras", 0, gv_pLAYER_01_USER, PointFromId(35));
     UnitSetOwner(UnitLastCreated(), gv_pLAYER_06_VOIDRAY, true);
     lv_voidRay02 = UnitLastCreated();
     UnitSetHeight(lv_voidRay02, 8.0, 0.0);
@@ -2629,7 +2699,6 @@ bool gt_MothershipDestroyed_Func (bool testConds, bool runActions) {
     if ((gv_mothershipsDestroyed >= gv_mOTHERSHIP_COUNT)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveDestroyShipsComplete, true, true);
-        TriggerExecute(gt_TransmissionBonusObjectiveUpdateQ, true, false);
         TriggerExecute(gt_TransmissionBonusObjectiveCompleteQ, true, false);
     }
     else {
@@ -2928,6 +2997,7 @@ bool gt_ShrineDestroyed_Func (bool testConds, bool runActions) {
     unit lv_shrine;
 
     // Automatic Variable Declarations
+    unit autoC0ACF11A_val;
     unit auto7B42AC61_val;
 
     // Variable Initialization
@@ -2976,6 +3046,21 @@ bool gt_ShrineDestroyed_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_ShrineReinforcements, true, false);
     TriggerExecute(gt_ObjectiveDestroyShrinesUpdate, true, false);
+    autoC0ACF11A_val = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+    if (autoC0ACF11A_val == gv_shrineNorthUnit) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    }
+    else if (autoC0ACF11A_val == gv_shrineSouthUnit) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    }
+    else if (autoC0ACF11A_val == gv_shrineEastUnit) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    }
+    else if (autoC0ACF11A_val == gv_shrineWestUnit) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    }
+    else {
+    }
     if ((gv_shrinesDestroyed == 4)) {
         gv_finalShrineLocation = UnitGetPosition(EventPlayerEffectUsedUnit(c_effectUnitCaster));
         gv_finalShrine = EventPlayerEffectUsedUnit(c_effectUnitCaster);
@@ -4128,6 +4213,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDestroyShrinesComplete, true, true);
@@ -4422,11 +4508,12 @@ bool gt_ObjectiveSurvivetheFirstNightComplete_Func (bool testConds, bool runActi
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSurvivetheFirstNightCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PTaldarim01Primary01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase5);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4458,7 +4545,7 @@ bool gt_ObjectiveSurvivetheFirstNightFailed_Func (bool testConds, bool runAction
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSurvivetheFirstNightCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PTaldarim01Primary01", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase5);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4520,7 +4607,7 @@ bool gt_ObjectiveDestroyShrinesComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyShrinesCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PTaldarim01Primary02", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4541,7 +4628,10 @@ bool gt_ObjectiveDestroyShrinesUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveDestroyShrinesCreate, true, false);
-    libVCMI_gf_SetMissionObjectiveProgress("PTaldarim01Primary02", gv_shrinesDestroyed);
+    if ((gv_shrinesDestroyed < 4)) {
+        libVCMI_gf_SetMissionObjectiveProgress("PTaldarim01Primary02", gv_shrinesDestroyed);
+    }
+
     return true;
 }
 
@@ -4572,7 +4662,7 @@ bool gt_ObjectiveDestroyShrinesFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyShrinesCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PTaldarim01Primary02", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4634,7 +4724,7 @@ bool gt_ObjectiveDestroyShipsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyShipsCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PTaldarim01Bonus01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4689,7 +4779,7 @@ bool gt_ObjectiveDestroyShipsFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyShipsCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PTaldarim01Bonus01", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5454,6 +5544,9 @@ void gt_VictoryMusic_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
+    gt_SouthMothership_Init();
+    gt_NorthMothership_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
