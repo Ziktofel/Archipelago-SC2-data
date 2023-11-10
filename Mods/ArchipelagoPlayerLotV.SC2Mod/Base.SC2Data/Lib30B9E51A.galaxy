@@ -1,6 +1,7 @@
 include "TriggerLibs/NativeLib"
-include "Lib15EF4C78"
 include "TriggerLibs/VoidCampaignMissionLib"
+include "TriggerLibs/VoidCampaignUILib"
+include "Lib15EF4C78"
 
 include "Lib30B9E51A_h"
 
@@ -10,8 +11,21 @@ include "Lib30B9E51A_h"
 // External Library Initialization
 void lib30B9E51A_InitLibraries () {
     libNtve_InitVariables();
-    lib15EF4C78_InitVariables();
     libVCMI_InitVariables();
+    libVCUI_InitVariables();
+    lib15EF4C78_InitVariables();
+}
+
+// Variable Initialization
+bool lib30B9E51A_InitVariables_completed = false;
+
+void lib30B9E51A_InitVariables () {
+    if (lib30B9E51A_InitVariables_completed) {
+        return;
+    }
+
+    lib30B9E51A_InitVariables_completed = true;
+
 }
 
 // Functions
@@ -44,10 +58,30 @@ bool lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor_Func (bool testCond
         return true;
     }
 
+    lib15EF4C78_InitLib();
     TriggerExecute(lib15EF4C78_gt_ArchipelagoPlayerHandlersConstructor, true, false);
+    TriggerEnable(libVCUI_gt_PU_GPInit, false);
+    TriggerEnable(libVCUI_gt_PU_GPVitalChanges, false);
+    TriggerEnable(libVCUI_gt_PU_GPBirthFinished, false);
+    TriggerEnable(libVCUI_gt_PU_GPDeathRemove2D, false);
+    TriggerEnable(libVCMI_gt_PM_SoAStatusWatch, false);
+    TriggerEnable(libVCMI_gt_PM_SoAInit, false);
+    TriggerEnable(libVCMI_gt_PM_SoAStatPylonUsed, false);
+    TriggerDestroy(libVCUI_gt_PU_GPInit);
+    TriggerDestroy(libVCUI_gt_PU_GPVitalChanges);
+    TriggerDestroy(libVCUI_gt_PU_GPBirthFinished);
+    TriggerDestroy(libVCUI_gt_PU_GPDeathRemove2D);
+    TriggerExecute(lib15EF4C78_gt_PU_GPInit, true, true);
+    libVCUI_gv_pU_GPPanel = lib15EF4C78_gv_pU_GPPanel;
+    libVCUI_gv_pU_GPHolder = lib15EF4C78_gv_pU_GPHolder;
+    libVCUI_gv_pU_GPCmdPanel = lib15EF4C78_gv_pU_GPCmdPanel;
+    libVCUI_gv_pU_GPCutscene = lib15EF4C78_gv_pU_GPCutscene;
+    libVCUI_gv_pU_GPEnergyBarScene = lib15EF4C78_gv_pU_GPEnergyBarScene;
+    libVCUI_gv_pU_GPEnergyGlassScene = lib15EF4C78_gv_pU_GPEnergyGlassScene;
+    libVCUI_gv_pU_GPEnergyBar = lib15EF4C78_gv_pU_GPEnergyBar;
+    libVCUI_gv_pU_GPEnergyLabel = lib15EF4C78_gv_pU_GPEnergyLabel;
     // Cinematic mode
     ap_player_cinematicModeFunction = lib30B9E51A_gf_isInCinematicMode;
-    
     // Lotv Campaign teaching
     ap_player_LotV_ShowCampaignTeaching = lib30B9E51A_gf_ShowCampaignTeaching;
     ap_player_LotV_HideCampaignTeaching = lib30B9E51A_gf_HideCampaignTeaching;
@@ -57,6 +91,34 @@ bool lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor_Func (bool testCond
 //--------------------------------------------------------------------------------------------------
 void lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor_Init () {
     lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor = TriggerCreate("lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: LoadFinishedWatcher
+//--------------------------------------------------------------------------------------------------
+bool lib30B9E51A_gt_LoadFinishedWatcher_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib30B9E51A_gv_aP_Player_LotV_loadFinished = true;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib30B9E51A_gt_LoadFinishedWatcher_Init () {
+    lib30B9E51A_gt_LoadFinishedWatcher = TriggerCreate("lib30B9E51A_gt_LoadFinishedWatcher_Func");
+    TriggerAddEventGeneric(lib30B9E51A_gt_LoadFinishedWatcher, "AP_Core_LOAD_FINISHED_EVENT");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -140,11 +202,45 @@ void lib30B9E51A_gt_TechReactorswaptoStarport_Init () {
     TriggerAddEventUnitBehaviorChange(lib30B9E51A_gt_TechReactorswaptoStarport, null, "StarportTechReactor", c_unitBehaviorChangeActivate);
 }
 
+//--------------------------------------------------------------------------------------------------
+// Trigger: VanillaSoAUIKiller
+//--------------------------------------------------------------------------------------------------
+bool lib30B9E51A_gt_VanillaSoAUIKiller_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib30B9E51A_gv_aP_Player_LotV_loadFinished == true))) {
+            return false;
+        }
+
+        if (!((null == lib15EF4C78_gv_pM_SoAUnit[1]))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    libVCUI_gf_ShowSpearofAdunUI(false, c_transitionDurationImmediate);
+    lib15EF4C78_gf_ShowSpearofAdunUI(false, c_transitionDurationImmediate);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib30B9E51A_gt_VanillaSoAUIKiller_Init () {
+    lib30B9E51A_gt_VanillaSoAUIKiller = TriggerCreate("lib30B9E51A_gt_VanillaSoAUIKiller_Func");
+    TriggerAddEventTimePeriodic(lib30B9E51A_gt_VanillaSoAUIKiller, 1.0, c_timeGame);
+}
+
 void lib30B9E51A_InitTriggers () {
     lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor_Init();
+    lib30B9E51A_gt_LoadFinishedWatcher_Init();
     lib30B9E51A_gt_TechReactorswaptoBarracks_Init();
     lib30B9E51A_gt_TechReactorswaptoFactory_Init();
     lib30B9E51A_gt_TechReactorswaptoStarport_Init();
+    lib30B9E51A_gt_VanillaSoAUIKiller_Init();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -160,6 +256,7 @@ void lib30B9E51A_InitLib () {
     lib30B9E51A_InitLib_completed = true;
 
     lib30B9E51A_InitLibraries();
+    lib30B9E51A_InitVariables();
     lib30B9E51A_InitTriggers();
 }
 

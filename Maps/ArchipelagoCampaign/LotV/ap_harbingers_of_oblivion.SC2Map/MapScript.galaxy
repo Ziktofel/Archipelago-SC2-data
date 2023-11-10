@@ -12,6 +12,10 @@ include "TriggerLibs/VoidLib"
 include "TriggerLibs/VoidCampaignLib"
 include "TriggerLibs/VoidCampaignMissionLib"
 include "TriggerLibs/VoidCampaignUILib"
+include "Lib15EF4C78"
+include "Lib30B9E51A"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "ai04DD8B1F"
 include "ai372AE431"
 include "ai44BBAAAE"
@@ -27,6 +31,10 @@ void InitLibs () {
     libVoiC_InitLib();
     libVCMI_InitLib();
     libVCUI_InitLib();
+    lib15EF4C78_InitLib();
+    lib30B9E51A_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -179,6 +187,8 @@ void gf_HybridDominatorAI (unit lp_hybrid);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
+trigger gt_TransferZergControlToPlayer;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -910,6 +920,162 @@ bool auto_gf_HybridDominatorAI_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(true, true);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: TransferZergControlToPlayer
+//--------------------------------------------------------------------------------------------------
+bool gt_TransferZergControlToPlayer_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    string lv_unitType;
+
+    // Automatic Variable Declarations
+    unitgroup autoE6A90AD2_g;
+    int autoE6A90AD2_u;
+    unitgroup auto46F444EC_g;
+    int auto46F444EC_u;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_DefeatSwarmMustSurviveFailed, false);
+    TriggerEnable(gt_KerriganDies, false);
+    autoE6A90AD2_g = UnitGroup(null, gv_pLAYER_02_DOMINION5, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoE6A90AD2_u = UnitGroupCount(autoE6A90AD2_g, c_unitCountAll);
+    for (;; autoE6A90AD2_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(autoE6A90AD2_g, autoE6A90AD2_u);
+        if (lv_unit == null) { break; }
+        if ((lv_unit == gv_zeratul)) {
+            if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
+                UnitRemove(lv_unit);
+            }
+            else {
+                libNtve_gf_RescueUnit(lv_unit, gv_pLAYER_01_USER, true);
+                libNtve_gf_ReplaceUnit(lv_unit, "AP_K5Kerrigan", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_unit = libNtve_gf_LastReplacedUnit();
+                gv_zeratul = lv_unit;
+                lib15EF4C78_gf_SetHeroPanelUnit(1, gv_zeratul, gv_pLAYER_01_USER);
+            }
+        }
+        else if ((UnitGetType(lv_unit) == "HotSRaptor")) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Zergling", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        else if ((UnitGetType(lv_unit) == "RoachVile")) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Roach", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        else if ((UnitGetType(lv_unit) == "HydraliskLurker")) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Hydralisk", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        else if ((UnitGetType(lv_unit) == "HotSNoxious")) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Ultralisk", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        else if ((UnitGetType(lv_unit) == "MutaliskBroodlord")) {
+            libNtve_gf_ReplaceUnit(lv_unit, "Mutalisk", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        else if ((UnitGetType(lv_unit) == "AutomatedExtractor")) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Extractor", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        else if ((UnitGetType(lv_unit) == "Egg")) {
+            UnitRemove(lv_unit);
+        }
+        else if ((UnitGetType(lv_unit) == "Larva")) {
+            UnitRemove(lv_unit);
+        }
+        else if ((lv_unit == gv_townCenterUnits[1])) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Hive", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+            gv_townCenterUnits[1] = lv_unit;
+            UnitGroupAdd(gv_townCenterGroup, lv_unit);
+        }
+        else if ((lv_unit == gv_townCenterUnits[2])) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Hive", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+            gv_townCenterUnits[2] = lv_unit;
+            UnitGroupAdd(gv_townCenterGroup, lv_unit);
+        }
+        else if ((lv_unit == gv_townCenterUnits[3])) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Hive", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+            gv_townCenterUnits[3] = lv_unit;
+            UnitGroupAdd(gv_townCenterGroup, lv_unit);
+        }
+        else if ((lv_unit == gv_townCenterUnits[4])) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Hive", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+            gv_townCenterUnits[4] = lv_unit;
+            UnitGroupAdd(gv_townCenterGroup, lv_unit);
+        }
+        else if ((lv_unit == gv_townCenterUnits[5])) {
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_Hive", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+            gv_townCenterUnits[5] = lv_unit;
+            UnitGroupAdd(gv_townCenterGroup, lv_unit);
+        }
+        else if (true) {
+            lv_unitType = UnitGetType(lv_unit);
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_" + lv_unitType, libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        libNtve_gf_RescueUnit(lv_unit, gv_pLAYER_01_USER, true);
+    }
+    PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropSuppliesLimit, c_playerPropOperAdd, 200);
+    auto46F444EC_g = UnitGroup("AP_Hive", gv_pLAYER_01_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto46F444EC_u = UnitGroupCount(auto46F444EC_g, c_unitCountAll);
+    for (;; auto46F444EC_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(auto46F444EC_g, auto46F444EC_u);
+        if (lv_unit == null) { break; }
+        lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lv_unit, 3);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_TransferZergControlToPlayer_Init () {
+    gt_TransferZergControlToPlayer = TriggerCreate("gt_TransferZergControlToPlayer_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -919,9 +1085,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_ULoadCampaignData("PUlnar03");
     TriggerExecute(gt_Init01Technology, true, false);
-    libVoiC_gf_PurchaseStorymodeTech();
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
@@ -936,7 +1100,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -949,9 +1112,7 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
-    libVoiC_gf_EnableCampaignTechUnit(true, "HighTemplar", gv_pLAYER_01_USER);
-    libVCUI_gf_ShowSpearofAdunUI(false, c_transitionDurationDefault);
+    lib15EF4C78_gf_ShowSpearofAdunUI(false, c_transitionDurationDefault);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION5, "K5MindBolt", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION5, "K5CrushingGrip", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION5, "K5Mend", 1);
@@ -1868,7 +2029,7 @@ bool gt_MarinesRespondtoPsiStorm_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_MarinesRespondtoPsiStorm_Init () {
     gt_MarinesRespondtoPsiStorm = TriggerCreate("gt_MarinesRespondtoPsiStorm_Func");
-    TriggerAddEventUnitDamaged(gt_MarinesRespondtoPsiStorm, null, c_unitDamageTypeAny, c_unitDamageEither, "PsiStormDamage");
+    TriggerAddEventUnitDamaged(gt_MarinesRespondtoPsiStorm, null, c_unitDamageTypeAny, c_unitDamageEither, "AP_HighArchonPsiStormDamage");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1940,6 +2101,10 @@ bool gt_TeachFeedback_Func (bool testConds, bool runActions) {
         }
 
         if (!((UnitFilterMatch(EventUnit(), gv_pLAYER_01_USER, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)))) == true))) {
+            return false;
+        }
+
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
             return false;
         }
     }
@@ -2506,6 +2671,10 @@ bool gt_StartShadowTendrilMovement_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -2727,6 +2896,10 @@ bool gt_SpawnShadowCloudTrail01_Func (bool testConds, bool runActions) {
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
             return false;
         }
+
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -2761,6 +2934,10 @@ bool gt_SpawnShadowCloudTrail02SpeedUpdate_Func (bool testConds, bool runActions
         }
 
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
             return false;
         }
     }
@@ -2801,6 +2978,10 @@ bool gt_SpawnShadowCloudTrail03_Func (bool testConds, bool runActions) {
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
             return false;
         }
+
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -2835,6 +3016,10 @@ bool gt_SpawnShadowCloudTrail04_Func (bool testConds, bool runActions) {
         }
 
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
             return false;
         }
     }
@@ -3045,15 +3230,25 @@ bool gt_ZergStreamingWaveController_Func (bool testConds, bool runActions) {
 
         lv_waveGroup = null;
         TimerStart(gv_zergStreamWaveTimer, lv_waveInterval, false, c_timeAI);
-        UnitCargoCreate(lv_zergNydus, "HotSRaptor", lv_zerglingCount);
+        if ((libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true)) {
+            UnitCargoCreate(lv_zergNydus, "AP_Zergling", lv_zerglingCount);
+        }
+        else {
+            UnitCargoCreate(lv_zergNydus, "HotSRaptor", lv_zerglingCount);
+        }
         lv_waveGroup = UnitCargoLastCreatedGroup();
         UnitIssueOrder(lv_zergNydus, Order(AbilityCommand("NydusCanalTransport", 1)), c_orderQueueReplace);
         while (!((UnitGroupCount(UnitCargoGroup(lv_zergNydus), c_unitCountAlive) == 0))) {
             Wait(0.5, c_timeAI);
         }
-        Wait(2.0, c_timeAI);
-        AISetGroupScriptControlled(lv_waveGroup, false);
-        gf_ZergStreamWave(lv_waveGroup);
+        if ((libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true)) {
+            libNtve_gf_RescueUnit2(lv_waveGroup, gv_pLAYER_01_USER, true);
+        }
+        else {
+            Wait(2.0, c_timeAI);
+            AISetGroupScriptControlled(lv_waveGroup, false);
+            gf_ZergStreamWave(lv_waveGroup);
+        }
         libNtve_gf_WaitForTimer(gv_zergStreamWaveTimer, 0.0, false);
     }
     return true;
@@ -3894,6 +4089,7 @@ bool gt_VoidCrystal01Destroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
     gf_CrystalDestructionShake(gv_voidCrystal[1]);
     PingDestroy(gv_voidCrystalPing[1]);
     if ((libLotv_gf_DifficultyValueInt2(0, 0, 1, 1) == 1) && (gv_masteryWindowClosed[1] == false)) {
@@ -3952,6 +4148,7 @@ bool gt_VoidCrystal02Destroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     gf_CrystalDestructionShake(gv_voidCrystal[2]);
     PingDestroy(gv_voidCrystalPing[2]);
     if ((libLotv_gf_DifficultyValueInt2(0, 0, 1, 1) == 1) && (gv_masteryWindowClosed[2] == false)) {
@@ -4010,6 +4207,7 @@ bool gt_VoidCrystal03Destroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     gf_CrystalDestructionShake(gv_voidCrystal[3]);
     PingDestroy(gv_voidCrystalPing[3]);
     if ((libLotv_gf_DifficultyValueInt2(0, 0, 1, 1) == 1) && (gv_masteryWindowClosed[3] == false)) {
@@ -4068,6 +4266,7 @@ bool gt_VoidCrystal04Destroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     gf_CrystalDestructionShake(gv_voidCrystal[4]);
     PingDestroy(gv_voidCrystalPing[4]);
     if ((libLotv_gf_DifficultyValueInt2(0, 0, 1, 1) == 1) && (gv_masteryWindowClosed[4] == false)) {
@@ -4665,6 +4864,7 @@ bool gt_Vessel01Activated_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
     gv_vesselsActivated += 1;
     gf_VesselActivationFX(PointFromId(448));
     TriggerExecute(gt_ObjectiveActivateVesselsUpdate, true, true);
@@ -4713,6 +4913,7 @@ bool gt_Vessel02Activated_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
     gv_vesselsActivated += 1;
     gf_VesselActivationFX(PointFromId(510));
     TriggerExecute(gt_ObjectiveActivateVesselsUpdate, true, true);
@@ -4761,6 +4962,7 @@ bool gt_Vessel03Activated_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
     gv_vesselsActivated += 1;
     gf_VesselActivationFX(PointFromId(554));
     TriggerExecute(gt_ObjectiveActivateVesselsUpdate, true, true);
@@ -5020,6 +5222,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDestroyVoidCrystalsComplete, true, false);
@@ -6276,7 +6479,7 @@ bool gt_ObjectiveFindArtanisComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFindArtanisCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6308,7 +6511,7 @@ bool gt_ObjectiveFindArtanisFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFindArtanisCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary01", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6369,7 +6572,7 @@ bool gt_ObjectiveKillHybridComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillHybridCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary02", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6401,7 +6604,7 @@ bool gt_ObjectiveKillHybridFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillHybridCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary02", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6452,7 +6655,11 @@ bool gt_ObjectiveDestroyVoidCrystalsUpdate_Func (bool testConds, bool runActions
     }
 
     TriggerExecute(gt_ObjectiveDestroyVoidCrystalsCreate, true, false);
-    libVCMI_gf_SetMissionObjectiveProgress("PUlnar03Primary03", gv_voidCrystalsDisabled);
+    if ((gv_voidCrystalsDisabled == gv_vOID_CRYSTAL_TOTAL)) {
+    }
+    else {
+        libVCMI_gf_SetMissionObjectiveProgress("PUlnar03Primary03", gv_voidCrystalsDisabled);
+    }
     return true;
 }
 
@@ -6480,7 +6687,7 @@ bool gt_ObjectiveDestroyVoidCrystalsComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyVoidCrystalsCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary03", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6512,7 +6719,7 @@ bool gt_ObjectiveDestroyVoidCrystalsFailed_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyVoidCrystalsCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary03", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6573,7 +6780,7 @@ bool gt_ObjectiveSwarmMustSurviveComplete_Func (bool testConds, bool runActions)
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSwarmMustSurviveCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary04", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase4);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6605,7 +6812,7 @@ bool gt_ObjectiveSwarmMustSurviveFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSwarmMustSurviveCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Primary04", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase4);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6662,7 +6869,11 @@ bool gt_ObjectiveActivateVesselsUpdate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveActivateVesselsCreate, true, false);
-    libVCMI_gf_SetMissionObjectiveProgress("PUlnar03Bonus01", gv_vesselsActivated);
+    if ((gv_vesselsActivated == 3)) {
+    }
+    else {
+        libVCMI_gf_SetMissionObjectiveProgress("PUlnar03Bonus01", gv_vesselsActivated);
+    }
     return true;
 }
 
@@ -6690,7 +6901,7 @@ bool gt_ObjectiveActivateVesselsComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveActivateVesselsCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PUlnar03Bonus01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6957,6 +7168,7 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
         libNtve_gf_SwooshCamera(gv_pLAYER_01_USER, ((CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance)) + 8.0), CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance), CameraInfoGetTarget(CameraInfoFromId(40)), lv_fadeDuration);
         CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
     }
+    libVCUI_gf_ShowSpearofAdunUI(false, c_transitionDurationDefault);
     return true;
 }
 
@@ -7399,8 +7611,15 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     libVCMI_gf_CinematicModeCampaign(false, lv_fadeDuration, false);
     libNtve_gf_SwooshCamera(gv_pLAYER_01_USER, ((CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance)) + 8.0), CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance), PlayerStartLocation(gv_pLAYER_01_USER), lv_fadeDuration);
     CinematicFade(true, lv_fadeDuration, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    libVCUI_gf_ShowSpearofAdunUI(true, c_transitionDurationDefault);
-    libVCMI_gf_SetSpearofAdunEnergy(0.0, libVCMI_ge_SpearofAdunEnergyType_Absolute);
+    if ((UnitGroupCount(UnitGroup("AP_SoACaster", gv_pLAYER_01_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)) {
+        lib15EF4C78_gf_ShowSpearofAdunUI(true, c_transitionDurationDefault);
+        lib15EF4C78_gf_SetSpearofAdunEnergy(gv_pLAYER_01_USER, 0.0, lib15EF4C78_ge_SpearofAdunEnergyType_Absolute);
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true)) {
+        TriggerExecute(gt_TransferZergControlToPlayer, true, false);
+    }
+
     UISetFrameVisible(PlayerGroupAll(), c_syncFrameTypeResourcePanel, true);
     VisExploreArea(gv_pLAYER_01_USER, RegionFromId(17), true, false);
     return true;
@@ -7858,6 +8077,8 @@ void gt_VictoryExplosions_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
+    gt_TransferZergControlToPlayer_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
