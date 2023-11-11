@@ -5015,14 +5015,16 @@ void gt_StatStargateUnitBuilt_Init () {
 // Trigger: Victory & Defeat for Player
 //--------------------------------------------------------------------------------------------------
 bool gt_VictoryDefeatforPlayer_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_unitGroup;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unitGroup = UnitGroupEmpty();
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((UnitGroupCount(UnitGroup(null, gv_p01_PLAYER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
             return false;
         }
     }
@@ -5032,22 +5034,32 @@ bool gt_VictoryDefeatforPlayer_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
-    gv_gameOver = true;
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSurviveUntilYouDie);
-    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
-    if ((gv_killCount >= gv_sTAGE_01_KILL_QUOTA)) {
-        libCamp_gf_RunMissionVictorySequence(gt_VictoryQ);
-    }
-    else {
-        TriggerQueuePause(true);
-        TriggerQueueClear(c_triggerQueueRemove);
-        Wait(2.0, c_timeReal);
-        libCamp_gf_DisplayCampaignMessage(PlayerGroupAll(), libCamp_ge_CampaignMessageType_MissionFailed, StringExternal("Param/Value/D472A25B"), libCamp_ge_CampaignMessageFormatNotFormat_FormatMessage);
+    lv_unitGroup = UnitGroup(null, gv_p01_PLAYER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_SoACaster", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_SoAAutonomousCaster", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_SOAThermalLanceTargeter", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_Core_Controller", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_Core_SupplyHolder", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_ZerglingRespawnControllerUnit", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    if ((UnitGroupCount(lv_unitGroup, c_unitCountAlive) == 0)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        gv_gameOver = true;
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSurviveUntilYouDie);
         Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
-        TriggerExecute(gt_Defeat, true, false);
+        if ((gv_killCount >= gv_sTAGE_01_KILL_QUOTA)) {
+            libCamp_gf_RunMissionVictorySequence(gt_VictoryQ);
+        }
+        else {
+            TriggerQueuePause(true);
+            TriggerQueueClear(c_triggerQueueRemove);
+            Wait(2.0, c_timeReal);
+            libCamp_gf_DisplayCampaignMessage(PlayerGroupAll(), libCamp_ge_CampaignMessageType_MissionFailed, StringExternal("Param/Value/D472A25B"), libCamp_ge_CampaignMessageFormatNotFormat_FormatMessage);
+            Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+            TriggerExecute(gt_Defeat, true, false);
+        }
     }
+
     return true;
 }
 
