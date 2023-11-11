@@ -9,6 +9,9 @@ include "TriggerLibs/NativeLib"
 include "TriggerLibs/VoidLib"
 include "TriggerLibs/VoidCampaignLib"
 include "TriggerLibs/VoidCampaignMissionLib"
+include "Lib30B9E51A"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "aiCD4D0112"
 
 //--------------------------------------------------------------------------------------------------
@@ -19,6 +22,9 @@ void InitLibs () {
     libLotv_InitLib();
     libVoiC_InitLib();
     libVCMI_InitLib();
+    lib30B9E51A_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -159,6 +165,9 @@ void gf_IntroWaitForNexus (unit lp_neuxs);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
+trigger gt_WestHybridStatisChamber;
+trigger gt_SoutheastHybridStatisChamber;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -507,14 +516,14 @@ void gf_MovePlatform (int lp_nextLocation, fixed lp_direction) {
         autoA6006777_var = UnitGroupUnitFromEnd(autoA6006777_g, autoA6006777_u);
         if (autoA6006777_var == null) { break; }
         if ((UnitTypeTestAttribute(UnitGetType(autoA6006777_var), c_unitAttributeStructure) == false)) {
-            if ((UnitGetType(autoA6006777_var) == "Probe")) {
-                UnitAbilityEnable(autoA6006777_var, "ProtossBuild", false);
+            if ((UnitGetType(autoA6006777_var) == "AP_Probe")) {
+                UnitAbilityEnable(autoA6006777_var, "AP_ProtossBuild", false);
             }
 
             UnitIssueOrder(autoA6006777_var, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
         }
         else {
-            if ((UnitGetType(autoA6006777_var) == "Nexus")) {
+            if ((UnitGetType(autoA6006777_var) == "AP_Nexus")) {
                 UnitIssueOrder(autoA6006777_var, OrderTargetingUnit(AbilityCommand("RallyNexus", 0), autoA6006777_var), c_orderQueueReplace);
             }
             else {
@@ -564,8 +573,8 @@ void gf_MovePlatform (int lp_nextLocation, fixed lp_direction) {
         auto26E24D62_var = UnitGroupUnitFromEnd(auto26E24D62_g, auto26E24D62_u);
         if (auto26E24D62_var == null) { break; }
         UnitIssueOrder(auto26E24D62_var, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
-        if ((UnitGetType(auto26E24D62_var) == "Probe")) {
-            UnitAbilityEnable(auto26E24D62_var, "ProtossBuild", true);
+        if ((UnitGetType(auto26E24D62_var) == "AP_Probe")) {
+            UnitAbilityEnable(auto26E24D62_var, "AP_ProtossBuild", true);
         }
 
     }
@@ -613,6 +622,7 @@ void gf_CoreDestroyed (unit lp_activeUnit) {
     int lv_iter;
 
     // Automatic Variable Declarations
+    unit auto17881523_val;
     const int autoA01F2F86_ae = 3;
     const int autoA01F2F86_ai = 1;
     const int auto9E181E62_ae = 3;
@@ -623,6 +633,18 @@ void gf_CoreDestroyed (unit lp_activeUnit) {
 
     // Implementation
     gv_coresDestroyed += 1;
+    auto17881523_val = lp_activeUnit;
+    if (auto17881523_val == UnitFromId(109)) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    }
+    else if (auto17881523_val == UnitFromId(275)) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    }
+    else if (auto17881523_val == UnitFromId(276)) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    }
+    else {
+    }
     lv_iter = 1;
     for ( ; ( (autoA01F2F86_ai >= 0 && lv_iter <= autoA01F2F86_ae) || (autoA01F2F86_ai < 0 && lv_iter >= autoA01F2F86_ae) ) ; lv_iter += autoA01F2F86_ai ) {
         if ((lp_activeUnit == gv_powerCores[lv_iter])) {
@@ -735,6 +757,73 @@ bool auto_gf_IntroWaitForNexus_TriggerFunc (bool testConds, bool runActions) {
         Wait(0.15, c_timeGame);
     }
     return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS);
+    lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 170);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: West Hybrid Statis Chamber
+//--------------------------------------------------------------------------------------------------
+bool gt_WestHybridStatisChamber_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_WestHybridStatisChamber_Init () {
+    gt_WestHybridStatisChamber = TriggerCreate("gt_WestHybridStatisChamber_Func");
+    TriggerAddEventUnitDied(gt_WestHybridStatisChamber, UnitRefFromVariable("gv_hybridCellUnits[1]"));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Southeast Hybrid Statis Chamber
+//--------------------------------------------------------------------------------------------------
+bool gt_SoutheastHybridStatisChamber_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SoutheastHybridStatisChamber_Init () {
+    gt_SoutheastHybridStatisChamber = TriggerCreate("gt_SoutheastHybridStatisChamber_Func");
+    TriggerAddEventUnitDied(gt_SoutheastHybridStatisChamber, UnitRefFromVariable("gv_hybridCellUnits[2]"));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1447,7 +1536,7 @@ bool gt_PlatformButtonPressed_Func (bool testConds, bool runActions) {
     }
 
     if ((EventDialogControl() == gv_movingPlatform.lv_townBellButton)) {
-        lv_probeGroup = UnitGroup("Probe", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_platformNexus), 15.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
+        lv_probeGroup = UnitGroup("AP_Probe", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_platformNexus), 15.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
         if ((UnitGroupCount(lv_probeGroup, c_unitCountAlive) == 0)) {
             return true;
         }
@@ -1856,7 +1945,7 @@ bool gt_PlatformNexusDies_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    gv_platformNexus = UnitGroupUnit(UnitGroup("Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
+    gv_platformNexus = UnitGroupUnit(UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
     if ((UnitIsAlive(gv_platformNexus) == true)) {
         return true;
     }
@@ -1865,10 +1954,10 @@ bool gt_PlatformNexusDies_Func (bool testConds, bool runActions) {
     libNtve_gf_SetDialogItemDesaturated(gv_movingPlatform.lv_townBellButton, true, PlayerGroupAll());
     DialogControlFadeTransparency(gv_movingPlatform.lv_townBellButton, PlayerGroupAll(), 0.0, 50.0);
     DialogControlFadeTransparency(gv_movingPlatform.lv_recallProbesIcon, PlayerGroupAll(), 0.0, 50.0);
-    while (!((UnitGroupCount(UnitGroup("Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1))) {
+    while (!((UnitGroupCount(UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1))) {
         Wait(1.0, c_timeAI);
     }
-    gv_platformNexus = UnitGroupUnit(UnitGroup("Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
+    gv_platformNexus = UnitGroupUnit(UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
     TriggerExecute(gt_EnableButtons, true, false);
     return true;
 }
@@ -2703,6 +2792,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDestroyPowerCoresComplete, true, true);
@@ -3364,7 +3454,7 @@ bool gt_ObjectiveDestroyPowerCoresComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyPowerCoresCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PMoebius02Primary01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3443,7 +3533,7 @@ bool gt_ObjectiveKillHybridComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKillHybridCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PMoebius02Bonus01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4139,6 +4229,9 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
+    gt_WestHybridStatisChamber_Init();
+    gt_SoutheastHybridStatisChamber_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
