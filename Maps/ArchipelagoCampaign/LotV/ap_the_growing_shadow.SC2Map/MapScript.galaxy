@@ -686,7 +686,6 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init03Units, true, false);
     lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
     libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS);
-    libABFE498B_gf_AP_Triggers_MapConfig_setMissionBuild(true);
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     return true;
 }
@@ -707,9 +706,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_ULoadCampaignData("PAiur02");
     TriggerExecute(gt_Init01Technology, true, false);
-    libVoiC_gf_PurchaseStorymodeTech();
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
@@ -722,7 +719,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -735,7 +731,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     TechTreeUnitAllow(gv_pLAYER_01_USER, "AP_CyberneticsCore", true);
     libVoiC_gf_EnableCampaignTechUnit(true, "AP_StalkerShakuras", gv_pLAYER_01_USER);
     TechTreeUnitAllow(gv_pLAYER_01_USER, "Forge", false);
@@ -745,7 +740,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("ZeratulVoidPrisonAiur01", 0), false);
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("ZeratulStun", 0), false);
     TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "HaveZeratulChampion", 1);
-    libVCUI_gf_ShowSpearofAdunUI(false, c_transitionDurationDefault);
     return true;
 }
 
@@ -4517,8 +4511,8 @@ bool gt_FindNerazimPylon01_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_NerazimPylonFoundQ, true, false);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    TriggerExecute(gt_NerazimPylonFoundQ, true, false);
     gv_objective_NerazimPylonsFound += 1;
     TriggerExecute(gt_ObjectiveFindNerazimPylonsUpdate, true, false);
     if ((gv_objective_NerazimPylonsFound == 3) && (GameGetMissionTime() <= 600.0) && (libLotv_gf_DifficultyValueInt2(0, 1, 1, 1) == 1)) {
@@ -4594,8 +4588,8 @@ bool gt_FindNerazimPylon02_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     TriggerExecute(gt_NerazimPylonFoundQ, true, false);
     gv_objective_NerazimPylonsFound += 1;
     TriggerExecute(gt_ObjectiveFindNerazimPylonsUpdate, true, false);
@@ -4672,8 +4666,8 @@ bool gt_FindNerazimPylon03_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     TriggerExecute(gt_NerazimPylonFoundQ, true, false);
     gv_objective_NerazimPylonsFound += 1;
     TriggerExecute(gt_ObjectiveFindNerazimPylonsUpdate, true, false);
@@ -5477,7 +5471,7 @@ bool gt_AllAloneQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    while (!((UnitGroupCount(UnitGroup("Stalker", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
+    while (!((UnitGroupCount(UnitGroup("AP_StalkerShakuras", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
         Wait(1.0, c_timeGame);
     }
     TriggerQueueEnter();
@@ -5819,6 +5813,10 @@ bool gt_DefeatZeratulDies_Func (bool testConds, bool runActions) {
         if (!((libVCMI_gf_GameIsOver() == false))) {
             return false;
         }
+
+        if (!((gv_zeratul != null))) {
+            return false;
+        }
     }
 
     // Actions
@@ -5841,6 +5839,7 @@ bool gt_DefeatZeratulDies_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_DefeatZeratulDies_Init () {
     gt_DefeatZeratulDies = TriggerCreate("gt_DefeatZeratulDies_Func");
+    TriggerEnable(gt_DefeatZeratulDies, false);
     TriggerAddEventUnitDied(gt_DefeatZeratulDies, UnitRefFromVariable("gv_zeratul"));
 }
 
@@ -5892,8 +5891,8 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     libVCMI_gf_RunMissionVictorySequence(gt_VictoryQ);
@@ -6438,7 +6437,7 @@ bool gt_ObjectiveZeratulMustSurviveFailed_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveZeratulMustSurviveCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PAiur02Primary04", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_ZeratulMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6555,7 +6554,7 @@ bool gt_ObjectiveFindNerazimPylonsFailed_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFindNerazimPylonsCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PAiur02Bonus01", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7044,7 +7043,7 @@ bool gt_MidPlayerBaseSetup_Func (bool testConds, bool runActions) {
         UnitRemove(auto35F93D5D_var);
     }
     UnitClearSelection(gv_pLAYER_01_USER);
-    lv_stalkers = UnitGroup("Stalker", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 3);
+    lv_stalkers = UnitGroup("AP_StalkerShakuras", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 3);
     autoE8FE61A5_g = UnitGroup(null, gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     autoE8FE61A5_u = UnitGroupCount(autoE8FE61A5_g, c_unitCountAll);
     for (;; autoE8FE61A5_u -= 1) {
@@ -7203,6 +7202,7 @@ bool gt_MidPlayerBaseCleanup_Func (bool testConds, bool runActions) {
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
     ObjectiveShow(gv_objective_ReachNexus, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     gf_CreateInfoText(UnitFromId(254));
     gf_CreateInfoText(UnitFromId(416));
     gf_CreateInfoText(UnitFromId(415));
@@ -7386,6 +7386,7 @@ bool gt_MidUpperBaseSetup_Func (bool testConds, bool runActions) {
     GameTimeOfDayPause(true);
     libNtve_gf_SetAlliance(gv_pLAYER_01_USER, gv_pLAYER_03_DARK_PROTOSS, libNtve_ge_AllianceSetting_Neutral);
     RegionPlayableMapSet(RegionEntireMap());
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     autoE09571FC_g = UnitGroup(null, gv_pLAYER_02_ZERG, RegionFromId(46), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
@@ -7430,6 +7431,7 @@ bool gt_MidUpperBaseSetup_Func (bool testConds, bool runActions) {
     libNtve_gf_ShowHideUnit(gv_artanis, true);
     libNtve_gf_CreateUnitsAtPoint2(1, "ZeratulVoidAiur01", c_unitCreateIgnorePlacement, gv_pLAYER_01_USER, PointFromId(21));
     gv_zeratul = UnitLastCreated();
+    TriggerEnable(gt_DefeatZeratulDies, true);
     UnitBehaviorAdd(gv_zeratul, "SuppressCloak", gv_zeratul, 1);
     UnitSetFacing(gv_zeratul, PointGetFacing(PointFromId(1230)), 0.0);
     UnitSetState(gv_zeratul, c_unitStateFidget, false);
