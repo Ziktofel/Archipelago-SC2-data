@@ -11,6 +11,9 @@ include "TriggerLibs/VoidLib"
 include "TriggerLibs/VoidCampaignLib"
 include "TriggerLibs/VoidCampaignMissionLib"
 include "TriggerLibs/VoidCampaignUILib"
+include "Lib30B9E51A"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "ai5D126363"
 include "ai4D3D7702"
 include "aiE29F8996"
@@ -27,6 +30,9 @@ void InitLibs () {
     libVoiC_InitLib();
     libVCMI_InitLib();
     libVCUI_InitLib();
+    lib30B9E51A_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -160,6 +166,8 @@ void gf_TurnWarpedInUnit (unit lp_unit);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchipelagoInit;
+trigger gt_TransferAllyControlToPlayer;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -1095,6 +1103,135 @@ bool auto_gf_TurnWarpedInUnit_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Archipelago Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchipelagoInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+    libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS);
+    lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 185);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchipelagoInit_Init () {
+    gt_ArchipelagoInit = TriggerCreate("gt_ArchipelagoInit_Func");
+    TriggerAddEventMapInit(gt_ArchipelagoInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: TransferAllyControlToPlayer
+//--------------------------------------------------------------------------------------------------
+bool gt_TransferAllyControlToPlayer_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+    unitgroup lv_unitGroup;
+    unit lv_unit;
+    string lv_unitType;
+
+    // Automatic Variable Declarations
+    unitgroup auto75C2CF92_g;
+    int auto75C2CF92_u;
+    playergroup autoBCCFAFCC_g;
+    unitgroup auto9B7513CD_g;
+    int auto9B7513CD_u;
+    unitgroup auto9C5FAAB6_g;
+    int auto9C5FAAB6_u;
+
+    // Variable Initialization
+    lv_unitGroup = UnitGroupEmpty();
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    if ((libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true)) {
+        autoBCCFAFCC_g = gv_friendlyPlayerGroup;
+        lv_player = -1;
+        while (true) {
+            lv_player = PlayerGroupNextPlayer(autoBCCFAFCC_g, lv_player);
+            if (lv_player < 0) { break; }
+            UnitGroupAddUnitGroup(lv_unitGroup, UnitGroup(null, lv_player, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        }
+        auto9B7513CD_g = lv_unitGroup;
+        auto9B7513CD_u = UnitGroupCount(auto9B7513CD_g, c_unitCountAll);
+        for (;; auto9B7513CD_u -= 1) {
+            lv_unit = UnitGroupUnitFromEnd(auto9B7513CD_g, auto9B7513CD_u);
+            if (lv_unit == null) { break; }
+            if (((lv_unit == gv_vorazun) || (lv_unit == gv_alarak) || (lv_unit == gv_karax) || (UnitGetType(lv_unit) == "KaraxInvisiblePylon") || (UnitGetType(lv_unit) == "KaraxServitorWeaponA") || (UnitGetType(lv_unit) == "KaraxServitorWeaponB"))) {
+            }
+            else if ((lv_unit == gv_nerazimNexus)) {
+                libNtve_gf_ReplaceUnit(lv_unit, "AP_Nexus", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_unit = libNtve_gf_LastReplacedUnit();
+                gv_nerazimNexus = lv_unit;
+            }
+            else if ((lv_unit == gv_purifierNexus)) {
+                libNtve_gf_ReplaceUnit(lv_unit, "AP_Nexus", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_unit = libNtve_gf_LastReplacedUnit();
+                gv_purifierNexus = lv_unit;
+            }
+            else if ((lv_unit == gv_taldarimNexus)) {
+                libNtve_gf_ReplaceUnit(lv_unit, "AP_Nexus", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_unit = libNtve_gf_LastReplacedUnit();
+                gv_taldarimNexus = lv_unit;
+            }
+            else if (true) {
+                lv_unitType = UnitGetType(lv_unit);
+                libNtve_gf_ReplaceUnit(lv_unit, "AP_" + lv_unitType, libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_unit = libNtve_gf_LastReplacedUnit();
+            }
+            libNtve_gf_RescueUnit(lv_unit, gv_pLAYER_01_USER, true);
+        }
+        PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropSuppliesLimit, c_playerPropOperAdd, 600);
+        auto9C5FAAB6_g = UnitGroup("MineralField", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto9C5FAAB6_u = UnitGroupCount(auto9C5FAAB6_g, c_unitCountAll);
+        for (;; auto9C5FAAB6_u -= 1) {
+            lv_unit = UnitGroupUnitFromEnd(auto9C5FAAB6_g, auto9C5FAAB6_u);
+            if (lv_unit == null) { break; }
+            libNtve_gf_ReplaceUnit(lv_unit, "RichMineralField", libNtve_ge_ReplaceUnitOptions_OldUnits);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+            UnitSetPropertyFixed(lv_unit, c_unitPropResources, 12000.0);
+        }
+        TriggerEnable(gt_VorazunTripwireTransmission01Q, false);
+        TriggerEnable(gt_PurifierTripwireTransmission01Q, false);
+        TriggerEnable(gt_AlarakTripwireTransmission01Q, false);
+    }
+    else {
+        auto75C2CF92_g = UnitGroupFromId(2);
+        auto75C2CF92_u = UnitGroupCount(auto75C2CF92_g, c_unitCountAll);
+        for (;; auto75C2CF92_u -= 1) {
+            lv_unit = UnitGroupUnitFromEnd(auto75C2CF92_g, auto75C2CF92_u);
+            if (lv_unit == null) { break; }
+            UnitRemove(lv_unit);
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_TransferAllyControlToPlayer_Init () {
+    gt_TransferAllyControlToPlayer = TriggerCreate("gt_TransferAllyControlToPlayer_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -1104,16 +1241,13 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_ULoadCampaignData("PAiur06");
     TriggerExecute(gt_Init01Technology, true, false);
-    libVoiC_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
     TriggerExecute(gt_Init07Help, true, false);
     TriggerExecute(gt_IntroQ, true, true);
+    TriggerExecute(gt_TransferAllyControlToPlayer, true, false);
     TriggerExecute(gt_StartGameQ, true, false);
     return true;
 }
@@ -1121,7 +1255,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1134,7 +1267,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_02_ZERG_GREEN, "overlordspeed", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_03_ZERG_RED, "overlordspeed", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_04_ZERG_PINK, "overlordspeed", 1);
@@ -2553,6 +2685,7 @@ bool gt_DisableSpearPower1_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     gf_DisableSpearPowerQ(1);
     return true;
 }
@@ -2588,6 +2721,7 @@ bool gt_DisableSpearPower2_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     gf_DisableSpearPowerQ(2);
     return true;
 }
@@ -2623,7 +2757,7 @@ bool gt_DisableSpearPower3_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libVCMI_gf_SetSpearofAdunEnergy(-5.0, libVCMI_ge_SpearofAdunEnergyType_Regeneration);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     gf_DisableSpearPowerQ(3);
     return true;
 }
@@ -2659,6 +2793,7 @@ bool gt_DisableSpearPower4_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     gf_DisableSpearPowerQ(4);
     return true;
 }
@@ -5902,6 +6037,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     TransmissionClearAll();
     libNtve_gf_ChangeUnitDamage(gv_keystone, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     libNtve_gf_ChangeUnitDamage(gv_nerazimNexus, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
@@ -6292,7 +6428,7 @@ bool gt_ObjectiveKeystoneMustSurviveComplete_Func (bool testConds, bool runActio
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKeystoneMustSurviveCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PAiur06Primary01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6324,7 +6460,7 @@ bool gt_ObjectiveKeystoneMustSurviveFailed_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKeystoneMustSurviveCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("PAiur06Primary01", libVoiC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_DefeatKeystoneDestroyed, true, false);
     return true;
@@ -7261,6 +7397,8 @@ void gt_VictoryMusic_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchipelagoInit_Init();
+    gt_TransferAllyControlToPlayer_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
