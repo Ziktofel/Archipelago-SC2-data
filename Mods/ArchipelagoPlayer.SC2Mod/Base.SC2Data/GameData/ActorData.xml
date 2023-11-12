@@ -23688,6 +23688,7 @@
     </CActorEventMacro>
     <CActorUnit id="AP_ValkyrieSCBW" parent="GenericUnitBase" unitName="AP_ValkyrieSCBW">
         <Aliases value="_UnitLarge"/>
+        <Macros value="GimbalZMacro"/>
         <On Terms="UnitDeathCustomize; ValidateUnit AP_HaveVoidShade" Send="DeathCustomize Shadow"/>
         <On Terms="UnitDeathCustomize; ValidateUnit AP_HaveTerrazineShadow" Send="DeathCustomize Shadow"/>
         <HostSiteOps Ops="AP_SOpBankerWraith"/>
@@ -29207,4 +29208,64 @@
         <On Terms="ActorCreation; ValidateUnit AP_HasBrynhildAssaultRangeEq10" Send="SetScale 1.000000,1.900000,1.000000"/>
         <!--On Terms="Effect.HHTwinGatlingCannons.Start; At Caster" Send="Create"/-->
     </CActorModel>
+    <CActorEventMacro id="GimbalZMacro">
+        <!-- Enoki's Z-axis unit facing, taken from the Sc2Mapster Discord thread #Data-Driven Turrets -->
+        <Supporter Subject="_Unit"/>
+        <On Terms="UnitBirth" Send="Create PropsHost"/>
+        <On Terms="UnitBirth" Send="Create GimbalZModel"/>
+        <On Terms="UnitBirth" Target="_GimbalZ" Send="Signal GimbalBirth"/>
+        <On Terms="SupporterDestruction" Target="_GimbalZ" Send="Signal GimbalDeath"/>
+        <On Terms="UnitDeath" Target="_GimbalZ" Send="Signal GimbalDeath"/>
+        <On Terms="ActorOrphan" Target="_GimbalZ" Send="Signal GimbalDeath"/>
+        <On Terms="SupporterDestruction" Target="PropsHost" Send="Destroy"/>
+        <On Terms="UnitDeath" Target="PropsHost" Send="Destroy"/>
+        <On Terms="ActorOrphan" Target="PropsHost" Send="Destroy"/>
+    </CActorEventMacro>
+    <CActorModel id="GimbalZModel">
+        <Terms value="Cap 1"/>
+        <Aliases value="_UnitLarge"/>
+        <Aliases value="_Snapshot"/>
+        <Aliases value="_GimbalZ"/>
+        <AcceptedTransfers index="FOWColor" value="1"/>
+        <AcceptedTransfers index="FOWShader" value="1"/>
+        <AcceptedTransfers index="Status" value="1"/>
+        <AcceptedHostedPropTransfers index="BaseModelScale" value="0"/>
+        <AcceptedHostedPropTransfers index="CastShadows" value="0"/>
+        <AcceptedHostedPropTransfers index="CloakEffect" value="0"/>
+        <AcceptedHostedPropTransfers index="CreepEngulfment" value="0"/>
+        <AcceptedHostedPropTransfers index="Decal" value="0"/>
+        <AcceptedHostedPropTransfers index="LocalTintColor" value="0"/>
+        <AcceptedHostedPropTransfers index="ModelMaterials" value="0"/>
+        <AcceptedHostedPropTransfers index="Opacity" value="0"/>
+        <AcceptedHostedPropTransfers index="TeamColor" value="0"/>
+        <AcceptedHostedPropTransfers index="TintColor" value="0"/>
+        <AcceptedHostedPropTransfers index="WarpGroup" value="0"/>
+        <Supporter Subject="_Unit"/>
+        <On Terms="Signal.*.GimbalDeath" Target="_Unit" Send="RefClear ::Host"/>
+        <On Terms="Signal.*.GimbalDeath" Target="PropsHost" Send="Destroy"/>
+        <On Terms="Signal.*.GimbalDeath" Target="GimbalZTurret" Send="Destroy"/>
+        <On Terms="Signal.*.GimbalDeath" Send="Destroy"/>
+        <On Terms="SupporterDestruction" Target="_Unit" Send="RefClear ::Host"/>
+        <On Terms="SupporterDestruction" Target="PropsHost" Send="Destroy"/>
+        <On Terms="SupporterDestruction" Target="GimbalZTurret" Send="Destroy"/>
+        <On Terms="SupporterDestruction" Send="Destroy"/>
+        <On Terms="ActorOrphan" Target="_Unit" Send="RefClear ::Host"/>
+        <On Terms="ActorOrphan" Target="PropsHost" Send="Destroy"/>
+        <On Terms="ActorOrphan" Target="GimbalZTurret" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="Signal.*.GimbalBirth" Send="SetOpacity 0.000000 0.000000 GimbalOpacity"/>
+        <On Terms="Signal.*.GimbalBirth" Send="RefSet ::HostForProps PropsHost"/>
+        <On Terms="Signal.*.GimbalBirth" Target="::Main" Send="RefClear ::Host"/>
+        <On Terms="Signal.*.GimbalBirth" Target="::Main" Send="RefSet ::Host _GimbalZ"/>
+        <On Terms="Signal.*.GimbalBirth" Target="::Main" Send="RefSet ::HostForProps PropsHost"/>
+        <On Terms="Signal.*.GimbalBirth" Target="::HostForProps" Send="HostSiteOpsSet ::HostForProps SOpMoveDownByDot25"/>
+        <On Terms="Signal.*.GimbalBirth" Target="::Main" Send="HostSiteOpsSet ::Host SOpAttachShield"/>
+        <On Terms="Signal.*.GimbalBirth" Send="RefSet ::HostForProps _Unit"/>
+        <HostForProps Subject="_Unit"/>
+        <Model value="Phoenix"/>
+    </CActorModel>
+    <CActorTurret id="GimbalZTurret">
+        <TurretBody Subject="_GimbalZ" FailOnNoHost="1"/>
+        <On Terms="TurretEnable" Send="Create"/>
+    </CActorTurret>
 </Catalog>
