@@ -81,6 +81,7 @@ playergroup gv_playerGroup;
 playergroup gv_enemyPlayerGroup;
 unitgroup gv_stargateGroup;
 bool gv_phoenixOrderIssued;
+bool[6] gv_locksSent;
 gs_RECORD_CelestialLock[6] gv_celestialLocks;
 int gv_celestialLocksActivated;
 unit gv_titanicWarpPrism;
@@ -163,6 +164,7 @@ void gf_ActivateDeactivateCelestialLock (bool lp_activateDeactivate, int lp_inde
 void gf_SetCelestialLockState (int lp_index, int lp_state);
 void gf_ActivateDeactivateStaticDefenseforLock (bool lp_activateDeactivate, int lp_index);
 void gf_SendBulliesHome (int lp_index);
+void gf_HandleTitanicWarpPrism (point lp_prismPoint);
 bool gf_AttackRegionisValid (region lp_region);
 void gf_AddLockAttackTarget (region lp_region);
 void gf_AddLockAttackWaveUnits (int lp_count, string lp_unitType);
@@ -172,11 +174,6 @@ void gf_LockBullyUpgrades (int lp_index);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
-trigger gt_CelestialLock1;
-trigger gt_CelestialLock2;
-trigger gt_CelestialLock3;
-trigger gt_CelestialLock4;
-trigger gt_CelestialLock5;
 trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
@@ -204,6 +201,7 @@ trigger gt_TitanicWarpPrismProximityTrigger;
 trigger gt_TitanicWarpPrismBehaviour;
 trigger gt_SetUpTitanicWarpPrismEscorts;
 trigger gt_TitanicWarpPrismDies;
+trigger gt_TitanicWapPrismmindcontrolled;
 trigger gt_TitanicWarpPrismWarpInShields;
 trigger gt_StartAI;
 trigger gt_AttackWaves;
@@ -376,6 +374,11 @@ void gf_SetCelestialLockState (int lp_index, int lp_state) {
             gv_firstLockIndex = lp_index;
         }
 
+        if ((gv_locksSent[lp_index] == false)) {
+            lib5BD4895D_gf_AP_Core_sendLocationLocal(lp_index);
+            gv_locksSent[lp_index] = true;
+        }
+
         gv_celestialLocks[lp_index].lv_state = ge_PRESET_CelestialLockState_PlayerControlled;
         UnitSetInfoSubTip(gv_celestialLocks[lp_index].lv_celestialLock, StringExternal("Param/Value/20B971DA"));
         ActorSend(libNtve_gf_MainActorofUnit(gv_celestialLocks[lp_index].lv_celestialLock), "Signal StateGood");
@@ -490,6 +493,35 @@ void gf_SendBulliesHome (int lp_index) {
         }
 
     }
+}
+
+void gf_HandleTitanicWarpPrism (point lp_prismPoint) {
+    // Variable Declarations
+    point lv_triggeringUnitPoint;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    lv_triggeringUnitPoint = lp_prismPoint;
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    TriggerEnable(gt_TitanicWapPrismmindcontrolled, false);
+    TriggerEnable(gt_TitanicWarpPrismBehaviour, false);
+    TriggerStop(gt_TitanicWarpPrismBehaviour);
+    TimerPause(gv_titanicWarpPrismAchievementTimer, true);
+    TriggerExecute(gt_AchievementTitanoPrismKilledQuickly, true, false);
+    TriggerExecute(gt_ObjectiveDestroyTitanicWarpPrismComplete, true, false);
+    PingDestroy(gv_titanicWarpPrismPing);
+    UnitCreate(1, "RawSolarite", c_unitCreateIgnorePlacement, 0, lv_triggeringUnitPoint, 270.0);
+    UnitSetHeight(UnitLastCreated(), UnitTypeGetProperty("WarpPrismGiant", c_unitPropHeight), 0.0);
+    UnitBehaviorAddPlayer(UnitLastCreated(), "ObjectiveCollectionBeam", gv_pLAYER_01_USER, 1);
+    Wait(2.0, c_timeGame);
+    libVCMI_gf_DisplayMissionObjectiveRewardFloatingText(lv_triggeringUnitPoint, "PUlnar01Bonus01");
+    TriggerQueueEnter();
+    libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
+    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Ulnar01|Line00021", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Game);
+    TriggerQueueExit();
 }
 
 bool gf_AttackRegionisValid (region lp_region) {
@@ -816,141 +848,6 @@ bool auto_gf_LockBullyUpgrades_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Celestial Lock 1
-//--------------------------------------------------------------------------------------------------
-bool gt_CelestialLock1_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_index;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((gv_celestialLocks[1].lv_state == ge_PRESET_CelestialLockState_PlayerControlled)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_CelestialLock1_Init () {
-    gt_CelestialLock1 = TriggerCreate("gt_CelestialLock1_Func");
-    TriggerAddEventUnitRegion(gt_CelestialLock1, UnitRefFromVariable("gv_celestialLocks[1].lv_celestialLock"), EventUnitRegion(), true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Celestial Lock 2
-//--------------------------------------------------------------------------------------------------
-bool gt_CelestialLock2_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_index;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((gv_celestialLocks[2].lv_state == ge_PRESET_CelestialLockState_PlayerControlled)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_CelestialLock2_Init () {
-    gt_CelestialLock2 = TriggerCreate("gt_CelestialLock2_Func");
-    TriggerAddEventUnitRegion(gt_CelestialLock2, UnitRefFromVariable("gv_celestialLocks[2].lv_celestialLock"), EventUnitRegion(), true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Celestial Lock 3
-//--------------------------------------------------------------------------------------------------
-bool gt_CelestialLock3_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_index;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((gv_celestialLocks[3].lv_state == ge_PRESET_CelestialLockState_PlayerControlled)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_CelestialLock3_Init () {
-    gt_CelestialLock3 = TriggerCreate("gt_CelestialLock3_Func");
-    TriggerAddEventUnitRegion(gt_CelestialLock3, UnitRefFromVariable("gv_celestialLocks[3].lv_celestialLock"), EventUnitRegion(), true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Celestial Lock 4
-//--------------------------------------------------------------------------------------------------
-bool gt_CelestialLock4_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_index;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((gv_celestialLocks[4].lv_state == ge_PRESET_CelestialLockState_PlayerControlled)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_CelestialLock4_Init () {
-    gt_CelestialLock4 = TriggerCreate("gt_CelestialLock4_Func");
-    TriggerAddEventUnitRegion(gt_CelestialLock4, UnitRefFromVariable("gv_celestialLocks[4].lv_celestialLock"), EventUnitRegion(), true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Celestial Lock 5
-//--------------------------------------------------------------------------------------------------
-bool gt_CelestialLock5_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_index;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((gv_celestialLocks[5].lv_state == ge_PRESET_CelestialLockState_PlayerControlled)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_CelestialLock5_Init () {
-    gt_CelestialLock5 = TriggerCreate("gt_CelestialLock5_Func");
-    TriggerAddEventUnitRegion(gt_CelestialLock5, UnitRefFromVariable("gv_celestialLocks[5].lv_celestialLock"), EventUnitRegion(), true);
-}
-
-//--------------------------------------------------------------------------------------------------
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
@@ -961,7 +858,6 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
-    TriggerExecute(lib30B9E51A_gt_VanillaSoAUIKiller, true, false);
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
     lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
@@ -986,11 +882,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_ULoadCampaignData("PUlnar01");
     TriggerExecute(gt_Init01Technology, true, false);
-    libVoiC_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
@@ -1003,7 +895,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1016,8 +907,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
-    libVoiC_gf_EnableCampaignTechUnit(true, "Phoenix", gv_pLAYER_01_USER);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_02_TALDARIM, "DarkProtoss", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_03_MOEBIUS, "DarkProtoss", 1);
     return true;
@@ -2039,7 +1928,7 @@ bool gt_TitanicWarpPrismBehaviour_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_SetUpTitanicWarpPrismEscorts, true, false);
     while (true) {
         Wait(1.0, c_timeAI);
-        if (((UnitIsAlive(gv_titanicWarpPrism) == false) || (libVCMI_gf_GameIsOver() == true))) {
+        if (((UnitIsAlive(gv_titanicWarpPrism) == false) || (UnitGetOwner(gv_titanicWarpPrism) != gv_pLAYER_01_USER) || (libVCMI_gf_GameIsOver() == true))) {
             return true;
         }
 
@@ -2234,13 +2123,7 @@ void gt_SetUpTitanicWarpPrismEscorts_Init () {
 // Trigger: Titanic Warp Prism Dies
 //--------------------------------------------------------------------------------------------------
 bool gt_TitanicWarpPrismDies_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    point lv_triggeringUnitPoint;
-
     // Automatic Variable Declarations
-    // Variable Initialization
-    lv_triggeringUnitPoint = UnitGetPosition(EventUnit());
-
     // Conditions
     if (testConds) {
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
@@ -2253,20 +2136,7 @@ bool gt_TitanicWarpPrismDies_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    TimerPause(gv_titanicWarpPrismAchievementTimer, true);
-    TriggerExecute(gt_AchievementTitanoPrismKilledQuickly, true, false);
-    TriggerExecute(gt_ObjectiveDestroyTitanicWarpPrismComplete, true, false);
-    PingDestroy(gv_titanicWarpPrismPing);
-    UnitCreate(1, "RawSolarite", c_unitCreateIgnorePlacement, 0, lv_triggeringUnitPoint, 270.0);
-    UnitSetHeight(UnitLastCreated(), UnitTypeGetProperty("WarpPrismGiant", c_unitPropHeight), 0.0);
-    UnitBehaviorAddPlayer(UnitLastCreated(), "ObjectiveCollectionBeam", gv_pLAYER_01_USER, 1);
-    Wait(2.0, c_timeGame);
-    libVCMI_gf_DisplayMissionObjectiveRewardFloatingText(lv_triggeringUnitPoint, "PUlnar01Bonus01");
-    TriggerQueueEnter();
-    libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
-    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Ulnar01|Line00021", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Game);
-    TriggerQueueExit();
+    gf_HandleTitanicWarpPrism(UnitGetPosition(EventUnit()));
     return true;
 }
 
@@ -2274,6 +2144,41 @@ bool gt_TitanicWarpPrismDies_Func (bool testConds, bool runActions) {
 void gt_TitanicWarpPrismDies_Init () {
     gt_TitanicWarpPrismDies = TriggerCreate("gt_TitanicWarpPrismDies_Func");
     TriggerAddEventUnitDied(gt_TitanicWarpPrismDies, UnitRefFromVariable("gv_titanicWarpPrism"));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Titanic Wap Prism mind controlled
+//--------------------------------------------------------------------------------------------------
+bool gt_TitanicWapPrismmindcontrolled_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_targetUnit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((EventUnitTargetUnit() == gv_titanicWarpPrism))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_targetUnit = EventUnitTargetUnit();
+    gf_HandleTitanicWarpPrism(UnitGetPosition(lv_targetUnit));
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_TitanicWapPrismmindcontrolled_Init () {
+    gt_TitanicWapPrismmindcontrolled = TriggerCreate("gt_TitanicWapPrismmindcontrolled_Func");
+    TriggerAddEventUnitAbility(gt_TitanicWapPrismmindcontrolled, null, AbilityCommand("AP_NPSwarm", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_TitanicWapPrismmindcontrolled, null, AbilityCommand("AP_DarkArchonMindControl", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_TitanicWapPrismmindcontrolled, null, AbilityCommand("AP_MindControl", 0), c_unitAbilStageComplete, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4056,11 +3961,6 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
-    gt_CelestialLock1_Init();
-    gt_CelestialLock2_Init();
-    gt_CelestialLock3_Init();
-    gt_CelestialLock4_Init();
-    gt_CelestialLock5_Init();
     gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
@@ -4088,6 +3988,7 @@ void InitTriggers () {
     gt_TitanicWarpPrismBehaviour_Init();
     gt_SetUpTitanicWarpPrismEscorts_Init();
     gt_TitanicWarpPrismDies_Init();
+    gt_TitanicWapPrismmindcontrolled_Init();
     gt_TitanicWarpPrismWarpInShields_Init();
     gt_StartAI_Init();
     gt_AttackWaves_Init();
