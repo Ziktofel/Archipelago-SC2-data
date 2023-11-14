@@ -11,6 +11,9 @@ include "TriggerLibs/VoidLib"
 include "TriggerLibs/VoidCampaignLib"
 include "TriggerLibs/VoidCampaignMissionLib"
 include "TriggerLibs/VoidCampaignUILib"
+include "Lib30B9E51A"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "ai93D2D4F0"
 
 //--------------------------------------------------------------------------------------------------
@@ -23,6 +26,9 @@ void InitLibs () {
     libVoiC_InitLib();
     libVCMI_InitLib();
     libVCUI_InitLib();
+    lib30B9E51A_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -295,6 +301,9 @@ bool gf_UnitisArmyforPlayer (unit lp_unit, int lp_player);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
+trigger gt_TransferProtossControlToPlayer;
+trigger gt_TransferTerranControlToPlayer;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -1705,6 +1714,168 @@ bool gf_UnitisArmyforPlayer (unit lp_unit, int lp_player) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(true, true);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: TransferProtossControlToPlayer
+//--------------------------------------------------------------------------------------------------
+bool gt_TransferProtossControlToPlayer_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    string lv_unitType;
+
+    // Automatic Variable Declarations
+    unitgroup auto3C191AC7_g;
+    int auto3C191AC7_u;
+    unitgroup autoE2545373_g;
+    int autoE2545373_u;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    auto3C191AC7_g = UnitGroup(null, gv_pLAYER_03_ARTANIS, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto3C191AC7_u = UnitGroupCount(auto3C191AC7_g, c_unitCountAll);
+    for (;; auto3C191AC7_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(auto3C191AC7_g, auto3C191AC7_u);
+        if (lv_unit == null) { break; }
+        if ((UnitGetType(lv_unit) == "AP_ZerglingRespawnControllerUnit")) {
+            UnitRemove(lv_unit);
+        }
+        else if (true) {
+            lv_unitType = UnitGetType(lv_unit);
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_" + lv_unitType, libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        libNtve_gf_RescueUnit(lv_unit, gv_pLAYER_01_USER, true);
+    }
+    PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropSuppliesLimit, c_playerPropOperAdd, 200);
+    Wait(1.0, c_timeAI);
+    autoE2545373_g = UnitGroup(null, gv_pLAYER_03_ARTANIS, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoE2545373_u = UnitGroupCount(autoE2545373_g, c_unitCountAll);
+    for (;; autoE2545373_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(autoE2545373_g, autoE2545373_u);
+        if (lv_unit == null) { break; }
+        if ((UnitGetType(lv_unit) == "AP_ZerglingRespawnControllerUnit")) {
+            UnitRemove(lv_unit);
+        }
+        else if (true) {
+            lv_unitType = UnitGetType(lv_unit);
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_" + lv_unitType, libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        libNtve_gf_RescueUnit(lv_unit, gv_pLAYER_01_USER, true);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_TransferProtossControlToPlayer_Init () {
+    gt_TransferProtossControlToPlayer = TriggerCreate("gt_TransferProtossControlToPlayer_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: TransferTerranControlToPlayer
+//--------------------------------------------------------------------------------------------------
+bool gt_TransferTerranControlToPlayer_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+    string lv_unitType;
+
+    // Automatic Variable Declarations
+    unitgroup autoE4E4890C_g;
+    int autoE4E4890C_u;
+    unitgroup auto4335521C_g;
+    int auto4335521C_u;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    autoE4E4890C_g = UnitGroup(null, gv_pLAYER_02_RAYNOR, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoE4E4890C_u = UnitGroupCount(autoE4E4890C_g, c_unitCountAll);
+    for (;; autoE4E4890C_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(autoE4E4890C_g, autoE4E4890C_u);
+        if (lv_unit == null) { break; }
+        if ((UnitGetType(lv_unit) == "AP_ZerglingRespawnControllerUnit")) {
+            UnitRemove(lv_unit);
+        }
+        else if (true) {
+            lv_unitType = UnitGetType(lv_unit);
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_" + lv_unitType, libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        libNtve_gf_RescueUnit(lv_unit, gv_pLAYER_01_USER, true);
+    }
+    PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropSuppliesLimit, c_playerPropOperAdd, 200);
+    Wait(1.0, c_timeAI);
+    auto4335521C_g = UnitGroup(null, gv_pLAYER_02_RAYNOR, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto4335521C_u = UnitGroupCount(auto4335521C_g, c_unitCountAll);
+    for (;; auto4335521C_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(auto4335521C_g, auto4335521C_u);
+        if (lv_unit == null) { break; }
+        if ((UnitGetType(lv_unit) == "AP_ZerglingRespawnControllerUnit")) {
+            UnitRemove(lv_unit);
+        }
+        else if (true) {
+            lv_unitType = UnitGetType(lv_unit);
+            libNtve_gf_ReplaceUnit(lv_unit, "AP_" + lv_unitType, libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_unit = libNtve_gf_LastReplacedUnit();
+        }
+        libNtve_gf_RescueUnit(lv_unit, gv_pLAYER_01_USER, true);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_TransferTerranControlToPlayer_Init () {
+    gt_TransferTerranControlToPlayer = TriggerCreate("gt_TransferTerranControlToPlayer_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -1714,11 +1885,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_ULoadCampaignData("SC2Epilogue03");
     TriggerExecute(gt_Init01Technology, true, false);
-    libVoiC_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
@@ -1731,7 +1898,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1744,56 +1910,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libVoiC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
-    libVoiC_gf_EnableCampaignTechUnit(true, "ZerglingSwarmling", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "RoachCorpser", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "BanelingSplitter", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "HydraliskImpaler", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "MutaliskBroodlord", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "SwarmHostCarrion", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "UltraliskTorrasque", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "Infestor", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "Aberration", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "SpineCrawler", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "SporeCrawler", gv_pLAYER_01_USER);
-    libVoiC_gf_EnableCampaignTechUnit(true, "SwarmQueen", gv_pLAYER_01_USER);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "K5ImprovedOverlords", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "K5AutoExtractor", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "K5CreepBonuses", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "K5TwoDrones", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "FasterLarvaSpawn", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "HotSCampaignLarvaCountHard", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "CreepTumorHidden", 1);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("OverlordTransport", 0), false);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("OverlordTransport", 2), false);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("GenerateCreep", 0), false);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("GenerateCreep", 1), false);
-    TechTreeUnitAllow(gv_pLAYER_01_USER, "Overseer", false);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("MorphToOverseer", 1), false);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "zerglingattackspeed", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "HotsViscousDischarge", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "OrganicCarapace", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "HotSGroovedSpines", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "HotSRapidRegeneration", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "HotSRapidIncubation", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "HotSTissueAssimilation", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "SwarmQueenVisual", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_01_USER, "Consume", 1);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 0), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 1), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 2), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 6), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 7), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 8), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 3), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 4), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("evolutionchamberresearch", 5), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("SpireResearch", 0), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("SpireResearch", 1), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("SpireResearch", 2), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("SpireResearch", 3), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("SpireResearch", 4), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("SpireResearch", 5), true);
     TechTreeUnitAllow(gv_pLAYER_02_RAYNOR, "Bunker", true);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_RAYNOR, "TechReactorAI", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_RAYNOR, "VanadiumPlating", 1);
@@ -1810,7 +1926,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
     TechTreeUpgradeAddLevel(gv_pLAYER_02_RAYNOR, "AresClassWeaponsSystem", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_RAYNOR, "MaelstromRounds", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_RAYNOR, "SiegeTankShapedBlast", 1);
-    libVCUI_gf_ShowSpearofAdunUI(false, c_transitionDurationImmediate);
     libVoiC_gf_EnableCampaignTechUnit(true, "ZealotAiur", gv_pLAYER_03_ARTANIS);
     libVoiC_gf_EnableCampaignTechUnit(true, "StalkerAiur", gv_pLAYER_03_ARTANIS);
     libVoiC_gf_EnableCampaignTechUnit(true, "SentryAiur", gv_pLAYER_03_ARTANIS);
@@ -2041,6 +2156,11 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     // Actions
     if (!runActions) {
         return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true)) {
+        TriggerExecute(gt_TransferTerranControlToPlayer, true, false);
+        TriggerExecute(gt_TransferProtossControlToPlayer, true, false);
     }
 
     TriggerExecute(gt_VoidChasmInit, true, false);
@@ -3989,7 +4109,7 @@ bool gt_CleaveBase1AftermathQ_Func (bool testConds, bool runActions) {
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategoryCombat, 10.0, 0.25);
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategoryDoodad, 12.0, 0.25);
     libVCMI_gf_SendTransmissionCampaign(null, "Mission_Epilogue03|Line00035", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    if (((UnitGroupCount(UnitGroup("Hatchery", gv_pLAYER_01_USER, RegionFromId(23), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("Lair", gv_pLAYER_01_USER, RegionFromId(23), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("Hive", gv_pLAYER_01_USER, RegionFromId(23), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0))) {
+    if (((UnitGroupCount(UnitGroup("AP_Hatchery", gv_pLAYER_01_USER, RegionFromId(23), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Lair", gv_pLAYER_01_USER, RegionFromId(23), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hive", gv_pLAYER_01_USER, RegionFromId(23), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0))) {
         libVCMI_gf_SendTransmissionCampaign(gv_kerrigan, "Mission_Epilogue03|Line00013", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     }
     else {
@@ -5461,6 +5581,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     libVoiC_gf_CampaignAwardAchievement("SC2Epilogue03_1", gv_pLAYER_01_USER);
@@ -5767,7 +5888,7 @@ bool gt_ObjectiveDestroyCrystalsComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyCrystalsCreate, true, false);
-    libVCMI_gf_ZS_SetMissionObjectiveState("SC2Epilogue03Primary01", libVoiC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7063,6 +7184,9 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
+    gt_TransferProtossControlToPlayer_Init();
+    gt_TransferTerranControlToPlayer_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
