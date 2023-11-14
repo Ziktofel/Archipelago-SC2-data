@@ -335,7 +335,7 @@ void lib15EF4C78_gf_PauseUnpauseSpearofAdunCooldowns (int lp_player, bool lp_pau
 
     }
     else {
-        lib15EF4C78_gv_pM_SoAPaused[0] = false;
+        lib15EF4C78_gv_pM_SoAPaused[lp_player] = false;
         UnitBehaviorRemove(lib15EF4C78_gv_pM_SoAUnit[lp_player], "AP_SOAAbilityDisable", 1);
     }
 }
@@ -365,6 +365,16 @@ void lib15EF4C78_gf_AP_Player_CreateSoAUnit (int lp_player) {
     lib15EF4C78_gv_pM_SoAEnabledForPlayer[lp_player] = true;
     lib15EF4C78_gf_ShowSpearofAdunUI(true, c_transitionDurationDefault);
     lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(true, c_transitionDurationDefault);
+}
+
+void lib15EF4C78_gf_AP_Player_CreateSoAAutonomousCasterUnit (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SoAAutonomousCaster", c_unitCreateIgnorePlacement, lp_player, Point(0.0, 0.0));
+    lib15EF4C78_gv_pM_SoAAutonomousCaster[lp_player] = UnitLastCreated();
+    UnitSetState(lib15EF4C78_gv_pM_SoAAutonomousCaster[lp_player], c_unitStateSelectable, false);
+    lib15EF4C78_gv_pM_SoAAutonomousCasterEnabledForPlayer[lp_player] = true;
+    TriggerExecute(lib15EF4C78_gt_PM_SoAAutonomousStatusWatch, true, false);
 }
 
 void lib15EF4C78_gf_SetScreenModeCampaign (int lp_mode, fixed lp_duration) {
@@ -3497,6 +3507,58 @@ void lib15EF4C78_gt_PM_SoAStatusWatch_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: PM_SoAAutonomousStatusWatch
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_PM_SoAAutonomousStatusWatch_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_player;
+
+    // Automatic Variable Declarations
+    playergroup auto703FA77E_g;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (true) {
+        auto703FA77E_g = PlayerGroupAll();
+        lv_player = -1;
+        while (true) {
+            lv_player = PlayerGroupNextPlayer(auto703FA77E_g, lv_player);
+            if (lv_player < 0) { break; }
+            if ((lib15EF4C78_gv_pM_SoAAutonomousCasterEnabledForPlayer[lv_player] == true)) {
+                if (((lib15EF4C78_gv_pM_SoAAutonomousCaster[lv_player] == null) || (UnitIsAlive(lib15EF4C78_gv_pM_SoAAutonomousCaster[lv_player]) == false))) {
+                    UnitRemove(lib15EF4C78_gv_pM_SoAAutonomousCaster[lv_player]);
+                    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SoAAutonomousCaster", c_unitCreateIgnorePlacement, lv_player, Point(0.0, 0.0));
+                    lib15EF4C78_gv_pM_SoAAutonomousCaster[lv_player] = UnitLastCreated();
+                    UnitSetState(lib15EF4C78_gv_pM_SoAAutonomousCaster[lv_player], c_unitStateSelectable, false);
+                }
+
+            }
+
+        }
+        Wait(0.5, c_timeGame);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_PM_SoAAutonomousStatusWatch_Init () {
+    lib15EF4C78_gt_PM_SoAAutonomousStatusWatch = TriggerCreate("lib15EF4C78_gt_PM_SoAAutonomousStatusWatch_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: PM_CinematicModeOn
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_PM_CinematicModeOn_Func (bool testConds, bool runActions) {
@@ -5497,6 +5559,7 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_ZerglingRespawnFindPrimaryOnZerglingDeath_Init();
     lib15EF4C78_gt_KerriganPsiStrike_Init();
     lib15EF4C78_gt_PM_SoAStatusWatch_Init();
+    lib15EF4C78_gt_PM_SoAAutonomousStatusWatch_Init();
     lib15EF4C78_gt_PM_CinematicModeOn_Init();
     lib15EF4C78_gt_PM_CinematicModeOff_Init();
     lib15EF4C78_gt_PM_SoATargetingForceOff_Init();
