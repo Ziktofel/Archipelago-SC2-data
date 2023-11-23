@@ -11693,6 +11693,161 @@
     <CActorMissile id="AP_MutaliskAttackSegment2Missile" parent="GenericAttackMissile" unitName="AP_GlaiveWurmM2Weapon">
         <Model value="GlaiveWurmM2Weapon"/>
     </CActorMissile>
+    <!-- Corruptor -->
+    <CActorUnit id="AP_Corruptor" parent="GenericUnitMorph" unitName="AP_Corruptor">
+        <Baselines index="Stand" BlendIn="1.000000" BlendOut="1.000000"/>
+        <Baselines index="Walk" BlendIn="1.000000" BlendOut="1.000000"/>
+        <On Terms="Abil.MorphToBroodLord.Start" Send="AnimPlay Morph Stand,Morph,Start"/>
+        <On Terms="Abil.AP_Corruption.SourceChannelStart" Send="$Spell"/>
+        <On Terms="Abil.AP_CausticSpray.SourceChannelStart" Send="$Spell"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create Corruptor_Land"/>  <!-- swarm.sc2mod -->
+        <On Terms="Effect.CorruptorGroundAttackLaunchMissile.Start" Send="AnimPlay Attack Attack"/>  <!-- swarm.sc2mod -->
+        <DeathArray index="Normal" ModelLink="CorruptorDeath" SoundLink="" VoiceLink="Corruptor_Death"/>
+        <BuildModel value="Corruptor"/> <!--Testing-->
+        <PlacementModel value="Corruptor"/> <!--Testing-->
+        <Model value="Corruptor"/>  <!--Testing-->
+        <PortraitModel value="CorruptorPortrait"/>
+        <BarWidth value="78"/>
+        <BarOffset value="55"/>
+        <UnitIcon value="Assets\Textures\btn-unit-zerg-corruptor.dds"/>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-corruptor.dds"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-Zerg-Corruptor.dds"/>
+        </GroupIcon>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-Zerg-Corruptor.dds"/>
+        </Wireframe>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-flyercarapace-level0.dds"/>
+        <HostSiteOps Ops="SOpBankerCorruptor"/>
+        <Aliases value="_UnitLarge"/>
+        <!-- swarm.sc2mod start -->
+        <DeathActorModel value="UnitDeathModelWithDeathMotionFlier"/>
+        <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
+        <DeathCustoms>
+            <ActorModel value="UnitDeathRagdollFlier"/>
+            <ModelLink value="CorruptorDeathRagdoll"/>
+            <Name value="RagdollBasic"/>
+            <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
+            <BodySquibs Name="FireOnMetal"/>
+            <BodySquibs Name="BloodReduced" IsFallback="1"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollNuke" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollFire" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollAcid" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollOverkillDPRH" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
+        <!-- swarm.sc2mod end -->
+        <Macros value="PhysicsDeathsSwarmAir"/>  <!-- swarm.sc2mod -->
+        <Macros value="PhysicsDeathsVoidAir"/>  <!-- void.sc2mod -->
+        <ModelFlags index="OutlineEmitter" value="1"/>  <!-- void.sc2mod -->
+    </CActorUnit>
+    <!-- Corruptor Weapon -->
+    <CActorMissile id="AP_CorruptorAttackMissile" parent="GenericAttackMissile" unitName="AP_ParasiteSpore_MissileUnit"/>
+    <CActorAction id="AP_CorruptorAttack" parent="GenericAttack" effectImpact="AP_ParasiteSpore_Damage" effectLaunch="AP_ParasiteSpore_LaunchMissile">
+        <LaunchAssets Sound="Corruptor_AttackLaunch"/>
+        <ImpactMap index="None" Sound="Corruptor_AttackImpact"/>
+    </CActorAction>
+    <!-- Corruptor Caustic Spray Ability -->
+    <CActorRange id="AP_CausticSprayRange" parent="RangeAbil" abil="AP_CausticSpray">
+        <Icon value="Assets\Textures\RadarIcon2.dds"/>
+    </CActorRange>
+    <CActorBeamSimple id="AP_CausticSpray_DummyAttackBeam" parent="BeamSimpleAnimationStyleContinuous">
+        <Model value="VoidRayAttackBeam"/>
+        <Supporter Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <Host Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="Effect.AP_CausticSpray_Create.Stop; At Effect" Send="TimerSet 0.125000 DelayDestroy"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="SetVisibility"/>
+        <Macros value="ActionTargetTeleportDestroy"/>
+    </CActorBeamSimple>
+    <CActorAction id="AP_CausticSpray_DummyAttack" parent="GenericAttackBase">
+        <LaunchAttachQuery Methods="Weapon"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeNoVizEnhance SOpForwardLaunchGuide"/>
+        <ActionFlags index="AlignedImpactsAndDamages" value="1"/>
+        <ActionFlags index="ImpactMonitorsTeleports" value="1"/>
+        <ActionFlags index="LaunchForceSite" value="1"/>
+        <Lifetime value="-1.000000"/>
+        <On Terms="Effect.AP_CausticSpray_Create.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_CausticSpray_Dummy.Start; FromEffectTreeDescendant" Send="ActionDamage"/>
+        <!-- Need to delay the attack long enough to be able kill a beam during its death anim, when
+             the target teleports. -->
+        <On Terms="Effect.AP_CausticSpray_Create.Stop; At Caster; FromEffectTreeDescendant" Send="Destroy WhenReady"/>
+        <ShieldFlashType value="None"/>
+    </CActorAction>
+    <CActorMissile id="AP_CausticSprayMissile" parent="GenericAttackMissile" unitName="AP_CausticSprayMissile">
+        <Model value="AP_CausticSprayWeapon"/>
+    </CActorMissile>
+    <CActorAction id="AP_CausticSprayLevel1" parent="GenericAttack" effectImpact="AP_CausticSprayLevel1_Damage" effectLaunch="AP_CausticSprayLevel1_LaunchMissile">
+        <LaunchAttachQuery Methods="Weapon"/>
+        <Missile value="AP_CausticSprayMissile"/>
+        <AcquisitionYawHalfArc value="2.000000"/>
+        <AcquisitionPitchHalfArc value="2.000000"/>
+        <AccuracyHalfArc value="0.000000"/>
+        <ImpactMap index="None" Model="AP_CausticSprayImpact"/>
+        <HostImpactSource Subject="AP_CausticSpray_DummyAttack" ReachAcrossEffectTrees="1"/>
+    </CActorAction>
+    <CActorAction id="AP_CausticSprayLevel2" parent="GenericAttack" effectImpact="AP_CausticSprayLevel2_Damage" effectLaunch="AP_CausticSprayLevel2_LaunchMissile">
+        <LaunchAttachQuery Methods="Weapon"/>
+        <Missile value="AP_CausticSprayMissile"/>
+        <AcquisitionYawHalfArc value="2.000000"/>
+        <AcquisitionPitchHalfArc value="2.000000"/>
+        <AccuracyHalfArc value="0.000000"/>
+        <ImpactMap index="None" Model="AP_CausticSprayImpact"/>
+        <HostImpactSource Subject="AP_CausticSpray_DummyAttack" ReachAcrossEffectTrees="1"/>
+    </CActorAction>
+    <CActorSound id="AP_Corruptor_CausticSpray2Loop_ActorSound" parent="SoundContinuous">
+        <On Terms="Abil.AP_CausticSpray.SourceChannelStart" Send="Create"/>
+        <On Terms="Abil.AP_CausticSpray.SourceChannelStop" Send="Destroy"/>
+        <Sound value="Corruptor_CausticSpray2_Loop"/>  <!-- This sound lives in liberty.sc2mod/sounddata.xml -->
+    </CActorSound>
+    <CActorSound id="AP_Corruptor_CausticSprayLoop_ActorSound" parent="SoundContinuous">
+        <On Terms="Abil.AP_CausticSpray.SourceChannelStart" Send="Create"/>
+        <On Terms="Abil.AP_CausticSpray.SourceChannelStop" Send="Destroy"/>
+        <Sound value="Corruptor_CausticSpray_Loop"/>  <!-- This sound lives in liberty.sc2mod/sounddata.xml -->
+    </CActorSound>
+    <CActorSound id="AP_Corruptor_CausticSprayLaunch_ActorSound" parent="SoundOneShot">
+        <On Terms="Abil.AP_CausticSpray.SourceChannelStart" Send="Create"/>
+        <Sound value="Corruptor_CausticSpray_Launch"/>  <!-- This sound lives in liberty.sc2mod/sounddata.xml -->
+    </CActorSound>
+    <!-- Corruptor Corruption Ability -->
+    <CActorRange id="AP_CorruptionRange" parent="RangeAbil" abil="AP_Corruption"/>
+    <CActorMissile id="AP_CorruptionMissile" parent="GenericAttackMissile" unitName="AP_CorruptionWeapon">
+        <Model value="AP_CausticSprayWeapon"/>
+    </CActorMissile>
+    <CActorAction id="AP_Corruption" parent="GenericAttack" effectImpact="AP_CorruptionDummy" effectLaunch="AP_CorruptionLaunchMissile">
+        <ImpactSiteOps Ops="SOpAttachHarness VoidRaySOpForwardLaunch SOpForwardLaunchGuide"/>
+        <AccuracyHalfArc value="10.000000"/>
+        <ShieldFlashType value="None"/>
+    </CActorAction>
+    <CActorSound id="AP_CorruptionLaunchSound" parent="SoundOneShot">
+        <Sound value="Corruptor_CorruptionLaunch"/>
+        <On Terms="Abil.AP_Corruption.SourceChannelStop" Send="Create"/>
+        <On Terms="Abil.AP_Corruption.SourceCastStart" Send="Create"/>
+    </CActorSound>
+    <CActorSound id="AP_CorruptionLoopSound" parent="SoundContinuous">
+        <Sound value="Corruptor_CorruptionLoop"/>
+        <On Terms="Abil.AP_Corruption.SourceChannelStart" Send="Create"/>
+        <On Terms="Abil.AP_Corruption.SourceChannelStop" Send="Destroy"/>
+    </CActorSound>
+    <CActorModel id="AP_CorruptionModel" parent="ModelAddition">
+        <AutoScaleFactor value="1.000000"/>
+        <Inherits index="TintColor" value="0"/>
+        <On Terms="Behavior.AP_Corruption.On" Send="Create"/>
+        <On Terms="Behavior.AP_Corruption.Off" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpAttachCenterSoft"/>
+    </CActorModel>
+    <CActorSound id="AP_CorruptionImpactSound" parent="SoundOneShot">
+        <Sound value="Corruptor_CorruptionImpact"/>
+        <On Terms="Behavior.AP_Corruption.On" Send="Create"/>
+    </CActorSound>
     <CActorModel id="AP_DarkImmortalTestImpact" parent="ModelAnimationStyleOneShotNoOrphan">
         <Flags index="SuppressCreationErrors" value="1"/>
         <Inherits index="Visibility" value="1"/>
