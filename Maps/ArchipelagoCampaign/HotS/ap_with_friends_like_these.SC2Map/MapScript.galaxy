@@ -9,6 +9,7 @@ include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/SwarmLib"
 include "TriggerLibs/SwarmCampaignLib"
+include "Lib15EF4C78"
 include "LibA472B13C"
 include "Lib5BD4895D"
 include "LibABFE498B"
@@ -21,6 +22,7 @@ void InitLibs () {
     libLbty_InitLib();
     libHots_InitLib();
     libSwaC_InitLib();
+    lib15EF4C78_InitLib();
     libA472B13C_InitLib();
     lib5BD4895D_InitLib();
     libABFE498B_InitLib();
@@ -1180,6 +1182,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_Init01Technology, true, true);
+    TriggerExecute(gt_Init03Units, true, true);
     TriggerExecute(gt_Init04MusicSound, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
@@ -1381,6 +1384,8 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     unit lv_indexUnit;
 
     // Automatic Variable Declarations
+    unitgroup autoB1B44FA1_g;
+    int autoB1B44FA1_u;
     unitgroup autoC708BF1D_g;
     int autoC708BF1D_u;
     unit autoC708BF1D_var;
@@ -1403,6 +1408,13 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    autoB1B44FA1_g = UnitGroup("AP_ZerglingRespawnControllerUnit", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoB1B44FA1_u = UnitGroupCount(autoB1B44FA1_g, c_unitCountAll);
+    for (;; autoB1B44FA1_u -= 1) {
+        lv_indexUnit = UnitGroupUnitFromEnd(autoB1B44FA1_g, autoB1B44FA1_u);
+        if (lv_indexUnit == null) { break; }
+        UnitRemove(lv_indexUnit);
+    }
     gv_playerBase = UnitFromId(76);
     UnitIssueOrder(gv_playerBase, Order(AbilityCommand("move", 2)), c_orderQueueReplace);
     libSwaC_gf_SetUnitInfoTextCampaign(gv_playerBase, null, UnitTypeGetName(UnitGetType(gv_playerBase)), StringExternal("Param/Value/B3553AF2"));
@@ -2250,6 +2262,10 @@ bool gt_FirstBaseCaptured_Func (bool testConds, bool runActions) {
         }
 
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
             return false;
         }
     }
@@ -3835,6 +3851,10 @@ bool gt_XPBarCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_DisplayProgressBar(StringExternal("Param/Value/F5885274"), 0, 1000);
+    if ((lib15EF4C78_gf_AP_Player_isSoaEnabledForPlayer(gv_pLAYER_01_USER) == true)) {
+        DialogControlSetPosition(libSwaC_gv_zS_ProgressBarPanel, PlayerGroupAll(), c_anchorTopRight, 0, 40);
+    }
+
     TriggerExecute(gt_XPBarUpdate, true, false);
     return true;
 }
@@ -6202,7 +6222,6 @@ bool gt_IntroCinematic_Func (bool testConds, bool runActions) {
     libNtve_gf_StoryMode(PlayerGroupAll(), true);
     UISetWorldVisible(PlayerGroupAll(), false);
     CinematicFade(true, 2.0, c_fadeStyleNormal, Color(0.00, 0.00, 0.00), 0.0, false);
-    libSwaC_gf_CampaignPlayCutscene2("Cutscenes\\ZBriefingSpace01.SC2Cutscene", true, true);
     libNtve_gf_StoryMode(PlayerGroupAll(), false);
     UISetWorldVisible(PlayerGroupAll(), true);
     gv_introCutsceneCompleted = true;
@@ -7140,11 +7159,11 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 
     TriggerExecute(libA472B13C_gt_AP_HotS_Constructor, true, false);
     TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     libABFE498B_gf_AP_Triggers_MapConfig_setMissionBuild(false);
     libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(false, true);
     lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
+    lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 120);
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     return true;
 }
