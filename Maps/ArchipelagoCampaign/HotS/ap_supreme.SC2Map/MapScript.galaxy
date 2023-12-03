@@ -431,6 +431,7 @@ trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
 trigger gt_ArchInit;
+trigger gt_ArchInit2;
 trigger gt_SetMineralCount;
 trigger gt_XelNagaRelicPickupsFirst;
 trigger gt_XelNagaRelicPickupsSecond;
@@ -12728,7 +12729,13 @@ void gt_onDifficultyBrutal_Init () {
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    timer lv_testtimer;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_testtimer = TimerCreate();
+
     // Actions
     if (!runActions) {
         return true;
@@ -12743,9 +12750,6 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
     lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_PRIMAL_ZERG);
     lib5BD4895D_gf_AP_Core_initObjectivePanel();
-    libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective01");
-    lib5BD4895D_gf_AP_Core_addObjective(ObjectiveLastCreated(), "Leaders", true, "slain", 0, 3);
-    lib5BD4895D_gf_AP_Core_setObjectiveProgress(ObjectiveLastCreated(), "Leaders", 1);
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     return true;
 }
@@ -12754,6 +12758,46 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 void gt_ArchInit_Init () {
     gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
     TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init 2
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit2_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    timer lv_testtimer;
+    int lv_testobjective;
+    int lv_testobjective2;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_testtimer = TimerCreate();
+    lv_testobjective = c_invalidObjectiveId;
+    lv_testobjective2 = c_invalidObjectiveId;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective01");
+    lib5BD4895D_gf_AP_Core_addObjective(ObjectiveLastCreated(), false, "slain", 0, 3, false, lv_testtimer);
+    lv_testobjective = ObjectiveLastCreated();
+    libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective02");
+    lib5BD4895D_gf_AP_Core_addObjective(ObjectiveLastCreated(), true, "slain", 0, 3, false, lv_testtimer);
+    lv_testobjective2 = ObjectiveLastCreated();
+    libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective03");
+    lib5BD4895D_gf_AP_Core_addObjective(ObjectiveLastCreated(), false, "slain", 0, 3, false, lv_testtimer);
+    Wait(5.0, c_timeReal);
+    lib5BD4895D_gf_AP_Core_deleteObjective(lv_testobjective);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(lv_testobjective2, 1);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit2_Init () {
+    gt_ArchInit2 = TriggerCreate("gt_ArchInit2_Func");
+    TriggerAddEventTimeElapsed(gt_ArchInit2, 2.0, c_timeReal);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -13114,6 +13158,7 @@ void InitTriggers () {
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
     gt_ArchInit_Init();
+    gt_ArchInit2_Init();
     gt_SetMineralCount_Init();
     gt_XelNagaRelicPickupsFirst_Init();
     gt_XelNagaRelicPickupsSecond_Init();
