@@ -528,6 +528,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 130);
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
     return true;
 }
 
@@ -1491,6 +1492,7 @@ bool gt_StartGameEscort_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDestroyDominionBasesCreateQ, true, true);
     Wait(1.0, c_timeGame);
     ObjectiveShow(gv_objectiveDestroytheLoki, PlayerGroupAll(), true);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroytheLoki, "check", 1, 0);
     Wait(29.0, c_timeGame);
     TriggerExecute(gt_BattlecruiserSpawnAttackOdin, true, false);
     Wait(30.0, c_timeGame);
@@ -4939,12 +4941,14 @@ bool gt_ObjectiveStealtheOdinCreateQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/85BC6DAF"), StringExternal("Param/Value/4DF1D7BC"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
     gv_objectiveStealTheOdin = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/67435239"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/83B223A5"), StringExternal("Param/Value/11837275"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
     gv_objectiveTychusMustSurvive = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/A2EBB206"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -5028,9 +5032,11 @@ bool gt_ObjectiveDestroyDominionBasesCreateQ_Func (bool testConds, bool runActio
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/B6A1D7EC"), StringExternal("Param/Value/35A07756"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", 0, gv_objectiveDestroyDominionBasesQuota);
     gv_objectiveDestroyDominionBases = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/1AAF573D"));
     ObjectiveCreate(StringExternal("Param/Value/9A3A5393"), StringExternal("Param/Value/4F1324DA"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
     gv_objectiveOdinMustSurvive = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective4, ObjectiveLastCreated(), StringExternal("Param/Value/FD0C270E"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -5085,7 +5091,7 @@ bool gt_ObjectiveDestroyDominionBasesUpdate_Func (bool testConds, bool runAction
 
     TriggerExecute(gt_ObjectiveDestroyDominionBasesCreateQ, true, false);
     gv_objectiveDestroyDominionBasesCurrent = (gv_objectiveDestroyDominionBasesCurrent + 1);
-    ObjectiveSetName(gv_objectiveDestroyDominionBases, (StringExternal("Param/Value/EA3B8510") + IntToText(gv_objectiveDestroyDominionBasesCurrent) + StringExternal("Param/Value/189A67E4") + IntToText(gv_objectiveDestroyDominionBasesQuota) + StringExternal("Param/Value/46DDFDA9")));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBases, gv_objectiveDestroyDominionBasesCurrent);
     if ((gv_objectiveDestroyDominionBasesCurrent == gv_objectiveDestroyDominionBasesQuota)) {
         TriggerExecute(gt_VictoryDestroyAllBasesComplete, true, false);
     }
@@ -5118,10 +5124,12 @@ bool gt_ObjectiveDestroytheLokiCreateHidden_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/932ED8C2"), StringExternal("Param/Value/16ADA481"), c_objectiveStateHidden, false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/932ED8C2"), StringExternal("Param/Value/16ADA481"), c_objectiveStateActive, false);
     gv_objectiveDestroytheLoki = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective5, ObjectiveLastCreated(), StringExternal("Param/Value/94E1BA17"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
     return true;
 }
 
@@ -5171,7 +5179,7 @@ bool gt_ObjectiveDestroytheLokiFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroytheLokiCreateHidden, true, false);
-    ObjectiveSetState(gv_objectiveDestroytheLoki, c_objectiveStateFailed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroytheLoki);
     return true;
 }
 
@@ -5199,7 +5207,8 @@ bool gt_ObjectiveDevourerSamplesCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate((StringExternal("Param/Value/15C1693C") + IntToText((3 - gv_devourerSamplesFound)) + StringExternal("Param/Value/FAD28B57")), StringExternal("Param/Value/9337876A"), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/65CF8966"), StringExternal("Param/Value/9337876A"), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", gv_devourerSamplesFound, gv_devourerSamplesTotal);
     gv_objectiveDevourerSamples = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective6, ObjectiveLastCreated(), StringExternal("Param/Value/2504059C"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -5234,7 +5243,7 @@ bool gt_ObjectiveDevourerSampleUpdate_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/FAEB47D8"), null, UnitGetPosition(EventUnit()));
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectFindDevourerTissueSamples, EventUnit(), gv_p01_USER);
     UnitKill(EventUnit());
-    ObjectiveSetName(gv_objectiveDevourerSamples, (StringExternal("Param/Value/D44C9615") + IntToText(gv_devourerSamplesFound) + StringExternal("Param/Value/16047064") + IntToText(gv_devourerSamplesTotal) + StringExternal("Param/Value/3CBF51DD")));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDevourerSamples, gv_devourerSamplesFound);
     if ((gv_devourerSamplesFound == gv_devourerSamplesTotal)) {
         TriggerExecute(gt_ObjectiveCerebrateSamplesComplete, true, true);
     }
