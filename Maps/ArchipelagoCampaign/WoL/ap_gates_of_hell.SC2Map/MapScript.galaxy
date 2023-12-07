@@ -924,6 +924,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p04_WARFIELD, lib5BD4895D_gv_aP_Core_Faction_TERRAN_DOMINION);
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
     lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 160);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
     return true;
 }
 
@@ -6306,7 +6307,8 @@ bool gt_ObjectiveTroopSupplyCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate((StringExternal("Param/Value/CCBA874B") + FixedToText(gv_existingSupplyUpdate, 0) + StringExternal("Param/Value/D2C29749") + IntToText(gv_obejctiveTroopsSupplyTotal) + StringExternal("Param/Value/FFF89351")), StringExternal("Param/Value/ACD3FC1A"), c_objectiveStateActive, true);
+    ObjectiveCreate(StringExternal("Param/Value/1204A177"), StringExternal("Param/Value/ACD3FC1A"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", FixedToInt(gv_existingSupplyUpdate), gv_obejctiveTroopsSupplyTotal);
     gv_troopSupply = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian01Objective2, gv_troopSupply, StringExternal("Param/Value/099D9D4B"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -6456,12 +6458,12 @@ bool gt_ObjectiveTroopSupplyUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveTroopSupplyCreateQ, true, false);
-    ObjectiveSetName(gv_troopSupply, (StringExternal("Param/Value/35A51023") + FixedToText(gv_existingSupplyUpdate, 0) + StringExternal("Param/Value/931B73B1") + (IntToText(gv_obejctiveTroopsSupplyTotal)) + StringExternal("Param/Value/A31AC52F")));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_troopSupply, FixedToInt(gv_existingSupplyUpdate));
     if ((gv_existingSupplyUpdate >= IntToFixed(gv_obejctiveTroopsSupplyTotal))) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerEnable(gt_ObjectiveFoodSupply, false);
         TriggerExecute(gt_ObjectiveTroopSupplyComplete, true, false);
-        ObjectiveSetName(gv_troopSupply, (StringExternal("Param/Value/CF493A94") + FixedToText(100.0, 0) + StringExternal("Param/Value/93880367") + (IntToText(gv_obejctiveTroopsSupplyTotal)) + StringExternal("Param/Value/A3A377F1")));
+        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_troopSupply, 100);
         lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_troopSupply);
     }
 
@@ -6491,7 +6493,8 @@ bool gt_ObjectiveNydusWormsCreateHidden_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate((StringExternal("Param/Value/C304BF9D") + IntToText(gv_obejctiveNydusWormsUpdate) + StringExternal("Param/Value/2DF13558") + IntToText(gv_obejctiveNydusWormsTotal) + StringExternal("Param/Value/F9F69467")), StringExternal("Param/Value/C5E5B9B1"), c_objectiveStateHidden, true);
+    ObjectiveCreate(StringExternal("Param/Value/408B1BB0"), StringExternal("Param/Value/C5E5B9B1"), c_objectiveStateHidden, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_obejctiveNydusWormsUpdate, gv_obejctiveNydusWormsTotal);
     gv_objectiveNydusWorms = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian01Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/F35D34B8"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -6522,7 +6525,7 @@ bool gt_ObjectiveNydusWormsUpdate_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_ObjectiveNydusWormsCreateHidden, true, false);
     gv_obejctiveNydusWormsUpdate += 1;
-    ObjectiveSetName(gv_objectiveNydusWorms, (StringExternal("Param/Value/2FB3E0A4") + IntToText(gv_obejctiveNydusWormsUpdate) + StringExternal("Param/Value/482E305A") + (IntToText(gv_obejctiveNydusWormsTotal)) + StringExternal("Param/Value/5D117C8B")));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveNydusWorms, gv_obejctiveNydusWormsUpdate);
     if ((gv_obejctiveNydusWormsUpdate == gv_obejctiveNydusWormsTotal)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveNydusWormsComplete, true, false);
@@ -8168,6 +8171,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     gv_inCinematic = false;
     gv_midCinematicCompleted = true;
     ObjectiveShow(gv_objectiveNydusWorms, PlayerGroupAll(), true);
+    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveNydusWorms);
     TriggerExecute(gt_DialogueSirWShouldMobilizeEverythingWeGotQ, true, false);
     autoBB380C33_g = gv_bunkerGroup01;
     autoBB380C33_u = UnitGroupCount(autoBB380C33_g, c_unitCountAll);
