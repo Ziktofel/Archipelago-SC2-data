@@ -167,7 +167,7 @@ void gf_ShuttleLaunchAnimate (unit lp_dockingBay, int lp_statetoenter);
 void gf_DoArrowPings (unitgroup lp_unitgroup, point lp_endpoint);
 void gf_ActivateDeactivateWarpConduit (unit lp_unit, int lp_state);
 void gf_SaveFrozenZerg (unit lp_cHOSEN_UNIT);
-text gf_Objective_LabelText ();
+string gf_Objective_LabelText ();
 
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
@@ -1068,14 +1068,14 @@ bool auto_gf_SaveFrozenZerg_TriggerFunc (bool testConds, bool runActions) {
     return true;
 }
 
-text gf_Objective_LabelText () {
+string gf_Objective_LabelText () {
     // Automatic Variable Declarations
     // Implementation
     if ((gv_shuttleWavesRemaining == 1)) {
-        return StringExternal("Param/Value/9594FB1A");
+        return "Wave Remaining";
     }
     else {
-        return StringExternal("Param/Value/06A14697");
+        return "Waves Remaining";
     }
 }
 
@@ -4732,6 +4732,8 @@ bool gt_ObjectiveDestroyAllProtossShuttlesCreate_Func (bool testConds, bool runA
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition02Objective2");
     gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition02Objective2", gf_Objective_LabelText());
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, gv_shuttleWavesRemaining);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4773,7 +4775,8 @@ bool gt_ObjectiveDestroyAllProtossShuttlesUpdate_Func (bool testConds, bool runA
 
     TriggerExecute(gt_ObjectiveDestroyAllProtossShuttlesCreate, true, false);
     gv_shuttleWavesRemaining -= 1;
-    libSwaC_gf_UpdateMissionObjectiveText("ZExpedition02Objective2", gv_shuttleWavesRemaining, false, gf_Objective_LabelText());
+    lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase, gf_Objective_LabelText());
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, gv_shuttleWavesRemaining);
     if ((gv_shuttleWavesRemaining <= 0)) {
         TriggerExecute(gt_VictorySequence, true, false);
     }
@@ -4868,6 +4871,7 @@ bool gt_ObjectiveNoShuttleCanEscapeCreate_Func (bool testConds, bool runActions)
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition02Objective3");
     gv_objectiveNoShuttleCanEscape = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition02Objective3", "");
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4956,6 +4960,7 @@ bool gt_ObjectiveDestroyStasisChamberCreate_Func (bool testConds, bool runAction
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition02Objective1");
     gv_objectiveBonusDestroyStasisChamber = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition02Objective1", "");
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4983,11 +4988,7 @@ bool gt_ObjectiveDestroyStasisChamberUpdate_Func (bool testConds, bool runAction
     }
 
     TriggerExecute(gt_ObjectiveDestroyStasisChamberCreate, true, false);
-    if ((gv_stasisChamberDestroyed == 3)) {
-    }
-    else {
-        libSwaC_gf_SetMissionObjectiveProgress2("ZExpedition02Objective1", gv_stasisChamberDestroyed, true, null, true);
-    }
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveBonusDestroyStasisChamber, gv_stasisChamberDestroyed);
     return true;
 }
 
@@ -5805,9 +5806,8 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     libABFE498B_gf_AP_Triggers_MapConfig_setKerriganOptions(false, true);
     lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM_SWITCHABLE_TO_PRIMAL_ZERG);
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
-    lib15EF4C78_gf_APInitObjectives(20, 100);
-    lib15EF4C78_gf_APAddObjective("test1 test2 test3 test4 test5 test6 test7");
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
     return true;
 }
 
