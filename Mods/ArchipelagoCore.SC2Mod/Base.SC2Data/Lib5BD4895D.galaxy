@@ -456,7 +456,7 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, bool lp_hasCounter, 
     }
 
     while ((lv_rollingindex > 0) && (ObjectiveGetPriority(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[(lv_rollingindex - 1)].lv_objective) < ObjectiveGetPriority(lp_objective))) {
-        lib5BD4895D_gf_AP_Core_copyObjectiveData(lv_categoryindex, (lv_rollingindex - 1), lv_rollingindex, false);
+        lib5BD4895D_gf_AP_Core_copyObjectiveData(lv_categoryindex, (lv_rollingindex - 1), lv_rollingindex, true);
         lv_rollingindex -= 1;
     }
     if ((ObjectiveGetState(lp_objective) != c_objectiveStateHidden)) {
@@ -484,7 +484,6 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, bool lp_hasCounter, 
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_counterMax = lp_counterMax;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_hasTimer = lp_hasTimer;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_timer = lp_timer;
-    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_finished = false;
     if ((ObjectiveGetState(lp_objective) == c_objectiveStateHidden)) {
         DialogControlSetVisible(lv_new_panel, PlayerGroupAll(), false);
     }
@@ -587,6 +586,39 @@ void lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix (int lp_objective, string 
 
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_counterSuffix = lp_counterSuffix;
     lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
+}
+
+void lib5BD4895D_gf_AP_Core_setObjectiveCounterMax (int lp_objective, int lp_counterMax) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective);
+
+    // Implementation
+    if ((lv_objectiveindex == -1)) {
+        return ;
+    }
+
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_counterMax = lp_counterMax;
+    lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
+}
+
+void lib5BD4895D_gf_AP_Core_updateObjectiveDescription (int lp_objective) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective);
+
+    // Implementation
+    libNtve_gf_SetDialogItemTooltip(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_label, ObjectiveGetDescription(lp_objective), PlayerGroupAll());
 }
 
 trigger auto_lib5BD4895D_gf_AP_Core_addObjectiveExtraLine_Trigger = null;
@@ -881,6 +913,7 @@ void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_counterMax = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_counterMax;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_hasTimer = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_hasTimer;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_timer = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_timer;
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_extraLines = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_extraLines;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_waiting = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_waiting;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_finished = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_finished;
     if ((lv_previoustimer == true)) {
@@ -928,6 +961,7 @@ void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_counterMax = 0;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_hasTimer = false;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_timer = lib5BD4895D_gv_aP_Core_objectiveDefaultTimer;
+        lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_extraLines = 0;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_waiting = false;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_finished = false;
     }
@@ -964,7 +998,12 @@ text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, bool lp_hasCounter, str
     // Implementation
     if ((lp_hasCounter == true)) {
         if ((StringLength(lp_counterSuffix) > 0)) {
-            lv_countersuffix = (StringExternal("Param/Value/lib_5BD4895D_237AD9BA") + StringToText(lp_counterSuffix));
+            if ((StringFind(lp_counterSuffix, ")", c_stringCase) == 1)) {
+                lv_countersuffix = StringToText(lp_counterSuffix);
+            }
+            else {
+                lv_countersuffix = (StringExternal("Param/Value/lib_5BD4895D_237AD9BA") + StringToText(lp_counterSuffix));
+            }
         }
 
         if ((lp_counterMax > 0)) {
