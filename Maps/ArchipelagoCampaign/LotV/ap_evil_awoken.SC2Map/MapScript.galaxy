@@ -890,6 +890,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_PROTOSS_NOT_LOTV_MAIN);
     libABFE498B_gf_AP_Triggers_MapConfig_setMissionBuild(false);
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
     return true;
 }
 
@@ -8384,6 +8385,8 @@ bool gt_ObjectiveInvestigateTempleCreate_Func (bool testConds, bool runActions) 
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary01");
     gv_objective_InvestigateTemple = ObjectiveLastCreated();
+    ObjectiveSetPriority(ObjectiveLastCreated(), 4);
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary01", "", 0);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8442,7 +8445,8 @@ bool gt_ObjectiveDestroyCatalystCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary02");
     gv_objective_DestroyCatalyst = ObjectiveLastCreated();
-    ObjectiveSetAfter(ObjectiveLastCreated(), gv_objective_InvestigateTemple);
+    ObjectiveSetPriority(ObjectiveLastCreated(), 3);
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary02", "", 0);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8501,7 +8505,8 @@ bool gt_ObjectiveEscapeCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary04");
     gv_objective_Escape = ObjectiveLastCreated();
-    ObjectiveSetBefore(ObjectiveLastCreated(), gv_objective_ZeratulMustSurvive);
+    ObjectiveSetPriority(ObjectiveLastCreated(), 0);
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary04", "", 0);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8559,7 +8564,7 @@ bool gt_ObjectiveEscapeFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEscapeCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary04", libA3DDD02B_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Escape);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8589,6 +8594,7 @@ bool gt_ObjectiveZeratulMustSurviveCreate_Func (bool testConds, bool runActions)
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary05");
     gv_objective_ZeratulMustSurvive = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary05", "", 0);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8646,7 +8652,7 @@ bool gt_ObjectiveZeratulMustSurviveFailed_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveZeratulMustSurviveCreate, true, false);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary05", libA3DDD02B_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_ZeratulMustSurvive);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8676,7 +8682,7 @@ bool gt_ObjectiveDestroyParticleCannonsCreate_Func (bool testConds, bool runActi
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Bonus01");
     gv_objectiveDestroyParticleCannons = ObjectiveLastCreated();
-    libA3DDD02B_gf_SetMissionObjectiveProgress2("PPrologue03Bonus01", gv_particleCannonsDestroyed, true, null, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Bonus01", "", gv_particleCannonsDestroyed);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8704,10 +8710,7 @@ bool gt_ObjectiveDestroyParticleCannonsUpdate_Func (bool testConds, bool runActi
     }
 
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsCreate, true, false);
-    if ((gv_particleCannonsDestroyed < 3)) {
-        libA3DDD02B_gf_SetMissionObjectiveProgress2("PPrologue03Bonus01", gv_particleCannonsDestroyed, true, null, true);
-    }
-
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyParticleCannons, gv_particleCannonsDestroyed);
     return true;
 }
 
@@ -9630,8 +9633,11 @@ bool gt_MidVoidCatalystDestroyedSetup_Func (bool testConds, bool runActions) {
     gv_currentSection = 3;
     RegionPlayableMapSet(RegionFromId(127));
     libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary01", libA3DDD02B_ge_MissionObjectiveState_Undiscovered);
+    lib5BD4895D_gf_AP_Core_showObjective(gv_objective_InvestigateTemple);
     libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary02", libA3DDD02B_ge_MissionObjectiveState_Undiscovered);
+    lib5BD4895D_gf_AP_Core_showObjective(gv_objective_DestroyCatalyst);
     libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Bonus01", libA3DDD02B_ge_MissionObjectiveState_Undiscovered);
+    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyParticleCannons);
     libNtve_gf_SetAlliance(gv_pLAYER_01_USER, gv_pLAYER_02_TALDARIM, libNtve_ge_AllianceSetting_Neutral);
     Wait(0.0625, c_timeGame);
     gv_cinematicTempUnits = UnitGroupEmpty();

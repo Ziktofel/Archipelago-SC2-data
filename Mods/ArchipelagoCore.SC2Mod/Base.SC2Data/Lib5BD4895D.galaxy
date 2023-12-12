@@ -490,7 +490,7 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, bool lp_hasCounter, 
 
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex += 1;
     lib5BD4895D_gf_AP_Core_resizeObjectivePanel();
-    lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout(lp_objective, lv_categoryindex, lv_rollingindex, lv_new_label, lp_hasTimer);
+    lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout(lv_categoryindex, lv_rollingindex, lp_hasTimer);
 }
 
 void lib5BD4895D_gf_AP_Core_addObjectiveSimple (int lp_objective) {
@@ -695,12 +695,17 @@ void lib5BD4895D_gf_AP_Core_showObjective (int lp_objective) {
     int lv_categoryindex;
     int lv_objectiveindex;
     int lv_rollingindex;
+    bool lv_hidecategory;
     int lv_visualrollingindex;
 
     // Automatic Variable Declarations
+    int auto05D885EE_ae;
+    const int auto05D885EE_ai = 1;
+
     // Variable Initialization
     lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
     lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective);
+    lv_hidecategory = true;
 
     // Implementation
     if ((lv_objectiveindex == -1)) {
@@ -709,42 +714,42 @@ void lib5BD4895D_gf_AP_Core_showObjective (int lp_objective) {
 
     if ((ObjectiveGetState(lp_objective) == c_objectiveStateHidden)) {
         DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_panel, PlayerGroupAll(), false);
+        auto05D885EE_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex - 1);
+        lv_rollingindex = 0;
+        for ( ; ( (auto05D885EE_ai >= 0 && lv_rollingindex <= auto05D885EE_ae) || (auto05D885EE_ai < 0 && lv_rollingindex >= auto05D885EE_ae) ) ; lv_rollingindex += auto05D885EE_ai ) {
+            if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective != c_invalidObjectiveId) && (ObjectiveGetState(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective) != c_objectiveStateHidden)) {
+                lv_hidecategory = false;
+            }
+
+        }
+        if ((lv_hidecategory == true)) {
+            DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleLabel, PlayerGroupAll(), false);
+            DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleBackground, PlayerGroupAll(), false);
+            DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), false);
+        }
+
     }
     else {
         DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_panel, PlayerGroupAll(), true);
-    }
-    lib5BD4895D_gf_AP_Core_resizeObjectivePanel();
-    if ((ObjectiveGetState(lp_objective) == c_objectiveStateHidden)) {
-    }
-    else {
         DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleLabel, PlayerGroupAll(), true);
         DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleBackground, PlayerGroupAll(), true);
         DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), true);
-        lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_waiting = true;
         libNtve_gf_SetDialogItemTextWriteout(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_label, true, PlayerGroupAll());
         lib5BD4895D_gf_AP_Core_updateObjectiveText(lv_categoryindex, lv_objectiveindex);
-        DialogControlFadeTransparency(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_label, PlayerGroupAll(), 2.5, 0.0);
-        SoundPlayForPlayer(SoundLink("UI_ObjectiveText", -1), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
-        Wait(2.5, c_timeReal);
-        SoundStop(SoundLastPlayed(), false);
-        libNtve_gf_SetDialogItemTextWriteout(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_label, false, PlayerGroupAll());
-        lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_waiting = false;
+        lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout(lv_categoryindex, lv_objectiveindex, false);
     }
+    lib5BD4895D_gf_AP_Core_resizeObjectivePanel();
 }
 
 trigger auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_Trigger = null;
-int auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_objective;
 int auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_categoryIndex;
 int auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_objectiveIndex;
-int auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_label;
-bool auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_hasTimer;
+bool auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_addTimer;
 
-void lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout (int lp_objective, int lp_categoryIndex, int lp_objectiveIndex, int lp_label, bool lp_hasTimer) {
-    auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_objective = lp_objective;
+void lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout (int lp_categoryIndex, int lp_objectiveIndex, bool lp_addTimer) {
     auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_categoryIndex = lp_categoryIndex;
     auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_objectiveIndex = lp_objectiveIndex;
-    auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_label = lp_label;
-    auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_hasTimer = lp_hasTimer;
+    auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_addTimer = lp_addTimer;
 
     if (auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_Trigger == null) {
         auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_Trigger = TriggerCreate("auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_TriggerFunc");
@@ -754,26 +759,30 @@ void lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout (int lp_objective, int lp_
 }
 
 bool auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_TriggerFunc (bool testConds, bool runActions) {
-    int lp_objective = auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_objective;
     int lp_categoryIndex = auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_categoryIndex;
     int lp_objectiveIndex = auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_objectiveIndex;
-    int lp_label = auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_label;
-    bool lp_hasTimer = auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_hasTimer;
+    bool lp_addTimer = auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_addTimer;
+
+    // Variable Declarations
+    int lv_label;
 
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_label = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_objectives[lp_objectiveIndex].lv_label;
+
     // Implementation
-    if ((ObjectiveGetState(lp_objective) == c_objectiveStateHidden)) {
+    if ((ObjectiveGetState(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_objectives[lp_objectiveIndex].lv_objective) == c_objectiveStateHidden)) {
     }
     else {
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_objectives[lp_objectiveIndex].lv_waiting = true;
-        DialogControlFadeTransparency(lp_label, PlayerGroupAll(), 2.5, 0.0);
+        DialogControlFadeTransparency(lv_label, PlayerGroupAll(), 2.5, 0.0);
         SoundPlayForPlayer(SoundLink("UI_ObjectiveText", -1), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
         Wait(2.5, c_timeReal);
         SoundStop(SoundLastPlayed(), false);
-        libNtve_gf_SetDialogItemTextWriteout(lp_label, false, PlayerGroupAll());
+        libNtve_gf_SetDialogItemTextWriteout(lv_label, false, PlayerGroupAll());
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_objectives[lp_objectiveIndex].lv_waiting = false;
     }
-    if ((lp_hasTimer == true)) {
+    if ((lp_addTimer == true) && (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_objectives[lp_objectiveIndex].lv_hasTimer == true)) {
         TriggerEnable(lib5BD4895D_gt_AP_Core_objectiveTimerUpdate, true);
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_timerObjectives[lib5BD4895D_gv_aP_Core_objectivePanel.lv_timerRollingIndex][0] = lp_categoryIndex;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_timerObjectives[lib5BD4895D_gv_aP_Core_objectivePanel.lv_timerRollingIndex][1] = lp_objectiveIndex;
@@ -1483,7 +1492,10 @@ bool lib5BD4895D_gt_AP_Core_objectiveTimerUpdate_Func (bool testConds, bool runA
         lv_categoryindex = lib5BD4895D_gv_aP_Core_objectivePanel.lv_timerObjectives[lv_timerindex][0];
         if ((lv_categoryindex >= 0)) {
             lv_objectiveindex = lib5BD4895D_gv_aP_Core_objectivePanel.lv_timerObjectives[lv_timerindex][1];
-            lib5BD4895D_gf_AP_Core_updateObjectiveText(lv_categoryindex, lv_objectiveindex);
+            if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_waiting == false)) {
+                lib5BD4895D_gf_AP_Core_updateObjectiveText(lv_categoryindex, lv_objectiveindex);
+            }
+
         }
 
     }
