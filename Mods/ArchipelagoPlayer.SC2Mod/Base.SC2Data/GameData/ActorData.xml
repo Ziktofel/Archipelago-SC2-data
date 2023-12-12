@@ -185,6 +185,7 @@
         <On Terms="AbilMorph.*.Finish; MorphTo AP_Roach; MorphFrom AP_RoachBurrowed" Send="TerrainSquibActivateGroup RippleStandard"/>
         <On Terms="AbilMorph.*.Finish; MorphTo AP_RoachBurrowed; MorphFrom AP_Roach" Send="TerrainSquibDeactivate"/>
         <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Roach_Land"/>
+        <On Terms="AbilMorph.AP_MorphToRavager.Finish; MorphTo AP_RavagerCocoon" Send="Destroy"/>
         <ModelFlags index="OutlineEmitter" value="1"/>
         <BuildModel value="Roach"/>
         <HighlightTooltip value="Unit/Name/AP_Roach"/>
@@ -7513,6 +7514,7 @@
     <CActorUnit id="AP_Roach" parent="AP_RoachBase" unitName="AP_Roach">
         <On Terms="UnitBirth.AP_RoachBurrowed" Send="Create"/>
         <On Terms="UnitBirth.AP_RoachBurrowed" Send="AnimGroupApply Burrow Burrow Unburrow ClosingFull,Instant"/>
+        <On Terms="AbilMorph.AP_MorphToRavager.Finish; MorphFrom AP_RavagerCocoon; MorphTo AP_Roach" Send="Create"/>
         <On Terms="Upgrade.AP_RoachVile.Add" Send="Create AP_RoachVile"/>
         <On Terms="Upgrade.AP_RoachVile.Add" Send="Destroy"/>
         <On Terms="ActorCreation; ValidateUnit AP_HaveRoachVile" Send="Create AP_RoachVile"/>
@@ -9379,6 +9381,173 @@
         <On Terms="WeaponStart.AP_RoachVileMelee.AttackStart" Send="Create"/>
         <Sound value="RoachVile_AttackLaunchMelee"/>
     </CActorSound>
+    <!-- Ravager -->
+    <CActorUnit id="AP_Ravager" parent="GenericBurrowerStandard" unitName="AP_Ravager">
+        <Aliases value="_UnitLarge"/>
+        <Macros value="ZergBurrowStandardAnimMacro"/>
+        <Macros value="ZergMediumBurrowEffects"/>
+        <Macros value="UnloadDropAnim"/>
+        <Macros value="PhysicsDeathsSwarmGround"/>
+        <Macros value="PhysicsDeathsVoidGround"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <Macros value="AP_DeepTunnelMacro"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Ravager_Land"/>
+        <On Terms="AbilMorph.*.Start; AbilKey BurrowDown" Send="Create BurrowDownMedium"/>
+        <On Terms="AbilMorph.*.Start; AbilKey BurrowDown" Send="AnimClear Fidget"/>
+        <On Terms="AbilMorph.*.Start; AbilKey BurrowDown" Send="AnimClear Spell"/>
+        <On Terms="AbilMorph.*.Cancel; MorphFrom AP_Ravager; MorphTo AP_RavagerBurrowed" Send="AnimClear Burrow"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_Ravager; MorphFrom AP_RavagerBurrowed" Send="AnimBracketStop Burrow"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_Ravager; MorphFrom AP_RavagerCocoon" Send="Create"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_Ravager; MorphFrom AP_RavagerCocoon" Send="$Birth 0 0.000000"/>
+        <On Terms="Abil.AP_RavagerCorrosiveBile.SourceCastStart" Send="$Spell"/>
+        <On Terms="UnitMovementUpdate.*.Walk" Send="AnimClear Spell"/>
+        <On Terms="UnitMovementUpdate.*.Walk" Send="AnimClear Birth"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <PortraitModel value="RavagerPortrait"/>
+        <HighlightTooltip value="Unit/Name/AP_Ravager"/>
+        <DeathArray index="Normal" ModelLink="RavagerDeath" SoundLink="Roach_Explode"/>
+        <DeathArray index="Disintegrate" ModelLink="RavagerDeathAcid" SoundLink="Uni_DeathFXAcid"/>
+        <DeathArray index="Fire" ModelLink="RavagerDeathFire" SoundLink="Uni_DeathFXFire"/>
+        <DeathCustoms ActorModel="AP_RavagerDeathRagdoll" ModelLink="RavagerDeathRagdoll" Name="RagdollBasic">
+            <BodySquibs Name="FireOnMetal"/>
+            <BodySquibs Name="Blood" IsFallback="1"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollSiegeTank" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollNuke" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollFire" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollAcid" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollBaneling" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollUltraUnburrow" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDPRH" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms ActorModel="SpineCrawlerHurlDeathRagdollBloodPrevent" ModelLink="RavagerDeathRagdoll" Name="RagdollSpineCrawlerHurl">
+            <BodySquibs Name="None"/>
+        </DeathCustoms>
+        <TerrainSquibs>
+            <MovementDistance value="0.150000,0.150000"/>
+            <IdlePeriod value="0.100000,0.250000"/>
+            <RangeUp value="0.600000"/>
+            <RangeDown value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleImmortal"/>
+        </TerrainSquibs>
+        <WalkAnimMoveSpeed value="2.25"/>
+        <BarOffset value="85"/>
+        <BarWidth value="75"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-zerg-ravagers.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-ravager.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
+        <UnitIcon value="Assets\Textures\btn-unit-zerg-ravager.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-zerg-ravagers.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorModel id="AP_RavagerDeathRagdoll" parent="UnitDeathRagdoll"/>
+    <CActorSound id="AP_Ravager_Land" parent="SoundOneShot"/>
+    <CActorAction id="AP_RavagerAttack" parent="GenericAttack" effectImpact="AP_RavagerWeaponDamage" effectLaunch="AP_RavagerWeaponLM">
+        <LaunchAssets Model="" Sound="Ravager_AttackLaunch"/>
+        <Missile value="AP_RavagerWeaponMissile"/>
+        <ImpactMap index="None" Model="AP_RavagerWeaponImpact" Sound="Ravager_Attack_Impact"/>
+    </CActorAction>
+    <CActorMissile id="AP_RavagerWeaponMissile" parent="GenericAttackMissile" unitName="AP_RavagerWeaponMissile"/>
+    <CActorSplat id="AP_RavagerBurrowedSplat" parent="BurrowedSplat" unitName="AP_Ravager">
+        <Scale value="1.100000"/>
+    </CActorSplat>
+    <CActorUnit id="AP_RavagerCocoon" parent="GenericUnitMorph" unitName="AP_RavagerCocoon">
+        <Aliases value="_UnitMedium"/>
+        <On Terms="ActorCreation" Send="Create AP_RavagerCocoonBirthSound"/>
+        <On Terms="ActorCreation" Send="$Birth 0 0.000000"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <DeathArray index="Normal" ModelLink="RavagerCocoonDeath" SoundLink="Egg_Explode"/>
+        <PortraitModel value="RavagerCocoonPortrait"/>
+        <BarOffset value="40"/>
+        <BarWidth value="36"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-Zerg-RavagersEgg.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-egg.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
+        <UnitIcon value="Assets\Textures\btn-unit-zerg-egg.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-Zerg-RavagersEgg.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorSound id="AP_RavagerCocoonBirthSound" parent="SoundOneShot">
+        <Host Subject="::Creator"/>
+        <Sound value="Egg_Birth"/>
+    </CActorSound>
+    <CActorModel id="AP_RavagerCocoonHatch">
+        <Inherits index="Visibility" value="1"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_RavagerCocoon; ValidateUnit NotDead" Send="Create"/>
+        <On Terms="ActorCreation" Send="$Death"/>
+        <On Terms="AnimDone; AnimName Death" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create AP_RavagerCocoonDeathSound"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOriginStationary"/>
+        <Model value="AP_RavagerCocoon"/>
+    </CActorModel>
+    <CActorSound id="AP_RavagerCocoonDeathSound" parent="SoundOneShot">
+        <Host Subject="::Creator"/>
+        <Sound value="Egg_Explode"/>
+    </CActorSound>
+    <!-- Ravager Corrosive Bile -->
+    <CActorAction id="AP_RavagerCorrosiveBileAttackDown" parent="GenericAttack" effectImpact="AP_RavagerCorrosiveBileSearch" effectLaunch="AP_RavagerCorrosiveBileLaunchDown">
+        <LaunchSiteOps Ops="SOpTargetPointStationary AP_SOpRavagerCorrosiveBileOffsetDown"/>
+        <LaunchAssets Sound="Ravager_CorrosiveBile_Incoming"/>
+        <Missile value="AP_RavagerCorrosiveBileMissile"/>
+        <ImpactMap index="None" Model="RavagerCorrosiveBileImpact" Sound="Ravager_CorrosiveBile_Explosion"/>
+        <ImpactModel value="GenericAttackImpactModelPoint"/>
+        <ImpactSound value="GenericAttackImpactSoundPoint"/>
+        <ShieldFlashType value="Full"/>
+    </CActorAction>
+    <CActorAction id="AP_RavagerCorrosiveBileAttackUp" parent="GenericAttack" effectLaunch="AP_RavagerCorrosiveBileLaunchUp">
+        <LaunchSiteOps Ops="SOpAttachWeapon"/>
+        <LaunchAssets Sound="Ravager_CorrosiveBile_AttackLaunch"/>
+        <Missile value="AP_RavagerCorrosiveBileMissile"/>
+        <ImpactPointSiteOps Ops="SOpSourcePointSationary AP_SOpRavagerCorrosiveBileOffsetUp"/>
+    </CActorAction>
+    <CActorSplat id="AP_RavagerCorrosiveBileCursorSplat" parent="ZergCursorSplat" abil="AP_RavagerCorrosiveBile"/>
+    <CActorForceSphere id="AP_RavagerCorrosiveBileImpactForce">
+        <On Terms="Effect.AP_RavagerCorrosiveBileSearch.Start" Send="Create"/>
+        <HostSiteOps Ops="SOpTargetPoint SOpForwardLaunchGuide SOp2DRotation SOpRandomPointInCircleDot35"/>
+        <Duration value="0.250000"/>
+        <Magnitude value="30.000000,12.000000"/>
+        <Radius value="2.150000,0.200000"/>
+    </CActorForceSphere>
+    <CActorMissile id="AP_RavagerCorrosiveBileMissile" parent="GenericAttackMissile" unitName="AP_RavagerCorrosiveBileMissile"/>
+    <CActorModel id="AP_RavagerCorrosiveBilePrecursor">
+        <Flags index="SuppressSaveLoad" value="1"/>
+        <On Terms="Effect.AP_RavagerCorrosiveBileCP.Start" Send="Create"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD {} Stand Death ContentPlayOnce"/>
+        <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="AnimBracketStop BSD"/>
+        <On Terms="ActorCreation" Send="AnimSetTimeScale BSD 3.000000"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.250000 Anim"/>
+        <On Terms="TimerExpired; TimerName Anim" Send="AnimSetTimeScale BSD 0.660000"/>
+        <HostSiteOps Ops="SOpShadow"/>
+    </CActorModel>
+    <CActorRange id="AP_RavagerCorrosiveBileRange" parent="RangeAbil" abil="AP_RavagerCorrosiveBile">
+        <Icon value="Assets\Textures\RadarIcon2.dds"/>
+        <IconArcLength value="3.250000"/>
+    </CActorRange>
+    <CActorSiteOpLocalOffset id="AP_SOpRavagerCorrosiveBileOffsetDown">
+        <LocalOffset value="0.000000,1.000000,30.000000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteOpLocalOffset id="AP_SOpRavagerCorrosiveBileOffsetUp">
+        <LocalOffset value="0.000000,-1.000000,30.000000"/>
+    </CActorSiteOpLocalOffset>
+    <!-- Swarm Host Deep Tunnel -->
     <CActorSplat id="AP_SwarmHostSplitBDeepBurrowSplatFinish" parent="BurrowedSplatBase">
         <On Terms="Effect.AP_SwarmHostDeepBurrow.Stop" Send="Create"/>
         <On Terms="ActorCreation" Send="RefClear ::Host"/>
@@ -29694,6 +29863,17 @@
         <TurretBody Subject="_GimbalZ" FailOnNoHost="1"/>
         <On Terms="TurretEnable" Send="Create"/>
     </CActorTurret>
+    <CActorEventMacro id="AP_DeepTunnelMacro">
+        <On Terms="Abil.AP_DeepTunnel.SourceCastStart" Send="Signal DeepTunnelStart"/>
+        <On Terms="Abil.AP_DeepTunnel.SourceCastStop" Send="Signal DeepTunnelStop"/>
+        <On Terms="Signal.*.DeepTunnelStart" Send="AnimBracketStart DeepBurrow Burrow IGNORE Unburrow ClosingFull,OpeningPlayForever 0.500000 AsTimeScale"/>
+        <On Terms="Signal.*.DeepTunnelStart" Send="Create AP_Spell_DeepTunnel_Burrow"/>
+        <On Terms="Signal.*.DeepTunnelStop; ValidateUnit IsBuried" Send="AnimBracketClear DeepBurrow"/>
+        <On Terms="Signal.*.DeepTunnelStop" Send="AnimBracketStop DeepBurrow"/>
+        <On Terms="Signal.*.DeepTunnelStop" Send="Create AP_Spell_DeepTunnel_Unburrow"/>
+        <On Terms="Signal.*.DeepTunnelStart" Send="TimerSet 1.200000 DeepBurrowTimer"/>
+        <On Terms="TimerExpired; TimerName DeepBurrowTimer" Send="Create AP_SwarmHostDeepBurrow"/>
+    </CActorEventMacro>
     <CActorMissile id="AP_WarpPrismTaldarimWeaponMissile" parent="GenericAttackMissile" unitName="AP_WarpPrismTaldarimWeaponMissile">
         <On Terms="ActorCreation" Send="SetTintColor 255,0,0"/>
         <On Terms="ActorCreation" Send="Create AP_WarpPrismTaldarim_AttackLaunchSound"/>
