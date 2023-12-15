@@ -335,6 +335,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     libABFE498B_gf_AP_Triggers_MapConfig_setMissionProtoss(libABFE498B_gv_aP_Triggers_MapConfig_MISSION_PROTOSS_NOT_LOTV_MAIN);
     lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 160);
     lib5BD4895D_gf_AP_Core_MapConfig_setAffectedPlayers(PlayerGroupSingle(gv_p01_PLAYER));
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
     return true;
 }
 
@@ -5227,10 +5228,12 @@ bool gt_ObjectiveSurviveCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate((TextReplaceWord(StringExternal("Param/Value/F6F153EE"), StringExternal("Param/Value/E46C4938"), IntToText(gv_sTAGE_01_KILL_QUOTA), c_stringReplaceAll, c_stringCase) + libCamp_gf_StoryResearchSupplementTextForObjective(libCamp_ge_StoryResearchObject_ResearchObjectKill1500Zerg, libCamp_ge_StoryResearchObjectiveTextStyle_Lumpsum, 1, 0)), StringExternal("Param/Value/1F2F72F6"), c_objectiveStateActive, true);
+    ObjectiveCreate(TextReplaceWord(StringExternal("Param/Value/127508A0"), StringExternal("Param/Value/65D79CE4"), IntToText(gv_sTAGE_01_KILL_QUOTA), c_stringReplaceAll, c_stringCase), StringExternal("Param/Value/1F2F72F6"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
     gv_objectiveKillPrimary = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TZeratul04Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/09C0A593"));
     ObjectiveCreate(StringExternal("Param/Value/D6B7F35F"), StringExternal("Param/Value/97923284"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
     gv_objectiveSurviveUntilYouDie = ObjectiveLastCreated();
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5262,7 +5265,7 @@ bool gt_ObjectiveSurvivePrimaryComplete_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     TriggerExecute(gt_ObjectiveSurviveCreateQ, true, false);
-    ObjectiveSetName(gv_objectiveKillPrimary, (TextReplaceWord(StringExternal("Param/Value/93FAEACE"), StringExternal("Param/Value/5FE97FBF"), IntToText(gv_sTAGE_01_KILL_QUOTA), c_stringReplaceAll, c_stringCase) + libCamp_gf_StoryResearchSupplementTextForObjective(libCamp_ge_StoryResearchObject_ResearchObjectKill1500Zerg, libCamp_ge_StoryResearchObjectiveTextStyle_Lumpsum, 1, 1)));
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillPrimary);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5291,7 +5294,8 @@ bool gt_ObjectiveProtectArchiveCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate((StringExternal("Param/Value/7BC07007") + libCamp_gf_StoryResearchSupplementTextForObjective(libCamp_ge_StoryResearchObject_ResearchObjectProtecttheArchive, libCamp_ge_StoryResearchObjectiveTextStyle_Lumpsum, 1, 0)), StringExternal("Param/Value/E45D7291"), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/4DA1EAE9"), StringExternal("Param/Value/6FBB3F20"), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithTimer(ObjectiveLastCreated(), gv_protectArchiveTimer);
     gv_objectiveProtectArchive = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TZeratul04Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/691FF230"));
     Wait(4.0, c_timeReal);
@@ -5336,7 +5340,6 @@ bool gt_ObjectiveProtectArchiveUpdate_Func (bool testConds, bool runActions) {
     }
 
     lv_tIMER = FixedToInt(TimerGetRemaining(gv_protectArchiveTimer));
-    ObjectiveSetName(gv_objectiveProtectArchive, (StringExternal("Param/Value/0A3D9279") + libCamp_gf_FormatTimeCampaign(lv_tIMER) + StringExternal("Param/Value/3BC7D8C2") + libCamp_gf_StoryResearchSupplementTextForObjective(libCamp_ge_StoryResearchObject_ResearchObjectProtecttheArchive, libCamp_ge_StoryResearchObjectiveTextStyle_Lumpsum, 1, 0)));
     return true;
 }
 
@@ -5384,7 +5387,6 @@ bool gt_ObjectiveProtectArchiveComplete_Func (bool testConds, bool runActions) {
     TriggerEnable(gt_ObjectiveProtectArchiveUpdate, false);
     TriggerEnable(gt_ObjectiveProtectArchiveFailed, false);
     TriggerExecute(gt_ObjectiveProtectArchiveCreateQ, true, false);
-    ObjectiveSetName(gv_objectiveProtectArchive, (StringExternal("Param/Value/BE65AF3D") + libCamp_gf_StoryResearchSupplementTextForObjective(libCamp_ge_StoryResearchObject_ResearchObjectProtecttheArchive, libCamp_ge_StoryResearchObjectiveTextStyle_Lumpsum, 1, 1)));
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveProtectArchive);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -5430,7 +5432,6 @@ bool gt_ObjectiveProtectArchiveFailed_Func (bool testConds, bool runActions) {
     TimerPause(gv_protectArchiveTimer, true);
     TriggerEnable(gt_ObjectiveProtectArchiveUpdate, false);
     TriggerExecute(gt_ObjectiveProtectArchiveCreateQ, true, false);
-    ObjectiveSetName(gv_objectiveProtectArchive, (StringExternal("Param/Value/00B96633") + StringExternal("Param/Value/6A188D0E") + StringExternal("Param/Value/D1FBA455") + libCamp_gf_StoryResearchSupplementTextForObjective(libCamp_ge_StoryResearchObject_ResearchObjectProtecttheArchive, libCamp_ge_StoryResearchObjectiveTextStyle_Lumpsum, 1, 0)));
     lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveProtectArchive);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;

@@ -276,13 +276,13 @@ trigger gt_ObjectiveDestroyNexusComplete;
 trigger gt_ObjectiveDestroyNexusFailed;
 trigger gt_ObjectiveDestroyPurifierCreateQ;
 trigger gt_ObjectiveDestroyPurifierComplete;
-trigger gt_ObjectiveDestroyFirstFleetCreateHidden;
+trigger gt_ObjectiveDestroyFirstFleetCreate;
 trigger gt_ObjectiveDestroyFirstFleetComplete;
 trigger gt_ObjectiveDestroyFirstFleetFailed;
-trigger gt_ObjectiveDestroySecondFleetCreateHidden;
+trigger gt_ObjectiveDestroySecondFleetCreate;
 trigger gt_ObjectiveDestroySecondFleetComplete;
 trigger gt_ObjectiveDestroySecondFleetFailed;
-trigger gt_ObjectiveDestroyThirdFleetCreateHidden;
+trigger gt_ObjectiveDestroyThirdFleetCreate;
 trigger gt_ObjectiveDestroyThirdFleetComplete;
 trigger gt_ObjectiveDestroyThirdFleetFailed;
 trigger gt_BriefingQ;
@@ -662,6 +662,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 120);
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
     return true;
 }
 
@@ -1198,9 +1199,6 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_TransmissionProtossNexusQ, true, false);
     Wait(1.0, c_timeGame);
     TriggerExecute(gt_CreateNexusPings, true, false);
-    TriggerExecute(gt_ObjectiveDestroyFirstFleetCreateHidden, true, false);
-    TriggerExecute(gt_ObjectiveDestroySecondFleetCreateHidden, true, false);
-    TriggerExecute(gt_ObjectiveDestroyThirdFleetCreateHidden, true, false);
     Wait(10.0, c_timeGame);
     TriggerExecute(gt_NewUnitVikingTipQ, true, false);
     Wait(10.0, c_timeGame);
@@ -1346,7 +1344,7 @@ bool gt_NexusDestroyed_Func (bool testConds, bool runActions) {
     gv_nexusBeingDestroyed = true;
     gv_nexusDestroyed += 1;
     TriggerExecute(gt_ObjectiveDestroyNexusCreateQ, true, false);
-    ObjectiveSetName(gv_primaryObjectiveDestroyProtossNexus, (StringExternal("Param/Value/7CA551C6") + IntToText(gv_nexusDestroyed) + StringExternal("Param/Value/079AD687")));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_primaryObjectiveDestroyProtossNexus, gv_nexusDestroyed);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "THanson03AMusicEventB", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     if ((gv_nexusDestroyed == 3)) {
@@ -2275,7 +2273,7 @@ bool gt_SendBetaBaseTerrorFleet_Func (bool testConds, bool runActions) {
     }
 
     if ((UnitGroupCount(gv_terrorFleetGroup, c_unitCountAlive) != 0)) {
-        ObjectiveShow(gv_bonusObjectiveDestroyFirstTerrorFleet, PlayerGroupAll(), true);
+        TriggerExecute(gt_ObjectiveDestroyFirstFleetCreate, true, false);
         TriggerEnable(gt_TerrorFleetBetaBaseBehavior, true);
         TriggerExecute(gt_TransmissionFirstTerrorFleetWarningQ, true, false);
         PingCreate(PlayerGroupSingle(gv_pLAYER01_USER), "PingWarning", libNtve_gf_CenterOfUnitGroup(gv_terrorFleetGroup), ColorWithAlpha(100.00, 0.00, 0.00, 0.00), 0.0);
@@ -2372,7 +2370,7 @@ bool gt_SendGammaBaseTerrorFleet_Func (bool testConds, bool runActions) {
     }
 
     if ((UnitGroupCount(gv_terrorFleetGroup, c_unitCountAlive) != 0)) {
-        ObjectiveShow(gv_bonusObjectiveDestroySecondTerrorFleet, PlayerGroupAll(), true);
+        TriggerExecute(gt_ObjectiveDestroySecondFleetCreate, true, false);
         TriggerEnable(gt_TerrorFleetGammaBaseBehavior, true);
         TriggerExecute(gt_TransmissionSecondTerrorFleetWarningQ, true, false);
         PingCreate(PlayerGroupSingle(gv_pLAYER01_USER), "PingWarning", libNtve_gf_CenterOfUnitGroup(gv_terrorFleetGroup), ColorWithAlpha(100.00, 0.00, 0.00, 0.00), 0.0);
@@ -2467,7 +2465,7 @@ bool gt_SendOmegaBaseTerrorFleet_Func (bool testConds, bool runActions) {
     }
 
     if ((UnitGroupCount(gv_terrorFleetGroup, c_unitCountAlive) != 0)) {
-        ObjectiveShow(gv_bonusObjectiveDestroyThirdTerrorFleet, PlayerGroupAll(), true);
+        TriggerExecute(gt_ObjectiveDestroyThirdFleetCreate, true, false);
         TriggerEnable(gt_TerrorFleetOmegaBaseBehavior, true);
         TriggerExecute(gt_TransmissionThirdTerrorFleetWarningQ, true, false);
         PingCreate(PlayerGroupSingle(gv_pLAYER01_USER), "PingWarning", libNtve_gf_CenterOfUnitGroup(gv_terrorFleetGroup), ColorWithAlpha(100.00, 0.00, 0.00, 0.00), 0.0);
@@ -5741,6 +5739,7 @@ bool gt_ObjectiveDestroyNexusCreateQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/AD2F9FE8"), StringExternal("Param/Value/A1645D39"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", 0, 3);
     gv_primaryObjectiveDestroyProtossNexus = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective1, ObjectiveLastCreated(), StringExternal("Param/Value/E20ACD09"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -5829,6 +5828,7 @@ bool gt_ObjectiveDestroyPurifierCreateQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/D5ED231C"), StringExternal("Param/Value/3BF6C822"), c_objectiveStateActive, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
     gv_primaryObjectiveDestroyPurifier = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective2, ObjectiveLastCreated(), StringExternal("Param/Value/F92933A7"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -5872,9 +5872,9 @@ void gt_ObjectiveDestroyPurifierComplete_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy First Fleet Create Hidden
+// Trigger: Objective Destroy First Fleet Create
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroyFirstFleetCreateHidden_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyFirstFleetCreate_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -5889,16 +5889,19 @@ bool gt_ObjectiveDestroyFirstFleetCreateHidden_Func (bool testConds, bool runAct
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/523C2823"), StringExternal("Param/Value/35629878"), c_objectiveStateHidden, false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/523C2823"), StringExternal("Param/Value/35629878"), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
     gv_bonusObjectiveDestroyFirstTerrorFleet = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective3, ObjectiveLastCreated(), StringExternal("Param/Value/501EA7FB"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroyFirstFleetCreateHidden_Init () {
-    gt_ObjectiveDestroyFirstFleetCreateHidden = TriggerCreate("gt_ObjectiveDestroyFirstFleetCreateHidden_Func");
+void gt_ObjectiveDestroyFirstFleetCreate_Init () {
+    gt_ObjectiveDestroyFirstFleetCreate = TriggerCreate("gt_ObjectiveDestroyFirstFleetCreate_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5919,7 +5922,7 @@ bool gt_ObjectiveDestroyFirstFleetComplete_Func (bool testConds, bool runActions
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveShow(gv_bonusObjectiveDestroyFirstTerrorFleet, PlayerGroupAll(), true);
+    TriggerExecute(gt_ObjectiveDestroyFirstFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_bonusObjectiveDestroyFirstTerrorFleet);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     gv_firstTerrorFleetStopped = true;
@@ -5954,7 +5957,7 @@ bool gt_ObjectiveDestroyFirstFleetFailed_Func (bool testConds, bool runActions) 
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveShow(gv_bonusObjectiveDestroyFirstTerrorFleet, PlayerGroupAll(), true);
+    TriggerExecute(gt_ObjectiveDestroyFirstFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_bonusObjectiveDestroyFirstTerrorFleet);
     return true;
 }
@@ -5965,9 +5968,9 @@ void gt_ObjectiveDestroyFirstFleetFailed_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Second Fleet Create Hidden
+// Trigger: Objective Destroy Second Fleet Create
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroySecondFleetCreateHidden_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroySecondFleetCreate_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -5982,16 +5985,19 @@ bool gt_ObjectiveDestroySecondFleetCreateHidden_Func (bool testConds, bool runAc
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/8BE98668"), StringExternal("Param/Value/27A32384"), c_objectiveStateHidden, false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/8BE98668"), StringExternal("Param/Value/27A32384"), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
     gv_bonusObjectiveDestroySecondTerrorFleet = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective4, ObjectiveLastCreated(), StringExternal("Param/Value/FDF11DB0"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroySecondFleetCreateHidden_Init () {
-    gt_ObjectiveDestroySecondFleetCreateHidden = TriggerCreate("gt_ObjectiveDestroySecondFleetCreateHidden_Func");
+void gt_ObjectiveDestroySecondFleetCreate_Init () {
+    gt_ObjectiveDestroySecondFleetCreate = TriggerCreate("gt_ObjectiveDestroySecondFleetCreate_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6012,7 +6018,7 @@ bool gt_ObjectiveDestroySecondFleetComplete_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveShow(gv_bonusObjectiveDestroySecondTerrorFleet, PlayerGroupAll(), true);
+    TriggerExecute(gt_ObjectiveDestroySecondFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_bonusObjectiveDestroySecondTerrorFleet);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
     gv_secondTerrorFleetStopped = true;
@@ -6047,7 +6053,7 @@ bool gt_ObjectiveDestroySecondFleetFailed_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveShow(gv_bonusObjectiveDestroySecondTerrorFleet, PlayerGroupAll(), true);
+    TriggerExecute(gt_ObjectiveDestroySecondFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_bonusObjectiveDestroySecondTerrorFleet);
     return true;
 }
@@ -6058,9 +6064,9 @@ void gt_ObjectiveDestroySecondFleetFailed_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Third Fleet Create Hidden
+// Trigger: Objective Destroy Third Fleet Create
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroyThirdFleetCreateHidden_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyThirdFleetCreate_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -6075,16 +6081,19 @@ bool gt_ObjectiveDestroyThirdFleetCreateHidden_Func (bool testConds, bool runAct
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/E5B125BB"), StringExternal("Param/Value/3794325E"), c_objectiveStateHidden, false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/E5B125BB"), StringExternal("Param/Value/3794325E"), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
     gv_bonusObjectiveDestroyThirdTerrorFleet = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective5, ObjectiveLastCreated(), StringExternal("Param/Value/DC5A680F"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroyThirdFleetCreateHidden_Init () {
-    gt_ObjectiveDestroyThirdFleetCreateHidden = TriggerCreate("gt_ObjectiveDestroyThirdFleetCreateHidden_Func");
+void gt_ObjectiveDestroyThirdFleetCreate_Init () {
+    gt_ObjectiveDestroyThirdFleetCreate = TriggerCreate("gt_ObjectiveDestroyThirdFleetCreate_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6105,7 +6114,7 @@ bool gt_ObjectiveDestroyThirdFleetComplete_Func (bool testConds, bool runActions
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveShow(gv_bonusObjectiveDestroyThirdTerrorFleet, PlayerGroupAll(), true);
+    TriggerExecute(gt_ObjectiveDestroyThirdFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_bonusObjectiveDestroyThirdTerrorFleet);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
     gv_thirdTerrorFleetStopped = true;
@@ -6140,7 +6149,7 @@ bool gt_ObjectiveDestroyThirdFleetFailed_Func (bool testConds, bool runActions) 
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveShow(gv_bonusObjectiveDestroyThirdTerrorFleet, PlayerGroupAll(), true);
+    TriggerExecute(gt_ObjectiveDestroyThirdFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_bonusObjectiveDestroyThirdTerrorFleet);
     return true;
 }
@@ -7202,13 +7211,13 @@ void InitTriggers () {
     gt_ObjectiveDestroyNexusFailed_Init();
     gt_ObjectiveDestroyPurifierCreateQ_Init();
     gt_ObjectiveDestroyPurifierComplete_Init();
-    gt_ObjectiveDestroyFirstFleetCreateHidden_Init();
+    gt_ObjectiveDestroyFirstFleetCreate_Init();
     gt_ObjectiveDestroyFirstFleetComplete_Init();
     gt_ObjectiveDestroyFirstFleetFailed_Init();
-    gt_ObjectiveDestroySecondFleetCreateHidden_Init();
+    gt_ObjectiveDestroySecondFleetCreate_Init();
     gt_ObjectiveDestroySecondFleetComplete_Init();
     gt_ObjectiveDestroySecondFleetFailed_Init();
-    gt_ObjectiveDestroyThirdFleetCreateHidden_Init();
+    gt_ObjectiveDestroyThirdFleetCreate_Init();
     gt_ObjectiveDestroyThirdFleetComplete_Init();
     gt_ObjectiveDestroyThirdFleetFailed_Init();
     gt_BriefingQ_Init();
