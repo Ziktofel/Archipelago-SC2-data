@@ -27740,7 +27740,7 @@
         <On Terms="Behavior.AP_YoinkEnemyStun.Off" Send="AnimBracketStop BSD"/>
         <Host Subject="_Selectable"/>
         <HostSiteOps Ops="SOpAttachOverhead"/>
-        <Model value="MindBlastStun"/>
+        <Model value="AP_MindBlastStun"/>
     </CActorModel>
     <CActorSimple id="AP_YoinkImpactAnim">
         <On Terms="Behavior.AP_Yoink.On; ValidateUnit IsNotConstructing" Send="Create"/>
@@ -30190,4 +30190,76 @@
     <CActorSiteOpBankerUnit id="AP_SOpBankerGuardianMP" parent="SOpBankerUnit">
         <RollMax value="15.000000"/>
     </CActorSiteOpBankerUnit>
+    <CActorModelMaterial id="AP_GlazeParasiticBomb" parent="GlazeParent">
+        <Model value="GlazeParasiticBomb"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <On Terms="Behavior.AP_ParasiticBomb.On" Send="Create"/>
+        <On Terms="ActorCreation" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="Behavior.AP_ParasiticBomb.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="AnimDone; AnimName Death" Send="ModelMaterialRemoveFrom ::Main"/>
+        <On Terms="AnimDone; AnimName Death" Send="Destroy"/>
+    </CActorModelMaterial>
+    <CActorModel id="AP_ParasiticBombTargetModel">
+        <Model value="ParasiticBomb"/>
+        <On Terms="Behavior.AP_ParasiticBomb.On" Send="Create"/>
+        <On Terms="Behavior.AP_ParasiticBomb.On" Send="AnimBracketStart BSD Birth Stand"/>
+        <On Terms="Behavior.AP_ParasiticBomb.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_ParasiticBombSecondaryUnitSearch.On" Send="Create"/>
+        <On Terms="Behavior.AP_ParasiticBombSecondaryUnitSearch.On" Send="AnimBracketStart BSD {} Stand Death"/>
+        <On Terms="Behavior.AP_ParasiticBombSecondaryUnitSearch.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="AnimBracketState.*.AfterClosing; !AnimBracketExitReason ModelSwap; AnimName BSD" Send="Destroy"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpBasicScopeFollow SOpShadow SOpForwardNorth SOpMoveUpBy3"/>
+    </CActorModel>
+    <CActorUnit id="AP_ParasiticBombDummy" parent="GenericUnitStandardNoAutoSoundLinks" unitName="AP_ParasiticBombDummy">
+        <!--Model value="Sphere"/-->
+        <Model value="Invisible"/>
+    </CActorUnit>
+    <CActorSimple id="AP_ParasiticBombTint">
+        <On Terms="Behavior.AP_ParasiticBombTintDummy.On" Send="Create"/>
+        <!--On Terms="ActorCreation" Target="_Unit" Send="SetTintColor 255,50,50 0.500000 OneShot Parasite"/>
+        <On Terms="Behavior.ParasiticBombTintDummy.Off" Target="_Unit" Send="ClearTintColor 0.500000 Parasite"/-->
+        <On Terms="Behavior.AP_ParasiticBombTintDummy.Off" Send="Destroy"/>
+    </CActorSimple>
+    <!--CActorModel id="ParasiticBomb" parent="ModelAddition">
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <Remove Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="AnimBracketStop BSD"/>
+    </CActorModel-->
+    <CActorSound id="AP_ActorSound_ParasiticBombLaunch">
+        <Sound value="AP_ParasiticBombLaunch"/>
+        <On Terms="Effect.AP_ParasiticBombLM.Start; At Caster" Send="Create"/>
+    </CActorSound>
+    <CActorMissile id="AP_ParasiticBombAttackMissile" parent="GenericAttackMissile" unitName="AP_ParasiticBombMissile">
+        <Model value="Invisible"/>
+        <On Terms="ActorCreation" Send="Create AP_ParasiticBombAttackMissileAttachment"/>
+    </CActorMissile>
+    <CActorModel id="AP_ParasiticBombAttackMissileAttachment">
+        <Model value="ParasiticBombMissile"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <On Terms="ActorOrphan" Send="AnimBracketStop BSD"/>
+        <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <Host Subject="_Missile"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorAction id="AP_ParasiticBombAttack" parent="GenericAttack" effectImpact="AP_ParasiticBombInitialImpactDummy" effectLaunch="AP_ParasiticBombLM">
+        <LaunchAttachQuery Methods="Weapon"/>
+        <!-- <LaunchAssets Sound="ParasiticBombLaunch"/> triggers twice  -->
+        <ImpactMap index="None" Model="ParasiticBombAttackImpact" Sound="AP_ParasiticBombImpact"/>
+    </CActorAction>
+    <CActorRange id="AP_ParasiticBombRange" parent="RangeAbil" abil="AP_ParasiticBomb">
+        <Icon value="Assets\Textures\RadarIcon2.dds"/>
+        <IconArcLength value="3.250000"/>
+    </CActorRange>
+    <CActorModel id="AP_ParasiticBombDotState" parent="ModelAnimationStyleOneShot">
+        <Model value="ParasiticBombDotState"/>
+        <Terms value="Cap 1"/>
+        <On Terms="Effect.AP_ParasiticBombDotDamage.Start; At Target" Send="Create"/>
+        <!--On Terms="Behavior.ParasiticBombDot.On" Send="Create"/>
+        <On Terms="Behavior.ParasiticBombDot.Off" Send="AnimBracketStop BSD"/-->
+        <!--On Terms="ActorCreation" Send="SetTintColor {0,255,0 2.000000}"/-->
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="1.000000"/>
+    </CActorModel>
 </Catalog>
