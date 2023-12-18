@@ -14934,6 +14934,26 @@
             <Image value="Assets\Textures\Wireframe-Zerg-CreepTumor.dds"/>
         </Wireframe>
     </CActorUnit>
+    <CActorAction id="AP_CreepTumorMissileAttack" parent="GenericAttack" effectImpact="AP_CreepTumorImpactDummy" effectLaunch="AP_CreepTumorLaunchMissile">
+        <LaunchSiteOps Ops="SOpAttachOrigin SOpShadow"/>
+        <ImpactSiteOps Ops="SOpAttachOrigin SOpShadow"/>
+        <ShieldFlashType value="None"/>
+    </CActorAction>
+    <CActorSound id="AP_CreepTumorMissileAttackImpactSound" parent="SoundOneShot">
+        <On Terms="Effect.AP_CreepTumorImpactDummy.Start; At Target" Send="Create"/>
+    </CActorSound>
+    <CActorMissile id="AP_CreepTumorMissileAttackMissile" parent="GenericAttackMissile" unitName="AP_CreepTumorMissile">
+        <Model value="CreepTumorMissile"/>
+        <Remove Terms="UnitDeath" Send="Destroy"/>
+        <Remove Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="AnimDone; AnimName Death" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="MessageUpdateActivate"/>
+        <On Terms="ActorUpdate; Height GE 0.250000; IsStatus OffGround 0" Send="StatusSet OffGround 1"/>
+        <On Terms="ActorUpdate; Height GE 0.250000; IsStatus OffGround 0" Send="AnimPlay Fly Fly PlayForever"/>
+        <On Terms="ActorUpdate; Height LT 0.250000; IsStatus OffGround 1" Send="AnimClear Fly"/>
+        <On Terms="ActorUpdate; Height LT 0.250000; IsStatus OffGround 1" Send="StatusSet OffGround 0"/>
+        <DeathArray index="Normal" AnimProps="Death"/>
+    </CActorMissile>
     <CActorModel id="AP_CreepTumorBuild" parent="ZergBuildingBuild">
         <Model value="CreepTumorBuild"/>
     </CActorModel>
@@ -16732,8 +16752,6 @@
         <On Terms="AbilMorph.*.Finish; MorphTo AP_QueenBurrowed; MorphFrom AP_Queen" Send="TerrainSquibDeactivate"/>
         <On Terms="WeaponStart.AP_TalonsMissile.AttackStart" Send="AnimBracketStart Attack Spell,C"/>
         <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Queen_Land"/>
-        <Model value="Queen"/>
-        <BuildModel value="Queen"/>
         <DeathArray index="Normal" ModelLink="AP_SwarmQueenDeath"/>
         <DeathArray index="Disintegrate" ModelLink="QueenDeathAcid" SoundLink="Uni_DeathFXAcid"/>
         <DeathArray index="Fire" ModelLink="QueenDeathFire" SoundLink="Uni_DeathFXFire"/>
