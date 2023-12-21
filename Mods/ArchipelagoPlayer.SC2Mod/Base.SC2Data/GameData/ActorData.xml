@@ -19395,7 +19395,7 @@
         <Sound value="Marauder_Land"/>
     </CActorSound>
     <CActorAction id="AP_HERCAttack" parent="GenericAttack" effectAttack="AP_HERCWeaponDamage">
-        <LaunchAssets Model="AP_HERCAttackLaunch" Sound="AP_Herc_AttackLaunch"/>
+        <LaunchAssets Sound="AP_Herc_AttackLaunch"/>
         <LaunchModel value="AP_HERCAttackLaunch"/>
         <ContainerAssets Model="AP_HERCAttackLaunch" Sound="AP_Herc_AttackLaunch"/>
         <ImpactMap index="None" Model="GhostAttackImpact" Sound="Ghost_AttackImpact"/>
@@ -19410,7 +19410,6 @@
         <Aliases value="_UnitMedium"/>
         <On index="69" removed="1"/>
         <Model value="HERC"/>
-        <HighlightTooltip value="Unit/Name/AP_HERCPlacement"/>
         <StatusBarFlags index="Shields" value="0"/>
         <StatusBarFlags index="Life" value="0"/>
         <StatusBarFlags index="Energy" value="0"/>
@@ -19426,7 +19425,6 @@
         <On Terms="Signal.*.GrappleImpactModelCreated" Target="AP_HercGrappleBeam" Send="Signal GrappleImpactModelCreatedB"/>
         <LaunchAttachQuery Methods="Weapon 1"/>
         <LaunchAssets Sound="AP_Herc_Grapple_Shoot"/>
-        <Missile value="AP_HercGrappleAttackMissile"/>
         <ImpactSite value="HercGrappleGenericAttackImpactSite"/>
         <ImpactMap index="None" Model="AP_GrappleWeapon"/>
         <ImpactModel value="AP_GrappleImpactModel"/>
@@ -19464,6 +19462,184 @@
     </CActorSound>
     <CActorSound id="AP_Herc_GrappleRetract" parent="SoundOneShot">
         <Sound value="AP_Herc_Grapple_Move"/>
+    </CActorSound>
+    <CActorForceSphere id="AP_WarhoundMissileAttackForce">
+        <Host Subject="_ImpactGuide"/>
+        <HostSiteOps Ops="SOpMoveDownByDot25 SOpRandomPointInSphereDot25"/>
+        <Magnitude value="18.000000,7.650000"/>
+        <Radius value="1.250000"/>
+        <Duration value="0.150000"/>
+    </CActorForceSphere>
+    <CActorAction id="AP_TornadoMissileAttack" parent="GenericAttack" effectImpact="AP_TornadoMissileDamage" effectLaunch="AP_TornadoMissileLM">
+        <LaunchAttachQuery Methods="AP_AMFilterWarHound AP_AMPatternWarHound"/>
+        <LaunchAssets Model="TornadoMissileAttackLaunch" Sound="AP_WarHound_Missile_Launch"/>
+        <Missile value="AP_TornadoMissileAttackMissile"/>
+        <ImpactMap index="None" Model="TornadoMissileAttackImpact" Sound="AP_WarHound_Missile_Impact"/>
+        <ImpactPhysics Name="TornadoMissileImpact" MatchKeys="Basic" Physics="AP_WarhoundMissileAttackForce"/>
+    </CActorAction>
+    <CActorMissile id="AP_TornadoMissileAttackMissile" parent="GenericAttackMissile" unitName="AP_TornadoMissileWeapon">
+        <Model value="TornadoMissileWeapon"/>
+    </CActorMissile>
+    <CActorAction id="AP_TornadoMissileDummyAttack" parent="GenericAttack" effectImpact="AP_TornadoMissileDamageDummy" effectLaunch="AP_TornadoMissileLMDummy">
+        <LaunchAttachQuery Methods="AP_AMFilterWarHoundDummy AP_AMPatternWarHoundDummy"/>
+        <LaunchAssets Model="TornadoMissileDummyAttackLaunch" Sound="AP_WarHound_Missile_Launch"/>
+        <Missile value="AP_TornadoMissileDummyAttackMissile"/>
+        <ImpactMap index="None" Sound="AP_WarHound_Missile_Impact"/>
+    </CActorAction>
+    <CActorMissile id="AP_TornadoMissileDummyAttackMissile" parent="GenericAttackMissile" unitName="AP_TornadoMissileDummyWeapon">
+        <Model value="TornadoMissileDummyWeapon"/>
+    </CActorMissile>
+    <CActorUnit id="AP_WarHound" parent="GenericUnitBase" unitName="AP_WarHound">
+        <Aliases value="_UnitLarge"/>
+        <Macros value="UnloadDropAnim"/>
+        <Macros value="PhysicsDeathsSwarmGround"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <On index="64" Terms="WeaponStart.AP_WarHound.AttackStart" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="WeaponStop.AP_WarHound.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="WeaponStart.AP_WarHound.AttackStart; WeaponTargetElevation GE 20.000000" Send="AnimBracketStart AttackSuperior Attack,Superior"/>
+        <On Terms="WeaponStart.AP_WarHound.AttackStart; WeaponTargetElevation LE -20.000000" Send="AnimBracketStart AttackInferior Attack,Inferior"/>
+        <On Terms="WeaponStop.AP_WarHound.AttackStop" Send="AnimBracketStop AttackSuperior"/>
+        <On Terms="WeaponStop.AP_WarHound.AttackStop" Send="AnimBracketStop AttackInferior"/>
+        <On Terms="WeaponStart.AP_WarHoundMelee.AttackStart" Send="AnimBracketStart Attack Spell,A"/>
+        <On Terms="WeaponStop.AP_WarHoundMelee.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="Effect.AP_TornadoMissileCP.Start; At Caster" Send="AnimBracketStart Cover Cover,Start Cover Cover,End"/>
+        <On Terms="Effect.AP_TornadoMissileCP.Stop; At Caster" Send="AnimBracketStop Cover"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Warhound_Land"/>
+        <On Terms="UnitDeathCustomize; Option Model Low" Send="DeathCustomize Low"/>
+        <DeathArray index="Normal" ModelLink="AP_WarHoundDeath" SoundLink="SiegeTank_Explode"/>
+        <DeathCustoms ModelLink="AP_WarhoundDeathRagdoll" Name="RagdollBasic">
+            <BodySquibs Name="Basic" Model="TerranSquibDeathRagdoll"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollSiegeTank" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollNuke" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollFire" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollAcid" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollBaneling" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollUltraUnburrow" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDPRH" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms ModelLink="TerranLargeUnitDeathLow" Name="Low"/>
+        <DeathActorModel value="UnitDeathModelUnscaled"/>
+        <PortraitModel value="AP_WarhoundPortrait"/>
+        <StandAnimTurnTime value="3.33"/>
+        <TerrainSquibs>
+            <MovementDistance value="0.150000,0.150000"/>
+            <IdlePeriod value="0.100000,0.250000"/>
+            <RangeUp value="2.000000"/>
+            <RangeDown value="2.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleWarhound"/>
+        </TerrainSquibs>
+        <WalkAnimMoveSpeed value="2.7968"/>
+        <BarOffset value="125"/>
+        <BarWidth value="90"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-terran-warhound.dds"/>
+        </GroupIcon>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-vehicleplatinglevel0.dds"/>
+        <NameOffset value="40"/>
+        <SoundArray index="Ready" value="AP_WarHound_Ready"/>
+        <SoundArray index="What" value="AP_WarHound_What"/>
+        <SoundArray index="Yes" value="AP_WarHound_Yes"/>
+        <SoundArray index="Attack" value="AP_WarHound_Attack"/>
+        <SoundArray index="Pissed" value="AP_WarHound_Pissed"/>
+        <SoundArray index="Movement" value="AP_WarHound_Movement"/>
+        <UnitIcon value="Assets\Textures\btn-unit-terran-warhound.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-terran-warhound.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorForceCylinder id="AP_RailgunAttackDeathForce">
+        <Receiver Subject="::Main"/>
+        <HostEnd Subject="_ImpactGuide"/>
+        <HostEndSiteOps Ops="SOpForwardLaunchGuide SOp180 SOpMoveByDot5"/>
+        <HostSiteOps HoldPosition="1" HoldRotation="1"/>
+        <Radius value="1.000000"/>
+        <Magnitude value="63.000000,27.000000"/>
+        <Duration value="0.150000"/>
+    </CActorForceCylinder>
+    <CActorAction id="AP_WarHoundAttack" parent="GenericAttack" effectImpact="AP_WarHound" effectLaunch="AP_WarHoundLM">
+        <LaunchAssets Sound="AP_RailGun_Launch"/>
+        <BeamScope value="Caster"/>
+        <Missile value="AP_WarHoundAttackMissile"/>
+        <ImpactMap index="None" Model="AP_WarHoundAttackImpact" Sound="AP_RailGun_Impact"/>
+        <ImpactPhysics Name="RailgunImpact" MatchKeys="Basic" Physics="AP_RailgunAttackDeathForce"/>
+        <ActionFlags index="LaunchForceSite" value="1"/>
+    </CActorAction>
+    <CActorMissile id="AP_WarHoundAttackMissile" parent="GenericAttackMissile" unitName="AP_WarHoundWeapon">
+        <Model value="Invisible"/>
+    </CActorMissile>
+    <CActorSite id="AP_WarHoundImpactHoldingSite"/>
+    <CActorBeamSimple id="AP_WarHoundBeam" parent="GenericAttackBeam">
+        <Inherits index="CloakEffect" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <On Terms="Effect.AP_WarHoundLM.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_WarHound.Start" Send="Create AP_WarHoundImpactHoldingSite"/>
+        <On Terms="Effect.AP_WarHound.Start" Send="RefSet ::HostImpact AP_WarHoundImpactHoldingSite"/>
+        <Host Subject="_Selectable"/>
+        <HostLaunch Subject="_Selectable" Actor="Find"/>
+        <HostLaunchSiteOps Ops="SOpAttachWeapon" HoldPosition="1" HoldRotation="1"/>
+        <HostImpact Subject="_Missile" Actor="Find"/>
+        <HostImpactSiteOps Ops="SOpAttachCenter"/>
+    </CActorBeamSimple>
+    <CActorForceSphere id="AP_WarhoundMeleeAttackForceExplosion">
+        <Receiver Subject="::Main"/>
+        <Host Subject="_ImpactGuide"/>
+        <HostSiteOps Ops="SOpRandomPointInSphereDot25" HoldPosition="1" HoldRotation="1"/>
+        <Magnitude value="13.500000,8.550000"/>
+        <Radius value="1.000000"/>
+        <Duration value="0.300000"/>
+    </CActorForceSphere>
+    <CActorForceCylinder id="AP_WarhoundMeleeAttackForceLateral">
+        <Host Subject="::Main" Scope="Caster"/>
+        <HostSiteOps Ops="SOpAttachCenter SOpShadow SOpForwardTargetUnit SOpMoveByDot5"/>
+        <HostEnd Subject="::Self"/>
+        <HostEndSiteOps Ops="SOpPointUpWorld SOpMoveBy2"/>
+        <Field value="Radial"/>
+        <Magnitude value="22.500000,13.500000"/>
+        <Duration value="0.300000"/>
+        <Radius value="1.000000"/>
+        <On Terms="ActorCreation" Send="Create AP_WarhoundMeleeAttackForceExplosion"/>
+    </CActorForceCylinder>
+    <CActorForceConeRoundedEnd id="AP_WarhoundMeleeAttackForceOverhead">
+        <Host Subject="::Main" Scope="Caster"/>
+        <HostEnd Subject="::Main" Scope="Caster"/>
+        <HostEndSiteOps Ops="SOpMoveBy2 SOpMoveUpByDot5"/>
+        <Magnitude value="24.750000,11.250000"/>
+        <Duration value="0.300000"/>
+        <Angle value="65.000000"/>
+        <On Terms="ActorCreation" Send="Create AP_WarhoundMeleeAttackForceExplosion"/>
+    </CActorForceConeRoundedEnd>
+    <CActorAction id="AP_WarHoundMeleeAttack" parent="GenericAttack" effectAttack="AP_WarHoundMelee">
+        <ImpactMap index="None" Sound="AP_WarHound_MeleeAttackLaunch"/>
+        <ImpactPhysics>
+            <Name value="AttackOverhead"/>
+            <MatchKeys value="Basic"/>
+            <AttackAnimProps value="00"/>
+            <Physics value="AP_WarhoundMeleeAttackForceOverhead"/>
+        </ImpactPhysics>
+        <ImpactPhysics>
+            <Name value="AttackSwipe"/>
+            <MatchKeys value="Basic"/>
+            <AttackAnimProps value="01"/>
+            <Physics value="AP_WarhoundMeleeAttackForceLateral"/>
+        </ImpactPhysics>
+        <ShieldFlashType value="Header"/>
+    </CActorAction>
+    <CActorSound id="AP_WarHound_Death" parent="SoundOneShot">
+        <On Terms="UnitDeath.AP_WarHound; PassChance 25.000000" Send="Create"/>
+    </CActorSound>
+    <CActorSound id="AP_Warhound_Land" parent="SoundOneShot">
+        <Sound value="AP_Warhound_Land"/>
     </CActorSound>
     <CActorSound id="Zerg_BuildingMorphStart">
         <!-- Override -->
@@ -23942,14 +24118,14 @@
     <CActorAction id="AP_LiberatorAGAttack" parent="GenericAttack" effectImpact="AP_LiberatorAGDamage" effectLaunch="AP_LiberatorAGMissileLM">
         <LaunchAssets Sound="Liberator_AG_Launch"/>
         <ImpactMap index="None" Model="LiberatorAGAttackImpact" Sound="Liberator_AG_Launch_Impact"/>
-        <ImpactPhysics Name="RailgunImpact" MatchKeys="Basic" Physics="RailgunAttackDeathForce"/>
+        <ImpactPhysics Name="RailgunImpact" MatchKeys="Basic" Physics="AP_RailgunAttackDeathForce"/>
         <ActionFlags index="LaunchForceSite" value="1"/>
     </CActorAction>
     <CActorAction id="AP_MercLiberatorAGAttack" parent="GenericAttack" effectImpact="AP_MercLiberatorAGDamage" effectLaunch="AP_MercLiberatorAGMissileLM">
         <LaunchAssets Sound="Liberator_AG_Launch"/>
         <Missile value="AP_LiberatorAGAttackMissile"/>
         <ImpactMap index="None" Model="LiberatorAGAttackImpact" Sound="Liberator_AG_Launch_Impact"/>
-        <ImpactPhysics Name="RailgunImpact" MatchKeys="Basic" Physics="RailgunAttackDeathForce"/>
+        <ImpactPhysics Name="RailgunImpact" MatchKeys="Basic" Physics="AP_RailgunAttackDeathForce"/>
         <ActionFlags index="LaunchForceSite" value="1"/>
     </CActorAction>
     <CActorMissile id="AP_LiberatorAGAttackMissile" parent="GenericAttackMissile" unitName="AP_LiberatorAGMissile">
