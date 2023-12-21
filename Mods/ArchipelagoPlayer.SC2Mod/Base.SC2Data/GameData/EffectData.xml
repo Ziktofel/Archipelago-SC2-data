@@ -4380,8 +4380,8 @@
         <WhichLocation Value="TargetPoint"/>
         <SpawnEffect value="AP_DeepTunnelTeleportSet"/>
         <SpawnRange value="15"/>
-        <CreateFlags index="Precursor" value="1"/>
         <CreateFlags index="Birth" value="0"/>
+        <CreateFlags index="Precursor" value="1"/>
         <CreateFlags index="ProvideFood" value="0"/>
         <CreateFlags index="UseFood" value="0"/>
         <TypeFallbackUnit Value="Source"/>
@@ -16223,7 +16223,7 @@
         <SpawnCount value="2"/>
     </CEffectCreateUnit>
     <CEffectDamage id="AP_QueenStukovSpawnBroodlingsDamage">
-<!--        <ValidatorArray value="AP_QueenStukovSpawnBroodlingsDamageTargetFilters"/>-->
+        <!--        <ValidatorArray value="AP_QueenStukovSpawnBroodlingsDamageTargetFilters"/>-->
         <EditorCategories value=""/>
         <Amount value="300"/>
     </CEffectDamage>
@@ -16245,13 +16245,13 @@
     </CEffectDamage>
     <CEffectApplyBehavior id="AP_SIQueenFungalGrowthApplyBehavior">
         <EditorCategories value="Race:Zerg"/>
-<!--        <Behavior value="AP_SIQueenFungalGrowth"/>-->
+        <!--        <Behavior value="AP_SIQueenFungalGrowth"/>-->
         <Behavior value="AP_FungalGrowth"/>
     </CEffectApplyBehavior>
     <CEffectApplyBehavior id="AP_SIQueenFungalGrowthApplyMovementBehavior">
         <ValidatorArray index="0" value="TargetIsNotUnstoppable"/>
         <EditorCategories value="Race:Zerg"/>
-<!--        <Behavior value="AP_SIQueenFungalGrowthMovement"/>-->
+        <!--        <Behavior value="AP_SIQueenFungalGrowthMovement"/>-->
         <Behavior value="AP_FungalGrowthMovement"/>
     </CEffectApplyBehavior>
     <CEffectDamage id="AP_SIQueenFungalGrowthDamage">
@@ -16371,4 +16371,80 @@
         <SearchFilters value="-;Self,Missile,Stasis,Dead,Hidden,Invulnerable"/>
         <AreaArray Radius="5" Effect="AP_DefilerSCBWPlague@Set"/>
     </CEffectEnumArea>
+    <CEffectApplyBehavior id="AP_GrappleCasterInMotionApplyBehavior">
+        <WhichUnit Value="Caster"/>
+        <Behavior value="AP_GrappleCasterInMotion"/>
+    </CEffectApplyBehavior>
+    <CEffectRemoveBehavior id="AP_GrappleCasterInMotionRemoveBehavior">
+        <WhichUnit Value="Caster"/>
+        <BehaviorLink value="AP_GrappleCasterInMotion"/>
+    </CEffectRemoveBehavior>
+    <CEffectApplyBehavior id="AP_GrappleCreatePlaceholderAB">
+        <Behavior value="AP_GrappleCreatePlaceholder"/>
+    </CEffectApplyBehavior>
+    <CEffectDamage id="AP_HERCWeaponDamage" parent="DU_WEAP_MISSILE">
+        <KindSplash value="Splash"/>
+        <Amount value="20"/>
+        <AreaArray Arc="39.9792" Radius="2.1" Fraction="1"/>
+        <ExcludeArray Value="Target"/>
+        <SearchFilters value="Ground;Player,Ally,Neutral,Stasis,Dead,Hidden,Invulnerable"/>
+        <SearchFlags index="CenterAtLaunch" value="1"/>
+        <SearchFlags index="OffsetByUnitRadius" value="0"/>
+    </CEffectDamage>
+    <CEffectModifyUnit id="AP_HercDamageImmunityDummy">
+        <EditorCategories value=""/>
+    </CEffectModifyUnit>
+    <CEffectCreateUnit id="AP_HercGrappleCreatePlaceholder">
+        <ValidatorArray value="AP_GrappleMinTriggerDistance"/>
+        <WhichLocation Value="TargetPoint"/>
+        <CreateFlags index="Precursor" value="1"/>
+        <CreateFlags index="ProvideFood" value="0"/>
+        <CreateFlags index="TechComplete" value="0"/>
+        <CreateFlags index="UseFood" value="0"/>
+        <SpawnEffect value="AP_HercGrappleCreatePlaceholderSet"/>
+        <SpawnUnit value="AP_HERCPlacement"/>
+        <SpawnRange value="1.5"/>
+    </CEffectCreateUnit>
+    <CEffectDamage id="AP_HercGrappleCreatePlaceholderRemove">
+        <ImpactLocation Effect="AP_HercGrappleCreatePlaceholderSet" Value="OriginUnit"/>
+        <Flags index="Kill" value="1"/>
+        <Death value="Remove"/>
+    </CEffectDamage>
+    <CEffectSet id="AP_HercGrappleCreatePlaceholderSet">
+        <EffectArray value="AP_GrappleCreatePlaceholderAB"/>
+        <EffectArray value="AP_HercGrappleLM"/>
+    </CEffectSet>
+    <CEffectModifyUnit id="AP_HercGrappleImpactDummy">
+        <EditorCategories value="Race:Terran"/>
+    </CEffectModifyUnit>
+    <CEffectSet id="AP_HercGrappleImpactSet">
+        <EditorCategories value="Race:Terran"/>
+        <EffectArray value="AP_HercGrappleLaunchCasterSwitch"/>
+        <EffectArray value="AP_HercGrappleImpactDummy"/>
+    </CEffectSet>
+    <CEffectLaunchMissile id="AP_HercGrappleLM">
+        <EditorCategories value="Race:Terran"/>
+        <ImpactEffect value="AP_HercGrappleImpactSet"/>
+        <AmmoUnit value="AP_GrappleWeapon"/>
+        <Movers Link="MissileDefault"/>
+    </CEffectLaunchMissile>
+    <CEffectLaunchMissile id="AP_HercGrappleLaunchCaster">
+        <ValidatorArray value="CasterNotDead"/>
+        <EditorCategories value="Race:Terran"/>
+        <LaunchLocation Effect="AP_HercGrappleLaunchCasterSwitch" Value="CasterUnit"/>
+        <ImpactLocation Effect="AP_HercGrappleCreatePlaceholder" Value="TargetPoint"/>
+        <LaunchEffect value="AP_GrappleCasterInMotionApplyBehavior"/>
+        <FinishEffect value="AP_HercGrappleLaunchCasterImpactSet"/>
+        <Movers Link="AP_HERCJump"/>
+        <DeathType value="Unknown"/>
+    </CEffectLaunchMissile>
+    <CEffectSet id="AP_HercGrappleLaunchCasterImpactSet">
+        <EditorCategories value="Race:Terran"/>
+        <EffectArray value="AP_HercGrappleCreatePlaceholderRemove"/>
+        <EffectArray value="AP_GrappleCasterInMotionRemoveBehavior"/>
+    </CEffectSet>
+    <CEffectSwitch id="AP_HercGrappleLaunchCasterSwitch">
+        <CaseArray Validator="AP_HERCRooted" Effect="AP_HercGrappleCreatePlaceholderRemove"/>
+        <CaseDefault value="AP_HercGrappleLaunchCaster"/>
+    </CEffectSwitch>
 </Catalog>
