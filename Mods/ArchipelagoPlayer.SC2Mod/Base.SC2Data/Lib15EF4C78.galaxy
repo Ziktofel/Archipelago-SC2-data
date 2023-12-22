@@ -23,6 +23,7 @@ void lib15EF4C78_InitVariables () {
 
     lib15EF4C78_InitVariables_completed = true;
 
+    lib15EF4C78_gv_kerriganPsiStrikeEnergyCost2 = libNtve_gf_CostOfAbility("AP_NovaPsiStrike", "Energy");
     lib15EF4C78_gv_kerriganPsiStrikeEnergyCost = libNtve_gf_CostOfAbility("AP_PsiStrikeBlink", "Energy");
     lib15EF4C78_gv_pM_ScreenMode = c_uiModeConsole;
     for (init_i = 0; init_i <= 20; init_i += 1) {
@@ -3249,6 +3250,144 @@ void lib15EF4C78_gt_TechReactorswaptoAP_Starport_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Nova Psi Strike
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_NovaPsiStrike_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    point lv_k;
+    point lv_t;
+    point lv_finalT;
+    fixed lv_facing;
+    fixed lv_distance;
+    bool lv_goodPositionFound;
+    int lv_i;
+
+    // Automatic Variable Declarations
+    const int auto7B80AF78_ae = 7;
+    const int auto7B80AF78_ai = 1;
+
+    // Variable Initialization
+    lv_k = UnitGetPosition(EventUnit());
+    lv_t = EventUnitTargetPoint();
+    lv_facing = AngleBetweenPoints(UnitGetPosition(EventUnit()), EventUnitTargetPoint());
+    lv_distance = 8.0;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_t = libNtve_gf_PointOffsetTowardsPoint(lv_k, 8.0, lv_t);
+    lv_finalT = lv_t;
+    while ((lv_distance >= 0.6) && (lv_goodPositionFound == false)) {
+        lv_t = libNtve_gf_PointOffsetTowardsPoint(lv_k, lv_distance, lv_t);
+        if ((PointPathingCost(lv_k, lv_t) <= FixedToInt((lv_distance * 1.5))) && (WorldHeight(c_heightMapGround, lv_k) < (WorldHeight(c_heightMapGround, lv_t) + 1.0)) && (WorldHeight(c_heightMapGround, lv_k) > (WorldHeight(c_heightMapGround, lv_t) - 1.0))) {
+            lv_goodPositionFound = true;
+        }
+
+        lv_distance -= 0.5;
+    }
+    Wait(0.0625, c_timeGame);
+    if ((lv_goodPositionFound == true)) {
+        UnitIssueOrder(EventUnit(), OrderTargetingPoint(AbilityCommand("move", 0), lv_t), c_orderQueueReplace);
+        UnitIssueOrder(EventUnit(), OrderTargetingPoint(AbilityCommand("move", 0), lv_finalT), c_orderQueueAddToEnd);
+    }
+    else {
+        UnitIssueOrder(EventUnit(), OrderTargetingPoint(AbilityCommand("move", 0), lv_finalT), c_orderQueueReplace);
+    }
+    Wait(0.1875, c_timeGame);
+    lv_i = 1;
+    for ( ; ( (auto7B80AF78_ai >= 0 && lv_i <= auto7B80AF78_ae) || (auto7B80AF78_ai < 0 && lv_i >= auto7B80AF78_ae) ) ; lv_i += auto7B80AF78_ai ) {
+        lib15EF4C78_gv_kerriganPsiStrikeFacing2 = UnitGetFacing(EventUnit());
+        if ((lv_facing > 90.0)) {
+            if (((lib15EF4C78_gv_kerriganPsiStrikeFacing2 < (lv_facing - 90.0)) && (lib15EF4C78_gv_kerriganPsiStrikeFacing2 > (lv_facing - 270.0)))) {
+                UnitBehaviorRemove(EventUnit(), "AP_NovaPsiStrikeWalkSpeed", 1);
+                break;
+            }
+
+        }
+        else {
+            if ((lv_facing < -90.0)) {
+                if (((lib15EF4C78_gv_kerriganPsiStrikeFacing2 > (lv_facing + 90.0)) && (lib15EF4C78_gv_kerriganPsiStrikeFacing2 < (lv_facing + 270.0)))) {
+                    UnitBehaviorRemove(EventUnit(), "AP_NovaPsiStrikeWalkSpeed", 1);
+                    break;
+                }
+
+            }
+            else {
+                if (((lib15EF4C78_gv_kerriganPsiStrikeFacing2 > (lv_facing + 90.0)) || (lib15EF4C78_gv_kerriganPsiStrikeFacing2 < (lv_facing - 90.0)))) {
+                    UnitBehaviorRemove(EventUnit(), "AP_NovaPsiStrikeWalkSpeed", 1);
+                    break;
+                }
+
+            }
+        }
+        Wait(0.0625, c_timeGame);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_NovaPsiStrike_Init () {
+    lib15EF4C78_gt_NovaPsiStrike = TriggerCreate("lib15EF4C78_gt_NovaPsiStrike_Func");
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_NovaPsiStrike, null, AbilityCommand("AP_NovaPsiStrike", 0), c_abilEffectStageCast, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Fury of One Height
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_FuryofOneHeight_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_nova;
+    unit lv_target;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_nova = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+    lv_target = EventPlayerEffectUsedUnit(c_effectUnitTarget);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitSetHeight(lv_nova, UnitGetHeight(lv_target), 0.0);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_FuryofOneHeight_Init () {
+    lib15EF4C78_gt_FuryofOneHeight = TriggerCreate("lib15EF4C78_gt_FuryofOneHeight_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_FuryofOneHeight, c_playerAny, "AP_NovaWeaponBlazefireBladeShadowFuryImpactSet");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Fury of One Reset
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_FuryofOneReset_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_nova;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_nova = EventUnit();
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitSetHeight(lv_nova, 0.0, 0.0);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_FuryofOneReset_Init () {
+    lib15EF4C78_gt_FuryofOneReset = TriggerCreate("lib15EF4C78_gt_FuryofOneReset_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_FuryofOneReset, null, "AP_NovaWeaponBlazefireBladeShadowFuryController", c_unitBehaviorChangeDeactivate);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Player_setHolodecoyWeapon
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_AP_Player_setHolodecoyWeapon_Func (bool testConds, bool runActions) {
@@ -5652,6 +5791,9 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_TechReactorswaptoAP_Barracks_Init();
     lib15EF4C78_gt_TechReactorswaptoAP_Factory_Init();
     lib15EF4C78_gt_TechReactorswaptoAP_Starport_Init();
+    lib15EF4C78_gt_NovaPsiStrike_Init();
+    lib15EF4C78_gt_FuryofOneHeight_Init();
+    lib15EF4C78_gt_FuryofOneReset_Init();
     lib15EF4C78_gt_AP_Player_setHolodecoyWeapon_Init();
     lib15EF4C78_gt_Set5SecondsMark_Init();
     lib15EF4C78_gt_ZerglingRespawnInit_Init();
