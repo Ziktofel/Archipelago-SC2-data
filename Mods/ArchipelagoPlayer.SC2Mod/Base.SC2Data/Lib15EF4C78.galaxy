@@ -24,6 +24,9 @@ void lib15EF4C78_InitVariables () {
     lib15EF4C78_InitVariables_completed = true;
 
     lib15EF4C78_gv_kerriganPsiStrikeEnergyCost2 = libNtve_gf_CostOfAbility("AP_NovaPsiStrike", "Energy");
+    for (init_i = 0; init_i <= lib15EF4C78_gv_nMC_HEROCOUNT; init_i += 1) {
+        lib15EF4C78_gv_nM_HeroReviveCDLink[init_i] = "";
+    }
     lib15EF4C78_gv_kerriganPsiStrikeEnergyCost = libNtve_gf_CostOfAbility("AP_PsiStrikeBlink", "Energy");
     lib15EF4C78_gv_pM_ScreenMode = c_uiModeConsole;
     for (init_i = 0; init_i <= 20; init_i += 1) {
@@ -261,6 +264,235 @@ string lib15EF4C78_gf_AP_Player_findNovaWeapon (unit lp_sourceNovaUnit) {
         return "AP_NovaWeaponBlazefireBlade";
     }
     return null;
+}
+
+trigger auto_lib15EF4C78_gf_HandleHeroDeathNova_Trigger = null;
+unit auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_heroUnit;
+unit auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_reviveLocation;
+fixed auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_reviveTime;
+
+void lib15EF4C78_gf_HandleHeroDeathNova (unit lp_heroUnit, unit lp_reviveLocation, fixed lp_reviveTime) {
+    auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_heroUnit = lp_heroUnit;
+    auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_reviveLocation = lp_reviveLocation;
+    auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_reviveTime = lp_reviveTime;
+
+    if (auto_lib15EF4C78_gf_HandleHeroDeathNova_Trigger == null) {
+        auto_lib15EF4C78_gf_HandleHeroDeathNova_Trigger = TriggerCreate("auto_lib15EF4C78_gf_HandleHeroDeathNova_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib15EF4C78_gf_HandleHeroDeathNova_Trigger, false, false);
+}
+
+bool auto_lib15EF4C78_gf_HandleHeroDeathNova_TriggerFunc (bool testConds, bool runActions) {
+    unit lp_heroUnit = auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_heroUnit;
+    unit lp_reviveLocation = auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_reviveLocation;
+    fixed lp_reviveTime = auto_lib15EF4C78_gf_HandleHeroDeathNova_lp_reviveTime;
+
+    // Variable Declarations
+    int lv_heroType;
+    unit lv_actualReviveLocation;
+    string lv_reviveUnitType;
+    text lv_reviveMessage;
+    text lv_reviveRebuildMessage;
+    fixed lv_reviveCooldown;
+    bool lv_updateRally;
+
+    // Automatic Variable Declarations
+    int autoD47D4B33_val;
+    int autoD43BA88C_val;
+
+    // Variable Initialization
+
+    // Implementation
+    if ((lp_reviveLocation != null) && (UnitIsAlive(lp_reviveLocation) == false)) {
+        TriggerDebugOutput(1, StringExternal("Param/Value/lib_15EF4C78_D74BC47F"), false);
+        return true;
+    }
+
+    lv_heroType = lib15EF4C78_gf_NM_HeroTypeFromUnitType(UnitGetType(lp_heroUnit));
+    lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)] = UnitGetOwner(lp_heroUnit);
+    lib15EF4C78_gv_nM_HeroRevivingUnit[(lv_heroType)] = lp_heroUnit;
+    autoD47D4B33_val = lv_heroType;
+    if (autoD47D4B33_val == lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova) {
+        lv_reviveUnitType = "AP_NovaReviveCocoon";
+        lib15EF4C78_gv_nM_HeroReviveCDLink[(lv_heroType)] = "Abil/AP_NovaRevive";
+        lib15EF4C78_gv_nM_HeroReviveCommand[(lv_heroType)] = AbilityCommand("AP_NovaRevive", 0);
+        if ((lp_reviveTime == -1.0)) {
+            lv_reviveCooldown = lib15EF4C78_gv_nM_ReviveCooldownTimeNova;
+        }
+        else {
+            lv_reviveCooldown = lp_reviveTime;
+        }
+        if ((lib15EF4C78_gv_nM_ReviveUseAltMessage == true)) {
+            TextExpressionSetToken("Param/Expression/lib_15EF4C78_0B6D4AB4", "A", IntToText(FixedToInt(lv_reviveCooldown)));
+            lv_reviveMessage = TextExpressionAssemble("Param/Expression/lib_15EF4C78_0B6D4AB4");
+            lv_reviveRebuildMessage = StringExternal("Param/Value/lib_15EF4C78_D80C88E5");
+        }
+        else {
+            TextExpressionSetToken("Param/Expression/lib_15EF4C78_1B326596", "A", IntToText(FixedToInt(lv_reviveCooldown)));
+            lv_reviveMessage = TextExpressionAssemble("Param/Expression/lib_15EF4C78_1B326596");
+            lv_reviveRebuildMessage = StringExternal("Param/Value/lib_15EF4C78_D005C2B7");
+        }
+    }
+    else {
+        TextExpressionSetToken("Param/Expression/lib_15EF4C78_533C8428", "A", StringToText((UnitGetType(lp_heroUnit))));
+        TriggerDebugOutput(1, TextExpressionAssemble("Param/Expression/lib_15EF4C78_533C8428"), false);
+        return true;
+    }
+    lib15EF4C78_gv_nM_ReviveUseAltMessage = false;
+    if ((lp_reviveLocation != null)) {
+        lv_actualReviveLocation = lp_reviveLocation;
+    }
+    else {
+        lv_actualReviveLocation = lib15EF4C78_gf_NM_FindPrimaryTownHall(lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)]);
+    }
+    if ((lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)] == 1)) {
+        if (((lv_actualReviveLocation == null) || (UnitIsAlive(lv_actualReviveLocation) == false))) {
+        }
+        else {
+            TriggerExecute(lib15EF4C78_gt_NM_HeroReviveVOReminder, true, false);
+        }
+    }
+
+    Wait(2.0, c_timeGame);
+    while (((lv_actualReviveLocation == null) || (UnitIsAlive(lv_actualReviveLocation) == false))) {
+        Wait(1.0, c_timeGame);
+        lv_actualReviveLocation = lib15EF4C78_gf_NM_FindPrimaryTownHall(lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)]);
+    }
+    if ((UnitIsAlive(lp_heroUnit) == false)) {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, lv_reviveUnitType, 0, lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)], UnitGetPosition(lv_actualReviveLocation));
+        lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)] = UnitLastCreated();
+        if ((lv_updateRally == true)) {
+            UnitCreateEffectUnit(lv_actualReviveLocation, "CopyHatcheryRally", lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)]);
+            UnitIssueOrder(lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)], OrderTargetingUnit(AbilityCommand("RallyHatchery", 1), lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)]), c_orderQueueReplace);
+        }
+
+        libNtve_gf_PlayerRemoveCooldown(lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)], lib15EF4C78_gv_nM_HeroReviveCDLink[(lv_heroType)]);
+        PlayerAddCooldown(lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)], lib15EF4C78_gv_nM_HeroReviveCDLink[(lv_heroType)], lv_reviveCooldown);
+        autoD43BA88C_val = lv_heroType;
+        if (autoD43BA88C_val == lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova) {
+            TriggerEnable(lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait, true);
+        }
+        else {
+        }
+    }
+
+    Wait(3.0, c_timeGame);
+    if ((UnitIsAlive(lp_heroUnit) == false)) {
+        UnitSetPosition(lp_heroUnit, UnitGetPosition(lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)]), false);
+    }
+
+    return true;
+}
+
+void lib15EF4C78_gf_ReviveHeroInstantly2 (unit lp_heroUnit, bool lp_displayReviveMessage) {
+    // Variable Declarations
+    int lv_heroType;
+    unit lv_reviveLocation;
+
+    // Automatic Variable Declarations
+    int auto908068AB_val;
+    int autoAB432712_val;
+    int auto2FD04D31_val;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_heroType = lib15EF4C78_gf_NM_HeroTypeFromUnitType(UnitGetType(lp_heroUnit));
+    auto908068AB_val = lv_heroType;
+    if (auto908068AB_val == lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova) {
+        TriggerEnable(lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait, false);
+    }
+    else {
+    }
+    libNtve_gf_PlayerRemoveCooldown(lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)], lib15EF4C78_gv_nM_HeroReviveCDLink[(lv_heroType)]);
+    if ((UnitIsAlive(lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)]) == true)) {
+        UnitIssueOrder(lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)], libNtve_gf_ReviveOrderWithNoTarget(lib15EF4C78_gv_nM_HeroReviveCommand[(lv_heroType)], lib15EF4C78_gv_nM_HeroRevivingUnit[(lv_heroType)]), c_orderQueueReplace);
+        Wait(0.0625, c_timeGame);
+        UnitKill(lib15EF4C78_gv_nM_HeroReviverUnit[(lv_heroType)]);
+    }
+    else {
+        lv_reviveLocation = lib15EF4C78_gf_NM_FindPrimaryTownHall(lib15EF4C78_gv_nM_HeroRevivePlayer[(lv_heroType)]);
+        if ((lv_reviveLocation != null)) {
+            UnitSetPosition(lp_heroUnit, UnitGetPosition(lv_reviveLocation), false);
+        }
+
+        UnitRevive(lib15EF4C78_gv_nM_HeroRevivingUnit[(lv_heroType)]);
+        autoAB432712_val = lv_heroType;
+        if (autoAB432712_val == lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova) {
+            UnitSetPropertyFixed(lib15EF4C78_gv_nM_HeroRevivingUnit[(lv_heroType)], c_unitPropLife, UnitGetPropertyFixed(lib15EF4C78_gv_nM_HeroRevivingUnit[(lv_heroType)], c_unitPropLifeMax, c_unitPropCurrent));
+        }
+        else {
+        }
+    }
+    if ((lp_displayReviveMessage == true)) {
+        auto2FD04D31_val = lv_heroType;
+        if (auto2FD04D31_val == lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova) {
+        }
+        else {
+        }
+    }
+
+}
+
+void lib15EF4C78_gf_EnableDisableHeroReviveSystem (bool lp_enableDisable, int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_enableDisable == true)) {
+        libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "NovaWarpOut", 1);
+        TriggerEnable(lib15EF4C78_gt_NM_HeroReviveNova, true);
+    }
+    else {
+        libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "NovaWarpOut", 0);
+        TriggerEnable(lib15EF4C78_gt_NM_HeroReviveNova, false);
+        TriggerEnable(lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait, false);
+    }
+}
+
+void lib15EF4C78_gf_NM_HeroRevive (int lp_heroType) {
+    // Variable Declarations
+    int lv_heroIndex;
+
+    // Automatic Variable Declarations
+    unitgroup autoC48CCAB6_g;
+    int autoC48CCAB6_u;
+    unit autoC48CCAB6_var;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_heroIndex = (lp_heroType);
+    UnitIssueOrder(lib15EF4C78_gv_nM_HeroReviverUnit[lv_heroIndex], libNtve_gf_ReviveOrderWithNoTarget(lib15EF4C78_gv_nM_HeroReviveCommand[lv_heroIndex], lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex]), c_orderQueueReplace);
+    Wait(0.125, c_timeGame);
+    if ((lib15EF4C78_gv_nM_HeroRevivePlayer[lv_heroIndex] == 1)) {
+        autoC48CCAB6_g = UnitGroupSelected(1);
+        autoC48CCAB6_u = UnitGroupCount(autoC48CCAB6_g, c_unitCountAll);
+        for (;; autoC48CCAB6_u -= 1) {
+            autoC48CCAB6_var = UnitGroupUnitFromEnd(autoC48CCAB6_g, autoC48CCAB6_u);
+            if (autoC48CCAB6_var == null) { break; }
+            if ((autoC48CCAB6_var == lib15EF4C78_gv_nM_HeroReviverUnit[lv_heroIndex])) {
+                UnitSelect(lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex], lib15EF4C78_gv_nM_HeroRevivePlayer[lv_heroIndex], true);
+            }
+
+        }
+    }
+
+    UnitKill(lib15EF4C78_gv_nM_HeroReviverUnit[lv_heroIndex]);
+}
+
+int lib15EF4C78_gf_NM_HeroTypeFromUnitType (string lp_unitType) {
+    // Automatic Variable Declarations
+    // Implementation
+    if (((lp_unitType == "AP_NovaHero"))) {
+        return lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova;
+    }
+    return lib15EF4C78_ge_NM_HeroType_NM_HeroType_None;
+}
+
+unit lib15EF4C78_gf_NM_FindPrimaryTownHall (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    return lib15EF4C78_gf_AP_Player_getPrimaryTownHall(lp_player);
 }
 
 void lib15EF4C78_gf_AP_Player_clearZerglingRespawnChargesFromPlayer (int lp_player) {
@@ -1666,7 +1898,7 @@ int lib15EF4C78_gf_CU_HeroTypeFromUnitType (string lp_unitType) {
     else if (auto80A8D158_val == "AP_NovaHero") {
         return lib15EF4C78_ge_CampaignHeroes2_Nova;
     }
-    else if (auto80A8D158_val == "NovaReviveBeacon") {
+    else if (auto80A8D158_val == "AP_NovaReviveCocoon") {
         return lib15EF4C78_ge_CampaignHeroes2_NovaReviveBeacon;
     }
     else {
@@ -3412,6 +3644,94 @@ bool lib15EF4C78_gt_AP_Player_setHolodecoyWeapon_Func (bool testConds, bool runA
 void lib15EF4C78_gt_AP_Player_setHolodecoyWeapon_Init () {
     lib15EF4C78_gt_AP_Player_setHolodecoyWeapon = TriggerCreate("lib15EF4C78_gt_AP_Player_setHolodecoyWeapon_Func");
     TriggerAddEventUnitCreated(lib15EF4C78_gt_AP_Player_setHolodecoyWeapon, null, null, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: NM_HeroReviveNovaCooldownWait
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((PlayerGetCooldown(lib15EF4C78_gv_nM_HeroRevivePlayer[(lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova)], lib15EF4C78_gv_nM_HeroReviveCDLink[(lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova)]) == 0.0))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib15EF4C78_gf_NM_HeroRevive(lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova);
+    if ((lib15EF4C78_gv_nM_HeroRevivePlayer[(lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova)] == 1)) {
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait_Init () {
+    lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait = TriggerCreate("lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait_Func");
+    TriggerEnable(lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait, false);
+    TriggerAddEventTimePeriodic(lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: NM_HeroReviveVOReminder
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_NM_HeroReviveVOReminder_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((UserDataGetInt("StoryStates", "NovaHasRevivedBefore", "Value", 1) == 0)) {
+        UserDataSetInt("StoryStates", "NovaHasRevivedBefore", "Value", 1, 1);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_NM_HeroReviveVOReminder_Init () {
+    lib15EF4C78_gt_NM_HeroReviveVOReminder = TriggerCreate("lib15EF4C78_gt_NM_HeroReviveVOReminder_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: NM_HeroReviveNova
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_NM_HeroReviveNova_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((UnitGetType(EventUnit()) == "AP_NovaHero")) {
+        lib15EF4C78_gf_HandleHeroDeathNova(EventUnit(), null, -1.0);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_NM_HeroReviveNova_Init () {
+    lib15EF4C78_gt_NM_HeroReviveNova = TriggerCreate("lib15EF4C78_gt_NM_HeroReviveNova_Func");
+    TriggerAddEventUnitDied(lib15EF4C78_gt_NM_HeroReviveNova, null);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5795,6 +6115,9 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_FuryofOneHeight_Init();
     lib15EF4C78_gt_FuryofOneReset_Init();
     lib15EF4C78_gt_AP_Player_setHolodecoyWeapon_Init();
+    lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait_Init();
+    lib15EF4C78_gt_NM_HeroReviveVOReminder_Init();
+    lib15EF4C78_gt_NM_HeroReviveNova_Init();
     lib15EF4C78_gt_Set5SecondsMark_Init();
     lib15EF4C78_gt_ZerglingRespawnInit_Init();
     lib15EF4C78_gt_ZerglingRespawnFindPrimaryOnZerglingDeath_Init();
