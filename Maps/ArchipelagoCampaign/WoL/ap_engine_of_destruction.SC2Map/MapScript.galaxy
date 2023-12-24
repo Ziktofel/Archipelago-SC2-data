@@ -553,7 +553,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04Music, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulty, true, true);
-    TriggerExecute(gt_Init07Help, true, true);
     TriggerExecute(gt_IntroSequence, true, false);
     return true;
 }
@@ -1801,7 +1800,6 @@ bool gt_WraithIntro_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     Wait(15.0, c_timeGame);
-    libCamp_gf_CreateNewStructureTips();
     libNtve_gf_PauseUnit(UnitFromId(292), false);
     libNtve_gf_PauseUnit(UnitFromId(8), false);
     libNtve_gf_PauseUnit(UnitFromId(738), false);
@@ -1820,10 +1818,13 @@ bool gt_WraithIntro_Func (bool testConds, bool runActions) {
     UnitIssueOrder(UnitFromId(8), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitFromId(8)), 30.0, 45.0)), c_orderQueueReplace);
     TriggerEnable(gt_AfterWraithIntroQ, true);
     Wait(4.0, c_timeGame);
-    CameraLockInput(gv_p01_USER, true);
-    CameraPan(gv_p01_USER, PointFromId(52), 1.0, -1, 10, false);
-    Wait(1.0, c_timeGame);
-    CameraLockInput(gv_p01_USER, false);
+    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
+        CameraLockInput(gv_p01_USER, true);
+        CameraPan(gv_p01_USER, PointFromId(52), 1.0, -1, 10, false);
+        Wait(1.0, c_timeGame);
+        CameraLockInput(gv_p01_USER, false);
+    }
+
     UnitCreate(1, "AP_StarportFlying", 0, gv_p01_USER, PointFromId(75), 315.0);
     lv_starport = UnitLastCreated();
     UnitSetPropertyFixed(lv_starport, c_unitPropHeight, 10.0);
@@ -1883,7 +1884,6 @@ bool gt_AfterWraithIntroQ_Func (bool testConds, bool runActions) {
     TriggerQueueExit();
     Wait(15.0, c_timeGame);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Horner03_EscortingOdin", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeGame);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
@@ -3523,6 +3523,10 @@ bool gt_NukePan_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
+            return false;
+        }
+
         if (!((TriggerGetExecCount(TriggerGetCurrent()) == 0))) {
             return false;
         }
@@ -4492,7 +4496,6 @@ bool gt_CampaignTipsQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateStorymodeTips();
     TriggerQueueExit();
     return true;
 }
@@ -4524,7 +4527,6 @@ bool gt_RepairOdinTipQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Horner03_OdinRepair", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -4557,7 +4559,6 @@ bool gt_NewUnitWraithTipQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Horner03_Wraith", libNtve_ge_TipType_NewUnit, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerExecute(gt_NewAbilityCloakTipQ, true, false);
     TriggerQueueExit();
@@ -4592,7 +4593,6 @@ bool gt_NewAbilityCloakTipQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Horner03_Cloak", libNtve_ge_TipType_NewAbility, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5725,9 +5725,12 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
