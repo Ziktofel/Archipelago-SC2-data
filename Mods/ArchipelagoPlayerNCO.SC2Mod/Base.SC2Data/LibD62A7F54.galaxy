@@ -1,4 +1,5 @@
 include "TriggerLibs/NativeLib"
+include "LibNCUI"
 include "Lib15EF4C78"
 
 include "LibD62A7F54_h"
@@ -9,7 +10,31 @@ include "LibD62A7F54_h"
 // External Library Initialization
 void libD62A7F54_InitLibraries () {
     libNtve_InitVariables();
+    libNCUI_InitVariables();
     lib15EF4C78_InitVariables();
+}
+
+// Custom Script
+//--------------------------------------------------------------------------------------------------
+// Custom Script: AP_PlayerNCOGalaxyIncludes
+//--------------------------------------------------------------------------------------------------
+include "libNCUI";
+
+void libD62A7F54_InitCustomScript () {
+}
+
+// Functions
+void libD62A7F54_gf_killFlashing () {
+    // Automatic Variable Declarations
+    // Implementation
+    DialogCreate(1600, 1200, c_anchorCenter, 0, 0, false);
+    DialogSetImageVisible(DialogLastCreated(), false);
+    DialogSetFullscreen(DialogLastCreated(), true);
+    libNCUI_gv_nU_HealthWatchDialog = DialogLastCreated();
+    TriggerEnable(libNCUI_gt_NU_HealthWatchFlash, false);
+    TriggerEnable(libNCUI_gt_NU_HealthWatchStartSound, false);
+    TriggerEnable(libNCUI_gt_NU_HealthWatchHeartLoop, false);
+    TriggerEnable(libNCUI_gt_NU_HealthWatchBreathLoop, false);
 }
 
 // Triggers
@@ -24,14 +49,39 @@ bool libD62A7F54_gt_AP_Player_NCOConstructor_Func (bool testConds, bool runActio
     }
 
     lib15EF4C78_InitLib();
+    libNCUI_InitLib();
     TriggerExecute(lib15EF4C78_gt_ArchipelagoPlayerHandlersConstructor, true, false);
     TriggerExecute(libD62A7F54_gt_AP_Player_NCO_SetupNovaPresentForAll, true, false);
+    libD62A7F54_gf_killFlashing();
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 void libD62A7F54_gt_AP_Player_NCOConstructor_Init () {
     libD62A7F54_gt_AP_Player_NCOConstructor = TriggerCreate("libD62A7F54_gt_AP_Player_NCOConstructor_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_NCO_FlashingKiller
+//--------------------------------------------------------------------------------------------------
+bool libD62A7F54_gt_AP_Player_NCO_FlashingKiller_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(libNCUI_gt_NU_HealthWatchFlash, false);
+    TriggerEnable(libNCUI_gt_NU_HealthWatchStartSound, false);
+    TriggerEnable(libNCUI_gt_NU_HealthWatchHeartLoop, false);
+    TriggerEnable(libNCUI_gt_NU_HealthWatchBreathLoop, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void libD62A7F54_gt_AP_Player_NCO_FlashingKiller_Init () {
+    libD62A7F54_gt_AP_Player_NCO_FlashingKiller = TriggerCreate("libD62A7F54_gt_AP_Player_NCO_FlashingKiller_Func");
+    TriggerAddEventTimePeriodic(libD62A7F54_gt_AP_Player_NCO_FlashingKiller, 5.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -68,6 +118,7 @@ void libD62A7F54_gt_AP_Player_NCO_SetupNovaPresentForAll_Init () {
 
 void libD62A7F54_InitTriggers () {
     libD62A7F54_gt_AP_Player_NCOConstructor_Init();
+    libD62A7F54_gt_AP_Player_NCO_FlashingKiller_Init();
     libD62A7F54_gt_AP_Player_NCO_SetupNovaPresentForAll_Init();
 }
 
@@ -84,6 +135,7 @@ void libD62A7F54_InitLib () {
     libD62A7F54_InitLib_completed = true;
 
     libD62A7F54_InitLibraries();
+    libD62A7F54_InitCustomScript();
     libD62A7F54_InitTriggers();
 }
 
