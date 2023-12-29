@@ -119,7 +119,7 @@ void lib5BD4895D_gf_AP_Core_MapConfig_setMapInit (trigger lp_initTrigger) {
 bool lib5BD4895D_gf_AP_Core_IsControllerNotInitialized () {
     // Automatic Variable Declarations
     // Implementation
-    if (((TechTreeUnitCount(1, "AP_Core_Controller", c_techCountQueuedOrBetter) < 1) || (lib5BD4895D_gv_aP_Core_controller == null) || (UnitIsAlive(lib5BD4895D_gv_aP_Core_controller) == false) || ((lib5BD4895D_gv_aP_Core_initFinished == true) && (UnitGetPropertyFixed(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, c_unitPropCurrent) == UnitGetPropertyFixed(lib5BD4895D_gv_aP_Core_controller, c_unitPropLifeMax, c_unitPropCurrent))))) {
+    if (((TechTreeUnitCount(1, "AP_Core_Controller", c_techCountQueuedOrBetter) < 1) || (TechTreeUnitCount(1, "AP_Core_Controller2", c_techCountQueuedOrBetter) < 1) || (lib5BD4895D_gv_aP_Core_controller == null) || (lib5BD4895D_gv_aP_Core_controller2 == null) || (UnitIsAlive(lib5BD4895D_gv_aP_Core_controller) == false) || (UnitIsAlive(lib5BD4895D_gv_aP_Core_controller2) == false) || ((lib5BD4895D_gv_aP_Core_initFinished == true) && (UnitGetPropertyFixed(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, c_unitPropCurrent) == UnitGetPropertyFixed(lib5BD4895D_gv_aP_Core_controller, c_unitPropLifeMax, c_unitPropCurrent))))) {
         return true;
     }
     else {
@@ -141,8 +141,14 @@ void lib5BD4895D_gf_AP_Core_sendLocationLocal (int lp_locationIdLocal) {
             lib5BD4895D_gf_AP_Core_refreshController();
         }
 
-        UnitSetPropertyFixed(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, (UnitGetPropertyInt(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, c_unitPropCurrent) - PowI(2.0, lv_value)));
-        lib5BD4895D_gv_aP_Core_controllerStatus = (lib5BD4895D_gv_aP_Core_controllerStatus + PowI(2.0, lv_value));
+        if ((lp_locationIdLocal <= 13)) {
+            UnitSetPropertyFixed(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, (UnitGetPropertyInt(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, c_unitPropCurrent) - PowI(2.0, lv_value)));
+            lib5BD4895D_gv_aP_Core_controllerStatus = (lib5BD4895D_gv_aP_Core_controllerStatus + PowI(2.0, lv_value));
+        }
+        else {
+            UnitSetPropertyFixed(lib5BD4895D_gv_aP_Core_controller2, c_unitPropLife, (UnitGetPropertyInt(lib5BD4895D_gv_aP_Core_controller2, c_unitPropLife, c_unitPropCurrent) - PowI(2.0, lv_value)));
+            lib5BD4895D_gv_aP_Core_controller2Status = (lib5BD4895D_gv_aP_Core_controller2Status + PowI(2.0, lv_value));
+        }
     }
 
 }
@@ -156,9 +162,13 @@ void lib5BD4895D_gf_AP_Core_refreshController () {
 
     // Implementation
     UnitRemove(lib5BD4895D_gv_aP_Core_controller);
+    UnitRemove(lib5BD4895D_gv_aP_Core_controller2);
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Core_Controller", c_unitCreateIgnorePlacement, 1, Point(0.0, 0.0));
     lib5BD4895D_gv_aP_Core_controller = UnitLastCreated();
     UnitSetPropertyFixed(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, (UnitGetPropertyInt(lib5BD4895D_gv_aP_Core_controller, c_unitPropLife, c_unitPropCurrent) - lib5BD4895D_gv_aP_Core_controllerStatus));
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Core_Controller2", c_unitCreateIgnorePlacement, 1, Point(0.0, 0.0));
+    lib5BD4895D_gv_aP_Core_controller2 = UnitLastCreated();
+    UnitSetPropertyFixed(lib5BD4895D_gv_aP_Core_controller2, c_unitPropLife, (UnitGetPropertyInt(lib5BD4895D_gv_aP_Core_controller2, c_unitPropLife, c_unitPropCurrent) - lib5BD4895D_gv_aP_Core_controller2Status));
 }
 
 text lib5BD4895D_gf_getchatboxcontent () {
@@ -1129,9 +1139,11 @@ bool lib5BD4895D_gt_AP_Core_controllerInit_Func (bool testConds, bool runActions
 
     if (lib5BD4895D_gf_AP_Core_IsControllerNotInitialized()) {
         libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Core_Controller", c_unitCreateIgnorePlacement, 1, Point(0.0, 0.0));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Core_Controller2", c_unitCreateIgnorePlacement, 1, Point(0.0, 0.0));
     }
 
     lib5BD4895D_gv_aP_Core_controller = UnitGroupUnit(UnitGroup("AP_Core_Controller", 1, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
+    lib5BD4895D_gv_aP_Core_controller2 = UnitGroupUnit(UnitGroup("AP_Core_Controller2", 1, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
     return true;
 }
 
@@ -1151,6 +1163,10 @@ bool lib5BD4895D_gt_AP_Core_dontHideController_Func (bool testConds, bool runAct
         if (!((libNtve_gf_UnitIsHidden(lib5BD4895D_gv_aP_Core_controller) == true))) {
             return false;
         }
+
+        if (!((libNtve_gf_UnitIsHidden(lib5BD4895D_gv_aP_Core_controller2) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1159,6 +1175,7 @@ bool lib5BD4895D_gt_AP_Core_dontHideController_Func (bool testConds, bool runAct
     }
 
     libNtve_gf_ShowHideUnit(lib5BD4895D_gv_aP_Core_controller, true);
+    libNtve_gf_ShowHideUnit(lib5BD4895D_gv_aP_Core_controller2, true);
     return true;
 }
 
