@@ -1028,7 +1028,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04Music, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
-    TriggerExecute(gt_Init07Help, true, true);
     TriggerExecute(gt_IntroSequence, true, false);
     return true;
 }
@@ -1600,6 +1599,14 @@ bool gt_SpawnLeviathan_Func (bool testConds, bool runActions) {
     // Actions
     if (!runActions) {
         return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == true)) {
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Cinematic);
+        // Transmission - SoundLink("TValerian02BAdjutant00035", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02BAdjutant00035", 0), c_transmissionDurationAdd, 0.0, true);
+        libNtve_gf_SetAllSoundChannelVolumes(libNtve_ge_VolumeChannelMode_Game, PlayerGroupAll(), 0.0);
+        SoundPlay(SoundLink("Leviathan_Roar", -1), PlayerGroupAll(), 100.0, 0.0);
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
@@ -5223,7 +5230,6 @@ bool gt_TipCampaignTipsQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateStorymodeTips();
     TriggerQueueExit();
     return true;
 }
@@ -5251,7 +5257,6 @@ bool gt_TipCoolantTowersQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Valerian02b_CoolantTowers", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5280,7 +5285,6 @@ bool gt_TipEscapingtheExplosionQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Valerian02b_Explosion", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5309,7 +5313,6 @@ bool gt_TipLeviathanQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Valerian02b_Leviathan", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -6004,15 +6007,46 @@ void gt_BriefingScene04_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_MidPlatformsQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    int autoAD3F5868_val;
+
     // Actions
     if (!runActions) {
         return true;
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_MidPlatformsSetup, true, true);
-    TriggerExecute(gt_MidPlatformsCinematic, true, true);
-    TriggerExecute(gt_MidPlatformsCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidPlatformsSetup, true, true);
+        TriggerExecute(gt_MidPlatformsCinematic, true, true);
+        TriggerExecute(gt_MidPlatformsCinematicEnd, true, true);
+    }
+    else {
+        SoundPlayForPlayer(SoundLink("Odin_NukeExplode", -1), c_maxPlayers, PlayerGroupAll(), 150.0, 0.0);
+        CameraShakeStart(gv_pLAYER_P01_USER, c_cameraPositionTarget, c_cameraDirectionZ, 0.1, 2.0, 100.0, 4.0);
+        autoAD3F5868_val = gv_cinematicNumber;
+        if (autoAD3F5868_val == 1) {
+            gv_ground11 = RegionFromId(1);
+            gv_timerReadytoBlowArea01 = false;
+            TriggerExecute(gt_CreepArea01BR, true, false);
+        }
+        else if (autoAD3F5868_val == 2) {
+            gv_ground11 = RegionFromId(2);
+            gv_timerReadytoBlowArea02 = false;
+            TriggerExecute(gt_CreepArea02BL, true, false);
+        }
+        else if (autoAD3F5868_val == 3) {
+            gv_ground11 = RegionFromId(3);
+            gv_timerReadytoBlowArea03 = false;
+            TriggerExecute(gt_CreepArea03TL, true, false);
+        }
+        else if (autoAD3F5868_val == 4) {
+            gv_ground11 = RegionFromId(4);
+            gv_timerReadytoBlowArea04 = false;
+            TriggerExecute(gt_CreepArea04TR, true, false);
+        }
+        else {
+        }
+    }
     TriggerExecute(gt_MidPlatformsCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -6312,7 +6346,10 @@ bool gt_MidPlatformsCleanup_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    CameraShakeStop(gv_pLAYER_P01_USER);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CameraShakeStop(gv_pLAYER_P01_USER);
+    }
+
     auto525FFCC8_g = gv_midLeviathanHiddenUnitGroup;
     auto525FFCC8_u = UnitGroupCount(auto525FFCC8_g, c_unitCountAll);
     for (;; auto525FFCC8_u -= 1) {
@@ -6324,8 +6361,11 @@ bool gt_MidPlatformsCleanup_Func (bool testConds, bool runActions) {
     AITimePause(false);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_P01_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_P01_USER);
-    CameraRestore(gv_pLAYER_P01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_P01_USER);
+        CameraRestore(gv_pLAYER_P01_USER, 0.0, -1, 10);
+    }
+
     auto4E6C7F68_val = gv_cinematicNumber;
     if (auto4E6C7F68_val == 1) {
         lv_pickedArea = RegionFromId(1);
@@ -6945,9 +6985,12 @@ bool gt_MidLeviathanQ_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerQueueEnter();
-    TriggerExecute(gt_MidLeviathanSetup, true, true);
-    TriggerExecute(gt_MidLeviathanCinematic, true, true);
-    TriggerExecute(gt_MidLeviathanCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidLeviathanSetup, true, true);
+        TriggerExecute(gt_MidLeviathanCinematic, true, true);
+        TriggerExecute(gt_MidLeviathanCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_MidLeviathanCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -7140,8 +7183,11 @@ bool gt_MidLeviathanCleanup_Func (bool testConds, bool runActions) {
     }
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_P01_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_P01_USER);
-    CameraRestore(gv_pLAYER_P01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_P01_USER);
+        CameraRestore(gv_pLAYER_P01_USER, 0.0, -1, 10);
+    }
+
     if ((gv_midLeviathanCinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
