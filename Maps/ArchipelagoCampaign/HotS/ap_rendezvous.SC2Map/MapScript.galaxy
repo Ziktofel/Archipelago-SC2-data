@@ -1982,7 +1982,6 @@ bool gt_PlayerUnitSpawned_Func (bool testConds, bool runActions) {
     }
 
     if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
-        gf_CreateInfoText(EventUnitCreatedUnit());
     }
 
     return true;
@@ -2010,12 +2009,6 @@ bool gt_PlayerUnitMorphed_Func (bool testConds, bool runActions) {
         }
     }
 
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    gf_CreateInfoText(EventUnit());
     return true;
 }
 
@@ -2711,6 +2704,10 @@ bool gt_SpineCrawlerButtonPressed_Func (bool testConds, bool runActions) {
         }
 
         if (!((PlayerGetPropertyInt(EventPlayer(), c_playerPropMinerals) >= UnitTypeGetCost("SpineCrawler", c_unitCostMinerals)))) {
+            return false;
+        }
+
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
             return false;
         }
     }
@@ -5525,7 +5522,6 @@ bool gt_EvolutionUpgradePurchased_Func (bool testConds, bool runActions) {
         auto35D802AB_var = UnitGroupUnitFromEnd(auto35D802AB_g, auto35D802AB_u);
         if (auto35D802AB_var == null) { break; }
         if ((libHots_gf_DifficultyValueInt2(1, 1, 0) == 1)) {
-            gf_CreateInfoText(auto35D802AB_var);
         }
 
     }
@@ -6013,11 +6009,11 @@ bool gt_HoldOutFinishedEarly_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_DOMINION_RIGHT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
+        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_DOMINION_RIGHT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
             return false;
         }
 
-        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_07_DOMINION_LEFT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
+        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_07_DOMINION_LEFT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
             return false;
         }
 
@@ -6043,7 +6039,7 @@ bool gt_HoldOutFinishedEarly_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lv_count = (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_DOMINION_RIGHT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), lv_countThreashold), c_unitCountAlive) + UnitGroupCount(UnitGroup(null, gv_pLAYER_07_DOMINION_LEFT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), lv_countThreashold), c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionCenter, c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionLeft, c_unitCountAlive) + UnitGroupCount(gv_aI_FinalAttackWave, c_unitCountAlive));
+    lv_count = (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_DOMINION_RIGHT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), lv_countThreashold), c_unitCountAlive) + UnitGroupCount(UnitGroup(null, gv_pLAYER_07_DOMINION_LEFT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), lv_countThreashold), c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionCenter, c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionLeft, c_unitCountAlive) + UnitGroupCount(gv_aI_FinalAttackWave, c_unitCountAlive));
     if ((lv_count <= lv_countThreashold) && (gv_nightDropped == false)) {
         gv_nightDropped = true;
         GameSetLighting("DesertWorldNight", 18.0);
@@ -7933,7 +7929,6 @@ bool gt_TipMissionHelpQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libSwaC_gf_DisplayMissionTip(StringExternal("Param/Value/40B01E93"));
     Wait(libSwaC_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -8272,8 +8267,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -8872,6 +8870,10 @@ void gt_IntroMusic_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_MidQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup auto81B7F578_g;
+    int auto81B7F578_u;
+    unit auto81B7F578_var;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -8886,9 +8888,21 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+    else {
+        auto81B7F578_g = UnitGroup(null, gv_pLAYER_03_DOMINION_MAIN, RegionFromId(23), UnitFilter(0, (1 << (c_targetFilterHidden - 32)), (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
+        auto81B7F578_u = UnitGroupCount(auto81B7F578_g, c_unitCountAll);
+        for (;; auto81B7F578_u -= 1) {
+            auto81B7F578_var = UnitGroupUnitFromEnd(auto81B7F578_g, auto81B7F578_u);
+            if (auto81B7F578_var == null) { break; }
+            libNtve_gf_ShowHideUnit(auto81B7F578_var, true);
+        }
+        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab03|Line00152", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -9129,8 +9143,11 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
     UnitIssueOrder(UnitFromId(248), Order(AbilityCommand("ExtendingBridgeDirtyNEWide10Out", 0)), c_orderQueueReplace);
     RegionPlayableMapSet(RegionFromId(1));
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     SoundStop(gv_midNydusSound1, true);
     SoundStop(gv_midNydusSound2, true);
     SoundStop(gv_midRockSound1, true);

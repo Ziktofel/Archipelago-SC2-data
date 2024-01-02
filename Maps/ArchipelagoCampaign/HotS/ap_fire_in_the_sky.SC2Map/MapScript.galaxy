@@ -1347,7 +1347,7 @@ bool gt_TeachCreepTumor_Func (bool testConds, bool runActions) {
     libSwaC_gf_PingMinimapCampaign(PlayerGroupAll(), RegionGetCenter(RegionFromId(13)), 2.0, Color(100.00, 100.00, 0.00));
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/DE1E0DC5"), null, RegionGetCenter(RegionFromId(13)));
     libNtve_gf_RescueUnit(UnitFromId(54), gv_pLAYER_01_USER, true);
-    if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
+    if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true) && (libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
         CameraPan(gv_pLAYER_01_USER, PointFromId(603), 1.5, -1, 10.0, false);
         UISetButtonHighlighted(PlayerGroupSingle(gv_pLAYER_01_USER), AbilityCommand("QueenBuild", 0), true);
         UISetButtonHighlighted(PlayerGroupSingle(gv_pLAYER_01_USER), AbilityCommand("CreepTumorBuild", 0), true);
@@ -1427,7 +1427,7 @@ bool gt_ScourgeNestCycle_Func (bool testConds, bool runActions) {
                 gv_scourgeNestsActivatedCount += 1;
                 TriggerExecute(gt_ObjectiveActivateScourgeNestUpdate, true, false);
                 PingDestroy(gv_scourgeNestPing[lv_index]);
-                if ((gv_scourgeNestsActivatedCount == 1)) {
+                if ((gv_scourgeNestsActivatedCount == 1) && (libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
                     gv_gorgonAttacker = lv_index;
                     gv_midCinematicScourgeNest = gv_scourgeNestUnit[lv_index];
                     lv_nEST_POSITION = UnitGetPosition(gv_scourgeNestUnit[lv_index]);
@@ -1443,6 +1443,10 @@ bool gt_ScourgeNestCycle_Func (bool testConds, bool runActions) {
                     libNtve_gf_PlayAnimation(libNtve_gf_MainActorofUnit(gv_scourgeNestUnit[lv_index]), c_animNameDefault, "Stand Unpowered Morph", c_animFlagNonLooping, c_animTimeDefault);
                     Wait(2.5, c_timeGame);
                     gf_ScourgeNestAttack(lv_index);
+                    if ((gv_scourgeNestsActivatedCount == 1)) {
+                        TriggerExecute(gt_GorgonLaunchSchedule, true, false);
+                    }
+
                     gv_gorgonDestructionInProgress = false;
                     while (!((gv_gorgonDestructionInProgress == true))) {
                         Wait(0.5, c_timeGame);
@@ -4470,8 +4474,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
 
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5103,9 +5110,14 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+    else {
+        libNtve_gf_PauseUnit(gv_midCinematicScourgeNest, false);
+    }
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5302,9 +5314,12 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
     libSwaC_gf_EnableDisableZerglingRespawn(true);
-    libNtve_gf_RestoreUnitSelection(1);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoDefault(), 0.0, -1, 10.0, false);
-    CameraPan(gv_pLAYER_01_USER, CameraInfoGetTarget(CameraInfoFromId(1863)), 0.0, -1, 10.0, false);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(1);
+        CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoDefault(), 0.0, -1, 10.0, false);
+        CameraPan(gv_pLAYER_01_USER, CameraInfoGetTarget(CameraInfoFromId(1863)), 0.0, -1, 10.0, false);
+    }
+
     SoundStop(gv_midScourgeStinger, true);
     SoundStop(gv_midCruiserStinger, true);
     PingDestroy(gv_gorgonPing);
