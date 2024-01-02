@@ -39,6 +39,7 @@ const int gv_p10_REINFORCEMENTPROTOSS = 10;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
+int gv_endGameButton;
 int gv_sTAGE_01_KILL_QUOTA;
 int gv_sTAGE_02_KILL_QUOTA;
 playergroup gv_zergPlayers;
@@ -95,6 +96,7 @@ unit gv_hybrid3;
 unit gv_hybrid4;
 
 void InitGlobals () {
+    gv_endGameButton = c_invalidDialogControlId;
     gv_zergPlayers = PlayerGroupEmpty();
     gv_superWarpGate_P08 = UnitFromId(843);
     gv_superWarpGate_P10 = UnitFromId(637);
@@ -125,6 +127,8 @@ void gf_SpawnNydusWormZerglings (region lp_region);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_InitEndGameButton;
+trigger gt_EndGameButtonPressed;
 trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
@@ -319,6 +323,99 @@ void gf_SpawnNydusWormZerglings (region lp_region) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Init End Game Button
+//--------------------------------------------------------------------------------------------------
+bool gt_InitEndGameButton_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_killCount >= gv_sTAGE_01_KILL_QUOTA))) {
+            return false;
+        }
+
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    DialogCreate(200, 50, c_anchorTopRight, 50, 510, true);
+    libNtve_gf_CreateDialogItemButton(DialogLastCreated(), 200, 50, c_anchorBottom, 50, 50, StringToText(""), StringExternal("Param/Value/25F2FBFE"), "");
+    gv_endGameButton = DialogControlLastCreated();
+    DialogSetVisible(DialogLastCreated(), PlayerGroupAll(), true);
+    Wait(0.5, c_timeGame);
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(100,100,100), PlayerGroupAll());
+    Wait(0.5, c_timeGame);
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(0,0,0), PlayerGroupAll());
+    Wait(0.5, c_timeGame);
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(100,100,100), PlayerGroupAll());
+    Wait(0.5, c_timeGame);
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(0,0,0), PlayerGroupAll());
+    Wait(0.5, c_timeGame);
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(100,100,100), PlayerGroupAll());
+    Wait(0.5, c_timeGame);
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), ColorWithAlpha(0,0,0,0), PlayerGroupAll());
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_InitEndGameButton_Init () {
+    gt_InitEndGameButton = TriggerCreate("gt_InitEndGameButton_Func");
+    TriggerAddEventTimePeriodic(gt_InitEndGameButton, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: End Game Button Pressed
+//--------------------------------------------------------------------------------------------------
+bool gt_EndGameButtonPressed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    const int auto4CCDD38B_n = 5;
+    int auto4CCDD38B_i;
+    unitgroup auto67A6F6A6_g;
+    int auto67A6F6A6_u;
+    unit auto67A6F6A6_var;
+
+    // Conditions
+    if (testConds) {
+        if (!((EventDialogControl() == gv_endGameButton))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    for (auto4CCDD38B_i = 1; auto4CCDD38B_i <= auto4CCDD38B_n; auto4CCDD38B_i += 1) {
+        auto67A6F6A6_g = UnitGroup(null, gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto67A6F6A6_u = UnitGroupCount(auto67A6F6A6_g, c_unitCountAll);
+        for (;; auto67A6F6A6_u -= 1) {
+            auto67A6F6A6_var = UnitGroupUnitFromEnd(auto67A6F6A6_g, auto67A6F6A6_u);
+            if (auto67A6F6A6_var == null) { break; }
+            UnitKill(auto67A6F6A6_var);
+            Wait(0.02, c_timeGame);
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EndGameButtonPressed_Init () {
+    gt_EndGameButtonPressed = TriggerCreate("gt_EndGameButtonPressed_Func");
+    TriggerAddEventDialogControl(gt_EndGameButtonPressed, c_playerAny, c_invalidDialogControlId, c_triggerControlEventTypeClick);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
@@ -360,7 +457,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04Music, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
-    TriggerExecute(gt_Init07Help, true, true);
     TriggerExecute(gt_IntroQ, true, false);
     return true;
 }
@@ -999,7 +1095,6 @@ bool gt_NewTech01PhoenixQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     gv_reinforcementAutoMove = true;
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Zeratul04_Stargate", libNtve_ge_TipType_NewStructure, PlayerGroupAll());
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Stargate", c_unitCreateConstruct, gv_p01_PLAYER, RegionGetCenter(RegionFromId(80)));
     UnitSetProgressComplete(UnitLastCreated(), 1, 95);
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Stargate", c_unitCreateConstruct, gv_p01_PLAYER, RegionGetCenter(RegionFromId(81)));
@@ -1025,7 +1120,6 @@ bool gt_NewTech01PhoenixQ_Func (bool testConds, bool runActions) {
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     ActorSend(ActorFromDoodad(DoodadFromId(482)), "AnimGroupRemove Work");
     Wait(1.0, c_timeGame);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Zeratul04_Phoenix", libNtve_ge_TipType_NewUnit, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -1087,7 +1181,6 @@ bool gt_NewTech02VoidRayQ_Func (bool testConds, bool runActions) {
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     ActorSend(ActorFromDoodad(DoodadFromId(482)), "AnimGroupRemove Work");
     Wait(1.0, c_timeGame);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Zeratul04_VoidRay", libNtve_ge_TipType_NewUnit, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -1152,7 +1245,6 @@ bool gt_NewTech03CarriersQ_Func (bool testConds, bool runActions) {
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     ActorSend(ActorFromDoodad(DoodadFromId(482)), "AnimGroupRemove Work");
     Wait(1.0, c_timeGame);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Zeratul04_Carrier", libNtve_ge_TipType_NewUnit, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -1215,7 +1307,6 @@ bool gt_NewTech04MothershipQ_Func (bool testConds, bool runActions) {
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     ActorSend(ActorFromDoodad(DoodadFromId(482)), "AnimGroupRemove Work");
     Wait(1.0, c_timeGame);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Zeratul04_Mothership", libNtve_ge_TipType_NewUnit, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -4587,7 +4678,10 @@ bool gt_TransmissionTemplarsStoreKnowledgeQ_Func (bool testConds, bool runAction
     UnitIssueOrder(gv_superWarpGate_P08, OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 3), PointFromId(845)), c_orderQueueReplace);
     UnitIssueOrder(gv_superWarpGate_P08, OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 3), PointFromId(847)), c_orderQueueReplace);
     Wait(7.0, c_timeGame);
-    CameraPan(gv_p01_PLAYER, UnitGetPosition(UnitFromId(716)), 2.0, -1, 10, false);
+    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
+        CameraPan(gv_p01_PLAYER, UnitGetPosition(UnitFromId(716)), 2.0, -1, 10, false);
+    }
+
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     // Transmission - SoundLink("TZeratul04HighTemplar00034", -1)
@@ -5989,8 +6083,13 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroSetup, true, true);
+        TriggerExecute(gt_IntroCinematic, true, true);
+    }
+    else {
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_p01_PLAYER);
+    }
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -6230,9 +6329,15 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+    else {
+        // Transmission - SoundLink("TZeratul04DarkVoice00012", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul04DarkVoice00012", 0), c_transmissionDurationAdd, 0.0, false);
+    }
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -6438,8 +6543,11 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     GameTimeOfDayPause(false);
     PlayerSetState(gv_p01_PLAYER, c_playerStateXPGain, true);
     AITimePause(false);
-    libNtve_gf_RestoreUnitSelection(gv_p01_PLAYER);
-    CameraRestore(gv_p01_PLAYER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_p01_PLAYER);
+        CameraRestore(gv_p01_PLAYER, 0.0, -1, 10);
+    }
+
     if ((gv_midCinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
@@ -6841,6 +6949,8 @@ void gt_VictoryHybridExplosion_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_InitEndGameButton_Init();
+    gt_EndGameButtonPressed_Init();
     gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
