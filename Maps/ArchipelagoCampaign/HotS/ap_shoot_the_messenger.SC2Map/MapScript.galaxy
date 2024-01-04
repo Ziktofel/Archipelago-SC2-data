@@ -1084,6 +1084,10 @@ string gf_Objective_LabelText () {
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup autoC992EFDC_g;
+    int autoC992EFDC_u;
+    unit autoC992EFDC_var;
+
     // Actions
     if (!runActions) {
         return true;
@@ -1094,15 +1098,22 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
     libSwaC_gf_SetStoryKerriganLevel(-4);
-    TriggerExecute(gt_IntroQ, true, true);
-    TriggerExecute(gt_StartGameQ, true, false);
     if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
     }
     else {
         lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_pLAYER_01_USER);
+        autoC992EFDC_g = UnitGroupFromId(5);
+        autoC992EFDC_u = UnitGroupCount(autoC992EFDC_g, c_unitCountAll);
+        for (;; autoC992EFDC_u -= 1) {
+            autoC992EFDC_var = UnitGroupUnitFromEnd(autoC992EFDC_g, autoC992EFDC_u);
+            if (autoC992EFDC_var == null) { break; }
+            UnitRemove(autoC992EFDC_var);
+        }
     }
+    TriggerExecute(gt_IntroQ, true, true);
+    TriggerExecute(gt_StartGameQ, true, false);
     return true;
 }
 
@@ -4375,6 +4386,10 @@ bool gt_VictoryDockingBaysDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((gv_shuttleWavesRemaining > 4)) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    }
+
     libSwaC_gf_UpdateMissionObjectiveText("ZExpedition02Objective2", 0, false, StringExternal("Param/Value/DCC58208"));
     gv_alternateVictory = true;
     TriggerExecute(gt_VictorySequence, true, false);
@@ -4701,7 +4716,6 @@ bool gt_TipMissionHelpQ_Func (bool testConds, bool runActions) {
         libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
     }
 
-    libSwaC_gf_DisplayMissionTip(StringExternal("Param/Value/8AF6FAD6"));
     Wait(libSwaC_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5037,8 +5051,13 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
 
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+    else {
+        gv_cinematicCompleted = false;
+    }
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
