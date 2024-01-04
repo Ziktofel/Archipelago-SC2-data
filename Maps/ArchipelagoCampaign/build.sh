@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
-rm -rf WoL_build
-mkdir -p WoL_build
-for map in WoL/*.SC2Map ; do
-    mpqfile=WoL_build/$(sed 's/^WoL\///g' <<< "$map")
+process_map() {
+    map=$1
+    mpqfile="$campaign"_build/$(sed "s/^$campaign\///g" <<< "$map")
     smpq -c $mpqfile
     pushd $map
         for file in $(find . -type f) ; do
@@ -11,28 +10,12 @@ for map in WoL/*.SC2Map ; do
             smpq -a ../../$mpqfile $file
         done
     popd
-done
-rm -rf HotS_build
-mkdir -p HotS_build
-for map in HotS/*.SC2Map ; do
-    mpqfile=HotS_build/$(sed 's/^HotS\///g' <<< "$map")
-    smpq -c $mpqfile
-    pushd $map
-        for file in $(find . -type f) ; do
-            file=$(cut -c 3- <<< "$file")
-            smpq -a ../../$mpqfile $file
-        done
-    popd
-done
-rm -rf LotV_build
-mkdir -p LotV_build
-for map in LotV/*.SC2Map ; do
-    mpqfile=LotV_build/$(sed 's/^LotV\///g' <<< "$map")
-    smpq -c $mpqfile
-    pushd $map
-        for file in $(find . -type f) ; do
-            file=$(cut -c 3- <<< "$file")
-            smpq -a ../../$mpqfile $file
-        done
-    popd
+}
+export -f process_map
+
+for campaign in "WoL" "HotS" "LotV"; do
+    export campaign
+    rm -rf "$campaign"_build
+    mkdir -p "$campaign"_build
+    parallel -j +0 process_map ::: "$campaign"/*.SC2Map
 done
