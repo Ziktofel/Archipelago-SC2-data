@@ -997,7 +997,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04Music, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
-    TriggerExecute(gt_Init07Help, true, true);
     TriggerExecute(gt__1IntroSequence, true, false);
     return true;
 }
@@ -1934,7 +1933,6 @@ bool gt__1TipStoryModeQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libCamp_gf_CreateStorymodeTips();
     TriggerQueueExit();
     return true;
 }
@@ -2005,7 +2003,6 @@ bool gt__1TeachSnipeQ_Func (bool testConds, bool runActions) {
     // Transmission - SoundLink("TValerian02ARaynor00001", 0)
     libCamp_gf_SendTransmissionCampaign(gv_tHEONERAYNOR, SoundLink("TValerian02ARaynor00001", 0), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Valerian02a_Penetrator", libNtve_ge_TipType_NewAbility, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -2304,7 +2301,6 @@ bool gt__1TeachNadesQ_Func (bool testConds, bool runActions) {
     // Transmission - SoundLink("TValerian02ATychus00055", 0)
     libCamp_gf_SendTransmissionCampaign(gv_tHEONETYCHUS, SoundLink("TValerian02ATychus00055", 0), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Valerian02a_ShredderGrenades", libNtve_ge_TipType_NewAbility, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -2639,7 +2635,6 @@ bool gt__1TeachBettyQ_Func (bool testConds, bool runActions) {
     // Transmission - SoundLink("TValerian02ASwann00004", 0)
     libCamp_gf_SendTransmissionCampaign(gv_tHEONESWANN, SoundLink("TValerian02ASwann00004", 0), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Valerian02a_FlamingBetty", libNtve_ge_TipType_NewAbility, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -9105,7 +9100,6 @@ bool gt_IncapacitationTipQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    libCamp_gf_CreateTipFromConversationState("StoryTips|Valerian02a_FallenHeroes", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -9702,9 +9696,14 @@ bool gt_CinematicStartHoldout1Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_CinematicStartHoldout1Setup, true, true);
-    TriggerExecute(gt_CinematicStartHoldout1Cinematic, true, true);
-    TriggerExecute(gt_CinematicStartHoldout1CinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_CinematicStartHoldout1Setup, true, true);
+        TriggerExecute(gt_CinematicStartHoldout1Cinematic, true, true);
+        TriggerExecute(gt_CinematicStartHoldout1CinematicEnd, true, true);
+    }
+    else {
+        CinematicFade(false, 1.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+    }
     TriggerExecute(gt_CinematicStartHoldout1Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -10003,8 +10002,11 @@ bool gt_CinematicStartHoldout1Cleanup_Func (bool testConds, bool runActions) {
     UnitPauseAll(false);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_p1_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_p1_USER);
-    CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_p1_USER);
+        CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
@@ -10032,6 +10034,16 @@ void gt_CinematicStartHoldout1Cleanup_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_CinematicFinishedHoldout1Q_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup auto61BEB8E4_g;
+    int auto61BEB8E4_u;
+    unit auto61BEB8E4_var;
+    unitgroup auto7EA88BE3_g;
+    int auto7EA88BE3_u;
+    unit auto7EA88BE3_var;
+    unitgroup auto858E8E01_g;
+    int auto858E8E01_u;
+    unit auto858E8E01_var;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -10049,9 +10061,40 @@ bool gt_CinematicFinishedHoldout1Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_CinematicFinishedHoldout1Setup, true, true);
-    TriggerExecute(gt_CinematicFinishedHoldout1Cinematic, true, true);
-    TriggerExecute(gt_CinematicFinishedHoldout1CinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_CinematicFinishedHoldout1Setup, true, true);
+        TriggerExecute(gt_CinematicFinishedHoldout1Cinematic, true, true);
+        TriggerExecute(gt_CinematicFinishedHoldout1CinematicEnd, true, true);
+    }
+    else {
+        CinematicFade(false, 1.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+        gv_cinematicHiddenUnitGroup = UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, 0, 0), 0);
+        auto61BEB8E4_g = gv_cinematicHiddenUnitGroup;
+        auto61BEB8E4_u = UnitGroupCount(auto61BEB8E4_g, c_unitCountAll);
+        for (;; auto61BEB8E4_u -= 1) {
+            auto61BEB8E4_var = UnitGroupUnitFromEnd(auto61BEB8E4_g, auto61BEB8E4_u);
+            if (auto61BEB8E4_var == null) { break; }
+            libNtve_gf_ShowHideUnit(auto61BEB8E4_var, false);
+            libNtve_gf_MakeUnitInvulnerable(auto61BEB8E4_var, true);
+        }
+        auto7EA88BE3_g = UnitGroup(null, c_playerAny, RegionFromId(10), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto7EA88BE3_u = UnitGroupCount(auto7EA88BE3_g, c_unitCountAll);
+        for (;; auto7EA88BE3_u -= 1) {
+            auto7EA88BE3_var = UnitGroupUnitFromEnd(auto7EA88BE3_g, auto7EA88BE3_u);
+            if (auto7EA88BE3_var == null) { break; }
+            UnitRemove(auto7EA88BE3_var);
+        }
+        SoundPlayForPlayer(SoundLink("Odin_Explode", -1), c_maxPlayers, PlayerGroupAll(), 200.0, 0.0);
+        CameraShakeStart(gv_p1_USER, c_cameraPositionTarget, c_cameraDirectionZ, 0.3, 2.5, 100.0, 2.0);
+        Wait(1.0, c_timeGame);
+        auto858E8E01_g = UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto858E8E01_u = UnitGroupCount(auto858E8E01_g, c_unitCountAll);
+        for (;; auto858E8E01_u -= 1) {
+            auto858E8E01_var = UnitGroupUnitFromEnd(auto858E8E01_g, auto858E8E01_u);
+            if (auto858E8E01_var == null) { break; }
+            libNtve_gf_MakeUnitInvulnerable(auto858E8E01_var, false);
+        }
+    }
     TriggerExecute(gt_CinematicFinishedHoldout1Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -10388,7 +10431,10 @@ bool gt_CinematicFinishedHoldout1Cleanup_Func (bool testConds, bool runActions) 
     GameTimeOfDayPause(false);
     PlayerSetState(gv_p1_USER, c_playerStateXPGain, true);
     CameraShakeStop(gv_p1_USER);
-    CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
@@ -10428,9 +10474,14 @@ bool gt_CinematicStartHoldout2Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_CinematicStartHoldout2Setup, true, true);
-    TriggerExecute(gt_CinematicStartHoldout2Cinematic, true, true);
-    TriggerExecute(gt_CinematicStartHoldout2CinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_CinematicStartHoldout2Setup, true, true);
+        TriggerExecute(gt_CinematicStartHoldout2Cinematic, true, true);
+        TriggerExecute(gt_CinematicStartHoldout2CinematicEnd, true, true);
+    }
+    else {
+        CinematicFade(false, 1.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+    }
     TriggerExecute(gt_CinematicStartHoldout2Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -10726,8 +10777,11 @@ bool gt_CinematicStartHoldout2Cleanup_Func (bool testConds, bool runActions) {
     UnitPauseAll(false);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_p1_USER, c_playerStateXPGain, true);
-    libNtve_gf_RestoreUnitSelection(gv_p1_USER);
-    CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_p1_USER);
+        CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
@@ -10755,6 +10809,16 @@ void gt_CinematicStartHoldout2Cleanup_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_MidBroodChamber2Q_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup auto94CAAC4D_g;
+    int auto94CAAC4D_u;
+    unit auto94CAAC4D_var;
+    unitgroup autoC493A2F4_g;
+    int autoC493A2F4_u;
+    unit autoC493A2F4_var;
+    unitgroup auto2709FAAC_g;
+    int auto2709FAAC_u;
+    unit auto2709FAAC_var;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -10772,9 +10836,40 @@ bool gt_MidBroodChamber2Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_CinematicFinishedHoldout2Setup, true, true);
-    TriggerExecute(gt_CinematicFinishedHoldout2Cinematic, true, true);
-    TriggerExecute(gt_CinematicFinishedHoldout2CinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_CinematicFinishedHoldout2Setup, true, true);
+        TriggerExecute(gt_CinematicFinishedHoldout2Cinematic, true, true);
+        TriggerExecute(gt_CinematicFinishedHoldout2CinematicEnd, true, true);
+    }
+    else {
+        CinematicFade(false, 1.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+        gv_cinematicHiddenUnitGroup = UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, 0, 0), 0);
+        auto94CAAC4D_g = gv_cinematicHiddenUnitGroup;
+        auto94CAAC4D_u = UnitGroupCount(auto94CAAC4D_g, c_unitCountAll);
+        for (;; auto94CAAC4D_u -= 1) {
+            auto94CAAC4D_var = UnitGroupUnitFromEnd(auto94CAAC4D_g, auto94CAAC4D_u);
+            if (auto94CAAC4D_var == null) { break; }
+            libNtve_gf_ShowHideUnit(auto94CAAC4D_var, false);
+            libNtve_gf_MakeUnitInvulnerable(auto94CAAC4D_var, true);
+        }
+        autoC493A2F4_g = UnitGroup(null, c_playerAny, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoC493A2F4_u = UnitGroupCount(autoC493A2F4_g, c_unitCountAll);
+        for (;; autoC493A2F4_u -= 1) {
+            autoC493A2F4_var = UnitGroupUnitFromEnd(autoC493A2F4_g, autoC493A2F4_u);
+            if (autoC493A2F4_var == null) { break; }
+            UnitRemove(autoC493A2F4_var);
+        }
+        SoundPlayForPlayer(SoundLink("Odin_Explode", -1), c_maxPlayers, PlayerGroupAll(), 200.0, 0.0);
+        CameraShakeStart(gv_p1_USER, c_cameraPositionTarget, c_cameraDirectionZ, 0.3, 2.5, 100.0, 2.0);
+        Wait(1.0, c_timeGame);
+        auto2709FAAC_g = UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto2709FAAC_u = UnitGroupCount(auto2709FAAC_g, c_unitCountAll);
+        for (;; auto2709FAAC_u -= 1) {
+            auto2709FAAC_var = UnitGroupUnitFromEnd(auto2709FAAC_g, auto2709FAAC_u);
+            if (auto2709FAAC_var == null) { break; }
+            libNtve_gf_MakeUnitInvulnerable(auto2709FAAC_var, false);
+        }
+    }
     TriggerExecute(gt_CinematicFinishedHoldout2Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -11174,7 +11269,10 @@ bool gt_CinematicFinishedHoldout2Cleanup_Func (bool testConds, bool runActions) 
     GameTimeOfDayPause(false);
     PlayerSetState(gv_p1_USER, c_playerStateXPGain, true);
     CameraShakeStop(gv_p1_USER);
-    CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CameraRestore(gv_p1_USER, 0.0, -1, 10);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
@@ -11214,9 +11312,14 @@ bool gt_CinematicStartHoldout3Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_CinematicStartHoldout3Setup, true, true);
-    TriggerExecute(gt_CinematicStartHoldout3Cinematic, true, true);
-    TriggerExecute(gt_CinematicStartHoldout3CinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_CinematicStartHoldout3Setup, true, true);
+        TriggerExecute(gt_CinematicStartHoldout3Cinematic, true, true);
+        TriggerExecute(gt_CinematicStartHoldout3CinematicEnd, true, true);
+    }
+    else {
+        CinematicFade(false, 1.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+    }
     TriggerExecute(gt_CinematicStartHoldout3Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -11771,6 +11874,16 @@ void gt_CinematicStartHoldout3Cleanup_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_CinematicFinishedHoldout3Q_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup autoBB621F19_g;
+    int autoBB621F19_u;
+    unit autoBB621F19_var;
+    unitgroup autoFBC4FA28_g;
+    int autoFBC4FA28_u;
+    unit autoFBC4FA28_var;
+    unitgroup auto04016D58_g;
+    int auto04016D58_u;
+    unit auto04016D58_var;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -11788,9 +11901,39 @@ bool gt_CinematicFinishedHoldout3Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    TriggerExecute(gt_CinematicFinishedHoldout3Setup, true, true);
-    TriggerExecute(gt_CinematicFinishedHoldout3Cinematic, true, true);
-    TriggerExecute(gt_CinematicFinishedHoldout3CinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_CinematicFinishedHoldout3Setup, true, true);
+        TriggerExecute(gt_CinematicFinishedHoldout3Cinematic, true, true);
+        TriggerExecute(gt_CinematicFinishedHoldout3CinematicEnd, true, true);
+    }
+    else {
+        CinematicFade(false, 1.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+        gv_cinematicHiddenUnitGroup = UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, 0, 0), 0);
+        autoBB621F19_g = gv_cinematicHiddenUnitGroup;
+        autoBB621F19_u = UnitGroupCount(autoBB621F19_g, c_unitCountAll);
+        for (;; autoBB621F19_u -= 1) {
+            autoBB621F19_var = UnitGroupUnitFromEnd(autoBB621F19_g, autoBB621F19_u);
+            if (autoBB621F19_var == null) { break; }
+            libNtve_gf_ShowHideUnit(autoBB621F19_var, false);
+        }
+        autoFBC4FA28_g = UnitGroup(null, c_playerAny, RegionFromId(14), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoFBC4FA28_u = UnitGroupCount(autoFBC4FA28_g, c_unitCountAll);
+        for (;; autoFBC4FA28_u -= 1) {
+            autoFBC4FA28_var = UnitGroupUnitFromEnd(autoFBC4FA28_g, autoFBC4FA28_u);
+            if (autoFBC4FA28_var == null) { break; }
+            UnitRemove(autoFBC4FA28_var);
+        }
+        SoundPlayForPlayer(SoundLink("Odin_Explode", -1), c_maxPlayers, PlayerGroupAll(), 200.0, 0.0);
+        CameraShakeStart(gv_p1_USER, c_cameraPositionTarget, c_cameraDirectionZ, 0.3, 2.5, 100.0, 2.0);
+        Wait(1.0, c_timeGame);
+        auto04016D58_g = UnitGroup(null, gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto04016D58_u = UnitGroupCount(auto04016D58_g, c_unitCountAll);
+        for (;; auto04016D58_u -= 1) {
+            auto04016D58_var = UnitGroupUnitFromEnd(auto04016D58_g, auto04016D58_u);
+            if (auto04016D58_var == null) { break; }
+            libNtve_gf_MakeUnitInvulnerable(auto04016D58_var, false);
+        }
+    }
     TriggerExecute(gt_CinematicFinishedHoldout3Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -12243,7 +12386,10 @@ bool gt_CinematicFinishedHoldout3Cleanup_Func (bool testConds, bool runActions) 
     GameTimeOfDayPause(false);
     PlayerSetState(gv_p1_USER, c_playerStateXPGain, true);
     CameraShakeStop(gv_p1_USER);
-    libNtve_gf_RestoreUnitSelection(gv_p1_USER);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_p1_USER);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
