@@ -1243,7 +1243,10 @@ bool gt_StartGameIntroSectionQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/1593CAF3"), null, UnitGetPosition(gv_kerrigan));
     Wait(2.0, c_timeReal);
     TriggerQueueEnter();
-    TriggerExecute(gt_ObjectiveKerriganMustSurviveCreate, true, true);
+    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
+        TriggerExecute(gt_ObjectiveKerriganMustSurviveCreate, true, true);
+    }
+
     TriggerQueueExit();
     TriggerExecute(gt_SwarmHostQ, true, false);
     TriggerExecute(gt_TipMissionHelpQ, true, false);
@@ -1524,6 +1527,9 @@ void gt_CreateObjectivePingReveal_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_KerriganReachesPool_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    const int autoF592E35D_n = 3;
+    int autoF592E35D_i;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -1562,6 +1568,13 @@ bool gt_KerriganReachesPool_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveProceedToPoolComplete, true, false);
     TriggerExecute(gt_ObjectiveKerriganMustSurviveComplete, true, true);
     TriggerEnable(gt_DefeatKerriganKilled, false);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == true)) {
+        for (autoF592E35D_i = 1; autoF592E35D_i <= autoF592E35D_n; autoF592E35D_i += 1) {
+            TransmissionClearAll();
+            Wait(0.02, c_timeGame);
+        }
+    }
+
     TriggerExecute(gt_MidQ, true, true);
     return true;
 }
@@ -2838,7 +2851,6 @@ bool gt_SpawnLocustsQ_Func (bool testConds, bool runActions) {
     libSwaC_gf_SendTransmissionCampaign(null, "zMission_Zerus02|Line00167", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
     Wait(1.0, c_timeReal);
-    HelpPanelAddTip(PlayerGroupAll(), libNtve_gf_FormatTipTitle(StringExternal("Param/Value/8D5C3B50"), libNtve_ge_TipType_NormalTip), StringExternal("Param/Value/C53808A7"), StringExternal("Param/Value/992A8311"), "Assets\\Textures\\btn-ability-zerg-swarmseeds-color.dds");
     TriggerExecute(gt_SpawnLocustsButtonController, true, false);
     Wait(2.0, c_timeReal);
     TriggerQueueExit();
@@ -3034,11 +3046,14 @@ bool gt_SpawnLocustsUsedQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libNtve_gf_StopFlashingScreenButton(1);
-    CameraLockInput(gv_pLAYER_01_USER, true);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoDefault(), 1.0, -1, 10.0, false);
-    CameraPan(gv_pLAYER_01_USER, UnitGetPosition(gv_chrysalis), 1.0, -1, 10.0, true);
-    Wait(1.0, c_timeGame);
-    CameraLockInput(gv_pLAYER_01_USER, false);
+    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
+        CameraLockInput(gv_pLAYER_01_USER, true);
+        CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoDefault(), 1.0, -1, 10.0, false);
+        CameraPan(gv_pLAYER_01_USER, UnitGetPosition(gv_chrysalis), 1.0, -1, 10.0, true);
+        Wait(1.0, c_timeGame);
+        CameraLockInput(gv_pLAYER_01_USER, false);
+    }
+
     Wait(5.0, c_timeReal);
     TriggerQueueEnter();
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
@@ -5208,8 +5223,15 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
 
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+    else {
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_K5Kerrigan", 0, 1, PointFromId(114));
+        gv_kerrigan = UnitLastCreated();
+        libSwaC_gf_RegisterCampaignKerrigan(gv_kerrigan);
+    }
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5424,8 +5446,11 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
         UnitCreate(1, "PrimalHydralisk", 0, gv_pLAYER_02_BRAKK, RegionRandomPoint(RegionFromId(8)), libNtve_gf_RandomAngle());
         UnitGroupAdd(gv_introAttackUnits, UnitLastCreated());
     }
-    UnitCreate(1, "PrimalUltralisk", 0, gv_pLAYER_02_BRAKK, PointFromId(196), 135.0);
-    UnitGroupAdd(gv_introAttackUnits, UnitLastCreated());
+    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
+        UnitCreate(1, "PrimalUltralisk", 0, gv_pLAYER_02_BRAKK, PointFromId(196), 135.0);
+        UnitGroupAdd(gv_introAttackUnits, UnitLastCreated());
+    }
+
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
     libNtve_gf_PlayAnimationOnDoodadsInRegion(RegionEntireMap(), "ZerusSwampPlants", c_animNameDefault, "Stand Morph", c_animFlagPlayForever, c_animTimeDefault);
@@ -5439,6 +5464,12 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
     UnitGroupAdd(lv_startingSelection, gv_kerrigan);
     UnitGroupAddUnitGroup(lv_startingSelection, gv_swarmHostGroup);
     UnitGroupSelect(lv_startingSelection, gv_pLAYER_01_USER, true);
+    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
+        lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_pLAYER_01_USER);
+    }
+    else {
+        libNtve_gf_ShowHideUnit(gv_kerrigan, false);
+    }
     TriggerExecute(gt_StartAIIntro, true, false);
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
@@ -5606,12 +5637,12 @@ bool gt_IntroKerriganDropPod_Func (bool testConds, bool runActions) {
     UnitSetState(gv_kerrigan, c_unitStateFidget, false);
     if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
         lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_pLAYER_01_USER);
+        libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(114), libNtve_gf_ConvertUnitToUnitGroup(gv_kerrigan), false, gv_pLAYER_01_USER);
+        Wait(2.8, c_timeGame);
+        SoundPlay(SoundLink("Zerus02_OpenCS_ZergDropPod_Impact", -1), PlayerGroupAll(), 100.0, 0.0);
+        gv_introImpactSound1 = SoundLastPlayed();
     }
 
-    libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Zerg, PointFromId(114), libNtve_gf_ConvertUnitToUnitGroup(gv_kerrigan), false, gv_pLAYER_01_USER);
-    Wait(2.8, c_timeGame);
-    SoundPlay(SoundLink("Zerus02_OpenCS_ZergDropPod_Impact", -1), PlayerGroupAll(), 100.0, 0.0);
-    gv_introImpactSound1 = SoundLastPlayed();
     Wait(1.2, c_timeGame);
     UnitIssueOrder(gv_kerrigan, OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(24)), c_orderQueueReplace);
     Wait(7.0, c_timeGame);
@@ -5721,8 +5752,11 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;

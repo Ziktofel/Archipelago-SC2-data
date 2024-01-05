@@ -699,7 +699,10 @@ bool auto_gf_PutReticleonPrimalHive_TriggerFunc (bool testConds, bool runActions
     // Automatic Variable Declarations
     // Implementation
     VisRevealArea(gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(lp_cHOSEN_UNIT), 12.0), 15.0, true);
-    CameraPan(gv_pLAYER_01_USER, UnitGetPosition(lp_cHOSEN_UNIT), 2.0, -1, 10.0, true);
+    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
+        CameraPan(gv_pLAYER_01_USER, UnitGetPosition(lp_cHOSEN_UNIT), 2.0, -1, 10.0, true);
+    }
+
     libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergEnemy, libSwaC_ge_CampaginReticleSize_Medium, UnitTypeGetName(UnitGetType(lp_cHOSEN_UNIT)), lp_cHOSEN_UNIT, "Ref_Target");
     TextTagSetPosition(TextTagLastCreated(), UnitGetPosition(lp_cHOSEN_UNIT), 1.5);
     while (!(((UnitGetPropertyFixed(lp_cHOSEN_UNIT, c_unitPropLifePercent, c_unitPropCurrent) < 100.0) || (UnitIsAlive(lp_cHOSEN_UNIT) == false)))) {
@@ -2016,12 +2019,24 @@ void gf_AchievementAddInitialMutalisks () {
 
 void gf_HideKerrigan () {
     // Automatic Variable Declarations
+    unitgroup auto76C2A3E1_g;
+    int auto76C2A3E1_u;
+    unit auto76C2A3E1_var;
+
     // Implementation
     if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
     }
-
+    else {
+        auto76C2A3E1_g = UnitGroupFromId(3);
+        auto76C2A3E1_u = UnitGroupCount(auto76C2A3E1_g, c_unitCountAll);
+        for (;; auto76C2A3E1_u -= 1) {
+            auto76C2A3E1_var = UnitGroupUnitFromEnd(auto76C2A3E1_g, auto76C2A3E1_u);
+            if (auto76C2A3E1_var == null) { break; }
+            UnitRemove(auto76C2A3E1_var);
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6821,8 +6836,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -7302,9 +7320,14 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+    else {
+        libSwaC_gf_SendTransmissionCampaign(gv_cinematicBrakk, "zMission_Zerus01|Line00132", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_DontShowPortrait, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -7516,8 +7539,11 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     UnitSetPropertyFixed(gv_kerrigan, c_unitPropEnergyPercent, 100.0);
     gf_HideKerrigan();
     libSwaC_gf_EnableDisableZerglingRespawn(true);
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     if ((gv_introCinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
