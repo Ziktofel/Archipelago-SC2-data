@@ -9,9 +9,14 @@ include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "LibComC"
 include "LibCMMI"
-include "LibNovC"
 include "LibNCMI"
 include "LibNCUI"
+include "LibNCMI"
+include "LibNCUI"
+include "Lib15EF4C78"
+include "LibD62A7F54"
+include "Lib5BD4895D"
+include "LibABFE498B"
 
 //--------------------------------------------------------------------------------------------------
 // Library Initialization
@@ -21,9 +26,14 @@ void InitLibs () {
     libLbty_InitLib();
     libComC_InitLib();
     libCMMI_InitLib();
-    libNovC_InitLib();
     libNCMI_InitLib();
     libNCUI_InitLib();
+    libNCMI_InitLib();
+    libNCUI_InitLib();
+    lib15EF4C78_InitLib();
+    libD62A7F54_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -90,6 +100,8 @@ int gv_gorgonKills;
 int gv_yamatoKills;
 int gv_novaKills;
 int gv_gorgonsSummoned;
+int gv_objectiveDefeatTheDeathFleet;
+int gv_objectiveScienceFacility;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -126,9 +138,12 @@ void InitGlobals () {
     }
     gv_observerWave = UnitGroupEmpty();
     gv_deathFleetLeaderboard = c_boardNone;
+    gv_enemyUnitsRemaining = 1750;
     for (init_i = 0; init_i <= 3; init_i += 1) {
         gv_enemyGroups[init_i] = UnitGroupEmpty();
     }
+    gv_objectiveDefeatTheDeathFleet = c_invalidObjectiveId;
+    gv_objectiveScienceFacility = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -147,6 +162,7 @@ void gf_TrackUnitforLeaderboard (unit lp_unit, int lp_lane);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -528,6 +544,32 @@ void gf_TrackUnitforLeaderboard (unit lp_unit, int lp_lane) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(libD62A7F54_gt_AP_Player_NCOConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 260);
+    libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(null, null, null, null);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -537,11 +579,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libNCMI_gf_InitializeNovaMission("Nova08");
     TriggerExecute(gt_Init01Technology, true, false);
-    libNovC_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
@@ -558,7 +596,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -571,7 +608,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libNovC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     libComC_gf_EnableCampaignTechUnit(true, "Battlecruiser", gv_pLAYER_01_USER);
     TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION, "DOM", 1);
     TechTreeUnitAllow(gv_pLAYER_02_DOMINION, "Bunker", true);
@@ -697,22 +733,12 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libNtve_gf_CreateUnitsAtPoint2(1, "NovaHero", 0, gv_pLAYER_01_USER, PointFromId(1));
+    libNtve_gf_CreateUnitsAtPoint2(1, "AP_NovaHero", 0, gv_pLAYER_01_USER, PointFromId(1));
     gv_nova = UnitLastCreated();
-    libNCUI_gf_SetHeroPanelUnit(1, gv_nova);
+    lib15EF4C78_gf_SetHeroPanelUnit(1, gv_nova, gv_pLAYER_01_USER);
     libNCMI_gf_SetNovaHeroUnit(gv_nova);
     libNCMI_gf_EnableDisableHeroReviveSystem(true, gv_pLAYER_01_USER);
     libNCMI_gf_SetAllWorkerRallyPointsForPlayer(1);
-    if ((TechTreeUpgradeCount(gv_pLAYER_01_USER, "InternalizedTechModuleSiegeTank", c_techCountQueuedOrBetter) > 0)) {
-        lv_tempPoint = UnitGetPosition(UnitFromId(140));
-        UnitRemove(UnitFromId(140));
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "FactoryReactor", 0, gv_pLAYER_01_USER, lv_tempPoint);
-    }
-    else {
-        libNtve_gf_ShowHideUnit(UnitFromId(140), false);
-        Wait(0.0625, c_timeGame);
-        libNtve_gf_ShowHideUnit(UnitFromId(140), true);
-    }
     auto18F4B303_g = UnitGroup("Bunker", gv_pLAYER_02_DOMINION, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto18F4B303_u = UnitGroupCount(auto18F4B303_g, c_unitCountAll);
     for (;; auto18F4B303_u -= 1) {
@@ -1127,6 +1153,7 @@ bool gt_BattlecruisersOnlineQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     if ((UnitIsAlive(UnitFromId(182)) == true)) {
         lv_spotValid = true;
         AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION2, RegionFromId(22), true);
@@ -1223,6 +1250,7 @@ bool gt_MoreBattlecruisersOnlineQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
     if ((UnitIsAlive(UnitFromId(182)) == true)) {
         lv_spotValid = true;
         AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION2, RegionFromId(23), true);
@@ -1370,7 +1398,12 @@ bool gt_GorgonDialog_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    DialogCreate(296, 129, c_anchorTop, 0, -17, false);
+    if ((lib15EF4C78_gf_AP_Player_isSoaEnabledForPlayer(gv_pLAYER_01_USER) == true)) {
+        DialogCreate(296, 129, c_anchorTopRight, 0, 165, false);
+    }
+    else {
+        DialogCreate(296, 129, c_anchorTop, 0, -17, false);
+    }
     gv_gorgonDialog.lv_dialog = DialogLastCreated();
     libNtve_gf_CreateDialogItemImage(DialogLastCreated(), 68, 68, c_anchorLeft, 40, 2, StringToText(""), "Assets\\Textures\\btn-unit-terran-gorgonbattlecruiser.dds", c_triggerImageTypeNormal, false, Color(100,100,100), c_triggerBlendModeNormal);
     gv_gorgonDialog.lv_gorgon1 = DialogControlLastCreated();
@@ -2614,6 +2647,10 @@ bool gt_ProtossUnitDies_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
@@ -2674,6 +2711,10 @@ bool gt_ProtossUnitDominated_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
@@ -2722,6 +2763,7 @@ bool gt_ProtossUnitDominated_Func (bool testConds, bool runActions) {
 void gt_ProtossUnitDominated_Init () {
     gt_ProtossUnitDominated = TriggerCreate("gt_ProtossUnitDominated_Func");
     TriggerAddEventUnitAbility(gt_ProtossUnitDominated, UnitRefFromVariable("gv_nova"), AbilityCommand("NovaHelmetDomination", 0), c_unitAbilStageExecute, false);
+    TriggerAddEventUnitAbility(gt_ProtossUnitDominated, UnitRefFromVariable("gv_nova"), AbilityCommand("AP_NovaHelmetDomination", 0), c_unitAbilStageExecute, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2768,6 +2810,7 @@ bool gt_ProtossUnitReleased_Func (bool testConds, bool runActions) {
 void gt_ProtossUnitReleased_Init () {
     gt_ProtossUnitReleased = TriggerCreate("gt_ProtossUnitReleased_Func");
     TriggerAddEventUnitAbility(gt_ProtossUnitReleased, UnitRefFromVariable("gv_nova"), AbilityCommand("NovaReleaseMinion", 0), c_unitAbilStageExecute, false);
+    TriggerAddEventUnitAbility(gt_ProtossUnitReleased, UnitRefFromVariable("gv_nova"), AbilityCommand("AP_NovaReleaseMinion", 0), c_unitAbilStageExecute, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2777,6 +2820,10 @@ bool gt_JinaraDies1Q_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((gv_jinaraMothership1 != null))) {
+            return false;
+        }
+
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
@@ -2796,6 +2843,7 @@ bool gt_JinaraDies1Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     SoundtrackStop(PlayerGroupAll(), c_soundtrackCategoryMusic, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, gv_mapMusicTrack2, c_soundtrackCueAny, c_soundtrackIndexAny, true);
     TriggerQueueEnter();
@@ -2828,6 +2876,10 @@ bool gt_JinaraDies2_Func (bool testConds, bool runActions) {
 
     // Conditions
     if (testConds) {
+        if (!((gv_jinaraMothership2 != null))) {
+            return false;
+        }
+
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
@@ -3047,6 +3099,7 @@ bool gt_VictoryDefeattheDeathFleetCompleted_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
@@ -3128,6 +3181,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDefeattheDeathFleetComplete, true, true);
     if ((UnitIsAlive(UnitFromId(2044729735)) == true)) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
         TriggerExecute(gt_ObjectiveScienceFacilityComplete, true, true);
     }
     else {
@@ -3173,7 +3227,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     VictoryPanelAddCustomStatisticLine(StringExternal("Param/Value/CA08D661"), IntToText(gv_gorgonKills));
     VictoryPanelAddCustomStatisticLine(StringExternal("Param/Value/87A5BB4C"), IntToText(gv_yamatoKills));
     VictoryPanelAddCustomStatisticLine(StringExternal("Param/Value/B81D7391"), FixedToText(UnitGetPropertyFixed(gv_nova, c_unitPropKills, c_unitPropCurrent), 0));
-    libNCMI_gf_EndCampaignMission(gv_pLAYER_01_USER, c_gameOverVictory);
+    GameOver(gv_pLAYER_01_USER, c_gameOverVictory, true, true);
     return true;
 }
 
@@ -6034,6 +6088,8 @@ bool gt_ObjectiveDefeattheDeathFleetCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova08Primary01");
+    gv_objectiveDefeatTheDeathFleet = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDefeatTheDeathFleet, "Nova08Primary01", "", 0);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6062,7 +6118,7 @@ bool gt_ObjectiveDefeattheDeathFleetComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDefeattheDeathFleetCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova08Primary01", libComC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDefeatTheDeathFleet);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6091,6 +6147,8 @@ bool gt_ObjectiveScienceFacilityCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova08Bonus01");
+    gv_objectiveScienceFacility = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveScienceFacility, "Nova08Bonus01", "", 0);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6119,7 +6177,7 @@ bool gt_ObjectiveScienceFacilityComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveScienceFacilityCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova08Bonus01", libComC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveScienceFacility);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6148,7 +6206,7 @@ bool gt_ObjectiveScienceFacilityFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveScienceFacilityCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova08Bonus01", libComC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveScienceFacility);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7198,6 +7256,7 @@ void gt_FlyInGriffin_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
