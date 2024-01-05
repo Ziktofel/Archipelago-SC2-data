@@ -729,12 +729,24 @@ int gf_UniqueGarrisonsInfested () {
 
 void gf_HideKerrigan () {
     // Automatic Variable Declarations
+    unitgroup auto0DABE6DB_g;
+    int auto0DABE6DB_u;
+    unit auto0DABE6DB_var;
+
     // Implementation
     if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
     }
-
+    else {
+        auto0DABE6DB_g = UnitGroupFromId(8);
+        auto0DABE6DB_u = UnitGroupCount(auto0DABE6DB_g, c_unitCountAll);
+        for (;; auto0DABE6DB_u -= 1) {
+            auto0DABE6DB_var = UnitGroupUnitFromEnd(auto0DABE6DB_g, auto0DABE6DB_u);
+            if (auto0DABE6DB_var == null) { break; }
+            UnitRemove(auto0DABE6DB_var);
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1549,7 +1561,10 @@ bool gt_TeachFungalGrowth_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     if ((gv_fungalUsed == false)) {
-        CameraPan(gv_pLAYER_01_USER, PointFromId(718), 2.0, -1, 10.0, true);
+        if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
+            CameraPan(gv_pLAYER_01_USER, PointFromId(718), 2.0, -1, 10.0, true);
+        }
+
         UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("FungalGrowth", 0), true);
         libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergEnemy, libSwaC_ge_CampaginReticleSize_Medium, StringExternal("Param/Value/514DC072"), UnitFromId(15), "Ref_Origin");
         gv_fungalTarget_Helper = libNtve_gf_ActorLastCreated();
@@ -1736,7 +1751,10 @@ bool gt_TeachParasiticDomination_Func (bool testConds, bool runActions) {
     TriggerEnable(gt_ParasticDominationUsed, true);
     MinimapPing(PlayerGroupAll(), UnitGetPosition(UnitFromId(241)), 2.0, Color(100.00, 100.00, 0.00));
     UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/A513E70F"), null, UnitFromId(241));
-    CameraPan(gv_pLAYER_01_USER, UnitGetPosition(UnitFromId(241)), 2.0, -1, 10, true);
+    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
+        CameraPan(gv_pLAYER_01_USER, UnitGetPosition(UnitFromId(241)), 2.0, -1, 10, true);
+    }
+
     libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergEnemy, libSwaC_ge_CampaginReticleSize_Medium, StringExternal("Param/Value/CCAA7BCD"), UnitFromId(241), "Ref_Center");
     TextTagSetPosition(TextTagLastCreated(), UnitGetPosition(UnitFromId(241)), 4.0);
     gv_parasiticDominationTarget_Helper = libNtve_gf_ActorLastCreated();
@@ -6347,8 +6365,15 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+    else {
+        CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(1237), 0.0, -1, 10.0, true);
+        Wait(1.0, c_timeGame);
+        TriggerExecute(gt_IntroCleanupSkipped, true, true);
+    }
     TriggerQueueExit();
     return true;
 }
@@ -7006,8 +7031,11 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
