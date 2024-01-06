@@ -1011,12 +1011,24 @@ bool auto_gf_VictoryDropPodHatchery_TriggerFunc (bool testConds, bool runActions
 
 void gf_HideKerrigan () {
     // Automatic Variable Declarations
+    unitgroup auto87BA2175_g;
+    int auto87BA2175_u;
+    unit auto87BA2175_var;
+
     // Implementation
     if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
     }
-
+    else {
+        auto87BA2175_g = UnitGroupFromId(5);
+        auto87BA2175_u = UnitGroupCount(auto87BA2175_g, c_unitCountAll);
+        for (;; auto87BA2175_u -= 1) {
+            auto87BA2175_var = UnitGroupUnitFromEnd(auto87BA2175_g, auto87BA2175_u);
+            if (auto87BA2175_var == null) { break; }
+            UnitRemove(auto87BA2175_var);
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1034,12 +1046,12 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
     TriggerExecute(gt_IntroQ, true, true);
-    TriggerExecute(gt_StartGameQ, true, false);
     gf_HideKerrigan();
     if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
         lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_pLAYER_01_USER);
     }
 
+    TriggerExecute(gt_StartGameQ, true, false);
     return true;
 }
 
@@ -5172,8 +5184,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5809,10 +5824,17 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
-    TriggerExecute(gt_MidCleanup, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+        TriggerExecute(gt_MidCleanup, true, true);
+    }
+    else {
+        TriggerExecute(gt_MidCleanup, true, true);
+        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Korhal01|Line00041", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Korhal01|Line00054", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     TriggerQueueExit();
     return true;
 }
@@ -6037,8 +6059,11 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     libSwaC_gf_ResetHeroAbilityCooldowns(libSwaC_ge_HeroUnit_Kerrigan);
     UnitSetPropertyFixed(gv_kerrigan, c_unitPropLifePercent, 100.0);
     UnitSetPropertyFixed(gv_kerrigan, c_unitPropEnergyPercent, 100.0);
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     SoundStop(gv_midBileSound, true);
     auto657C393E_var = 1;
     for ( ; auto657C393E_var <= auto657C393E_ae; auto657C393E_var += 1 ) {

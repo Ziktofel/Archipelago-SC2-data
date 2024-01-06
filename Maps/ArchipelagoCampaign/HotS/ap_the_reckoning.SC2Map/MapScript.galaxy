@@ -721,12 +721,24 @@ bool auto_gf_IntroMoveUnits_TriggerFunc (bool testConds, bool runActions) {
 
 void gf_HideKerrigan () {
     // Automatic Variable Declarations
+    unitgroup auto2F463DB8_g;
+    int auto2F463DB8_u;
+    unit auto2F463DB8_var;
+
     // Implementation
     if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
     }
-
+    else {
+        auto2F463DB8_g = UnitGroupFromId(6);
+        auto2F463DB8_u = UnitGroupCount(auto2F463DB8_g, c_unitCountAll);
+        for (;; auto2F463DB8_u -= 1) {
+            auto2F463DB8_var = UnitGroupUnitFromEnd(auto2F463DB8_g, auto2F463DB8_u);
+            if (auto2F463DB8_var == null) { break; }
+            UnitRemove(auto2F463DB8_var);
+        }
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1430,7 +1442,6 @@ bool gt_TipEliteForcesQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
-    libSwaC_gf_CreateTipCampaign("Elite Forces", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     Wait(libSwaC_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5112,8 +5123,13 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+    else {
+        TriggerExecute(gt_IntroCleanupSkipped, true, true);
+    }
     TriggerQueueExit();
     return true;
 }
@@ -5457,9 +5473,14 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategorySpell, 20.0, 0.2);
     libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Korhal03|Line00103", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+    else {
+        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Korhal03|Line00063", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5741,8 +5762,11 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     libNtve_gf_SetAllianceOneWay(gv_PLAYER_07_DOMINION_GREEN22, gv_PLAYER_03_DOMINION_BLUE, libNtve_ge_AllianceSetting_Enemy);
     AIToggleBulliesInRegion(gv_PLAYER_07_DOMINION_GREEN22, RegionFromId(24), true);
     libSwaC_gf_EnableDisableZerglingRespawn(true);
-    libNtve_gf_RestoreUnitSelection(gv_PLAYER_01_USER);
-    CameraRestore(gv_PLAYER_01_USER, 0.0, -1, 10.0);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_PLAYER_01_USER);
+        CameraRestore(gv_PLAYER_01_USER, 0.0, -1, 10.0);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }

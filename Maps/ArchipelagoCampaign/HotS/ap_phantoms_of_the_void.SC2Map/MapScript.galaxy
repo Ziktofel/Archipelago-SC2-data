@@ -201,6 +201,7 @@ void gf_SpawnHybridforTemple (point lp_spawnPoint, point lp_templePoint);
 void gf_CreatePingforHybrid (unit lp_hybrid);
 void gf_CreatePingforTemple (region lp_templeRegion);
 void gf_KillTemple (point lp_templePoint);
+void gf_StartKerriganReviveCooldown2 ();
 
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
@@ -665,6 +666,38 @@ bool auto_gf_KillTemple_TriggerFunc (bool testConds, bool runActions) {
     }
 
     return true;
+}
+
+void gf_StartKerriganReviveCooldown2 () {
+    // Variable Declarations
+    unit lv_reviveSpot;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    lv_reviveSpot = lib15EF4C78_gf_AP_Player_getPrimaryTownHall(gv_pLAYER_01_USER);
+    if (((lv_reviveSpot == null) || (UnitIsAlive(lv_reviveSpot) == false))) {
+        libSwaC_gf_DisplayCampaignMessage(PlayerGroupAll(), libSwaC_ge_CampaignMessageType_Warning, StringExternal("Param/Value/7ADB544F"), libSwaC_ge_CampaignMessageFormatNotFormat_FormatMessage);
+    }
+    else {
+        TextExpressionSetToken("Param/Expression/B08709DE", "A", IntToText(FixedToInt(libSwaC_gv_zS_ReviveCooldownTimeStukov)));
+        libSwaC_gf_DisplayCampaignMessage(PlayerGroupAll(), libSwaC_ge_CampaignMessageType_Warning, TextExpressionAssemble("Param/Expression/B08709DE"), libSwaC_ge_CampaignMessageFormatNotFormat_FormatMessage);
+    }
+    libNtve_gf_PlayerRemoveCooldown(1, libSwaC_gv_zSC_HeroReviveLinkStukov);
+    Wait(6.6, c_timeGame);
+    while (((lv_reviveSpot == null) || (UnitIsAlive(lv_reviveSpot) == false))) {
+        Wait(1.0, c_timeGame);
+        lv_reviveSpot = lib15EF4C78_gf_AP_Player_getPrimaryTownHall(gv_pLAYER_01_USER);
+    }
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "StukovReviveCocoon", 0, 1, UnitGetPosition(lv_reviveSpot));
+    libSwaC_gv_zS_HeroReviverStukov = UnitLastCreated();
+    UnitCreateEffectUnit(lv_reviveSpot, "CopyHatcheryRally", libSwaC_gv_zS_HeroReviverStukov);
+    UnitIssueOrder(libSwaC_gv_zS_HeroReviverStukov, OrderTargetingUnit(AbilityCommand("RallyHatchery", 1), libSwaC_gv_zS_HeroReviverStukov), c_orderQueueReplace);
+    UnitSetPosition(libSwaC_gv_zS_Stukov, UnitGetPosition(libSwaC_gv_zS_HeroReviverStukov), false);
+    libNtve_gf_PlayerRemoveCooldown(1, libSwaC_gv_zSC_HeroReviveLinkStukov);
+    PlayerAddCooldown(1, libSwaC_gv_zSC_HeroReviveLinkStukov, libSwaC_gv_zS_ReviveCooldownTimeStukov);
+    TriggerEnable(libSwaC_gt_ZS_ReviveCooldownReadyStukov, true);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1291,7 +1324,7 @@ bool gt_StukovRevive_Func (bool testConds, bool runActions) {
 
     gv_achievementStukovSurvivalDeathCount += 1;
     if ((gv_tugOfWarStarted == true)) {
-        libSwaC_gf_StartKerriganReviveCooldown2();
+        gf_StartKerriganReviveCooldown2();
     }
 
     return true;
