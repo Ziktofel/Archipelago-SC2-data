@@ -15,6 +15,13 @@ include "LibCMUI"
 include "LibNovC"
 include "LibNCMI"
 include "LibNCUI"
+include "LibNovC"
+include "LibNCMI"
+include "LibNCUI"
+include "Lib15EF4C78"
+include "LibD62A7F54"
+include "Lib5BD4895D"
+include "LibABFE498B"
 include "ai13916457"
 include "ai7A223D14"
 include "aiA28EB252"
@@ -34,6 +41,13 @@ void InitLibs () {
     libNovC_InitLib();
     libNCMI_InitLib();
     libNCUI_InitLib();
+    libNovC_InitLib();
+    libNCMI_InitLib();
+    libNCUI_InitLib();
+    lib15EF4C78_InitLib();
+    libD62A7F54_InitLib();
+    lib5BD4895D_InitLib();
+    libABFE498B_InitLib();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -147,6 +161,7 @@ void gf_AIBattlecruiser (int lp_owner, unit lp_battlecruiser, unitgroup lp_nearb
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -238,10 +253,6 @@ trigger gt_ObjectiveDestroyXanthosFailed;
 trigger gt_ObjectiveKillDavisCreate;
 trigger gt_ObjectiveKillDavisComplete;
 trigger gt_ObjectiveKillDavisFailed;
-trigger gt_BriefingQ;
-trigger gt_BriefingScene00RepairYards;
-trigger gt_BriefingScene01Xanthos;
-trigger gt_BriefingScene02XanthosWeapons;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1277,6 +1288,32 @@ bool auto_gf_AIBattlecruiser_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Arch Init
+//--------------------------------------------------------------------------------------------------
+bool gt_ArchInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(libD62A7F54_gt_AP_Player_NCOConstructor, true, false);
+    TriggerExecute(gt_Init02Players, true, false);
+    TriggerExecute(gt_Init03Units, true, false);
+    lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
+    lib5BD4895D_gf_AP_Core_MapConfig_setChatboxPosition(c_anchorTopRight, 500, 350, 0, 170);
+    libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(null, null, null, null);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ArchInit_Init () {
+    gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
+    TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -1286,17 +1323,12 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libNCMI_gf_InitializeNovaMission("Nova09");
     TriggerExecute(gt_Init01Technology, true, false);
-    libNovC_gf_PurchaseStorymodeTech();
-    TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
     TriggerExecute(gt_Init07Help, true, false);
     if ((GameIsTestMap(true) == true)) {
-        TriggerExecute(gt_BriefingQ, true, true);
         ConsoleCommand("exit", true, true);
     }
 
@@ -1307,7 +1339,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_Initialization_Init () {
     gt_Initialization = TriggerCreate("gt_Initialization_Func");
-    TriggerAddEventMapInit(gt_Initialization);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1320,7 +1351,6 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libNovC_gf_SetTechRestrictionsCallback(TriggerGetCurrent());
     TechTreeAbilityAllow(gv_pLAYER_03_DEFENDERSEAST, AbilityCommand("ArmSiloWithNuke", 0), true);
     TechTreeAbilityAllow(gv_pLAYER_03_DEFENDERSEAST, AbilityCommand("HeroArmNuke", 0), false);
     TechTreeAbilityAllow(gv_pLAYER_02_DEFENDERSWEST, AbilityCommand("ArmSiloWithNuke", 0), true);
@@ -1442,7 +1472,7 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     SoundChannelMute(PlayerGroupAll(), c_soundCategorySpell, true);
     SoundChannelMute(PlayerGroupAll(), c_soundCategoryOther, true);
     gv_nova = UnitFromId(588);
-    libNCUI_gf_SetHeroPanelUnit(1, gv_nova);
+    lib15EF4C78_gf_SetHeroPanelUnit(1, gv_nova, gv_pLAYER_01_USER);
     libNCMI_gf_SetNovaHeroUnit(gv_nova);
     libNCMI_gf_EnableDisableHeroReviveSystem(true, gv_pLAYER_01_USER);
     libNCMI_gf_SetAllWorkerRallyPointsForPlayer(gv_pLAYER_01_USER);
@@ -1868,6 +1898,10 @@ bool gt_CleanUpSection01_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
         if (!((libNCMI_gf_GameIsOver() == false))) {
             return false;
         }
@@ -3068,6 +3102,14 @@ bool gt_XanthosDies_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
+        if (!((gv_xanthos != null))) {
+            return false;
+        }
+
         if (!((libNCMI_gf_GameIsOver() == false))) {
             return false;
         }
@@ -3087,6 +3129,7 @@ bool gt_XanthosDies_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
     TriggerEnable(gt_XanthosFinalFightPlayerWipe, false);
     libNtve_gf_ChangeUnitDamage(gv_nova, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     TriggerExecute(gt_ObjectiveDestroyXanthosComplete, true, true);
@@ -3595,6 +3638,10 @@ bool gt_GorgonDies_Func (bool testConds, bool runActions) {
 
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
         if (!((libNCMI_gf_GameIsOver() == false))) {
             return false;
         }
@@ -4248,6 +4295,17 @@ void gt_GhostDies_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_S2DavisDiesQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
+        if (!((gv_s2_Davis != null))) {
+            return false;
+        }
+    }
+
     // Actions
     if (!runActions) {
         return true;
@@ -4393,6 +4451,10 @@ bool gt_S2RoomTrigger1_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
         if (!((libNCMI_gf_GameIsOver() == false))) {
             return false;
         }
@@ -4432,6 +4494,10 @@ bool gt_S2RoomTrigger2_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
         if (!((libNCMI_gf_GameIsOver() == false))) {
             return false;
         }
@@ -4480,6 +4546,10 @@ bool gt_S2RoomTrigger3_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
         if (!((libNCMI_gf_GameIsOver() == false))) {
             return false;
         }
@@ -5013,7 +5083,7 @@ bool gt_AntiNukeLogic_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_AntiNukeLogic_Init () {
     gt_AntiNukeLogic = TriggerCreate("gt_AntiNukeLogic_Func");
-    TriggerAddEventUnitAbility(gt_AntiNukeLogic, UnitRefFromVariable("gv_nova"), AbilityCommand("HeroNuclearStrike", 0), c_abilEffectStageCast, false);
+    TriggerAddEventUnitAbility(gt_AntiNukeLogic, UnitRefFromVariable("gv_nova"), AbilityCommand("AP_HeroNuclearStrike", 0), c_abilEffectStageCast, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5242,6 +5312,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
     libNCMI_gf_GameOver(libNCMI_ge_CampaignMissionGameResultType_Victory);
     libNtve_gf_ChangeUnitDamage(gv_nova, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     libNCMI_gf_RunMissionVictorySequence(gt_VictoryQ);
@@ -5295,7 +5366,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     VictoryPanelAddCustomStatisticLine(StringExternal("Param/Value/72F23243"), IntToText(gv_nukesDetonated));
     VictoryPanelAddCustomStatisticLine(StringExternal("Param/Value/C3C11B3B"), IntToText((5 - gv_objectiveProtectFleetCount)));
     VictoryPanelAddCustomStatisticLine(StringExternal("Param/Value/D528CE02"), IntToText(gv_xanthosAttackRunNumber));
-    libNCMI_gf_EndCampaignMission(gv_pLAYER_01_USER, c_gameOverVictory);
+    GameOver(gv_pLAYER_01_USER, c_gameOverVictory, true, true);
     return true;
 }
 
@@ -5446,9 +5517,8 @@ bool gt_ObjectiveProtectFleetCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova09Primary01");
-    libCMMI_gf_SetMissionObjectiveProgress("Nova09Primary01", gv_objectiveProtectFleetCount);
-    ObjectiveSetPriority(ObjectiveLastCreated(), 1);
     gv_objectiveDestroyZergBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase, "Nova09Primary01", "remaining", gv_objectiveProtectFleetCount);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5480,7 +5550,7 @@ bool gt_ObjectiveProtectFleetComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveProtectFleetCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova09Primary01", libComC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5501,7 +5571,7 @@ bool gt_ObjectiveProtectFleetUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveProtectFleetCreate, true, false);
-    libCMMI_gf_SetMissionObjectiveProgress("Nova09Primary01", gv_objectiveProtectFleetCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_objectiveProtectFleetCount);
     return true;
 }
 
@@ -5532,7 +5602,7 @@ bool gt_ObjectiveProtectFleetFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveProtectFleetCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova09Primary01", libComC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5562,6 +5632,7 @@ bool gt_ObjectiveDestroyXanthosCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova09Primary03");
     gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase2, "Nova09Primary03", "", 0);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5593,7 +5664,7 @@ bool gt_ObjectiveDestroyXanthosComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyXanthosCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova09Primary03", libComC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
     return true;
 }
 
@@ -5624,7 +5695,7 @@ bool gt_ObjectiveDestroyXanthosFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyXanthosCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova09Primary03", libComC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5654,6 +5725,7 @@ bool gt_ObjectiveKillDavisCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova09Primary04");
     gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase3, "Nova09Primary04", "", 0);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5685,7 +5757,7 @@ bool gt_ObjectiveKillDavisComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillDavisCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova09Primary04", libComC_ge_MissionObjectiveState_Completed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5717,7 +5789,7 @@ bool gt_ObjectiveKillDavisFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillDavisCreate, true, false);
-    libCMMI_gf_ZS_SetMissionObjectiveState("Nova09Primary04", libComC_ge_MissionObjectiveState_Failed);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5725,211 +5797,6 @@ bool gt_ObjectiveKillDavisFailed_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveKillDavisFailed_Init () {
     gt_ObjectiveKillDavisFailed = TriggerCreate("gt_ObjectiveKillDavisFailed_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Briefing Q
-//--------------------------------------------------------------------------------------------------
-bool gt_BriefingQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueClear(c_triggerQueueRemove);
-    TriggerQueueEnter();
-    libNCMI_gf_GameOver(libNCMI_ge_CampaignMissionGameResultType_Victory);
-    UnitPauseAll(true);
-    AITimePause(true);
-    GameTimeOfDayPause(true);
-    CinematicFade(false, 0.1, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    libNtve_gf_CinematicMode(true, PlayerGroupAll(), 0.0);
-    libNtve_gf_GlobalCinematicSetting(true);
-    UISetMode(PlayerGroupAll(), c_uiModeFullscreen, 0.0);
-    TriggerExecute(gt_BriefingScene00RepairYards, true, true);
-    TriggerExecute(gt_BriefingScene01Xanthos, true, true);
-    TriggerExecute(gt_BriefingScene02XanthosWeapons, true, true);
-    UnitPauseAll(true);
-    TriggerQueueClear(c_triggerQueueRemove);
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_BriefingQ_Init () {
-    gt_BriefingQ = TriggerCreate("gt_BriefingQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Briefing Scene 00 - Repair Yards
-//--------------------------------------------------------------------------------------------------
-bool gt_BriefingScene00RepairYards_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    unitgroup auto92490F47_g;
-    int auto92490F47_u;
-    unit auto92490F47_var;
-    unitgroup autoF377DF20_g;
-    int autoF377DF20_u;
-    unit autoF377DF20_var;
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    auto92490F47_g = UnitGroup(null, c_playerAny, null, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
-    auto92490F47_u = UnitGroupCount(auto92490F47_g, c_unitCountAll);
-    for (;; auto92490F47_u -= 1) {
-        auto92490F47_var = UnitGroupUnitFromEnd(auto92490F47_g, auto92490F47_u);
-        if (auto92490F47_var == null) { break; }
-        if ((libNtve_gf_UnitIsPaused(auto92490F47_var) == false)) {
-            UnitGroupAdd(gv_cinematicPausedUnits, auto92490F47_var);
-            libNtve_gf_PauseUnit(auto92490F47_var, true);
-        }
-
-    }
-    gv_cinematicHiddenUnits = UnitGroupEmpty();
-    gv_cinematicTempUnits = UnitGroupEmpty();
-    autoF377DF20_g = gv_cinematicHiddenUnits;
-    autoF377DF20_u = UnitGroupCount(autoF377DF20_g, c_unitCountAll);
-    for (;; autoF377DF20_u -= 1) {
-        autoF377DF20_var = UnitGroupUnitFromEnd(autoF377DF20_g, autoF377DF20_u);
-        if (autoF377DF20_var == null) { break; }
-        libNtve_gf_ShowHideUnit(autoF377DF20_var, false);
-    }
-    Wait(2.0, c_timeGame);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(11), 0.0, -1, 10, true);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(96317961), 11.0, -1, 10, true);
-    CameraShake(gv_pLAYER_01_USER, "Light", "SubtleMove", 0.0, 0.0, 12.0);
-    CinematicFade(true, 0.1, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    MovieStartRecording("Briefing_Video_Nova09_00");
-    Wait(12.0, c_timeReal);
-    MovieStopRecording();
-    CinematicFade(false, 0.1, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_BriefingScene00RepairYards_Init () {
-    gt_BriefingScene00RepairYards = TriggerCreate("gt_BriefingScene00RepairYards_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Briefing Scene 01 - Xanthos
-//--------------------------------------------------------------------------------------------------
-bool gt_BriefingScene01Xanthos_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    unitgroup auto6FB61C73_g;
-    int auto6FB61C73_u;
-    unit auto6FB61C73_var;
-    unitgroup auto8B4C56C1_g;
-    int auto8B4C56C1_u;
-    unit auto8B4C56C1_var;
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    auto6FB61C73_g = UnitGroup(null, c_playerAny, null, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
-    auto6FB61C73_u = UnitGroupCount(auto6FB61C73_g, c_unitCountAll);
-    for (;; auto6FB61C73_u -= 1) {
-        auto6FB61C73_var = UnitGroupUnitFromEnd(auto6FB61C73_g, auto6FB61C73_u);
-        if (auto6FB61C73_var == null) { break; }
-        if ((libNtve_gf_UnitIsPaused(auto6FB61C73_var) == false)) {
-            UnitGroupAdd(gv_cinematicPausedUnits, auto6FB61C73_var);
-            libNtve_gf_PauseUnit(auto6FB61C73_var, true);
-        }
-
-    }
-    gv_cinematicHiddenUnits = UnitGroupEmpty();
-    gv_cinematicTempUnits = UnitGroupEmpty();
-    auto8B4C56C1_g = gv_cinematicHiddenUnits;
-    auto8B4C56C1_u = UnitGroupCount(auto8B4C56C1_g, c_unitCountAll);
-    for (;; auto8B4C56C1_u -= 1) {
-        auto8B4C56C1_var = UnitGroupUnitFromEnd(auto8B4C56C1_g, auto8B4C56C1_u);
-        if (auto8B4C56C1_var == null) { break; }
-        libNtve_gf_ShowHideUnit(auto8B4C56C1_var, false);
-    }
-    Wait(2.0, c_timeGame);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(595), 0.0, -1, 10, true);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(102566339), 10.0, -1, 10, true);
-    CinematicFade(true, 0.1, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    MovieStartRecording("Briefing_Video_Nova09_01");
-    Wait(12.0, c_timeReal);
-    MovieStopRecording();
-    CinematicFade(false, 0.1, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_BriefingScene01Xanthos_Init () {
-    gt_BriefingScene01Xanthos = TriggerCreate("gt_BriefingScene01Xanthos_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Briefing Scene 02 - Xanthos Weapons
-//--------------------------------------------------------------------------------------------------
-bool gt_BriefingScene02XanthosWeapons_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    unitgroup autoFC6578C1_g;
-    int autoFC6578C1_u;
-    unit autoFC6578C1_var;
-    unitgroup auto461D183C_g;
-    int auto461D183C_u;
-    unit auto461D183C_var;
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    autoFC6578C1_g = UnitGroup(null, c_playerAny, null, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
-    autoFC6578C1_u = UnitGroupCount(autoFC6578C1_g, c_unitCountAll);
-    for (;; autoFC6578C1_u -= 1) {
-        autoFC6578C1_var = UnitGroupUnitFromEnd(autoFC6578C1_g, autoFC6578C1_u);
-        if (autoFC6578C1_var == null) { break; }
-        if ((libNtve_gf_UnitIsPaused(autoFC6578C1_var) == false)) {
-            UnitGroupAdd(gv_cinematicPausedUnits, autoFC6578C1_var);
-            libNtve_gf_PauseUnit(autoFC6578C1_var, true);
-        }
-
-    }
-    gv_cinematicHiddenUnits = UnitGroupEmpty();
-    gv_cinematicTempUnits = UnitGroupEmpty();
-    auto461D183C_g = gv_cinematicHiddenUnits;
-    auto461D183C_u = UnitGroupCount(auto461D183C_g, c_unitCountAll);
-    for (;; auto461D183C_u -= 1) {
-        auto461D183C_var = UnitGroupUnitFromEnd(auto461D183C_g, auto461D183C_u);
-        if (auto461D183C_var == null) { break; }
-        libNtve_gf_ShowHideUnit(auto461D183C_var, false);
-    }
-    Wait(2.0, c_timeGame);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(339461584), 0.0, -1, 10, true);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(208786291), 7.0, -1, 10, true);
-    CinematicFade(true, 0.1, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    MovieStartRecording("Briefing_Video_Nova09_02");
-    Wait(6.0, c_timeReal);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(770841095), 0.0, -1, 10, true);
-    CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoFromId(1680485165), 6.0, -1, 10, true);
-    Wait(6.0, c_timeReal);
-    MovieStopRecording();
-    CinematicFade(false, 0.1, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, true);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_BriefingScene02XanthosWeapons_Init () {
-    gt_BriefingScene02XanthosWeapons = TriggerCreate("gt_BriefingScene02XanthosWeapons_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6443,8 +6310,6 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     ActorSend(ActorFromDoodad(DoodadFromId(1629458597)), "Signal DoodadDeath");
     UnitGroupSelect(UnitGroupSelected(gv_pLAYER_01_USER), gv_pLAYER_01_USER, false);
     UnitSelect(gv_nova, gv_pLAYER_01_USER, true);
-    ObjectiveShow(gv_objectiveDestroyZergBase2, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyZergBase, PlayerGroupAll(), false);
     libNtve_gf_ShowHideDoodadsInRegion(false, RegionFromId(7), "Smoke_Battle");
     libNtve_gf_ShowHideDoodadsInRegion(false, RegionFromId(7), "Korhal_SiegeTank_Destroyed");
     libNtve_gf_ShowHideDoodadsInRegion(false, RegionFromId(7), "SmokePillarsTall");
@@ -6641,6 +6506,7 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
@@ -6732,10 +6598,6 @@ void InitTriggers () {
     gt_ObjectiveKillDavisCreate_Init();
     gt_ObjectiveKillDavisComplete_Init();
     gt_ObjectiveKillDavisFailed_Init();
-    gt_BriefingQ_Init();
-    gt_BriefingScene00RepairYards_Init();
-    gt_BriefingScene01Xanthos_Init();
-    gt_BriefingScene02XanthosWeapons_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
