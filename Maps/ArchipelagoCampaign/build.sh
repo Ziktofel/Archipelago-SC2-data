@@ -13,7 +13,7 @@ process_map() {
 }
 export -f process_map
 
-for campaign in "WoL" "HotS" "LotV"; do
+for campaign in "WoL" "HotS" "LotV" "NCO"; do
     export campaign
     rm -rf "$campaign"_build
     mkdir -p "$campaign"_build

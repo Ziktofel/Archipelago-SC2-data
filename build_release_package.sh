@@ -16,9 +16,11 @@ mkdir -p target
 mkdir -p target/Maps/ArchipelagoCampaign/WoL
 mkdir -p target/Maps/ArchipelagoCampaign/HotS
 mkdir -p target/Maps/ArchipelagoCampaign/LotV
+mkdir -p target/Maps/ArchipelagoCampaign/NCO
 cp -- Maps/ArchipelagoCampaign/WoL_build/* target/Maps/ArchipelagoCampaign/WoL/
 cp -- Maps/ArchipelagoCampaign/HotS_build/* target/Maps/ArchipelagoCampaign/HotS/
 cp -- Maps/ArchipelagoCampaign/LotV_build/* target/Maps/ArchipelagoCampaign/LotV/
+cp -- Maps/ArchipelagoCampaign/NCO_build/* target/Maps/ArchipelagoCampaign/NCO/
 
 # Copy mods
 mkdir -p target/Mods
