@@ -82,6 +82,7 @@ int gv_objectiveRescue;
 int gv_researchObjectiveKilltheBrutalisk;
 int gv_brutaliskKilled;
 unit gv_brutalisk;
+int gv_objectiveDestroyZerg;
 int gv_objectiveFindReaperGroups;
 int gv_reaperGroupsLeft;
 unit gv_briefing_SCV5;
@@ -121,6 +122,7 @@ void InitGlobals () {
     gv_objectiveCollect = c_invalidObjectiveId;
     gv_objectiveRescue = c_invalidObjectiveId;
     gv_researchObjectiveKilltheBrutalisk = c_invalidObjectiveId;
+    gv_objectiveDestroyZerg = c_invalidObjectiveId;
     gv_objectiveFindReaperGroups = c_invalidObjectiveId;
     gv_reaperGroupsLeft = 5;
     gv_victorySCV = UnitGroupEmpty();
@@ -234,6 +236,9 @@ trigger gt_ObjectiveRescuePartyCreateQ;
 trigger gt_ObjectiveRescuePartyComplete;
 trigger gt_ResearchObjectiveKilltheBrutaliskCreateQ;
 trigger gt_ResearchObjectiveKilltheBrutaliskUpdate;
+trigger gt_onZergBuildingDie;
+trigger gt_ObjectiveDestroyZergCreateQ;
+trigger gt_ObjectiveDestroyZergComplete;
 trigger gt_ObjectiveRescueRepaersCreateQ;
 trigger gt_ObjectiveRescueReapersUpdate;
 trigger gt_ObjectiveRescueReapersComplete;
@@ -647,6 +652,8 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_FirstSurge, true, false);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveCollectCreateQ, true, false);
+    Wait(2.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveDestroyZergCreateQ, true, false);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_CreateLeaderboard, true, false);
     Wait(4.0, c_timeReal);
@@ -4731,6 +4738,103 @@ void gt_ResearchObjectiveKilltheBrutaliskUpdate_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: onZergBuildingDie
+//--------------------------------------------------------------------------------------------------
+bool gt_onZergBuildingDie_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((UnitGroupCount(UnitGroup(null, gv_p02_ZERG, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) <= 0))) {
+            return false;
+        }
+
+        if (!((UnitGroupCount(UnitGroup(null, gv_p04_ZERG, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) <= 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    PlayerModifyPropertyInt(gv_p01_USER, c_playerPropMinerals, c_playerPropOperAdd, 10000);
+    TriggerExecute(gt_VictoryCollectedQuota, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onZergBuildingDie_Init () {
+    gt_onZergBuildingDie = TriggerCreate("gt_onZergBuildingDie_Func");
+    TriggerAddEventUnitDied(gt_onZergBuildingDie, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Zerg Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyZergCreateQ_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/EB258005"), StringToText(""), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    gv_objectiveDestroyZerg = ObjectiveLastCreated();
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyZergCreateQ_Init () {
+    gt_ObjectiveDestroyZergCreateQ = TriggerCreate("gt_ObjectiveDestroyZergCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Zerg Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyZergComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyZergCreateQ, true, true);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZerg);
+    Wait(5.0, c_timeReal);
+    TriggerExecute(gt_CommandCenterLiftOffTipQ, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyZergComplete_Init () {
+    gt_ObjectiveDestroyZergComplete = TriggerCreate("gt_ObjectiveDestroyZergComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Rescue Repaers Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRescueRepaersCreateQ_Func (bool testConds, bool runActions) {
@@ -5632,6 +5736,9 @@ void InitTriggers () {
     gt_ObjectiveRescuePartyComplete_Init();
     gt_ResearchObjectiveKilltheBrutaliskCreateQ_Init();
     gt_ResearchObjectiveKilltheBrutaliskUpdate_Init();
+    gt_onZergBuildingDie_Init();
+    gt_ObjectiveDestroyZergCreateQ_Init();
+    gt_ObjectiveDestroyZergComplete_Init();
     gt_ObjectiveRescueRepaersCreateQ_Init();
     gt_ObjectiveRescueReapersUpdate_Init();
     gt_ObjectiveRescueReapersComplete_Init();

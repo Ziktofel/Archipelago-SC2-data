@@ -75,6 +75,8 @@ const int ge_UnitData_udEggColony = 2;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
+int gv_objectiveGasPickupsCollected;
+int gv_objectiveGasPickups;
 int gv_objectiveKeepColonyBasesNotInfested;
 bool gv_gameOver;
 bool gv_inCinematic;
@@ -133,6 +135,7 @@ unitgroup gv_victoryHiddenUnitGroup;
 void InitGlobals () {
     int init_i;
 
+    gv_objectiveGasPickups = c_invalidObjectiveId;
     gv_objectiveKeepColonyBasesNotInfested = c_invalidObjectiveId;
     gv_zergInfestationCounter = 3;
     gv_zergPlayers = PlayerGroupEmpty();
@@ -197,11 +200,16 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveGasPickupsCreateQ;
+trigger gt_ObjectiveGasPickupsUpdate;
+trigger gt_SouthwestGas;
+trigger gt_EastGas;
+trigger gt_SouthEastGas;
 trigger gt_ObjectiveKeepColonyBasesnotinfestedCreateQ;
 trigger gt_ObjectiveKeepColonyBasesnotinfestedUpdate;
 trigger gt_NorthHive;
-trigger gt_EastNexus;
-trigger gt_SouthNexus;
+trigger gt_EastHive;
+trigger gt_SouthHive;
 trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
@@ -1002,6 +1010,185 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Gas Pickups Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveGasPickupsCreateQ_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/938EB678"), StringToText(""), c_objectiveStateActive, false);
+    gv_objectiveGasPickups = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveGasPickups, "", gv_objectiveGasPickupsCollected, 3);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveGasPickupsCreateQ_Init () {
+    gt_ObjectiveGasPickupsCreateQ = TriggerCreate("gt_ObjectiveGasPickupsCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Gas Pickups Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveGasPickupsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveKeepColonyBasesnotinfestedCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveGasPickups, gv_objectiveGasPickupsCollected);
+    if ((gv_objectiveGasPickupsCollected >= 3)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveGasPickups);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveGasPickupsUpdate_Init () {
+    gt_ObjectiveGasPickupsUpdate = TriggerCreate("gt_ObjectiveGasPickupsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: SouthwestGas
+//--------------------------------------------------------------------------------------------------
+bool gt_SouthwestGas_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetType(EventUnit()) == "NaturalGas"))) {
+            return false;
+        }
+
+        if (!((libNtve_gf_UnitInRegion(EventUnit(), RegionFromId(11)) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    gv_objectiveGasPickupsCollected = (gv_objectiveGasPickupsCollected + 1);
+    TriggerExecute(gt_ObjectiveGasPickupsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SouthwestGas_Init () {
+    gt_SouthwestGas = TriggerCreate("gt_SouthwestGas_Func");
+    TriggerAddEventUnitAbility(gt_SouthwestGas, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: EastGas
+//--------------------------------------------------------------------------------------------------
+bool gt_EastGas_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetType(EventUnit()) == "NaturalGas"))) {
+            return false;
+        }
+
+        if (!((libNtve_gf_UnitInRegion(EventUnit(), RegionFromId(11)) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+    gv_objectiveGasPickupsCollected = (gv_objectiveGasPickupsCollected + 1);
+    TriggerExecute(gt_ObjectiveGasPickupsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EastGas_Init () {
+    gt_EastGas = TriggerCreate("gt_EastGas_Func");
+    TriggerAddEventUnitAbility(gt_EastGas, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: SouthEastGas
+//--------------------------------------------------------------------------------------------------
+bool gt_SouthEastGas_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetType(EventUnit()) == "NaturalGas"))) {
+            return false;
+        }
+
+        if (!((libNtve_gf_UnitInRegion(EventUnit(), RegionFromId(11)) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
+    gv_objectiveGasPickupsCollected = (gv_objectiveGasPickupsCollected + 1);
+    TriggerExecute(gt_ObjectiveGasPickupsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SouthEastGas_Init () {
+    gt_SouthEastGas = TriggerCreate("gt_SouthEastGas_Func");
+    TriggerAddEventUnitAbility(gt_SouthEastGas, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Keep Colony Bases not infested Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveKeepColonyBasesnotinfestedCreateQ_Func (bool testConds, bool runActions) {
@@ -1075,9 +1262,9 @@ void gt_NorthHive_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: East Nexus
+// Trigger: East Hive
 //--------------------------------------------------------------------------------------------------
-bool gt_EastNexus_Func (bool testConds, bool runActions) {
+bool gt_EastHive_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Actions
     if (!runActions) {
@@ -1089,15 +1276,15 @@ bool gt_EastNexus_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_EastNexus_Init () {
-    gt_EastNexus = TriggerCreate("gt_EastNexus_Func");
-    TriggerAddEventUnitDied(gt_EastNexus, UnitRefFromUnit(UnitFromId(68)));
+void gt_EastHive_Init () {
+    gt_EastHive = TriggerCreate("gt_EastHive_Func");
+    TriggerAddEventUnitDied(gt_EastHive, UnitRefFromUnit(UnitFromId(68)));
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: South Nexus
+// Trigger: South Hive
 //--------------------------------------------------------------------------------------------------
-bool gt_SouthNexus_Func (bool testConds, bool runActions) {
+bool gt_SouthHive_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Actions
     if (!runActions) {
@@ -1109,9 +1296,9 @@ bool gt_SouthNexus_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_SouthNexus_Init () {
-    gt_SouthNexus = TriggerCreate("gt_SouthNexus_Func");
-    TriggerAddEventUnitDied(gt_SouthNexus, UnitRefFromUnit(UnitFromId(5)));
+void gt_SouthHive_Init () {
+    gt_SouthHive = TriggerCreate("gt_SouthHive_Func");
+    TriggerAddEventUnitDied(gt_SouthHive, UnitRefFromUnit(UnitFromId(5)));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1538,6 +1725,8 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDestroyInfestationCreateQ, true, true);
     Wait(1.0, c_timeGame);
     TriggerExecute(gt_ObjectiveKeepColonyBasesnotinfestedCreateQ, true, true);
+    Wait(1.0, c_timeGame);
+    TriggerExecute(gt_ObjectiveGasPickupsCreateQ, true, true);
     Wait(2.0, c_timeGame);
     TriggerExecute(gt_InitWarningPings, true, false);
     Wait(1.0, c_timeGame);
@@ -5075,11 +5264,16 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveGasPickupsCreateQ_Init();
+    gt_ObjectiveGasPickupsUpdate_Init();
+    gt_SouthwestGas_Init();
+    gt_EastGas_Init();
+    gt_SouthEastGas_Init();
     gt_ObjectiveKeepColonyBasesnotinfestedCreateQ_Init();
     gt_ObjectiveKeepColonyBasesnotinfestedUpdate_Init();
     gt_NorthHive_Init();
-    gt_EastNexus_Init();
-    gt_SouthNexus_Init();
+    gt_EastHive_Init();
+    gt_SouthHive_Init();
     gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();

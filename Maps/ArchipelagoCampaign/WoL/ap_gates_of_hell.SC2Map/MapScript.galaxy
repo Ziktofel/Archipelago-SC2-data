@@ -67,6 +67,9 @@ bool gv_twoDropPods;
 bool gv_fourDropPods;
 bool gv_sixDropPods;
 bool gv_eightDropPods;
+int gv_obejctiveSporeCannonsTotal;
+int gv_obejctiveSporeCannonsUpdate;
+int gv_objectiveSporeCannons;
 unit gv_nydusOBJ01;
 unit gv_nydusOBJ02;
 unit gv_nydusOBJ03;
@@ -202,6 +205,8 @@ void InitGlobals () {
     int init_i;
     int init_j;
 
+    gv_obejctiveSporeCannonsTotal = 6;
+    gv_objectiveSporeCannons = c_invalidObjectiveId;
     gv_zergPlayers = PlayerGroupEmpty();
     gv_dropPodTimer = TimerCreate();
     gv_gankGroupDrop01 = UnitGroupEmpty();
@@ -278,6 +283,16 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveSporeCannonsCreate;
+trigger gt_ObjectiveSporeCannonsUpdate;
+trigger gt_ObjectiveSporeCannonsComplete;
+trigger gt_ObjectiveSporeCannonsFailed;
+trigger gt_SouthwestSporeCannon;
+trigger gt_NorthwestSporeCannon;
+trigger gt_NortheastSporeCannon;
+trigger gt_EastSporeCannon;
+trigger gt_SoutheastSporeCannon;
+trigger gt_ExpansionSporeCannon;
 trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
@@ -950,6 +965,303 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: ObjectiveSporeCannons Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSporeCannonsCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/46F53229"), StringToText(""), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_obejctiveSporeCannonsUpdate, gv_obejctiveSporeCannonsTotal);
+    gv_objectiveSporeCannons = ObjectiveLastCreated();
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSporeCannonsCreate_Init () {
+    gt_ObjectiveSporeCannonsCreate = TriggerCreate("gt_ObjectiveSporeCannonsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ObjectiveSporeCannons Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSporeCannonsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveSporeCannonsCreate, true, false);
+    gv_obejctiveSporeCannonsUpdate += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSporeCannons, gv_obejctiveSporeCannonsUpdate);
+    if ((gv_obejctiveSporeCannonsUpdate == gv_obejctiveSporeCannonsTotal)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveSporeCannonsComplete, true, false);
+    }
+    else {
+        Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSporeCannonsUpdate_Init () {
+    gt_ObjectiveSporeCannonsUpdate = TriggerCreate("gt_ObjectiveSporeCannonsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ObjectiveSporeCannons Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSporeCannonsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveSporeCannonsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSporeCannons);
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerExecute(gt_VictoryPrimaryObjectiveCompleted, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSporeCannonsComplete_Init () {
+    gt_ObjectiveSporeCannonsComplete = TriggerCreate("gt_ObjectiveSporeCannonsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ObjectiveSporeCannons Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSporeCannonsFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveSporeCannonsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveSporeCannons);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSporeCannonsFailed_Init () {
+    gt_ObjectiveSporeCannonsFailed = TriggerCreate("gt_ObjectiveSporeCannonsFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: SouthwestSporeCannon
+//--------------------------------------------------------------------------------------------------
+bool gt_SouthwestSporeCannon_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SouthwestSporeCannon_Init () {
+    gt_SouthwestSporeCannon = TriggerCreate("gt_SouthwestSporeCannon_Func");
+    TriggerAddEventUnitDied(gt_SouthwestSporeCannon, UnitRefFromUnit(UnitFromId(541)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: NorthwestSporeCannon
+//--------------------------------------------------------------------------------------------------
+bool gt_NorthwestSporeCannon_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_NorthwestSporeCannon_Init () {
+    gt_NorthwestSporeCannon = TriggerCreate("gt_NorthwestSporeCannon_Func");
+    TriggerAddEventUnitDied(gt_NorthwestSporeCannon, UnitRefFromUnit(UnitFromId(1341)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: NortheastSporeCannon
+//--------------------------------------------------------------------------------------------------
+bool gt_NortheastSporeCannon_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_NortheastSporeCannon_Init () {
+    gt_NortheastSporeCannon = TriggerCreate("gt_NortheastSporeCannon_Func");
+    TriggerAddEventUnitDied(gt_NortheastSporeCannon, UnitRefFromUnit(UnitFromId(182)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: EastSporeCannon
+//--------------------------------------------------------------------------------------------------
+bool gt_EastSporeCannon_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EastSporeCannon_Init () {
+    gt_EastSporeCannon = TriggerCreate("gt_EastSporeCannon_Func");
+    TriggerAddEventUnitDied(gt_EastSporeCannon, UnitRefFromUnit(UnitFromId(1333)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: SoutheastSporeCannon
+//--------------------------------------------------------------------------------------------------
+bool gt_SoutheastSporeCannon_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+    TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SoutheastSporeCannon_Init () {
+    gt_SoutheastSporeCannon = TriggerCreate("gt_SoutheastSporeCannon_Func");
+    TriggerAddEventUnitDied(gt_SoutheastSporeCannon, UnitRefFromUnit(UnitFromId(1007)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ExpansionSporeCannon
+//--------------------------------------------------------------------------------------------------
+bool gt_ExpansionSporeCannon_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
+    TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ExpansionSporeCannon_Init () {
+    gt_ExpansionSporeCannon = TriggerCreate("gt_ExpansionSporeCannon_Func");
+    TriggerAddEventUnitDied(gt_ExpansionSporeCannon, UnitRefFromUnit(UnitFromId(181)));
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
@@ -1566,6 +1878,7 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ZergStartAttack, true, false);
     TriggerExecute(gt_DropPodallPodSpawnsQ, true, false);
     TriggerExecute(gt_ObjectiveNydusWormsCreateHidden, true, false);
+    TriggerExecute(gt_ObjectiveSporeCannonsCreate, true, false);
     Wait(15.0, c_timeGame);
     TriggerExecute(gt_DialogueKeepMeUpdatedIfWeCanReachQ, true, false);
     Wait(30.0, c_timeGame);
@@ -8778,6 +9091,16 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveSporeCannonsCreate_Init();
+    gt_ObjectiveSporeCannonsUpdate_Init();
+    gt_ObjectiveSporeCannonsComplete_Init();
+    gt_ObjectiveSporeCannonsFailed_Init();
+    gt_SouthwestSporeCannon_Init();
+    gt_NorthwestSporeCannon_Init();
+    gt_NortheastSporeCannon_Init();
+    gt_EastSporeCannon_Init();
+    gt_SoutheastSporeCannon_Init();
+    gt_ExpansionSporeCannon_Init();
     gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
