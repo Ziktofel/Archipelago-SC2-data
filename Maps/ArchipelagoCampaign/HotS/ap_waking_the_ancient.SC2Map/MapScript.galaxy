@@ -154,6 +154,7 @@ int gv_objectiveDestroyDominionBase2;
 int gv_objectiveDestroyDominionBase3;
 int gv_objectiveDestroyDominionBase4;
 int gv_objectiveDestroyDominionBase5;
+int gv_objectiveDestroyDominionBase6;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicHiddenUnits2;
 unitgroup gv_cinematicTempUnits;
@@ -232,6 +233,7 @@ void InitGlobals () {
     gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
     gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
     gv_objectiveDestroyDominionBase4 = c_invalidObjectiveId;
+    gv_objectiveDestroyDominionBase6 = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicHiddenUnits2 = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -393,6 +395,9 @@ trigger gt_ObjectiveKillBrakkFailed;
 trigger gt_ObjectiveCollectEssenceCreate;
 trigger gt_ObjectiveCollectEssenceUpdate;
 trigger gt_ObjectiveCollectEssenceComplete;
+trigger gt_ObjectiveDestroyPrimalHivesCreate;
+trigger gt_ObjectiveDestroyPrimalHivesUpdate;
+trigger gt_ObjectiveDestroyPrimalHivesComplete;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -421,6 +426,10 @@ trigger gt_SetMineralCount;
 trigger gt_EssencePoolAbsorbedCenter;
 trigger gt_EssencePoolAbsorbedEast;
 trigger gt_EssencePoolAbsorbedSouth;
+trigger gt_SouthProxyHive;
+trigger gt_EastProxyHive;
+trigger gt_SouthMainHive;
+trigger gt_EastMainHive;
 
 //--------------------------------------------------------------------------------------------------
 // Custom AI Functions
@@ -3525,6 +3534,7 @@ bool gt_PrimalHiveWarningQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyPrimalHivesCreate, true, false);
     gf_PutReticleonPrimalHive(EventUnitRangeUnit());
     TriggerQueueEnter();
     if ((UnitGetPropertyFixed(EventUnitRangeUnit(), c_unitPropLifePercent, c_unitPropCurrent) > 80.0)) {
@@ -6318,6 +6328,7 @@ bool gt_AchievementKillPrimalHivesNH_Func (bool testConds, bool runActions) {
     }
 
     gv_primalHivesKilled += 1;
+    TriggerExecute(gt_ObjectiveDestroyPrimalHivesUpdate, true, false);
     if ((libHots_gf_DifficultyValueInt2(0, 1, 1) == 1) && (gv_primalHivesKilled >= 4)) {
         TriggerEnable(TriggerGetCurrent(), false);
         libSwaC_gf_CampaignAwardAchievement("ZZerus01_3", gv_pLAYER_01_USER);
@@ -6814,6 +6825,95 @@ bool gt_ObjectiveCollectEssenceComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveCollectEssenceComplete_Init () {
     gt_ObjectiveCollectEssenceComplete = TriggerCreate("gt_ObjectiveCollectEssenceComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Primal Hives Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyPrimalHivesCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/55CE045C"), StringToText(""), c_objectiveStateActive, false);
+    gv_objectiveDestroyDominionBase6 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroyDominionBase6, "", gv_primalHivesKilled, 4);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyPrimalHivesCreate_Init () {
+    gt_ObjectiveDestroyPrimalHivesCreate = TriggerCreate("gt_ObjectiveDestroyPrimalHivesCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Primal Hives Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyPrimalHivesUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveDestroyPrimalHivesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase6, gv_primalHivesKilled);
+    if ((gv_primalHivesKilled == 4)) {
+        TriggerExecute(gt_ObjectiveDestroyPrimalHivesComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyPrimalHivesUpdate_Init () {
+    gt_ObjectiveDestroyPrimalHivesUpdate = TriggerCreate("gt_ObjectiveDestroyPrimalHivesUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Primal Hives Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyPrimalHivesComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveDestroyPrimalHivesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase6);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyPrimalHivesComplete_Init () {
+    gt_ObjectiveDestroyPrimalHivesComplete = TriggerCreate("gt_ObjectiveDestroyPrimalHivesComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -8136,6 +8236,146 @@ void gt_EssencePoolAbsorbedSouth_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: South Proxy Hive
+//--------------------------------------------------------------------------------------------------
+bool gt_SouthProxyHive_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SouthProxyHive_Init () {
+    gt_SouthProxyHive = TriggerCreate("gt_SouthProxyHive_Func");
+    TriggerAddEventUnitDied(gt_SouthProxyHive, UnitRefFromUnit(UnitFromId(2088)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: East Proxy Hive
+//--------------------------------------------------------------------------------------------------
+bool gt_EastProxyHive_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EastProxyHive_Init () {
+    gt_EastProxyHive = TriggerCreate("gt_EastProxyHive_Func");
+    TriggerAddEventUnitDied(gt_EastProxyHive, UnitRefFromUnit(UnitFromId(206)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: South Main Hive
+//--------------------------------------------------------------------------------------------------
+bool gt_SouthMainHive_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SouthMainHive_Init () {
+    gt_SouthMainHive = TriggerCreate("gt_SouthMainHive_Func");
+    TriggerAddEventUnitDied(gt_SouthMainHive, UnitRefFromUnit(UnitFromId(469)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: East Main Hive
+//--------------------------------------------------------------------------------------------------
+bool gt_EastMainHive_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EastMainHive_Init () {
+    gt_EastMainHive = TriggerCreate("gt_EastMainHive_Func");
+    TriggerAddEventUnitDied(gt_EastMainHive, UnitRefFromUnit(UnitFromId(468)));
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
@@ -8243,6 +8483,9 @@ void InitTriggers () {
     gt_ObjectiveCollectEssenceCreate_Init();
     gt_ObjectiveCollectEssenceUpdate_Init();
     gt_ObjectiveCollectEssenceComplete_Init();
+    gt_ObjectiveDestroyPrimalHivesCreate_Init();
+    gt_ObjectiveDestroyPrimalHivesUpdate_Init();
+    gt_ObjectiveDestroyPrimalHivesComplete_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
@@ -8271,6 +8514,10 @@ void InitTriggers () {
     gt_EssencePoolAbsorbedCenter_Init();
     gt_EssencePoolAbsorbedEast_Init();
     gt_EssencePoolAbsorbedSouth_Init();
+    gt_SouthProxyHive_Init();
+    gt_EastProxyHive_Init();
+    gt_SouthMainHive_Init();
+    gt_EastMainHive_Init();
 }
 
 //--------------------------------------------------------------------------------------------------

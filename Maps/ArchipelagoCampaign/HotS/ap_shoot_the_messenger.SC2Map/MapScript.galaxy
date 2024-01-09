@@ -48,6 +48,7 @@ const int gv_shuttleStoreDestination_cv = 7;
 const fixed gv_warningDistance = 25.0;
 const int gv_stasisChamberPingIndex = 0;
 const string gv_launchFacilityType = "ProtossDockingBayUnit";
+const int gv_objectiveFindFrozenZergTotal = 4;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -107,6 +108,9 @@ int gv_objectiveDestroyDominionBase;
 int gv_shuttleWavesRemaining;
 int gv_objectiveNoShuttleCanEscape;
 int gv_objectiveBonusDestroyStasisChamber;
+int gv_objectiveFindFrozenZerg;
+int gv_objectiveFindFrozenZergFound;
+int gv_objectiveFindFrozenZergBase;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -145,6 +149,8 @@ void InitGlobals () {
     gv_shuttleWavesRemaining = 8;
     gv_objectiveNoShuttleCanEscape = c_invalidObjectiveId;
     gv_objectiveBonusDestroyStasisChamber = c_invalidObjectiveId;
+    gv_objectiveFindFrozenZerg = c_invalidObjectiveId;
+    gv_objectiveFindFrozenZergBase = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -266,6 +272,12 @@ trigger gt_ObjectiveNoShuttleCanEscapeFailed;
 trigger gt_ObjectiveDestroyStasisChamberCreate;
 trigger gt_ObjectiveDestroyStasisChamberUpdate;
 trigger gt_ObjectiveDestroyStasisChamberComplete;
+trigger gt_ObjectiveFindFrozenZergCreate;
+trigger gt_ObjectiveFindFrozenZergUpdate;
+trigger gt_ObjectiveFindFrozenZergComplete;
+trigger gt_ObjectiveFindFrozenZergBaseCreate;
+trigger gt_ObjectiveFindFrozenZergBaseComplete;
+trigger gt_ObjectiveFindFrozenZergBaseFailed;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -290,6 +302,10 @@ trigger gt_SetMineralCount;
 trigger gt_StasisChamberDestroyedEast;
 trigger gt_StasisChamberDestroyedCenter;
 trigger gt_StasisChamberDestroyedWest;
+trigger gt_SouthwestFrozenZerg;
+trigger gt_WestFrozenZerg;
+trigger gt_SoutheastFrozenZerg;
+trigger gt_EastFrozenZerg;
 
 //--------------------------------------------------------------------------------------------------
 // Custom AI Functions
@@ -1546,6 +1562,8 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     TriggerQueueEnter();
     TriggerExecute(gt_ObjectiveDestroyAllProtossShuttlesCreate, true, false);
     TriggerExecute(gt_ObjectiveNoShuttleCanEscapeCreate, true, true);
+    TriggerExecute(gt_ObjectiveFindFrozenZergBaseCreate, true, true);
+    TriggerExecute(gt_ObjectiveFindFrozenZergCreate, true, true);
     TriggerExecute(gt_CreateWarpConduitPingLeft, true, false);
     TriggerQueueExit();
     Wait(8.0, c_timeAI);
@@ -3195,6 +3213,8 @@ bool gt_RescueFrozenZergExpansion_Func (bool testConds, bool runActions) {
     libSwaC_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(UnitFromId(1)), 2.0, Color(0.00, 100.00, 0.00));
     UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/66AC2FE8"), null, UnitFromId(1));
     TriggerExecute(gt_TransmissionFrozenBaseRescuedQ, true, false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    TriggerExecute(gt_ObjectiveFindFrozenZergBaseComplete, true, false);
     auto5E51DAD4_g = UnitGroup(null, gv_pLAYER_07_FROZENZERG, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto5E51DAD4_u = UnitGroupCount(auto5E51DAD4_g, c_unitCountAll);
     for (;; auto5E51DAD4_u -= 1) {
@@ -5040,6 +5060,186 @@ void gt_ObjectiveDestroyStasisChamberComplete_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Frozen Zerg Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindFrozenZergCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/2AB0D04A"), StringToText(""), c_objectiveStateActive, true);
+    gv_objectiveFindFrozenZerg = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveFindFrozenZerg, "", gv_objectiveFindFrozenZergFound, gv_objectiveFindFrozenZergTotal);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindFrozenZergCreate_Init () {
+    gt_ObjectiveFindFrozenZergCreate = TriggerCreate("gt_ObjectiveFindFrozenZergCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Frozen Zerg Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindFrozenZergUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveFindFrozenZergCreate, true, false);
+    gv_objectiveFindFrozenZergFound = (gv_objectiveFindFrozenZergFound + 1);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveFindFrozenZerg, gv_objectiveFindFrozenZergFound);
+    if ((gv_objectiveFindFrozenZergFound >= gv_objectiveFindFrozenZergTotal)) {
+        TriggerExecute(gt_ObjectiveFindFrozenZergComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindFrozenZergUpdate_Init () {
+    gt_ObjectiveFindFrozenZergUpdate = TriggerCreate("gt_ObjectiveFindFrozenZergUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Frozen Zerg Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindFrozenZergComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveFindFrozenZergCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFindFrozenZerg);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindFrozenZergComplete_Init () {
+    gt_ObjectiveFindFrozenZergComplete = TriggerCreate("gt_ObjectiveFindFrozenZergComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Frozen Zerg Base Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindFrozenZergBaseCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/43CE71A7"), StringToText(""), c_objectiveStateActive, false);
+    gv_objectiveFindFrozenZergBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveFindFrozenZergBase);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindFrozenZergBaseCreate_Init () {
+    gt_ObjectiveFindFrozenZergBaseCreate = TriggerCreate("gt_ObjectiveFindFrozenZergBaseCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Frozen Zerg Base Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindFrozenZergBaseComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveFindFrozenZergBaseCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindFrozenZergBaseComplete_Init () {
+    gt_ObjectiveFindFrozenZergBaseComplete = TriggerCreate("gt_ObjectiveFindFrozenZergBaseComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Frozen Zerg Base Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindFrozenZergBaseFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveFindFrozenZergBaseCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveFindFrozenZergBase);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeGame);
+    TriggerExecute(gt_DefeatPrimaryObjectiveFailed, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindFrozenZergBaseFailed_Init () {
+    gt_ObjectiveFindFrozenZergBaseFailed = TriggerCreate("gt_ObjectiveFindFrozenZergBaseFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Q
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroQ_Func (bool testConds, bool runActions) {
@@ -5950,6 +6150,170 @@ void gt_StasisChamberDestroyedWest_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Southwest Frozen Zerg
+//--------------------------------------------------------------------------------------------------
+bool gt_SouthwestFrozenZerg_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
+            return false;
+        }
+
+        if (!((UnitFilterMatch(EventUnit(), gv_pLAYER_01_USER, UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)) | (1 << (c_targetFilterSummoned - 32)))) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SouthwestFrozenZerg_Init () {
+    gt_SouthwestFrozenZerg = TriggerCreate("gt_SouthwestFrozenZerg_Func");
+    TriggerAddEventUnitRegion(gt_SouthwestFrozenZerg, null, RegionFromId(8), true);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: West Frozen Zerg
+//--------------------------------------------------------------------------------------------------
+bool gt_WestFrozenZerg_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
+            return false;
+        }
+
+        if (!((UnitFilterMatch(EventUnit(), gv_pLAYER_01_USER, UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)) | (1 << (c_targetFilterSummoned - 32)))) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_WestFrozenZerg_Init () {
+    gt_WestFrozenZerg = TriggerCreate("gt_WestFrozenZerg_Func");
+    TriggerAddEventUnitRegion(gt_WestFrozenZerg, null, RegionFromId(9), true);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Southeast Frozen Zerg
+//--------------------------------------------------------------------------------------------------
+bool gt_SoutheastFrozenZerg_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
+            return false;
+        }
+
+        if (!((UnitFilterMatch(EventUnit(), gv_pLAYER_01_USER, UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)) | (1 << (c_targetFilterSummoned - 32)))) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SoutheastFrozenZerg_Init () {
+    gt_SoutheastFrozenZerg = TriggerCreate("gt_SoutheastFrozenZerg_Func");
+    TriggerAddEventUnitRegion(gt_SoutheastFrozenZerg, null, RegionFromId(10), true);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: East Frozen Zerg
+//--------------------------------------------------------------------------------------------------
+bool gt_EastFrozenZerg_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
+            return false;
+        }
+
+        if (!((UnitFilterMatch(EventUnit(), gv_pLAYER_01_USER, UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)) | (1 << (c_targetFilterSummoned - 32)))) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EastFrozenZerg_Init () {
+    gt_EastFrozenZerg = TriggerCreate("gt_EastFrozenZerg_Func");
+    TriggerAddEventUnitRegion(gt_EastFrozenZerg, null, RegionFromId(3), true);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
@@ -6047,6 +6411,12 @@ void InitTriggers () {
     gt_ObjectiveDestroyStasisChamberCreate_Init();
     gt_ObjectiveDestroyStasisChamberUpdate_Init();
     gt_ObjectiveDestroyStasisChamberComplete_Init();
+    gt_ObjectiveFindFrozenZergCreate_Init();
+    gt_ObjectiveFindFrozenZergUpdate_Init();
+    gt_ObjectiveFindFrozenZergComplete_Init();
+    gt_ObjectiveFindFrozenZergBaseCreate_Init();
+    gt_ObjectiveFindFrozenZergBaseComplete_Init();
+    gt_ObjectiveFindFrozenZergBaseFailed_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
@@ -6071,6 +6441,10 @@ void InitTriggers () {
     gt_StasisChamberDestroyedEast_Init();
     gt_StasisChamberDestroyedCenter_Init();
     gt_StasisChamberDestroyedWest_Init();
+    gt_SouthwestFrozenZerg_Init();
+    gt_WestFrozenZerg_Init();
+    gt_SoutheastFrozenZerg_Init();
+    gt_EastFrozenZerg_Init();
 }
 
 //--------------------------------------------------------------------------------------------------

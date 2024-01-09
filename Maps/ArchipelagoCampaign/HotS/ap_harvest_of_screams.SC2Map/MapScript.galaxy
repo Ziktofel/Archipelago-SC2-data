@@ -108,6 +108,7 @@ int gv_ursadonMatriarchPingWest;
 int gv_ursadonMatriarchPingNorth;
 bool gv_aPNorthMatriarch;
 bool gv_aPSouthMatriarch;
+int gv_objectiveDestroyDominionBase2;
 bool gv_cinematicCompleted;
 unitgroup gv_cinematicTempUnits;
 unitgroup gv_cinematicHiddenUnits;
@@ -146,6 +147,7 @@ void InitGlobals () {
     gv_objectiveRescueBrood = c_invalidObjectiveId;
     gv_ursadonMatriarchPingWest = c_invalidPingId;
     gv_ursadonMatriarchPingNorth = c_invalidPingId;
+    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_victoryHiddenUnitGroup = UnitGroupEmpty();
@@ -308,6 +310,9 @@ trigger gt_ObjectiveUrsadonMatriarchsCreate;
 trigger gt_ObjectiveUrsadonMatriarchsUpdate;
 trigger gt_ObjectiveUrsadonMatriarchsComplete;
 trigger gt_ObjectiveUrsadonMatriarchsFailedQ;
+trigger gt_ObjectiveFindNafashCorpseCreate;
+trigger gt_ObjectiveFindNafashCorpseComplete;
+trigger gt_ObjectiveFindNafashCorpseFailed;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1940,6 +1945,7 @@ bool gt_StartGameStage2Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     if ((libHots_gf_DifficultyValueInt2(1, 1, 0) == 1)) {
     }
 
@@ -1951,6 +1957,7 @@ bool gt_StartGameStage2Q_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_CreatePingPsiLinkSpire01, true, false);
     Wait(6.0, c_timeReal);
     TriggerExecute(gt_ShowBonusObjectiveQ, true, false);
+    TriggerExecute(gt_ObjectiveFindNafashCorpseCreate, true, false);
     return true;
 }
 
@@ -4166,6 +4173,7 @@ bool gt_PsiLinkSpireDestroyed_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDestroyPsiLinkSpiresUpdate, true, false);
     TriggerExecute(gt_CreatePingPsiLinkSpire0203, true, false);
     if ((EventUnit() == UnitFromId(7))) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
         PingDestroy(gv_pingSpire01);
         gv_pingSpire01 = c_invalidPingId;
         UnitRemove(UnitFromId(1226));
@@ -4174,6 +4182,7 @@ bool gt_PsiLinkSpireDestroyed_Func (bool testConds, bool runActions) {
     }
 
     if ((EventUnit() == UnitFromId(5))) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
         PingDestroy(gv_pingSpire02);
         gv_pingSpire02 = c_invalidPingId;
         UnitRemove(UnitFromId(1227));
@@ -4182,6 +4191,7 @@ bool gt_PsiLinkSpireDestroyed_Func (bool testConds, bool runActions) {
     }
 
     if ((EventUnit() == UnitFromId(6))) {
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
         PingDestroy(gv_pingSpire03);
         gv_pingSpire03 = c_invalidPingId;
         UnitRemove(UnitFromId(1228));
@@ -4866,6 +4876,8 @@ bool gt_TransmissionKerriganFindsDeadQueenQ_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    TriggerExecute(gt_ObjectiveFindNafashCorpseComplete, true, false);
     TriggerQueueEnter();
     libSwaC_gf_PingMinimapCampaign(PlayerGroupAll(), UnitGetPosition(UnitFromId(18)), 2.0, Color(100.00, 100.00, 0.00));
     UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/97445FC7"), null, UnitFromId(18));
@@ -7079,6 +7091,93 @@ void gt_ObjectiveUrsadonMatriarchsFailedQ_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Nafash Corpse Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindNafashCorpseCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/C5DC69B4"), StringToText(""), c_objectiveStateActive, false);
+    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveDestroyDominionBase2);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindNafashCorpseCreate_Init () {
+    gt_ObjectiveFindNafashCorpseCreate = TriggerCreate("gt_ObjectiveFindNafashCorpseCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Nafash Corpse Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindNafashCorpseComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveFindNafashCorpseCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindNafashCorpseComplete_Init () {
+    gt_ObjectiveFindNafashCorpseComplete = TriggerCreate("gt_ObjectiveFindNafashCorpseComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Nafash Corpse Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindNafashCorpseFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveFindNafashCorpseCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindNafashCorpseFailed_Init () {
+    gt_ObjectiveFindNafashCorpseFailed = TriggerCreate("gt_ObjectiveFindNafashCorpseFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Q
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroQ_Func (bool testConds, bool runActions) {
@@ -8613,6 +8712,9 @@ void InitTriggers () {
     gt_ObjectiveUrsadonMatriarchsUpdate_Init();
     gt_ObjectiveUrsadonMatriarchsComplete_Init();
     gt_ObjectiveUrsadonMatriarchsFailedQ_Init();
+    gt_ObjectiveFindNafashCorpseCreate_Init();
+    gt_ObjectiveFindNafashCorpseComplete_Init();
+    gt_ObjectiveFindNafashCorpseFailed_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();

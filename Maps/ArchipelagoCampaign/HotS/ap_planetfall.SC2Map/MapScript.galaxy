@@ -45,6 +45,14 @@ const int gv_pLAYER_02_DOMINION422 = 7;
 const int gv_pLAYER_02_DOMINION423 = 8;
 
 //--------------------------------------------------------------------------------------------------
+// Global Structures
+//--------------------------------------------------------------------------------------------------
+struct gs_BileLauncherRewards {
+    bool lv_checkSent;
+    int lv_location;
+};
+
+//--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
 //--------------------------------------------------------------------------------------------------
 const int ge_LandingPointStatus_Vacant = 0;
@@ -75,6 +83,7 @@ int gv_dropNumber;
 int[3] gv_enemyTerritoryPing;
 unit[6] gv_bileLaunchers;
 int[6] gv_bileLauncherPing;
+gs_BileLauncherRewards[6] gv_bileLauncherRewards;
 int[101] gv_bileLauncherDlgLabel;
 int[101] gv_bileLauncherDlgValue;
 int[101] gv_bileLauncherDlgMax;
@@ -220,6 +229,7 @@ trigger gt_RemoveInvadersAtGate01;
 trigger gt_RemoveInvadersAtGate02;
 trigger gt_RemoveInvadersAtGate03;
 trigger gt_GateIntroProximitySafety;
+trigger gt_BileLauncherRewardsInit;
 trigger gt_StartNextLandingTimer;
 trigger gt_BileLauncherLandings;
 trigger gt_LandingsOrdered;
@@ -1997,6 +2007,37 @@ void gt_GateIntroProximitySafety_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: BileLauncherRewardsInit
+//--------------------------------------------------------------------------------------------------
+bool gt_BileLauncherRewardsInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    gv_bileLauncherRewards[1].lv_location = 4;
+    gv_bileLauncherRewards[2].lv_location = 5;
+    gv_bileLauncherRewards[3].lv_location = 6;
+    gv_bileLauncherRewards[4].lv_location = 7;
+    gv_bileLauncherRewards[5].lv_location = 8;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_BileLauncherRewardsInit_Init () {
+    gt_BileLauncherRewardsInit = TriggerCreate("gt_BileLauncherRewardsInit_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Start Next Landing Timer
 //--------------------------------------------------------------------------------------------------
 bool gt_StartNextLandingTimer_Func (bool testConds, bool runActions) {
@@ -2321,6 +2362,7 @@ bool gt_Expansion1Cleared_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
     AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION2, RegionFromId(6), false);
     PingDestroy(gv_enemyTerritoryPing[1]);
     return true;
@@ -2359,6 +2401,7 @@ bool gt_Expansion2Cleared_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(12);
     AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION3, RegionFromId(13), false);
     PingDestroy(gv_enemyTerritoryPing[2]);
     return true;
@@ -2864,6 +2907,11 @@ bool gt_UpdateBileLaunchersOwned_Func (bool testConds, bool runActions) {
     for ( ; auto9EB44190_var <= auto9EB44190_ae; auto9EB44190_var += 1 ) {
         if ((UnitGroupCount(UnitGroup("KorhalSporeCannon", gv_pLAYER_02_DOMINION422, RegionCircle(gv_landingPoint[auto9EB44190_var], 10.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)) {
             gv_bileLaunchersOwned += 1;
+            if ((gv_bileLauncherRewards[auto9EB44190_var].lv_checkSent == false)) {
+                gv_bileLauncherRewards[auto9EB44190_var].lv_checkSent = true;
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_bileLauncherRewards[auto9EB44190_var].lv_location);
+            }
+
         }
 
     }
@@ -4437,6 +4485,7 @@ bool gt_KillTeam01Ping_Func (bool testConds, bool runActions) {
 
         if ((libNtve_gf_UnitGroupIsDead(gv_killTeam01) == true)) {
             PingDestroy(gv_killTeam01Ping);
+            lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
             return true;
         }
         else {
@@ -4489,6 +4538,7 @@ bool gt_KillTeam02Ping_Func (bool testConds, bool runActions) {
 
         if ((libNtve_gf_UnitGroupIsDead(gv_killTeam02) == true)) {
             PingDestroy(gv_killTeam02Ping);
+            lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
             return true;
         }
         else {
@@ -6781,6 +6831,7 @@ void InitTriggers () {
     gt_RemoveInvadersAtGate02_Init();
     gt_RemoveInvadersAtGate03_Init();
     gt_GateIntroProximitySafety_Init();
+    gt_BileLauncherRewardsInit_Init();
     gt_StartNextLandingTimer_Init();
     gt_BileLauncherLandings_Init();
     gt_LandingsOrdered_Init();

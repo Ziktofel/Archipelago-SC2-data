@@ -111,6 +111,7 @@ int gv_objectiveDestroyDominionBase;
 int gv_objectiveDestroyDominionBase2;
 int gv_objectiveDestroyDominionBase3;
 int gv_objectiveDestroyDominionBase42;
+int gv_objectiveDestroyDominionBase43;
 int gv_banelingKills;
 int gv_banelingNestsBeforeVictoryLap;
 bool gv_banelingNestsBeforeVictoryLapSet;
@@ -160,6 +161,7 @@ void InitGlobals () {
     gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
     gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
     gv_objectiveDestroyDominionBase42 = c_invalidObjectiveId;
+    gv_objectiveDestroyDominionBase43 = c_invalidObjectiveId;
     gv_destroyZagarasBaseTimer = TimerCreate();
     gv_introHiddenUnitGroup = UnitGroupEmpty();
     gv_introHiddenUnitGroup2 = UnitGroupEmpty();
@@ -273,6 +275,9 @@ trigger gt_ObjectiveDestroyZagaraComplete;
 trigger gt_ObjectiveDestroyInfestedCCCreate;
 trigger gt_ObjectiveDestroyInfestedCCUpdate;
 trigger gt_ObjectiveDestroyInfestedCCComplete;
+trigger gt_ObjectiveFindBanelingNestsCreate;
+trigger gt_ObjectiveFindBanelingNestsUpdate;
+trigger gt_ObjectiveFindBanelingNestsComplete;
 trigger gt_DefeatBaseDead;
 trigger gt_DefeatPrimaryObjectiveFailed;
 trigger gt_VictoryZagarasBaseDestroyed;
@@ -1277,6 +1282,7 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     Wait(3.0, c_timeReal);
     TriggerQueueEnter();
     TriggerExecute(gt_ObjectiveCollectEggsCreate, true, true);
+    TriggerExecute(gt_ObjectiveFindBanelingNestsCreate, true, false);
     TriggerQueueExit();
     Wait(4.0, c_timeReal);
     TriggerExecute(gt_TipMissionHelpQ, true, false);
@@ -2376,6 +2382,7 @@ bool gt_BanelingEggPickup_Func (bool testConds, bool runActions) {
     unitgroup auto6171D946_g;
     int auto6171D946_u;
     unit auto6171D946_var;
+    unit autoFF5F2503_val;
 
     // Variable Initialization
 
@@ -2407,11 +2414,34 @@ bool gt_BanelingEggPickup_Func (bool testConds, bool runActions) {
             if (auto6171D946_var == null) { break; }
             UnitKill(auto6171D946_var);
             gv_banelingEggsCollected += 1;
+            TriggerExecute(gt_ObjectiveFindBanelingNestsUpdate, true, false);
+            autoFF5F2503_val = auto6171D946_var;
+            if (autoFF5F2503_val == UnitFromId(683)) {
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+            }
+            else if (autoFF5F2503_val == UnitFromId(766)) {
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+            }
+            else if (autoFF5F2503_val == UnitFromId(1810)) {
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+            }
+            else if (autoFF5F2503_val == UnitFromId(720)) {
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+            }
+            else if (autoFF5F2503_val == UnitFromId(607)) {
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+            }
+            else if (autoFF5F2503_val == UnitFromId(765)) {
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+            }
+            else {
+            }
             SoundPlay(SoundLink("UI_TerranRescueUnit", -1), PlayerGroupAll(), 100.0, 0.0);
             lv_eggPoint = UnitGetPosition(auto6171D946_var);
             gf_HatchBanelings(libHots_gf_DifficultyValueInt2(8, 8, 6), lv_eggPoint);
             libNtve_gf_KillModel(gv_banelingEggIndicator);
             if ((gv_banelingEggsCollected >= 6)) {
+                TriggerExecute(gt_ObjectiveFindBanelingNestsComplete, true, false);
                 TriggerExecute(gt_AchievementBanelingNestsBeforeEggs, true, false);
                 TriggerExecute(gt_BanelingEggCompleteQ, true, false);
             }
@@ -4488,6 +4518,10 @@ bool gt_ObjectiveInit_Func (bool testConds, bool runActions) {
     gv_objectiveDestroyDominionBase42 = ObjectiveLastCreated();
     ObjectiveShow(ObjectiveLastCreated(), PlayerGroupAll(), false);
     lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar01Objective5", "", 0);
+    ObjectiveCreate(StringExternal("Param/Value/A1AC8C33"), StringToText(""), c_objectiveStateActive, false);
+    gv_objectiveDestroyDominionBase43 = ObjectiveLastCreated();
+    ObjectiveShow(ObjectiveLastCreated(), PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroyDominionBase43, "", gv_banelingEggsCollected, 6);
     return true;
 }
 
@@ -4813,6 +4847,85 @@ bool gt_ObjectiveDestroyInfestedCCComplete_Func (bool testConds, bool runActions
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyInfestedCCComplete_Init () {
     gt_ObjectiveDestroyInfestedCCComplete = TriggerCreate("gt_ObjectiveDestroyInfestedCCComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Find Baneling Nests - Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindBanelingNestsCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveInit, true, false);
+    ObjectiveShow(gv_objectiveDestroyDominionBase43, PlayerGroupAll(), true);
+    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase43);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindBanelingNestsCreate_Init () {
+    gt_ObjectiveFindBanelingNestsCreate = TriggerCreate("gt_ObjectiveFindBanelingNestsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Find Baneling Nests - Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindBanelingNestsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveFindBanelingNestsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase43, gv_banelingEggsCollected);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindBanelingNestsUpdate_Init () {
+    gt_ObjectiveFindBanelingNestsUpdate = TriggerCreate("gt_ObjectiveFindBanelingNestsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Find Baneling Nests - Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindBanelingNestsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveFindBanelingNestsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase43);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindBanelingNestsComplete_Init () {
+    gt_ObjectiveFindBanelingNestsComplete = TriggerCreate("gt_ObjectiveFindBanelingNestsComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6690,6 +6803,9 @@ void InitTriggers () {
     gt_ObjectiveDestroyInfestedCCCreate_Init();
     gt_ObjectiveDestroyInfestedCCUpdate_Init();
     gt_ObjectiveDestroyInfestedCCComplete_Init();
+    gt_ObjectiveFindBanelingNestsCreate_Init();
+    gt_ObjectiveFindBanelingNestsUpdate_Init();
+    gt_ObjectiveFindBanelingNestsComplete_Init();
     gt_DefeatBaseDead_Init();
     gt_DefeatPrimaryObjectiveFailed_Init();
     gt_VictoryZagarasBaseDestroyed_Init();
