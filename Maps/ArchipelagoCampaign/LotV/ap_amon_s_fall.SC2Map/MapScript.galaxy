@@ -279,6 +279,7 @@ void InitGlobals () {
 //--------------------------------------------------------------------------------------------------
 // Global Function Declarations
 //--------------------------------------------------------------------------------------------------
+void gf_SetHeroPanelUnit (int lp_index, unit lp_heroUnit);
 fixed gf_NormalizeVoidCrystalAngle (int lp_index, fixed lp_angle);
 fixed gf_VoidCrystalRadiusatAngle (fixed lp_currentAngle, int lp_index);
 fixed gf_VoidCrystalHeightatAngle (fixed lp_currentAngle, int lp_index);
@@ -542,6 +543,73 @@ void cai_runall () {
 //--------------------------------------------------------------------------------------------------
 // Global Functions
 //--------------------------------------------------------------------------------------------------
+void gf_SetHeroPanelUnit (int lp_index, unit lp_heroUnit) {
+    // Variable Declarations
+    bool lv_noValidHeroes;
+    int lv_heroHotkey;
+
+    // Automatic Variable Declarations
+    int auto705B6D8E_val;
+    const int auto5561115D_ae = libVCUI_gv_pUC_VoidHerioUIMaxHeroCount;
+    int auto5561115D_var;
+
+    // Variable Initialization
+
+    // Implementation
+    libVCUI_gv_pU_VoidHeroUIUnit[lp_index] = lp_heroUnit;
+    libVCUI_gv_pU_VoidHeroUIType[lp_index] = libVCUI_gf_PU_VoidHeroTypeFromUnitType(UnitGetType(lp_heroUnit));
+    libVCUI_gv_pU_VoidHeroUIShowLevel[lp_index] = false;
+    libVCUI_gf_PU_UpdateHeroPanel(lp_index);
+    TriggerEnable(libVCUI_gt_PU_VoidHeroUILoadUpdate, true);
+    if (((libVCUI_gv_pU_VoidHeroUIType[lp_index] == libVCUI_ge_CampaignHeroes_Kerrigan) || (libVCUI_gv_pU_VoidHeroUIType[lp_index] == libVCUI_ge_CampaignHeroes_KerriganXN))) {
+        if ((libVoiC_gf_CurrentMap() == "SC2Epilogue02")) {
+            TriggerEnable(libVCUI_gt_PU_VoidHeroUIHandleEpilogue02RaceSwap, true);
+        }
+
+        DialogControlSendAnimationEvent(libVCUI_gv_pU_VoidHeroUIPanel[lp_index], PlayerGroupAll(), "SwitchZerg");
+    }
+
+    if ((libVCUI_gv_pU_VoidHeroUIUnit[lp_index] == null)) {
+        lv_noValidHeroes = true;
+        auto5561115D_var = 1;
+        for ( ; auto5561115D_var <= auto5561115D_ae; auto5561115D_var += 1 ) {
+            if ((libVCUI_gv_pU_VoidHeroUIUnit[auto5561115D_var] == null)) {
+            }
+            else {
+                lv_noValidHeroes = false;
+                break;
+            }
+        }
+        if ((lv_noValidHeroes == true)) {
+            TriggerEnable(libVCUI_gt_PU_HeroPanelUpdate, false);
+            TriggerEnable(libVCUI_gt_PU_VoidHeroUIUnitDamaged, false);
+        }
+
+    }
+    else {
+        TriggerEnable(libVCUI_gt_PU_HeroPanelUpdate, true);
+        TriggerEnable(libVCUI_gt_PU_VoidHeroUIUnitDamaged, true);
+        TriggerEnable(libVCUI_gt_PU_VoidHeroUIMouseHoverText, true);
+        TriggerEnable(libVCUI_gt_ZS_SwarmHeroUIUnitVitalChange, true);
+        libNtve_gf_SetDialogItemAnimationDuration(libVCUI_gv_pU_VoidHeroUIDialogCooldownImage[lp_index], 60.0, PlayerGroupAll());
+        auto705B6D8E_val = lp_index;
+        if (auto705B6D8E_val == 1) {
+            lv_heroHotkey = c_hotkeyHeroSelect0;
+        }
+        else if (auto705B6D8E_val == 2) {
+            lv_heroHotkey = c_hotkeyHeroSelect1;
+        }
+        else {
+        }
+        if ((lp_index <= libVCUI_gv_pUC_VoidHerioUIMaxHeroCount)) {
+            libNtve_gf_SetDialogItemHotkey(libVCUI_gv_pU_VoidHeroUIDialogButton[lp_index], lv_heroHotkey, PlayerGroupSingle(UnitGetOwner(lp_heroUnit)));
+        }
+        else {
+            TriggerDebugOutput(1, StringExternal("Param/Value/19C7BBA6"), false);
+        }
+    }
+}
+
 fixed gf_NormalizeVoidCrystalAngle (int lp_index, fixed lp_angle) {
     // Variable Declarations
     fixed lv_normalizedAngle;
@@ -1725,6 +1793,7 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    CinematicFade(false, 0.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
     TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
@@ -1892,7 +1961,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
-    TriggerExecute(gt_Init07Help, true, false);
     TriggerExecute(gt_IntroQ, true, true);
     TriggerExecute(gt_StartGameQ, true, false);
     return true;
@@ -2001,7 +2069,8 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     libNtve_gf_CreateUnitsAtPoint2(1, "KerriganEpilogue03", 0, gv_pLAYER_01_USER, PointFromId(9));
     gv_kerrigan = UnitLastCreated();
     UnitStatusBarOverride(gv_kerrigan, c_unitStatusGroupOwner);
-    libVCUI_gf_SetHeroPanelUnit(1, gv_kerrigan);
+    gf_SetHeroPanelUnit(1, gv_kerrigan);
+    gf_SetHeroPanelUnit(2, null);
     UnitIssueOrder(UnitFromId(6), OrderTargetingUnit(AbilityCommand("RallyHatchery", 1), UnitFromId(13)), c_orderQueueReplace);
     UnitIssueOrder(UnitFromId(6), OrderTargetingPoint(AbilityCommand("RallyHatchery", 0), PointFromId(514)), c_orderQueueReplace);
     TriggerExecute(gt_VoidCrystalInit, true, false);
@@ -5952,8 +6021,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -6482,6 +6554,16 @@ void gt_VoidCrystalInitialLocationsIntro_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_MidQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup auto04A008CB_g;
+    int auto04A008CB_u;
+    unit auto04A008CB_var;
+    unitgroup auto4F38BDEB_g;
+    int auto4F38BDEB_u;
+    unit auto4F38BDEB_var;
+    unitgroup auto6C5357EB_g;
+    int auto6C5357EB_u;
+    unit auto6C5357EB_var;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6504,10 +6586,39 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
-    TriggerExecute(gt_MidCleanup, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+        TriggerExecute(gt_MidCleanup, true, true);
+    }
+    else {
+        auto04A008CB_g = UnitGroup(null, gv_pLAYER_01_USER, gv_worldCleaverBaseAreas[1].lv_killZone, UnitFilter(0, 0, (1 << c_targetFilterStructure) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto04A008CB_u = UnitGroupCount(auto04A008CB_g, c_unitCountAll);
+        for (;; auto04A008CB_u -= 1) {
+            auto04A008CB_var = UnitGroupUnitFromEnd(auto04A008CB_g, auto04A008CB_u);
+            if (auto04A008CB_var == null) { break; }
+            UnitIssueOrder(auto04A008CB_var, OrderTargetingPoint(AbilityCommand("move", 0), PointWithOffsetPolar(UnitGetPosition(auto04A008CB_var), 16.0, 315.0)), c_orderQueueReplace);
+        }
+        auto4F38BDEB_g = UnitGroup(null, gv_pLAYER_02_RAYNOR, gv_worldCleaverBaseAreas[1].lv_killZone, UnitFilter(0, 0, (1 << c_targetFilterStructure) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto4F38BDEB_u = UnitGroupCount(auto4F38BDEB_g, c_unitCountAll);
+        for (;; auto4F38BDEB_u -= 1) {
+            auto4F38BDEB_var = UnitGroupUnitFromEnd(auto4F38BDEB_g, auto4F38BDEB_u);
+            if (auto4F38BDEB_var == null) { break; }
+            UnitGroupAdd(gv_midWorkers, auto4F38BDEB_var);
+            UnitIssueOrder(auto4F38BDEB_var, OrderTargetingPoint(AbilityCommand("move", 0), PointWithOffsetPolar(UnitGetPosition(auto4F38BDEB_var), 16.0, 315.0)), c_orderQueueReplace);
+        }
+        gf_CleaveBase(1);
+        Wait(5.0, c_timeReal);
+        auto6C5357EB_g = gv_midWorkers;
+        auto6C5357EB_u = UnitGroupCount(auto6C5357EB_g, c_unitCountAll);
+        for (;; auto6C5357EB_u -= 1) {
+            auto6C5357EB_var = UnitGroupUnitFromEnd(auto6C5357EB_g, auto6C5357EB_u);
+            if (auto6C5357EB_var == null) { break; }
+            AISetUnitScriptControlled(auto6C5357EB_var, false);
+        }
+        libVCMI_gf_SendTransmissionCampaign(null, "Mission_Epilogue03|Line00012", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     TriggerQueueExit();
     return true;
 }
@@ -6867,7 +6978,10 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     libVCMI_gf_SendActorMessageToDoodadsInRegion("Signal WorkStop", "Void_Amon_Cliff_Effect", gv_worldCleaverBaseAreas[1].lv_killZone);
     libVCMI_gf_SendActorMessageToDoodadsInRegion("Signal WorkStop", "Void_Amon_Ground_Effect", gv_worldCleaverBaseAreas[1].lv_killZone);
     gf_BlackOutTerraininRegion(gv_worldCleaverBaseAreas[1].lv_terrainDestructionRegion);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
