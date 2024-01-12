@@ -692,7 +692,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04MusicSound, true, true);
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
-    TriggerExecute(gt_Init07Help, true, true);
     TriggerExecute(gt_IntroQ, true, true);
     TriggerExecute(gt_StartGame, true, false);
     return true;
@@ -1145,12 +1144,6 @@ void gt_Init06Difficulties_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_Init07Help_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    libA3DDD02B_gf_CreateTipCampaign("BewareZerg", libNtve_ge_TipType_NormalTip, PlayerGroupAll());
     return true;
 }
 
@@ -2171,6 +2164,9 @@ bool gt_UnitKillsHoldingPen02Q_Func (bool testConds, bool runActions) {
     unitgroup auto9AFB7C81_g;
     int auto9AFB7C81_u;
     unit auto9AFB7C81_var;
+    unitgroup autoF83E96A0_g;
+    int autoF83E96A0_u;
+    unit autoF83E96A0_var;
     unitgroup auto3C101BAB_g;
     int auto3C101BAB_u;
     unit auto3C101BAB_var;
@@ -2219,6 +2215,15 @@ bool gt_UnitKillsHoldingPen02Q_Func (bool testConds, bool runActions) {
         auto9AFB7C81_var = UnitGroupUnitFromEnd(auto9AFB7C81_g, auto9AFB7C81_u);
         if (auto9AFB7C81_var == null) { break; }
         UnitRemove(auto9AFB7C81_var);
+    }
+    autoF83E96A0_g = UnitGroup(null, gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(14), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
+    autoF83E96A0_u = UnitGroupCount(autoF83E96A0_g, c_unitCountAll);
+    for (;; autoF83E96A0_u -= 1) {
+        autoF83E96A0_var = UnitGroupUnitFromEnd(autoF83E96A0_g, autoF83E96A0_u);
+        if (autoF83E96A0_var == null) { break; }
+        UnitSetPosition(autoF83E96A0_var, RegionGetCenter(RegionFromId(14)), false);
+        libNtve_gf_ShowHideUnit(autoF83E96A0_var, true);
+        libNtve_gf_PauseUnit(autoF83E96A0_var, false);
     }
     UnitGroupAddUnitGroup(lv_rescuedUnits, UnitGroup(null, gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(14), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     auto3C101BAB_g = lv_rescuedUnits;
@@ -4929,7 +4934,6 @@ bool gt_TipMissionHelpQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libA3DDD02B_gf_DisplayMissionTip(StringExternal("Param/Value/A5A6CA4F"));
     Wait(libA3DDD02B_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5577,8 +5581,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -5860,6 +5867,9 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
     unitgroup autoAB68FCCB_g;
     int autoAB68FCCB_u;
     unit autoAB68FCCB_var;
+    unitgroup auto8B3F9C62_g;
+    int auto8B3F9C62_u;
+    unit auto8B3F9C62_var;
 
     // Variable Initialization
 
@@ -5902,6 +5912,15 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "PathingBlocker4x4Diagonal", c_unitCreateIgnorePlacement, 0, PointFromId(477));
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "PathingBlocker4x4Diagonal", c_unitCreateIgnorePlacement, 0, PointFromId(527));
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "PathingBlocker4x4Diagonal", c_unitCreateIgnorePlacement, 0, PointFromId(576));
+    auto8B3F9C62_g = UnitGroupFromId(5);
+    auto8B3F9C62_u = UnitGroupCount(auto8B3F9C62_g, c_unitCountAll);
+    for (;; auto8B3F9C62_u -= 1) {
+        auto8B3F9C62_var = UnitGroupUnitFromEnd(auto8B3F9C62_g, auto8B3F9C62_u);
+        if (auto8B3F9C62_var == null) { break; }
+        UnitSetPosition(auto8B3F9C62_var, RegionGetCenter(RegionFromId(14)), false);
+        libNtve_gf_ShowHideUnit(auto8B3F9C62_var, false);
+        libNtve_gf_PauseUnit(auto8B3F9C62_var, true);
+    }
     libNtve_gf_KillModel(gv_introAirlockModel);
     libNtve_gf_StoryMode(PlayerGroupAll(), false);
     GameTimeOfDayPause(false);
@@ -5966,9 +5985,19 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+    }
+    else {
+        if ((UnitIsAlive(UnitFromId(1202)) == true)) {
+            UnitKill(UnitFromId(1202));
+        }
+
+        UnitGroupAddUnitGroup(gv_midZealots, UnitGroup("AP_ZealotAiur", gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        libA3DDD02B_gf_SendTransmissionCampaign(gv_midSpeaker, "vpMission_VoidPrologue01|Line00072", c_transmissionDurationAdd, 0.0, false, libA3DDD02B_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libA3DDD02B_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     TriggerExecute(gt_MidCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -6222,8 +6251,11 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
         if (autoD77231FA_var == null) { break; }
         UnitRemove(autoD77231FA_var);
     }
-    libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
-    CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
+        CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
+    }
+
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
