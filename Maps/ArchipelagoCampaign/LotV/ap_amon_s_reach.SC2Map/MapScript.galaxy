@@ -188,6 +188,7 @@ trigger gt_VoidThrasherIntroQ;
 trigger gt_VoidThrasherIntroShake;
 trigger gt_TransmissionVoidThrasherReturnQ;
 trigger gt_TransmissionVoidThrasherDeathQ;
+trigger gt_VoidThrasherSpawn1;
 trigger gt_VoidThrasherEncounter1;
 trigger gt_VoidThrasherDeath1;
 trigger gt_VoidThrasherSpawn2;
@@ -1525,7 +1526,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
-    TriggerExecute(gt_Init07Help, true, false);
     TriggerExecute(gt_IntroQ, true, true);
     return true;
 }
@@ -2065,6 +2065,10 @@ bool gt_TeachingOrbitalStrikeQ_Func (bool testConds, bool runActions) {
         }
 
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libABFE498B_gv_aP_Triggers_skipCutscenes == false))) {
             return false;
         }
     }
@@ -3066,6 +3070,65 @@ void gt_TransmissionVoidThrasherDeathQ_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Void Thrasher Spawn 1
+//--------------------------------------------------------------------------------------------------
+bool gt_VoidThrasherSpawn1_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_spawnIndex;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libVCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+
+        if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    libVCMI_gf_CreateMissionAutosavePoint(StringToText(""));
+    lv_spawnIndex = 1;
+    VisRevealerCreate(gv_pLAYER_01_USER, RegionFromId(1));
+    gv_voidThrashers.lv_revealer[lv_spawnIndex] = VisRevealerLastCreated();
+    libVCMI_gf_PingMinimapCampaign(PlayerGroupAll(), gv_voidThrashers.lv_location[lv_spawnIndex], 3.0, Color(100.00, 0.00, 0.00));
+    UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/57696281"), null, gv_voidThrashers.lv_location[lv_spawnIndex]);
+    TimerStart(gv_thrasherSpawnTimer, 6.0, false, c_timeAI);
+    gf_SpawnVoidThrasher(lv_spawnIndex);
+    if ((RegionContainsPoint(RegionCircle(gv_voidThrashers.lv_location[lv_spawnIndex], 32.0), CameraGetTarget(gv_pLAYER_01_USER)) == true)) {
+        SoundPlayForPlayer(SoundLink("Zerus03_Zurvan_CS_Intro", 0), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
+        CameraShake(gv_pLAYER_01_USER, "Medium", "Earthquake", 3.0, 1.0, 6.0);
+    }
+
+    libNtve_gf_WaitForTimer(gv_thrasherSpawnTimer, 0.0, false);
+    libNtve_gf_MakeUnitInvulnerable(gv_voidThrashers.lv_thrasher[lv_spawnIndex], false);
+    gv_voidThrashers.lv_activeThrashers += 1;
+    gv_voidThrashers.lv_totalThrashers += 1;
+    TriggerEnable(gt_VoidThrasherDeath1, true);
+    TriggerExecute(gt_VoidThrasherEncounter1, true, false);
+    Wait(2.0, c_timeAI);
+    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras01|Line00119", c_transmissionDurationAdd, 0.0, false, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_VoidThrasherSpawn1_Init () {
+    gt_VoidThrasherSpawn1 = TriggerCreate("gt_VoidThrasherSpawn1_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Void Thrasher Encounter 1
 //--------------------------------------------------------------------------------------------------
 bool gt_VoidThrasherEncounter1_Func (bool testConds, bool runActions) {
@@ -3083,9 +3146,12 @@ bool gt_VoidThrasherEncounter1_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    gv_voidThrashers.lv_activeThrashers += 1;
-    gv_voidThrashers.lv_totalThrashers += 1;
-    TriggerEnable(gt_VoidThrasherDeath1, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        gv_voidThrashers.lv_activeThrashers += 1;
+        gv_voidThrashers.lv_totalThrashers += 1;
+        TriggerEnable(gt_VoidThrasherDeath1, true);
+    }
+
     Wait(2.0, c_timeAI);
     gf_VoidThrasherAI(1);
     return true;
@@ -5895,8 +5961,13 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+    else {
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionFromId(46), gv_pLAYER_01_USER);
+    }
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     TriggerExecute(gt_StartGameQ, true, false);
@@ -6167,18 +6238,21 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
     CameraShakeStop(gv_pLAYER_01_USER);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
-    UnitSetPropertyFixed(UnitFromId(3), c_unitPropResources, gv_introMinerals[1]);
-    UnitSetPropertyFixed(UnitFromId(5), c_unitPropResources, gv_introMinerals[2]);
-    UnitSetPropertyFixed(UnitFromId(6), c_unitPropResources, gv_introMinerals[3]);
-    UnitSetPropertyFixed(UnitFromId(8), c_unitPropResources, gv_introMinerals[4]);
-    UnitSetPropertyFixed(UnitFromId(9), c_unitPropResources, gv_introMinerals[5]);
-    UnitSetPropertyFixed(UnitFromId(10), c_unitPropResources, gv_introMinerals[6]);
-    UnitSetPropertyFixed(UnitFromId(11), c_unitPropResources, gv_introMinerals[7]);
-    UnitSetPropertyFixed(UnitFromId(12), c_unitPropResources, gv_introMinerals[8]);
-    PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropMinerals, c_playerPropOperSetTo, gv_introMinerals[0]);
-    UnitSetPropertyFixed(UnitFromId(184), c_unitPropResources, gv_introGas[1]);
-    PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropVespene, c_playerPropOperSetTo, gv_introGas[0]);
-    libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionFromId(46), gv_pLAYER_01_USER);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        UnitSetPropertyFixed(UnitFromId(3), c_unitPropResources, gv_introMinerals[1]);
+        UnitSetPropertyFixed(UnitFromId(5), c_unitPropResources, gv_introMinerals[2]);
+        UnitSetPropertyFixed(UnitFromId(6), c_unitPropResources, gv_introMinerals[3]);
+        UnitSetPropertyFixed(UnitFromId(8), c_unitPropResources, gv_introMinerals[4]);
+        UnitSetPropertyFixed(UnitFromId(9), c_unitPropResources, gv_introMinerals[5]);
+        UnitSetPropertyFixed(UnitFromId(10), c_unitPropResources, gv_introMinerals[6]);
+        UnitSetPropertyFixed(UnitFromId(11), c_unitPropResources, gv_introMinerals[7]);
+        UnitSetPropertyFixed(UnitFromId(12), c_unitPropResources, gv_introMinerals[8]);
+        PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropMinerals, c_playerPropOperSetTo, gv_introMinerals[0]);
+        UnitSetPropertyFixed(UnitFromId(184), c_unitPropResources, gv_introGas[1]);
+        PlayerModifyPropertyInt(gv_pLAYER_01_USER, c_playerPropVespene, c_playerPropOperSetTo, gv_introGas[0]);
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionFromId(46), gv_pLAYER_01_USER);
+    }
+
     VisExploreArea(gv_pLAYER_01_USER, RegionEntireMap(), false, false);
     TriggerExecute(gt_StartAI, true, false);
     Wait(0.5, c_timeReal);
@@ -6225,10 +6299,15 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
-    TriggerExecute(gt_MidCleanup, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+        TriggerExecute(gt_MidCleanup, true, true);
+    }
+    else {
+        TriggerExecute(gt_VoidThrasherSpawn1, true, true);
+    }
     TriggerQueueExit();
     return true;
 }
@@ -6563,7 +6642,6 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     CameraShakeStop(gv_pLAYER_01_USER);
     GameTimeOfDayPause(false);
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
-    libVCMI_gf_AddMissionTipCampaign("VoidThrasher");
     libNtve_gf_RestoreUnitSelection(gv_pLAYER_01_USER);
     CameraRestore(gv_pLAYER_01_USER, 0.0, -1, 10);
     VisRevealArea(gv_pLAYER_01_USER, RegionFromId(1), 6.0, false);
@@ -6876,6 +6954,7 @@ void InitTriggers () {
     gt_VoidThrasherIntroShake_Init();
     gt_TransmissionVoidThrasherReturnQ_Init();
     gt_TransmissionVoidThrasherDeathQ_Init();
+    gt_VoidThrasherSpawn1_Init();
     gt_VoidThrasherEncounter1_Init();
     gt_VoidThrasherDeath1_Init();
     gt_VoidThrasherSpawn2_Init();
