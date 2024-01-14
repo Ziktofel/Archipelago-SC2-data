@@ -601,6 +601,11 @@ void gf_ActivateStasisChamber (int lp_containmentTowerIndex) {
         gv_midContainmentIndex = lp_containmentTowerIndex;
         TriggerExecute(gt_TransmissionActivateStasisChamberQ, true, true);
         Wait(1.0, c_timeGame);
+        if ((libABFE498B_gv_aP_Triggers_skipCutscenes == true)) {
+            TriggerExecute(gt_UpdateCybrosLights, true, false);
+            gf_WarpInPurifiers(lp_containmentTowerIndex);
+        }
+
         TriggerExecute(gt_MidQ, true, true);
         VisRevealArea(gv_pLAYER_01_USER, gv_purifierStasisChambers[lp_containmentTowerIndex].lv_revealRegion, 32.0, false);
         libVCMI_gf_PingMinimapCampaign(PlayerGroupAll(), gv_purifierStasisChambers[lp_containmentTowerIndex].lv_spawnPoint, 2.0, Color(0.00, 100.00, 0.00));
@@ -1775,7 +1780,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
-    TriggerExecute(gt_Init07Help, true, false);
     TriggerExecute(gt_IntroQ, true, true);
     TriggerExecute(gt_StartGame, true, false);
     return true;
@@ -3646,7 +3650,6 @@ bool gt_TransmissionPurifierWardenRevealQ_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libVCMI_gf_AddMissionTipCampaign("PurifierWarden");
     TriggerExecute(gt_PurifierWardenBehavior, true, false);
     libVCMI_gf_CreateObjectivePing(false, UnitGetPosition(gv_purifierWarden), StringExternal("Param/Value/1DF8E26D"));
     libHots_gf_StorePingForUnit(gv_purifierWarden, 1, PingLastCreated());
@@ -5857,7 +5860,6 @@ bool gt_TipReadyQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libVCMI_gf_DisplayMissionTip();
     Wait(libVCMI_gv_campaignHintDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -6196,8 +6198,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -6733,10 +6738,17 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    TriggerExecute(gt_MidSetup, true, true);
-    TriggerExecute(gt_MidCinematic, true, true);
-    TriggerExecute(gt_MidCinematicEnd, true, true);
-    TriggerExecute(gt_MidCleanup, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidSetup, true, true);
+        TriggerExecute(gt_MidCinematic, true, true);
+        TriggerExecute(gt_MidCinematicEnd, true, true);
+        TriggerExecute(gt_MidCleanup, true, true);
+    }
+    else {
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Purifier03|Line00195", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Purifier03|Line00186", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Purifier03|Line00184", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     TriggerQueueExit();
     return true;
 }
