@@ -83,6 +83,7 @@ unitgroup gv_hybridGroup;
 bool gv_repeatedPatrolsActivated;
 unit gv_templeBarrierBeacon;
 bool gv_firstBarrierTransmissionIssued;
+bool gv_supplyReached;
 unit gv_artanis;
 bool gv_artanisHealUsed;
 unit gv_activeEnergyCloud;
@@ -928,6 +929,9 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    CinematicFade(false, 0.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+    lib5BD4895D_gf_AP_Core_initObjectivePanel();
+    libVCMI_gf_CinematicModeCampaign(true, c_transitionDurationImmediate, true);
     TriggerExecute(lib30B9E51A_gt_ArchipelagoPlayerLotvHandlersConstructor, true, false);
     TriggerExecute(gt_Init02Players, true, false);
     TriggerExecute(gt_Init03Units, true, false);
@@ -935,8 +939,11 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
     libABFE498B_gf_AP_Triggers_MapConfig_setMissionBuild(false);
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
-    lib5BD4895D_gf_AP_Core_initObjectivePanel();
+    while (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+        Wait(0.5, c_timeGame);
+    }
     TriggerExecute(gt_IntroQ, true, true);
+    TriggerExecute(gt_CitadelStartingSequence, true, false);
     return true;
 }
 
@@ -957,13 +964,9 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_Init01Technology, true, false);
-    TriggerExecute(gt_Init02Players, true, false);
-    TriggerExecute(gt_Init03Units, true, false);
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
-    TriggerExecute(gt_Init07Help, true, false);
-    TriggerExecute(gt_CitadelStartingSequence, true, false);
     return true;
 }
 
@@ -1428,6 +1431,7 @@ bool gt_CitadelInit_Func (bool testConds, bool runActions) {
         UnitSetCustomValue(auto03681CF6_var, 1, PointGetY(UnitGetPosition(auto03681CF6_var)));
         UnitIssueOrder(auto03681CF6_var, Order(AbilityCommand("move", 2)), c_orderQueueReplace);
         UnitGroupAdd(gv_overseerGroup, auto03681CF6_var);
+        AISetUnitScriptControlled(auto03681CF6_var, true);
     }
     auto103518D1_g = UnitGroup("SwarmHost", gv_pLAYER_05_AMONS_FORCES, RegionFromId(86), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto103518D1_u = UnitGroupCount(auto103518D1_g, c_unitCountAll);
@@ -1457,8 +1461,6 @@ bool gt_CitadelStartingSequence_Func (bool testConds, bool runActions) {
     }
 
     TimerStart(gv_achievementSectionOneTimer, 361.0, false, c_timeGame);
-    libVCMI_gf_AddMissionTipCampaign("Alarak");
-    libVCMI_gf_AddMissionTipCampaign("Vorazun");
     UnitGroupAdd(gv_activePlayerUnits, gv_alarak);
     UnitGroupAdd(gv_activePlayerUnits, gv_vorazun);
     libVCUI_gf_SetHeroPanelUnit(1, gv_alarak);
@@ -1786,6 +1788,10 @@ bool gt_DestructionWavePan_Func (bool testConds, bool runActions) {
         if (!((lib30B9E51A_gv_aP_Player_LotV_loadFinished == true))) {
             return false;
         }
+
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
+            return false;
+        }
     }
 
     // Actions
@@ -2032,6 +2038,10 @@ bool gt_ShadowDashPing_Func (bool testConds, bool runActions) {
         }
 
         if (!((lib30B9E51A_gv_aP_Player_LotV_loadFinished == true))) {
+            return false;
+        }
+
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
             return false;
         }
     }
@@ -4223,6 +4233,10 @@ bool gt_FinalGatePan_Func (bool testConds, bool runActions) {
         if (!((RegionContainsPoint(RegionFromId(92), CameraGetTarget(gv_pLAYER_01_USER)) == true))) {
             return false;
         }
+
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
+            return false;
+        }
     }
 
     // Actions
@@ -4460,8 +4474,6 @@ bool gt_TempleStartingSequence_Func (bool testConds, bool runActions) {
     }
 
     TimerStart(gv_achievementSectionTwoTimer, 361.0, false, c_timeGame);
-    libVCMI_gf_AddMissionTipCampaign("Fenix");
-    libVCMI_gf_AddMissionTipCampaign("Karax");
     UnitGroupAdd(gv_activePlayerUnits, gv_karax);
     UnitGroupAdd(gv_activePlayerUnits, gv_fenix);
     UnitGroupSelect(gv_activePlayerUnits, gv_pLAYER_01_USER, true);
@@ -4721,6 +4733,10 @@ bool gt_ReclamationPan_Func (bool testConds, bool runActions) {
         }
 
         if (!((gv_templeComplete == false))) {
+            return false;
+        }
+
+        if (!((libABFE498B_gv_aP_Triggers_disableForcedCamera == false))) {
             return false;
         }
     }
@@ -5123,7 +5139,7 @@ bool gt_UnitTraining_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!(((UnitGetType(EventUnit()) == "Gateway") || (UnitGetType(EventUnit()) == "RoboticsFacility")))) {
+        if (!(((UnitGetType(EventUnit()) == "Gateway") || (UnitGetType(EventUnit()) == "AP_Gateway") || (UnitGetType(EventUnit()) == "AP_WarpGate") || (UnitGetType(EventUnit()) == "RoboticsFacility") || (UnitGetType(EventUnit()) == "AP_RoboticsFacility") || (UnitGetType(EventUnit()) == "AP_RoboticsFacilityWarp")))) {
             return false;
         }
     }
@@ -6103,6 +6119,10 @@ bool gt_HybridFight_Func (bool testConds, bool runActions) {
         if (!((UnitTypeTestFlag(UnitGetType(EventUnit()), c_unitFlagMissile) == false))) {
             return false;
         }
+
+        if (!((UnitTypeTestFlag(UnitGetType(EventUnit()), c_unitFlagUncommandable) == false))) {
+            return false;
+        }
     }
 
     // Actions
@@ -6240,7 +6260,11 @@ bool gt_TempleSupplyChanges_Func (bool testConds, bool runActions) {
     if ((ObjectiveGetState(gv_objective_AssembleArmy) == c_objectiveStateActive)) {
         if ((PlayerGetPropertyInt(EventPlayer(), c_playerPropSuppliesUsed) >= 60)) {
             lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_AssembleArmy, 60);
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+            if ((gv_supplyReached == false)) {
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+            }
+
+            gv_supplyReached = true;
             TriggerExecute(gt_ObjectiveAssembleanArmyComplete, true, true);
             TriggerExecute(gt__60SupplyQ, true, false);
         }
@@ -6391,7 +6415,7 @@ bool gt_EarlyBarrierQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    if (((gv_templeComplete == true) || (ObjectiveGetState(gv_objective_AssembleArmy) == c_objectiveStateCompleted))) {
+    if (((gv_templeComplete == true) || (ObjectiveGetState(gv_objective_AssembleArmy) == c_objectiveStateCompleted) || (gv_supplyReached == true))) {
         return true;
     }
 
@@ -6950,7 +6974,6 @@ bool gt_CavernsStartingSequence_Func (bool testConds, bool runActions) {
     }
 
     TimerStart(gv_achievementSectionThreeTimer, 361.0, false, c_timeGame);
-    libVCMI_gf_AddMissionTipCampaign("Artanis");
     UnitGroupSelect(gv_activePlayerUnits, gv_pLAYER_01_USER, true);
     UISetFrameVisible(PlayerGroupAll(), c_syncFrameTypeResourcePanel, false);
     UISetFrameVisible(PlayerGroupAll(), c_syncFrameTypeSupply, false);
@@ -7543,7 +7566,7 @@ bool gt_PurifierReinforcements_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0))) {
+        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0))) {
             return false;
         }
     }
@@ -7951,7 +7974,7 @@ bool gt_DarkTemplarReinforcements_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(30), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0))) {
+        if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(30), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0))) {
             return false;
         }
     }
@@ -9887,8 +9910,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    TriggerExecute(gt_IntroCinematic, true, true);
-    TriggerExecute(gt_IntroCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_IntroCinematic, true, true);
+        TriggerExecute(gt_IntroCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -10184,8 +10210,11 @@ bool gt_MidCitadelTempleQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_MidCitadelTempleSetup, true, true);
-    TriggerExecute(gt_MidCitadelTempleCinematic, true, true);
-    TriggerExecute(gt_MidCitadelTempleCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidCitadelTempleCinematic, true, true);
+        TriggerExecute(gt_MidCitadelTempleCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_MidCitadelTempleCleanup, true, true);
     TriggerExecute(gt_TempleStartingSequence, true, false);
     TriggerQueueExit();
@@ -10607,8 +10636,11 @@ bool gt_MidTempleCavernsQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_MidTempleCavernsSetup, true, true);
-    TriggerExecute(gt_MidTempleCavernsCinematic, true, true);
-    TriggerExecute(gt_MidTempleCavernsCinematicEnd, true, true);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+        TriggerExecute(gt_MidTempleCavernsCinematic, true, true);
+        TriggerExecute(gt_MidTempleCavernsCinematicEnd, true, true);
+    }
+
     TriggerExecute(gt_MidTempleCavernsCleanup, true, true);
     TriggerExecute(gt_CavernsStartingSequence, true, false);
     TriggerQueueExit();
