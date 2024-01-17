@@ -39,7 +39,13 @@ const int gv_p10_REINFORCEMENTPROTOSS = 10;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
+int gv_cancelCount;
+int gv_endGameDialog;
 int gv_endGameButton;
+int gv_confirmText;
+int gv_confirmEndGame;
+int gv_cancelEndGame;
+text gv_buttonText;
 int gv_sTAGE_01_KILL_QUOTA;
 int gv_sTAGE_02_KILL_QUOTA;
 playergroup gv_zergPlayers;
@@ -96,7 +102,12 @@ unit gv_hybrid3;
 unit gv_hybrid4;
 
 void InitGlobals () {
+    gv_endGameDialog = c_invalidDialogId;
     gv_endGameButton = c_invalidDialogControlId;
+    gv_confirmText = c_invalidDialogControlId;
+    gv_confirmEndGame = c_invalidDialogControlId;
+    gv_cancelEndGame = c_invalidDialogControlId;
+    gv_buttonText = StringExternal("Param/Value/AEE55C8F");
     gv_zergPlayers = PlayerGroupEmpty();
     gv_superWarpGate_P08 = UnitFromId(843);
     gv_superWarpGate_P10 = UnitFromId(637);
@@ -127,8 +138,9 @@ void gf_SpawnNydusWormZerglings (region lp_region);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_RandomizeButtonText;
 trigger gt_InitEndGameButton;
-trigger gt_EndGameButtonPressed;
+trigger gt_HandleEndGameButtons;
 trigger gt_ArchInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
@@ -323,6 +335,59 @@ void gf_SpawnNydusWormZerglings (region lp_region) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Randomize Button Text
+//--------------------------------------------------------------------------------------------------
+bool gt_RandomizeButtonText_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    int auto36E8AFFC_val;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto36E8AFFC_val = RandomInt(0, 9);
+    if (auto36E8AFFC_val == 0) {
+        gv_buttonText = StringExternal("Param/Value/E35E7BFA");
+    }
+    else if (auto36E8AFFC_val == 1) {
+        gv_buttonText = StringExternal("Param/Value/B6D47FEC");
+    }
+    else if (auto36E8AFFC_val == 2) {
+        gv_buttonText = StringExternal("Param/Value/65ED55C7");
+    }
+    else if (auto36E8AFFC_val == 3) {
+        gv_buttonText = StringExternal("Param/Value/4B333117");
+    }
+    else if (auto36E8AFFC_val == 4) {
+        gv_buttonText = StringExternal("Param/Value/05FFBB16");
+    }
+    else if (auto36E8AFFC_val == 5) {
+        gv_buttonText = StringExternal("Param/Value/13F5AE36");
+    }
+    else if (auto36E8AFFC_val == 6) {
+        gv_buttonText = StringExternal("Param/Value/ECAEF3DC");
+    }
+    else if (auto36E8AFFC_val == 7) {
+        gv_buttonText = StringExternal("Param/Value/C37D7AC0");
+    }
+    else if (auto36E8AFFC_val == 8) {
+        gv_buttonText = StringExternal("Param/Value/F2B57BDD");
+    }
+    else if (auto36E8AFFC_val == 9) {
+        gv_buttonText = StringExternal("Param/Value/CD16A17D");
+    }
+    else {
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_RandomizeButtonText_Init () {
+    gt_RandomizeButtonText = TriggerCreate("gt_RandomizeButtonText_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Init End Game Button
 //--------------------------------------------------------------------------------------------------
 bool gt_InitEndGameButton_Func (bool testConds, bool runActions) {
@@ -348,18 +413,28 @@ bool gt_InitEndGameButton_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    DialogCreate(200, 50, c_anchorTopRight, 50, 510, true);
-    libNtve_gf_CreateDialogItemButton(DialogLastCreated(), 200, 50, c_anchorBottom, 50, 50, StringToText(""), StringExternal("Param/Value/25F2FBFE"), "");
+    DialogCreate(450, 120, c_anchorRight, 0, 50, true);
+    gv_endGameDialog = DialogLastCreated();
+    libNtve_gf_CreateDialogItemLabel(DialogLastCreated(), 300, 50, c_anchorTop, 50, 50, StringExternal("Param/Value/B3F6B4A0"), ColorWithAlpha(0,0,0,0), false, 2.0);
+    gv_confirmText = DialogControlLastCreated();
+    DialogControlSetVisible(DialogControlLastCreated(), PlayerGroupAll(), false);
+    libNtve_gf_CreateDialogItemButton(DialogLastCreated(), 100, 50, c_anchorLeft, 50, 50, StringToText(""), StringExternal("Param/Value/EC556E9B"), "");
+    gv_confirmEndGame = DialogControlLastCreated();
+    DialogControlSetVisible(DialogControlLastCreated(), PlayerGroupAll(), false);
+    libNtve_gf_CreateDialogItemButton(DialogLastCreated(), 100, 50, c_anchorRight, 50, 50, StringToText(""), StringExternal("Param/Value/A93A6A05"), "");
+    gv_cancelEndGame = DialogControlLastCreated();
+    DialogControlSetVisible(DialogControlLastCreated(), PlayerGroupAll(), false);
+    libNtve_gf_CreateDialogItemButton(DialogLastCreated(), 450, 50, c_anchorCenter, 0, 0, StringToText(""), gv_buttonText, "");
     gv_endGameButton = DialogControlLastCreated();
     DialogSetVisible(DialogLastCreated(), PlayerGroupAll(), true);
     Wait(0.5, c_timeGame);
     libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(100,100,100), PlayerGroupAll());
     Wait(0.5, c_timeGame);
-    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(0,0,0), PlayerGroupAll());
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(22*100/255,128*100/255,0), PlayerGroupAll());
     Wait(0.5, c_timeGame);
     libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(100,100,100), PlayerGroupAll());
     Wait(0.5, c_timeGame);
-    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(0,0,0), PlayerGroupAll());
+    libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(22*100/255,128*100/255,0), PlayerGroupAll());
     Wait(0.5, c_timeGame);
     libNtve_gf_SetDialogItemColor(DialogControlLastCreated(), Color(100,100,100), PlayerGroupAll());
     Wait(0.5, c_timeGame);
@@ -374,9 +449,9 @@ void gt_InitEndGameButton_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: End Game Button Pressed
+// Trigger: Handle End Game Buttons
 //--------------------------------------------------------------------------------------------------
-bool gt_EndGameButtonPressed_Func (bool testConds, bool runActions) {
+bool gt_HandleEndGameButtons_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     const int auto4CCDD38B_n = 5;
     int auto4CCDD38B_i;
@@ -386,7 +461,7 @@ bool gt_EndGameButtonPressed_Func (bool testConds, bool runActions) {
 
     // Conditions
     if (testConds) {
-        if (!((EventDialogControl() == gv_endGameButton))) {
+        if (!((DialogControlGetDialog(EventDialogControl()) == gv_endGameDialog))) {
             return false;
         }
     }
@@ -396,23 +471,44 @@ bool gt_EndGameButtonPressed_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    for (auto4CCDD38B_i = 1; auto4CCDD38B_i <= auto4CCDD38B_n; auto4CCDD38B_i += 1) {
-        auto67A6F6A6_g = UnitGroup(null, gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-        auto67A6F6A6_u = UnitGroupCount(auto67A6F6A6_g, c_unitCountAll);
-        for (;; auto67A6F6A6_u -= 1) {
-            auto67A6F6A6_var = UnitGroupUnitFromEnd(auto67A6F6A6_g, auto67A6F6A6_u);
-            if (auto67A6F6A6_var == null) { break; }
-            UnitKill(auto67A6F6A6_var);
-            Wait(0.02, c_timeGame);
+    if ((EventDialogControl() == gv_endGameButton)) {
+        DialogControlSetVisible(gv_confirmText, PlayerGroupAll(), true);
+        DialogControlSetVisible(gv_confirmEndGame, PlayerGroupAll(), true);
+        DialogControlSetVisible(gv_cancelEndGame, PlayerGroupAll(), true);
+        DialogControlSetVisible(gv_endGameButton, PlayerGroupAll(), false);
+    }
+    else if ((EventDialogControl() == gv_cancelEndGame)) {
+        DialogControlSetVisible(gv_confirmText, PlayerGroupAll(), false);
+        DialogControlSetVisible(gv_confirmEndGame, PlayerGroupAll(), false);
+        DialogControlSetVisible(gv_cancelEndGame, PlayerGroupAll(), false);
+        gv_cancelCount = (gv_cancelCount+1);
+        if ((gv_cancelCount >= 2)) {
+            TriggerExecute(gt_RandomizeButtonText, true, false);
+            libNtve_gf_SetDialogItemText(gv_endGameButton, gv_buttonText, PlayerGroupAll());
+        }
+
+        DialogControlSetVisible(gv_endGameButton, PlayerGroupAll(), true);
+    }
+    else if ((EventDialogControl() == gv_confirmEndGame)) {
+        DialogSetVisible(DialogControlGetDialog(EventDialogControl()), PlayerGroupAll(), false);
+        for (auto4CCDD38B_i = 1; auto4CCDD38B_i <= auto4CCDD38B_n; auto4CCDD38B_i += 1) {
+            auto67A6F6A6_g = UnitGroup(null, gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+            auto67A6F6A6_u = UnitGroupCount(auto67A6F6A6_g, c_unitCountAll);
+            for (;; auto67A6F6A6_u -= 1) {
+                auto67A6F6A6_var = UnitGroupUnitFromEnd(auto67A6F6A6_g, auto67A6F6A6_u);
+                if (auto67A6F6A6_var == null) { break; }
+                UnitKill(auto67A6F6A6_var);
+                Wait(0.02, c_timeGame);
+            }
         }
     }
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_EndGameButtonPressed_Init () {
-    gt_EndGameButtonPressed = TriggerCreate("gt_EndGameButtonPressed_Func");
-    TriggerAddEventDialogControl(gt_EndGameButtonPressed, c_playerAny, c_invalidDialogControlId, c_triggerControlEventTypeClick);
+void gt_HandleEndGameButtons_Init () {
+    gt_HandleEndGameButtons = TriggerCreate("gt_HandleEndGameButtons_Func");
+    TriggerAddEventDialogControl(gt_HandleEndGameButtons, c_playerAny, c_invalidDialogControlId, c_triggerControlEventTypeClick);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -830,7 +926,6 @@ bool gt_StartGameStage1_Func (bool testConds, bool runActions) {
     Wait(1.0, c_timeGame);
     TriggerExecute(gt_CreateLeaderboard, true, false);
     Wait(10.0, c_timeGame);
-    libCamp_gf_CreateStorymodeTips();
     Wait(10.0, c_timeGame);
     TriggerExecute(gt_TransmissionTemplarsStoreKnowledgeQ, true, true);
     TriggerExecute(gt_ObjectiveProtectArchiveCreateQ, true, false);
@@ -6083,13 +6178,11 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    TriggerExecute(gt_IntroSetup, true, true);
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
-        TriggerExecute(gt_IntroSetup, true, true);
         TriggerExecute(gt_IntroCinematic, true, true);
     }
-    else {
-        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_p01_PLAYER);
-    }
+
     TriggerExecute(gt_IntroCleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -6277,6 +6370,10 @@ bool gt_IntroCleanup_Func (bool testConds, bool runActions) {
         lv_fadeDuration = 1.0;
         CameraApplyInfo(gv_p01_PLAYER, CameraInfoDefault(), 0.0, -1, 10, false);
         libNtve_gf_SwooshCamera(gv_p01_PLAYER, ((CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance)) + 8.0), CameraInfoGetValue(CameraInfoDefault(), c_cameraValueDistance), CameraInfoGetTarget(CameraInfoFromId(60)), 1.0);
+        if ((libABFE498B_gv_aP_Triggers_skipCutscenes == true)) {
+            CinematicFade(true, 1.0, c_fadeStyleNormal, ColorWithAlpha(0.00, 0.00, 0.00, 0.00), 0.0, false);
+        }
+
         libNtve_gf_CinematicMode(false, PlayerGroupAll(), lv_fadeDuration);
     }
     libNtve_gf_GlobalCinematicSetting(false);
@@ -6949,8 +7046,9 @@ void gt_VictoryHybridExplosion_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_RandomizeButtonText_Init();
     gt_InitEndGameButton_Init();
-    gt_EndGameButtonPressed_Init();
+    gt_HandleEndGameButtons_Init();
     gt_ArchInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
