@@ -97,6 +97,8 @@ int gv_primaryObjectiveMeltOpenTemple;
 int gv_bonusObjectiveCollectRelics;
 int gv_bonusObjectiveCollectRelicsNeeded;
 int gv_bonusObjectiveCollectRelicsFound;
+int gv_basesDestroyed;
+int gv_objectiveDestroyBases;
 actor[5] gv_midCinematicPings;
 unitgroup gv_midCinematicProtoss;
 unitgroup gv_midHiddenUnitGroup;
@@ -138,6 +140,7 @@ void InitGlobals () {
     gv_primaryObjectiveLaserDrillMustSurvive = c_invalidObjectiveId;
     gv_primaryObjectiveMeltOpenTemple = c_invalidObjectiveId;
     gv_bonusObjectiveCollectRelics = c_invalidObjectiveId;
+    gv_objectiveDestroyBases = c_invalidObjectiveId;
     gv_midCinematicProtoss = UnitGroupEmpty();
     gv_midHiddenUnitGroup = UnitGroupEmpty();
 }
@@ -266,6 +269,10 @@ trigger gt_PrimaryObjectiveOpenShrineCompleted;
 trigger gt_ObjectiveRelicsCreateQ;
 trigger gt_ObjectiveRelicsUpdate;
 trigger gt_ObjectiveRelicsComplete;
+trigger gt_ObjectiveBasesCreateQ;
+trigger gt_NorthwestBaseDestroyed;
+trigger gt_NortheastBaseDestroyed;
+trigger gt_EastBaseDestroyed;
 trigger gt_BriefingQ;
 trigger gt_BriefingScene00;
 trigger gt_BriefingScene01;
@@ -4687,6 +4694,9 @@ bool gt_VictoryDestroyProtoss_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    TriggerExecute(gt_NorthwestBaseDestroyed, true, false);
+    TriggerExecute(gt_NortheastBaseDestroyed, true, false);
+    TriggerExecute(gt_EastBaseDestroyed, true, false);
     TriggerExecute(gt_TempleHPLow1Q, true, false);
     TriggerExecute(gt_TempleHPLow2Q, true, false);
     TriggerExecute(gt_TempleHPLow3Q19m, true, false);
@@ -5087,6 +5097,8 @@ bool gt_PrimaryObjectiveOpenShrineDiscovered_Func (bool testConds, bool runActio
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_PrimaryObjectiveOpenShrineCreate, true, false);
     Wait(2.0, c_timeGame);
+    TriggerExecute(gt_ObjectiveBasesCreateQ, true, false);
+    Wait(2.0, c_timeGame);
     return true;
 }
 
@@ -5219,6 +5231,176 @@ bool gt_ObjectiveRelicsComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveRelicsComplete_Init () {
     gt_ObjectiveRelicsComplete = TriggerCreate("gt_ObjectiveRelicsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Bases - Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveBasesCreateQ_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/2A5C7A6C"), StringToText(""), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", 0, 3);
+    gv_objectiveDestroyBases = ObjectiveLastCreated();
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveBasesCreateQ_Init () {
+    gt_ObjectiveBasesCreateQ = TriggerCreate("gt_ObjectiveBasesCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Northwest Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_NorthwestBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGroupCount(UnitGroup(null, gv_p5_NW_PROTOSSLeft, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    gv_basesDestroyed = gv_basesDestroyed + 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyBases, gv_basesDestroyed);
+    if ((gv_basesDestroyed >= 3)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyBases);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_NorthwestBaseDestroyed_Init () {
+    gt_NorthwestBaseDestroyed = TriggerCreate("gt_NorthwestBaseDestroyed_Func");
+    TriggerAddEventTimePeriodic(gt_NorthwestBaseDestroyed, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Northeast Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_NortheastBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGroupCount(UnitGroup(null, gv_p2_NE_PROTOSSMiddle, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+    gv_basesDestroyed = gv_basesDestroyed + 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyBases, gv_basesDestroyed);
+    if ((gv_basesDestroyed >= 3)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyBases);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_NortheastBaseDestroyed_Init () {
+    gt_NortheastBaseDestroyed = TriggerCreate("gt_NortheastBaseDestroyed_Func");
+    TriggerAddEventTimePeriodic(gt_NortheastBaseDestroyed, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: East Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_EastBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGroupCount(UnitGroup(null, gv_p4_SE_PROTOSSRight, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
+    gv_basesDestroyed = gv_basesDestroyed + 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyBases, gv_basesDestroyed);
+    if ((gv_basesDestroyed >= 3)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyBases);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EastBaseDestroyed_Init () {
+    gt_EastBaseDestroyed = TriggerCreate("gt_EastBaseDestroyed_Func");
+    TriggerAddEventTimePeriodic(gt_EastBaseDestroyed, 1.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6329,6 +6511,10 @@ void InitTriggers () {
     gt_ObjectiveRelicsCreateQ_Init();
     gt_ObjectiveRelicsUpdate_Init();
     gt_ObjectiveRelicsComplete_Init();
+    gt_ObjectiveBasesCreateQ_Init();
+    gt_NorthwestBaseDestroyed_Init();
+    gt_NortheastBaseDestroyed_Init();
+    gt_EastBaseDestroyed_Init();
     gt_BriefingQ_Init();
     gt_BriefingScene00_Init();
     gt_BriefingScene01_Init();
