@@ -257,6 +257,7 @@ trigger gt_MothershipWarmholeVAULT;
 trigger gt_MothershipWarmhole75health;
 trigger gt_MothershipWarmhole30health;
 trigger gt_MothershipDeathQ;
+trigger gt_MothershipMindControl;
 trigger gt_InitiatePatrols;
 trigger gt_ResourcePickups;
 trigger gt_ResourcePickupDialogueQ;
@@ -428,6 +429,7 @@ bool gt_ObjectiveMothershipComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
     TriggerExecute(gt_ObjectiveMothershipCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyTheMothership);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -3185,7 +3187,6 @@ bool gt_MothershipDeathQ_Func (bool testConds, bool runActions) {
 
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/EBB89FB0"), null, UnitGetPosition(EventUnit()));
     PingDestroy(gv_pINGMothership);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
     TriggerExecute(gt_ObjectiveMothershipComplete, true, false);
     TriggerQueueEnter();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
@@ -3201,6 +3202,55 @@ bool gt_MothershipDeathQ_Func (bool testConds, bool runActions) {
 void gt_MothershipDeathQ_Init () {
     gt_MothershipDeathQ = TriggerCreate("gt_MothershipDeathQ_Func");
     TriggerAddEventUnitDied(gt_MothershipDeathQ, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mothership - Mind Control
+//--------------------------------------------------------------------------------------------------
+bool gt_MothershipMindControl_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_targetUnit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((EventUnitTargetUnit() == gv_uNITDaMothership))) {
+            return false;
+        }
+
+        if (!((gv_uNITDaMothership != null))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_MothershipDeathQ, false);
+    TriggerExecute(gt_ObjectiveMothershipComplete, true, false);
+    lv_targetUnit = EventUnitTargetUnit();
+    gv_uNITDaMothership = null;
+    TriggerQueueEnter();
+    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+    libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+    // Transmission - SoundLink("TTychus05TalDarimExecutor00017", 0)
+    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05TalDarimExecutor00017", 0), c_transmissionDurationAdd, 0.0, true);
+    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+    TriggerQueueExit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MothershipMindControl_Init () {
+    gt_MothershipMindControl = TriggerCreate("gt_MothershipMindControl_Func");
+    TriggerAddEventUnitAbility(gt_MothershipMindControl, null, AbilityCommand("AP_NPSwarm", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_MothershipMindControl, null, AbilityCommand("AP_DarkArchonMindControl", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_MothershipMindControl, null, AbilityCommand("AP_MindControl", 0), c_unitAbilStageComplete, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6819,6 +6869,7 @@ void InitTriggers () {
     gt_MothershipWarmhole75health_Init();
     gt_MothershipWarmhole30health_Init();
     gt_MothershipDeathQ_Init();
+    gt_MothershipMindControl_Init();
     gt_InitiatePatrols_Init();
     gt_ResourcePickups_Init();
     gt_ResourcePickupDialogueQ_Init();
