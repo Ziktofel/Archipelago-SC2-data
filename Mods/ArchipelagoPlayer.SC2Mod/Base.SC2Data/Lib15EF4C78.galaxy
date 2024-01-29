@@ -462,7 +462,12 @@ void lib15EF4C78_gf_NM_HeroRevive (int lp_heroType) {
 
     // Implementation
     lv_heroIndex = (lp_heroType);
-    UnitIssueOrder(lib15EF4C78_gv_nM_HeroReviverUnit[lv_heroIndex], libNtve_gf_ReviveOrderWithNoTarget(lib15EF4C78_gv_nM_HeroReviveCommand[lv_heroIndex], lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex]), c_orderQueueReplace);
+    if ((libNtve_gf_UnitIsPaused(lib15EF4C78_gv_nM_HeroReviverUnit[lv_heroIndex]) == false) && (UnitOrderIsValid(lib15EF4C78_gv_nM_HeroReviverUnit[lv_heroIndex], libNtve_gf_ReviveOrderWithNoTarget(lib15EF4C78_gv_nM_HeroReviveCommand[lv_heroIndex], lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex])) == true)) {
+        UnitIssueOrder(lib15EF4C78_gv_nM_HeroReviverUnit[lv_heroIndex], libNtve_gf_ReviveOrderWithNoTarget(lib15EF4C78_gv_nM_HeroReviveCommand[lv_heroIndex], lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex]), c_orderQueueReplace);
+    }
+    else {
+        UnitRevive(lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex]);
+    }
     Wait(0.125, c_timeGame);
     if ((lib15EF4C78_gv_nM_HeroRevivePlayer[lv_heroIndex] == 1)) {
         autoC48CCAB6_g = UnitGroupSelected(1);
@@ -3735,6 +3740,34 @@ void lib15EF4C78_gt_NM_HeroReviveNova_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: NM_HeroReviveOnBehaviorExpiry
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_NM_HeroReviveOnBehaviorExpiry_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(EventUnit()) == "AP_NovaReviveCocoon"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait, false);
+    lib15EF4C78_gf_NM_HeroRevive(lib15EF4C78_ge_NM_HeroType_NM_HeroType_Nova);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_NM_HeroReviveOnBehaviorExpiry_Init () {
+    lib15EF4C78_gt_NM_HeroReviveOnBehaviorExpiry = TriggerCreate("lib15EF4C78_gt_NM_HeroReviveOnBehaviorExpiry_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_NM_HeroReviveOnBehaviorExpiry, null, "AP_CocoonReviveTimer", c_unitBehaviorChangeDeactivate);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Set5SecondsMark
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_Set5SecondsMark_Func (bool testConds, bool runActions) {
@@ -6118,6 +6151,7 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_NM_HeroReviveNovaCooldownWait_Init();
     lib15EF4C78_gt_NM_HeroReviveVOReminder_Init();
     lib15EF4C78_gt_NM_HeroReviveNova_Init();
+    lib15EF4C78_gt_NM_HeroReviveOnBehaviorExpiry_Init();
     lib15EF4C78_gt_Set5SecondsMark_Init();
     lib15EF4C78_gt_ZerglingRespawnInit_Init();
     lib15EF4C78_gt_ZerglingRespawnFindPrimaryOnZerglingDeath_Init();
