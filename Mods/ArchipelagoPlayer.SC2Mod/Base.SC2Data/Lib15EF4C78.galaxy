@@ -467,6 +467,7 @@ void lib15EF4C78_gf_NM_HeroRevive (int lp_heroType) {
     }
     else {
         UnitRevive(lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex]);
+        UnitSetPropertyFixed(lib15EF4C78_gv_nM_HeroRevivingUnit[lv_heroIndex], c_unitPropLifePercent, 100.0);
     }
     Wait(0.125, c_timeGame);
     if ((lib15EF4C78_gv_nM_HeroRevivePlayer[lv_heroIndex] == 1)) {
@@ -2695,7 +2696,13 @@ void lib15EF4C78_gf_ReviveHeroInstantly (int lp_player, int lp_type, bool lp_dis
         if ((UnitIsAlive(lib15EF4C78_gv_zS_HeroReviverKerrigan[lp_player]) == true)) {
             ActorSend(lib15EF4C78_gv_zS_KerriganActor, "Destroy");
             libNtve_gf_PlayerRemoveCooldown(lp_player, lib15EF4C78_gv_zSC_HeroReviveLinkKerrigan);
-            UnitIssueOrder(lib15EF4C78_gv_zS_HeroReviverKerrigan[lp_player], libNtve_gf_ReviveOrderWithNoTarget(AbilityCommand("KerriganRevive", 0), lib15EF4C78_gf_AP_Player_getKerriganUnit(lp_player)), c_orderQueueReplace);
+            if ((libNtve_gf_UnitIsPaused(lib15EF4C78_gv_zS_HeroReviverKerrigan[lp_player]) == false) && (UnitOrderIsValid(lib15EF4C78_gv_zS_HeroReviverKerrigan[lp_player], libNtve_gf_ReviveOrderWithNoTarget(AbilityCommand("AP_KerriganRevive", 0), lib15EF4C78_gf_AP_Player_getKerriganUnit(lp_player))) == true)) {
+                UnitIssueOrder(lib15EF4C78_gv_zS_HeroReviverKerrigan[lp_player], libNtve_gf_ReviveOrderWithNoTarget(AbilityCommand("AP_KerriganRevive", 0), lib15EF4C78_gf_AP_Player_getKerriganUnit(lp_player)), c_orderQueueReplace);
+            }
+            else {
+                UnitRevive(lib15EF4C78_gf_AP_Player_getKerriganUnit(lp_player));
+                UnitSetPropertyFixed(lib15EF4C78_gf_AP_Player_getKerriganUnit(lp_player), c_unitPropLifePercent, 100.0);
+            }
             Wait(0.0625, c_timeGame);
             UnitKill(lib15EF4C78_gv_zS_HeroReviverKerrigan[lp_player]);
             UnitIssueOrder(lib15EF4C78_gv_zS_Kerrigan, Order(AbilityCommand("AP_K5KerriganUnburrow", 0)), c_orderQueueReplace);
@@ -6102,6 +6109,33 @@ void lib15EF4C78_gt_AP_Player_onKerriganRevived_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(EventUnit()) == "AP_KerriganReviveCocoon"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_ReviveHeroInstantly(UnitGetOwner(EventUnit()), lib15EF4C78_ge_HeroUnit_Kerrigan, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init () {
+    lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry = TriggerCreate("lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry, null, "AP_CocoonReviveTimer", c_unitBehaviorChangeDeactivate);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: EmitTransformerLand
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_EmitTransformerLand_Func (bool testConds, bool runActions) {
@@ -6206,6 +6240,7 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_AP_Player_ZS_ReviveCooldownReadyKerriganAsyncRunner_Init();
     lib15EF4C78_gt_AP_Player_ZS_KerriganDied_Init();
     lib15EF4C78_gt_AP_Player_onKerriganRevived_Init();
+    lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init();
     lib15EF4C78_gt_EmitTransformerLand_Init();
 }
 
