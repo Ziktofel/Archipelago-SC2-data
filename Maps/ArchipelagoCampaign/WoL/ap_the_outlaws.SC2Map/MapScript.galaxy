@@ -238,9 +238,7 @@ trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_RaiseCrane;
 trigger gt_VictoryMarinePatrol;
-trigger gt_NorthResourceCachesonRegionEnter;
 trigger gt_ResourceCachesonpickup;
-trigger gt_NorthResourceCachescheck;
 trigger gt_ObjectiveCloseResourceCacheCreate;
 trigger gt_ObjectiveCloseResourceCacheComplete;
 trigger gt_ObjectiveNorthResourceCacheCreate;
@@ -530,8 +528,9 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         gv_numberOfPallets += 1;
         gf_CreateInfoText(auto44256831_var);
     }
-    gv_closeResources = UnitGroup(null, 0, RegionFromId(29), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-    gv_northResources = UnitGroup(null, 0, RegionFromId(7), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    gv_closeResources = UnitGroup("PalletMinerals", 0, RegionFromId(29), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    UnitGroupAddUnitGroup(gv_closeResources, UnitGroup("PalletGas", 0, RegionFromId(29), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    gv_northResources = UnitGroup("PalletMinerals", 0, RegionFromId(7), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     TriggerExecute(gt_DominonGuardsInitialization, true, false);
     gv_initialAttackSquad = UnitGroup("Marine", gv_pLAYER_05_PATROL, RegionFromId(22), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     gv_dominionAttackSquadSize = UnitGroupCount(gv_initialAttackSquad, c_unitCountAlive);
@@ -4779,33 +4778,6 @@ void gt_VictoryMarinePatrol_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: North Resource Caches onRegionEnter
-//--------------------------------------------------------------------------------------------------
-bool gt_NorthResourceCachesonRegionEnter_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerExecute(gt_NorthResourceCachescheck, true, false);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_NorthResourceCachesonRegionEnter_Init () {
-    gt_NorthResourceCachesonRegionEnter = TriggerCreate("gt_NorthResourceCachesonRegionEnter_Func");
-    TriggerAddEventUnitRegion(gt_NorthResourceCachesonRegionEnter, null, RegionFromId(7), true);
-}
-
-//--------------------------------------------------------------------------------------------------
 // Trigger: Resource Caches on pickup
 //--------------------------------------------------------------------------------------------------
 bool gt_ResourceCachesonpickup_Func (bool testConds, bool runActions) {
@@ -4822,16 +4794,28 @@ bool gt_ResourceCachesonpickup_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    if ((UnitGroupCount(gv_closeResources, c_unitCountAlive) == 0)) {
+    if ((UnitGroupHasUnit(gv_closeResources, EventUnit()) == true)) {
+        UnitGroupRemove(gv_closeResources, EventUnit());
+    }
+
+    if ((UnitGroupHasUnit(gv_northResources, EventUnit()) == true)) {
+        UnitGroupRemove(gv_northResources, EventUnit());
+    }
+
+    if ((UnitGroupCount(gv_closeResources, c_unitCountAll) == 0)) {
         TriggerExecute(gt_ObjectiveCloseResourceCacheComplete, true, false);
+        if ((UnitGroupCount(gv_northResources, c_unitCountAll) == 0)) {
+            TriggerEnable(TriggerGetCurrent(), false);
+        }
+
     }
 
-    if ((UnitGroupCount(gv_northResources, c_unitCountAlive) == 0)) {
+    if ((UnitGroupCount(gv_northResources, c_unitCountAll) == 0)) {
         TriggerExecute(gt_ObjectiveNorthResourceCacheComplete, true, false);
-    }
+        if ((UnitGroupCount(gv_closeResources, c_unitCountAll) == 0)) {
+            TriggerEnable(TriggerGetCurrent(), false);
+        }
 
-    if ((UnitGroupCount(gv_northResources, c_unitCountAlive) == 0) && (UnitGroupCount(gv_closeResources, c_unitCountAlive) == 0)) {
-        TriggerEnable(TriggerGetCurrent(), false);
     }
 
     return true;
@@ -4842,43 +4826,6 @@ void gt_ResourceCachesonpickup_Init () {
     gt_ResourceCachesonpickup = TriggerCreate("gt_ResourceCachesonpickup_Func");
     TriggerAddEventUnitAbility(gt_ResourceCachesonpickup, null, AbilityCommand("PickupMinerals100", 0), c_unitAbilStageExecute, false);
     TriggerAddEventUnitAbility(gt_ResourceCachesonpickup, null, AbilityCommand("PickupGas100", 0), c_unitAbilStageExecute, false);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: North Resource Caches check
-//--------------------------------------------------------------------------------------------------
-bool gt_NorthResourceCachescheck_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((UnitCount(null, gv_pLAYER_01_USER, RegionFromId(7), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) >= 1))) {
-            return false;
-        }
-
-        if (!((UnitCount(null, gv_pLAYER_05_PATROL, RegionFromId(7), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) == 0))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerEnable(gt_NorthResourceCachesonRegionEnter, false);
-    TriggerEnable(gt_ResourceCachesonpickup, false);
-    TriggerExecute(gt_ObjectiveNorthResourceCacheComplete, true, false);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_NorthResourceCachescheck_Init () {
-    gt_NorthResourceCachescheck = TriggerCreate("gt_NorthResourceCachescheck_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5336,9 +5283,7 @@ void InitTriggers () {
     gt_VictoryCleanup_Init();
     gt_RaiseCrane_Init();
     gt_VictoryMarinePatrol_Init();
-    gt_NorthResourceCachesonRegionEnter_Init();
     gt_ResourceCachesonpickup_Init();
-    gt_NorthResourceCachescheck_Init();
     gt_ObjectiveCloseResourceCacheCreate_Init();
     gt_ObjectiveCloseResourceCacheComplete_Init();
     gt_ObjectiveNorthResourceCacheCreate_Init();
