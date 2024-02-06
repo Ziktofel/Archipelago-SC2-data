@@ -96,7 +96,10 @@ int gv_dominionBasePing;
 int gv_objectiveRebels;
 int gv_rebelPing;
 bool gv_victoryCinematicCompleted;
+unitgroup gv_closeResources;
+unitgroup gv_northResources;
 int gv_objectiveClaimNorthResourceCaches;
+int gv_objectiveClaimCloseResourceCaches;
 int gv_objectiveDoANiceJobClearingThatBunker;
 
 void InitGlobals () {
@@ -116,7 +119,10 @@ void InitGlobals () {
     gv_dominionBasePing = c_invalidPingId;
     gv_objectiveRebels = c_invalidObjectiveId;
     gv_rebelPing = c_invalidPingId;
+    gv_closeResources = UnitGroupEmpty();
+    gv_northResources = UnitGroupEmpty();
     gv_objectiveClaimNorthResourceCaches = c_invalidObjectiveId;
+    gv_objectiveClaimCloseResourceCaches = c_invalidObjectiveId;
     gv_objectiveDoANiceJobClearingThatBunker = c_invalidObjectiveId;
 }
 
@@ -204,7 +210,6 @@ trigger gt_AttackWaveDivert;
 trigger gt_AIMinerals;
 trigger gt_AIGas;
 trigger gt_AICrippled;
-trigger gt_ResourceCachesTipQ;
 trigger gt_StatMedicTrained;
 trigger gt_StatBarracksBuilt;
 trigger gt_ResourcePalletPickups;
@@ -233,11 +238,11 @@ trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_RaiseCrane;
 trigger gt_VictoryMarinePatrol;
-trigger gt_NorthResourceCachesonRegionEnter;
-trigger gt_NorthResourceCachesonUnitDie;
-trigger gt_NorthResourceCachescheck;
-trigger gt_ObjectiveResourceCacheCreate;
-trigger gt_ObjectiveResourceCacheComplete;
+trigger gt_ResourceCachesonpickup;
+trigger gt_ObjectiveCloseResourceCacheCreate;
+trigger gt_ObjectiveCloseResourceCacheComplete;
+trigger gt_ObjectiveNorthResourceCacheCreate;
+trigger gt_ObjectiveNorthResourceCacheComplete;
 trigger gt_ObjectiveBunkerCreate;
 trigger gt_ObjectiveBunkerComplete;
 trigger gt_ArchInit;
@@ -523,6 +528,9 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         gv_numberOfPallets += 1;
         gf_CreateInfoText(auto44256831_var);
     }
+    gv_closeResources = UnitGroup("PalletMinerals", 0, RegionFromId(29), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    UnitGroupAddUnitGroup(gv_closeResources, UnitGroup("PalletGas", 0, RegionFromId(29), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    gv_northResources = UnitGroup("PalletMinerals", 0, RegionFromId(7), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     TriggerExecute(gt_DominonGuardsInitialization, true, false);
     gv_initialAttackSquad = UnitGroup("Marine", gv_pLAYER_05_PATROL, RegionFromId(22), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     gv_dominionAttackSquadSize = UnitGroupCount(gv_initialAttackSquad, c_unitCountAlive);
@@ -786,7 +794,7 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     Wait(2.0, c_timeGame);
     TriggerExecute(gt_ObjectiveDestroytheDominionBaseDiscoverQ, true, true);
     Wait(2.0, c_timeGame);
-    TriggerExecute(gt_ObjectiveResourceCacheCreate, true, true);
+    TriggerExecute(gt_ObjectiveNorthResourceCacheCreate, true, true);
     Wait(3.0, c_timeGame);
     TriggerExecute(gt_TutorialReviewQ, true, true);
     Wait(2.0, c_timeReal);
@@ -3782,42 +3790,6 @@ void gt_AICrippled_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Resource Caches Tip Q
-//--------------------------------------------------------------------------------------------------
-bool gt_ResourceCachesTipQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
-            return false;
-        }
-
-        if (!((UnitFilterMatch(EventUnit(), gv_pLAYER_01_USER, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)))) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ResourceCachesTipQ_Init () {
-    gt_ResourceCachesTipQ = TriggerCreate("gt_ResourceCachesTipQ_Func");
-    TriggerAddEventUnitRegion(gt_ResourceCachesTipQ, null, RegionFromId(29), true);
-}
-
-//--------------------------------------------------------------------------------------------------
 // Trigger: Stat - Medic Trained
 //--------------------------------------------------------------------------------------------------
 bool gt_StatMedicTrained_Func (bool testConds, bool runActions) {
@@ -4806,13 +4778,13 @@ void gt_VictoryMarinePatrol_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: North Resource Caches onRegionEnter
+// Trigger: Resource Caches on pickup
 //--------------------------------------------------------------------------------------------------
-bool gt_NorthResourceCachesonRegionEnter_Func (bool testConds, bool runActions) {
+bool gt_ResourceCachesonpickup_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
     }
@@ -4822,58 +4794,47 @@ bool gt_NorthResourceCachesonRegionEnter_Func (bool testConds, bool runActions) 
         return true;
     }
 
-    TriggerExecute(gt_NorthResourceCachescheck, true, false);
+    if ((UnitGroupHasUnit(gv_closeResources, EventUnit()) == true)) {
+        UnitGroupRemove(gv_closeResources, EventUnit());
+    }
+
+    if ((UnitGroupHasUnit(gv_northResources, EventUnit()) == true)) {
+        UnitGroupRemove(gv_northResources, EventUnit());
+    }
+
+    if ((UnitGroupCount(gv_closeResources, c_unitCountAll) == 0)) {
+        TriggerExecute(gt_ObjectiveCloseResourceCacheComplete, true, false);
+        if ((UnitGroupCount(gv_northResources, c_unitCountAll) == 0)) {
+            TriggerEnable(TriggerGetCurrent(), false);
+        }
+
+    }
+
+    if ((UnitGroupCount(gv_northResources, c_unitCountAll) == 0)) {
+        TriggerExecute(gt_ObjectiveNorthResourceCacheComplete, true, false);
+        if ((UnitGroupCount(gv_closeResources, c_unitCountAll) == 0)) {
+            TriggerEnable(TriggerGetCurrent(), false);
+        }
+
+    }
+
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_NorthResourceCachesonRegionEnter_Init () {
-    gt_NorthResourceCachesonRegionEnter = TriggerCreate("gt_NorthResourceCachesonRegionEnter_Func");
-    TriggerAddEventUnitRegion(gt_NorthResourceCachesonRegionEnter, null, RegionFromId(7), true);
+void gt_ResourceCachesonpickup_Init () {
+    gt_ResourceCachesonpickup = TriggerCreate("gt_ResourceCachesonpickup_Func");
+    TriggerAddEventUnitAbility(gt_ResourceCachesonpickup, null, AbilityCommand("PickupMinerals100", 0), c_unitAbilStageExecute, false);
+    TriggerAddEventUnitAbility(gt_ResourceCachesonpickup, null, AbilityCommand("PickupGas100", 0), c_unitAbilStageExecute, false);
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: North Resource Caches onUnitDie
+// Trigger: Objective Close Resource Cache Create
 //--------------------------------------------------------------------------------------------------
-bool gt_NorthResourceCachesonUnitDie_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveCloseResourceCacheCreate_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_05_PATROL))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerExecute(gt_NorthResourceCachescheck, true, false);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_NorthResourceCachesonUnitDie_Init () {
-    gt_NorthResourceCachesonUnitDie = TriggerCreate("gt_NorthResourceCachesonUnitDie_Func");
-    TriggerAddEventUnitDied(gt_NorthResourceCachesonUnitDie, null);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: North Resource Caches check
-//--------------------------------------------------------------------------------------------------
-bool gt_NorthResourceCachescheck_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((UnitCount(null, gv_pLAYER_01_USER, RegionFromId(7), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) >= 1))) {
-            return false;
-        }
-
-        if (!((UnitCount(null, gv_pLAYER_05_PATROL, RegionFromId(7), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) == 0))) {
-            return false;
-        }
-
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
@@ -4885,21 +4846,50 @@ bool gt_NorthResourceCachescheck_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerEnable(gt_NorthResourceCachesonRegionEnter, false);
-    TriggerEnable(gt_NorthResourceCachesonUnitDie, false);
-    TriggerExecute(gt_ObjectiveResourceCacheComplete, true, false);
+    ObjectiveCreate(StringExternal("Param/Value/62DC26C8"), StringToText(""), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    gv_objectiveClaimCloseResourceCaches = ObjectiveLastCreated();
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_NorthResourceCachescheck_Init () {
-    gt_NorthResourceCachescheck = TriggerCreate("gt_NorthResourceCachescheck_Func");
+void gt_ObjectiveCloseResourceCacheCreate_Init () {
+    gt_ObjectiveCloseResourceCacheCreate = TriggerCreate("gt_ObjectiveCloseResourceCacheCreate_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Resource Cache Create
+// Trigger: Objective Close Resource Cache Complete
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveResourceCacheCreate_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveCloseResourceCacheComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    TriggerExecute(gt_ObjectiveCloseResourceCacheCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClaimCloseResourceCaches);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveCloseResourceCacheComplete_Init () {
+    gt_ObjectiveCloseResourceCacheComplete = TriggerCreate("gt_ObjectiveCloseResourceCacheComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective North Resource Cache Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveNorthResourceCacheCreate_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -4921,14 +4911,14 @@ bool gt_ObjectiveResourceCacheCreate_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveResourceCacheCreate_Init () {
-    gt_ObjectiveResourceCacheCreate = TriggerCreate("gt_ObjectiveResourceCacheCreate_Func");
+void gt_ObjectiveNorthResourceCacheCreate_Init () {
+    gt_ObjectiveNorthResourceCacheCreate = TriggerCreate("gt_ObjectiveNorthResourceCacheCreate_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Resource Cache Complete
+// Trigger: Objective North Resource Cache Complete
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveResourceCacheComplete_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveNorthResourceCacheComplete_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -4944,14 +4934,14 @@ bool gt_ObjectiveResourceCacheComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
-    TriggerExecute(gt_ObjectiveResourceCacheCreate, true, false);
+    TriggerExecute(gt_ObjectiveNorthResourceCacheCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClaimNorthResourceCaches);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveResourceCacheComplete_Init () {
-    gt_ObjectiveResourceCacheComplete = TriggerCreate("gt_ObjectiveResourceCacheComplete_Func");
+void gt_ObjectiveNorthResourceCacheComplete_Init () {
+    gt_ObjectiveNorthResourceCacheComplete = TriggerCreate("gt_ObjectiveNorthResourceCacheComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5265,7 +5255,6 @@ void InitTriggers () {
     gt_AIMinerals_Init();
     gt_AIGas_Init();
     gt_AICrippled_Init();
-    gt_ResourceCachesTipQ_Init();
     gt_StatMedicTrained_Init();
     gt_StatBarracksBuilt_Init();
     gt_ResourcePalletPickups_Init();
@@ -5294,11 +5283,11 @@ void InitTriggers () {
     gt_VictoryCleanup_Init();
     gt_RaiseCrane_Init();
     gt_VictoryMarinePatrol_Init();
-    gt_NorthResourceCachesonRegionEnter_Init();
-    gt_NorthResourceCachesonUnitDie_Init();
-    gt_NorthResourceCachescheck_Init();
-    gt_ObjectiveResourceCacheCreate_Init();
-    gt_ObjectiveResourceCacheComplete_Init();
+    gt_ResourceCachesonpickup_Init();
+    gt_ObjectiveCloseResourceCacheCreate_Init();
+    gt_ObjectiveCloseResourceCacheComplete_Init();
+    gt_ObjectiveNorthResourceCacheCreate_Init();
+    gt_ObjectiveNorthResourceCacheComplete_Init();
     gt_ObjectiveBunkerCreate_Init();
     gt_ObjectiveBunkerComplete_Init();
     gt_ArchInit_Init();
