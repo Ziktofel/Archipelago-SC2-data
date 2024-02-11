@@ -295,6 +295,7 @@ trigger gt_DefeatBaseDead;
 trigger gt_DefeatNovaDead;
 trigger gt_DefeatCivilianCenterMustSurviveFailed;
 trigger gt_VictoryDestroyTaldarimMothershipCompleted;
+trigger gt_VictoryTaldarimMothershipDominated;
 trigger gt_VictorySequence;
 trigger gt_Victory;
 trigger gt_Defeat;
@@ -5917,6 +5918,51 @@ void gt_VictoryDestroyTaldarimMothershipCompleted_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Victory Tal'darim Mothership Dominated
+//--------------------------------------------------------------------------------------------------
+bool gt_VictoryTaldarimMothershipDominated_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_targetUnit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_targetUnit = EventUnitTargetUnit();
+    if ((gv_mothership != null) && (lv_targetUnit == gv_mothership)) {
+        TriggerExecute(gt_ObjectiveDestroyTaldarimMothershipComplete, true, false);
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_VictorySequence, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_VictoryTaldarimMothershipDominated_Init () {
+    gt_VictoryTaldarimMothershipDominated = TriggerCreate("gt_VictoryTaldarimMothershipDominated_Func");
+    TriggerAddEventUnitAbility(gt_VictoryTaldarimMothershipDominated, null, AbilityCommand("AP_NPSwarm", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_VictoryTaldarimMothershipDominated, null, AbilityCommand("AP_DarkArchonMindControl", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_VictoryTaldarimMothershipDominated, null, AbilityCommand("AP_MindControl", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_VictoryTaldarimMothershipDominated, null, AbilityCommand("AP_NovaHelmetDomination", 0), c_unitAbilStageComplete, false);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Victory Sequence
 //--------------------------------------------------------------------------------------------------
 bool gt_VictorySequence_Func (bool testConds, bool runActions) {
@@ -8238,6 +8284,7 @@ void InitTriggers () {
     gt_DefeatNovaDead_Init();
     gt_DefeatCivilianCenterMustSurviveFailed_Init();
     gt_VictoryDestroyTaldarimMothershipCompleted_Init();
+    gt_VictoryTaldarimMothershipDominated_Init();
     gt_VictorySequence_Init();
     gt_Victory_Init();
     gt_Defeat_Init();
