@@ -63,6 +63,7 @@ sound gv_flashFreezeSound;
 bool gv_flashFreezeActive;
 unitgroup gv_overlordPathingBlockers;
 int gv_inCombatIndicator;
+int gv_deadZerglings;
 fixed gv_flashFreeze_Duration;
 timer gv_flashFreeze_Timer;
 int gv_flashFreezeDuration_Window;
@@ -194,6 +195,7 @@ trigger gt_DEBUGStage2;
 trigger gt_DEBUGStartBlizzard;
 trigger gt_DEBUGStartSnow;
 trigger gt_DEBUGStopSnow;
+trigger gt_onZerglingDie;
 trigger gt_StartGameStage1Q;
 trigger gt_StartGameStage2Q;
 trigger gt_UnitDiesGiveEssenceUpdateStats;
@@ -1885,6 +1887,37 @@ void gt_DEBUGStopSnow_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: onZerglingDie
+//--------------------------------------------------------------------------------------------------
+bool gt_onZerglingDie_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER))) {
+            return false;
+        }
+
+        if (!(((UnitGetType(EventUnit()) == "AP_Zergling") || (UnitGetType(EventUnit()) == "AP_ZerglingBurrowed")))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    gv_deadZerglings = (gv_deadZerglings + 1);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onZerglingDie_Init () {
+    gt_onZerglingDie = TriggerCreate("gt_onZerglingDie_Func");
+    TriggerAddEventUnitDied(gt_onZerglingDie, null);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Start Game - Stage 1 Q
 //--------------------------------------------------------------------------------------------------
 bool gt_StartGameStage1Q_Func (bool testConds, bool runActions) {
@@ -2531,10 +2564,15 @@ bool gt_StartFirstFlashFreezeQ_Func (bool testConds, bool runActions) {
     for (;; autoB8CFF056_u -= 1) {
         autoB8CFF056_var = UnitGroupUnitFromEnd(autoB8CFF056_g, autoB8CFF056_u);
         if (autoB8CFF056_var == null) { break; }
-        if ((autoB8CFF056_var != gv_kerrigan) && (UnitGetType(autoB8CFF056_var) != "AutomatedExtractor")) {
+        if ((autoB8CFF056_var != gv_kerrigan) && (UnitGetType(autoB8CFF056_var) != "AutomatedExtractor") && (UnitGetType(autoB8CFF056_var) != "AP_RavagerCocoon")) {
             gf_ReplaceUnit(autoB8CFF056_var);
         }
+        else {
+            if ((UnitGetType(autoB8CFF056_var) == "AP_RavagerCocoon")) {
+                libNtve_gf_ReplaceUnit(EventUnit(), "AP_Ravager", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+            }
 
+        }
     }
     TriggerQueueExit();
     TriggerExecute(gt_FlashFreezeEndingRandomQ, true, false);
@@ -7865,6 +7903,10 @@ bool gt_MidRecoverBroodCleanup_Func (bool testConds, bool runActions) {
         }
     }
 
+    lib15EF4C78_gf_ZerglingRespawnSetPrimaryHatchery(gv_pLAYER_01_USER, gv_startingHatchery);
+    lib15EF4C78_gf_AP_Player_clearZerglingRespawnChargesFromPlayer(gv_pLAYER_01_USER);
+    PlayerAddChargeUsed(gv_pLAYER_01_USER, "Abil/AP_ZerglingRespawn", (-gv_deadZerglings));
+    gv_deadZerglings = 0;
     auto1FD7D7EE_g = UnitGroup("Probe", gv_pLAYER_04_PROTOSS, RegionFromId(4), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto1FD7D7EE_u = UnitGroupCount(auto1FD7D7EE_g, c_unitCountAll);
     for (;; auto1FD7D7EE_u -= 1) {
@@ -8600,6 +8642,7 @@ void InitTriggers () {
     gt_DEBUGStartBlizzard_Init();
     gt_DEBUGStartSnow_Init();
     gt_DEBUGStopSnow_Init();
+    gt_onZerglingDie_Init();
     gt_StartGameStage1Q_Init();
     gt_StartGameStage2Q_Init();
     gt_UnitDiesGiveEssenceUpdateStats_Init();
