@@ -69,6 +69,7 @@ timer gv_protectArchiveTimer;
 int[11] gv_mineralFieldAmounts;
 int gv_leaderboard;
 int gv_killCount;
+bool gv_mothershipHeroBorn;
 unitgroup gv_gGWavesUnitGroup;
 fixed gv_nydusSpawnDelay;
 region gv_nydusSpawnRegion;
@@ -138,6 +139,7 @@ void gf_SpawnNydusWormZerglings (region lp_region);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_KillPlayerDead;
 trigger gt_RandomizeButtonText;
 trigger gt_InitEndGameButton;
 trigger gt_HandleEndGameButtons;
@@ -335,6 +337,62 @@ void gf_SpawnNydusWormZerglings (region lp_region) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Kill Player Dead
+//--------------------------------------------------------------------------------------------------
+bool gt_KillPlayerDead_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    unitgroup auto17C73D8C_g;
+    int auto17C73D8C_u;
+    unit auto17C73D8C_var;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto17C73D8C_g = UnitGroup(null, gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto17C73D8C_u = UnitGroupCount(auto17C73D8C_g, c_unitCountAll);
+    for (;; auto17C73D8C_u -= 1) {
+        auto17C73D8C_var = UnitGroupUnitFromEnd(auto17C73D8C_g, auto17C73D8C_u);
+        if (auto17C73D8C_var == null) { break; }
+        if ((UnitTypeTestAttribute(UnitGetType(auto17C73D8C_var), c_unitAttributeStructure) == true)) {
+            UnitSetPropertyFixed(auto17C73D8C_var, c_unitPropShields, 0.0);
+            UnitSetPropertyFixed(auto17C73D8C_var, c_unitPropLifeRegen, -25.0);
+        }
+
+        libNtve_gf_ChangeUnitDamage(auto17C73D8C_var, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_Mega);
+        UnitBehaviorAdd(auto17C73D8C_var, "AP_AdeptPsionicTransferDamageDebuff", UnitFromId(843), 1);
+        UnitBehaviorAdd(auto17C73D8C_var, "AP_Corruption", UnitFromId(843), 1);
+        UnitBehaviorAdd(auto17C73D8C_var, "AP_PsionicLiftRaise", UnitFromId(843), 1);
+        UnitBehaviorAdd(auto17C73D8C_var, "AP_PsionicLiftDamage", UnitFromId(843), 1);
+        UnitBehaviorAdd(auto17C73D8C_var, "WallOfFireBurn", UnitFromId(843), 1);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_KillPlayerDead_Init () {
+    gt_KillPlayerDead = TriggerCreate("gt_KillPlayerDead_Func");
+    TriggerEnable(gt_KillPlayerDead, false);
+    TriggerAddEventTimePeriodic(gt_KillPlayerDead, 0.25, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Randomize Button Text
 //--------------------------------------------------------------------------------------------------
 bool gt_RandomizeButtonText_Func (bool testConds, bool runActions) {
@@ -402,6 +460,10 @@ bool gt_InitEndGameButton_Func (bool testConds, bool runActions) {
             return false;
         }
 
+        if (!((gv_mothershipHeroBorn == true))) {
+            return false;
+        }
+
         if (!((gv_gameOver == false))) {
             return false;
         }
@@ -413,7 +475,7 @@ bool gt_InitEndGameButton_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    DialogCreate(450, 120, c_anchorRight, 0, 50, true);
+    DialogCreate(480, 120, c_anchorRight, 0, 50, true);
     gv_endGameDialog = DialogLastCreated();
     libNtve_gf_CreateDialogItemLabel(DialogLastCreated(), 300, 50, c_anchorTop, 50, 50, StringExternal("Param/Value/B3F6B4A0"), ColorWithAlpha(0,0,0,0), false, 2.0);
     gv_confirmText = DialogControlLastCreated();
@@ -454,12 +516,6 @@ void gt_InitEndGameButton_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_HandleEndGameButtons_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
-    const int auto4CCDD38B_n = 5;
-    int auto4CCDD38B_i;
-    unitgroup auto67A6F6A6_g;
-    int auto67A6F6A6_u;
-    unit auto67A6F6A6_var;
-
     // Conditions
     if (testConds) {
         if (!((DialogControlGetDialog(EventDialogControl()) == gv_endGameDialog))) {
@@ -492,16 +548,8 @@ bool gt_HandleEndGameButtons_Func (bool testConds, bool runActions) {
     }
     else if ((EventDialogControl() == gv_confirmEndGame)) {
         DialogSetVisible(DialogControlGetDialog(EventDialogControl()), PlayerGroupAll(), false);
-        for (auto4CCDD38B_i = 1; auto4CCDD38B_i <= auto4CCDD38B_n; auto4CCDD38B_i += 1) {
-            auto67A6F6A6_g = UnitGroup(null, gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-            auto67A6F6A6_u = UnitGroupCount(auto67A6F6A6_g, c_unitCountAll);
-            for (;; auto67A6F6A6_u -= 1) {
-                auto67A6F6A6_var = UnitGroupUnitFromEnd(auto67A6F6A6_g, auto67A6F6A6_u);
-                if (auto67A6F6A6_var == null) { break; }
-                UnitKill(auto67A6F6A6_var);
-                Wait(0.02, c_timeGame);
-            }
-        }
+        CameraShakeStart(1, c_cameraPositionTarget, c_cameraDirectionXYZ, 1.0, 2.0, 100.0, 10.0);
+        TriggerEnable(gt_KillPlayerDead, true);
     }
     return true;
 }
@@ -1401,6 +1449,7 @@ bool gt_NewTech04MothershipQ_Func (bool testConds, bool runActions) {
     // Transmission - SoundLink("TZeratul04Artanis00009", -1)
     libCamp_gf_SendTransmissionCampaign(gv_heroMothership, SoundLink("TZeratul04Artanis00009", 0), c_transmissionDurationAdd, 1.0, true);
     lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    gv_mothershipHeroBorn = true;
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     ActorSend(ActorFromDoodad(DoodadFromId(482)), "AnimGroupRemove Work");
     Wait(1.0, c_timeGame);
@@ -7048,6 +7097,7 @@ void gt_VictoryHybridExplosion_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_KillPlayerDead_Init();
     gt_RandomizeButtonText_Init();
     gt_InitEndGameButton_Init();
     gt_HandleEndGameButtons_Init();
