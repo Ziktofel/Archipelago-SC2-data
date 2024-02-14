@@ -192,6 +192,7 @@ trigger gt_S1_VoidTrashersAttack;
 trigger gt_S1_RemoveActorfromVoidForces;
 trigger gt_S1_VoidForcesUnitDies;
 trigger gt_S1_VoidForcesDestroyed;
+trigger gt_onPlayerRefineryDeath;
 trigger gt_S2_ProgressAutoSave01;
 trigger gt_S2_ProgressAutoSave02;
 trigger gt_S2_ProgressAutoSave03;
@@ -2285,6 +2286,35 @@ void gt_S1_VoidForcesDestroyed_Init () {
     gt_S1_VoidForcesDestroyed = TriggerCreate("gt_S1_VoidForcesDestroyed_Func");
     TriggerEnable(gt_S1_VoidForcesDestroyed, false);
     TriggerAddEventTimePeriodic(gt_S1_VoidForcesDestroyed, 1.0, c_timeAI);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onPlayerRefineryDeath
+//--------------------------------------------------------------------------------------------------
+bool gt_onPlayerRefineryDeath_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(EventUnit()) == "AP_Refinery"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    libNtve_gf_CreateUnitsAtPoint2(1, "VespeneGeyser", 0, 0, UnitGetPosition(EventUnit()));
+    UnitSetPropertyFixed(UnitLastCreated(), c_unitPropResources, UnitGetPropertyInt(EventUnit(), c_unitPropResources, c_unitPropCurrent));
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_onPlayerRefineryDeath_Init () {
+    gt_onPlayerRefineryDeath = TriggerCreate("gt_onPlayerRefineryDeath_Func");
+    TriggerAddEventUnitDied(gt_onPlayerRefineryDeath, UnitRefFromVariable("gv_playersRefinery"));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -8449,6 +8479,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
         UnitSetPropertyFixed(autoED2C508D_var, c_unitPropLifePercent, 100.0);
         libNtve_gf_ShowHideUnit(autoED2C508D_var, true);
         libNtve_gf_PauseUnit(autoED2C508D_var, false);
+        lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit(autoED2C508D_var);
     }
     libNtve_gf_ReplaceUnit(UnitFromId(65), "AP_SiegeTankSieged", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
     libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER_01_USER);
@@ -9247,6 +9278,7 @@ void InitTriggers () {
     gt_S1_RemoveActorfromVoidForces_Init();
     gt_S1_VoidForcesUnitDies_Init();
     gt_S1_VoidForcesDestroyed_Init();
+    gt_onPlayerRefineryDeath_Init();
     gt_S2_ProgressAutoSave01_Init();
     gt_S2_ProgressAutoSave02_Init();
     gt_S2_ProgressAutoSave03_Init();
