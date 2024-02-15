@@ -39,6 +39,7 @@ const int gv_p10_REINFORCEMENTPROTOSS = 10;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
+bool gv_pretendPlayerIsDead;
 int gv_cancelCount;
 int gv_endGameDialog;
 int gv_endGameButton;
@@ -549,6 +550,8 @@ bool gt_HandleEndGameButtons_Func (bool testConds, bool runActions) {
     else if ((EventDialogControl() == gv_confirmEndGame)) {
         DialogSetVisible(DialogControlGetDialog(EventDialogControl()), PlayerGroupAll(), false);
         TriggerEnable(gt_KillPlayerDead, true);
+        Wait(5.0, c_timeGame);
+        gv_pretendPlayerIsDead = true;
     }
     return true;
 }
@@ -5282,7 +5285,7 @@ bool gt_VictoryDefeatforPlayer_Func (bool testConds, bool runActions) {
     UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_Core_Controller2", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_Core_SupplyHolder", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_ZerglingRespawnControllerUnit", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
-    if ((UnitGroupCount(lv_unitGroup, c_unitCountAlive) == 0)) {
+    if (((UnitGroupCount(lv_unitGroup, c_unitCountAlive) == 0) || (gv_pretendPlayerIsDead == true))) {
         TriggerEnable(TriggerGetCurrent(), false);
         lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
         gv_gameOver = true;
