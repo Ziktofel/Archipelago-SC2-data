@@ -2941,10 +2941,19 @@ void gt_TransmissionShadowTendrilIntroQ_Init () {
 // Trigger: Shadow Tendril Damage Warning
 //--------------------------------------------------------------------------------------------------
 bool gt_ShadowTendrilDamageWarning_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_unitGroupToSearch;
+    unit lv_unit;
+
     // Automatic Variable Declarations
     unitgroup auto8CBD6C49_g;
     int auto8CBD6C49_u;
     unit auto8CBD6C49_var;
+    unitgroup autoFCC74842_g;
+    int autoFCC74842_u;
+
+    // Variable Initialization
+    lv_unitGroupToSearch = UnitGroupEmpty();
 
     // Conditions
     if (testConds) {
@@ -2971,7 +2980,15 @@ bool gt_ShadowTendrilDamageWarning_Func (bool testConds, bool runActions) {
     for (;; auto8CBD6C49_u -= 1) {
         auto8CBD6C49_var = UnitGroupUnitFromEnd(auto8CBD6C49_g, auto8CBD6C49_u);
         if (auto8CBD6C49_var == null) { break; }
-        if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(auto8CBD6C49_var), 15.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) == 1)) {
+        lv_unitGroupToSearch = UnitGroup(null, gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(auto8CBD6C49_var), 15.0), UnitFilter(0, 0, (1 << c_targetFilterStructure) | (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoFCC74842_g = UnitGroupFilter("AP_Larva", c_playerAny, lv_unitGroupToSearch, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoFCC74842_u = UnitGroupCount(autoFCC74842_g, c_unitCountAll);
+        for (;; autoFCC74842_u -= 1) {
+            lv_unit = UnitGroupUnitFromEnd(autoFCC74842_g, autoFCC74842_u);
+            if (lv_unit == null) { break; }
+            UnitGroupRemove(lv_unitGroupToSearch, lv_unit);
+        }
+        if ((UnitGroupCount(lv_unitGroupToSearch, c_unitCountAlive) >= 1)) {
             TriggerEnable(TriggerGetCurrent(), false);
             MinimapPing(PlayerGroupAll(), UnitGetPosition(auto8CBD6C49_var), 5.0, Color(100.00, 0.00, 0.00));
             UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/CD0A5CC7"), null, auto8CBD6C49_var);
