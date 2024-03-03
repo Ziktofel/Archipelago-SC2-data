@@ -1,0 +1,199 @@
+// A library for showing and hiding Protoss train ability buttons in the main command-card
+// to achieve a Sticky-key effect.
+include "AP_Player_StickyProtossBuildButtons_h"
+
+// Constants
+const int AP_Sticky_CLASS_ZEALOT = 0;
+const int AP_Sticky_CLASS_SENTRY = 1;
+const int AP_Sticky_CLASS_STALKER = 2;
+const int AP_Sticky_CLASS_HIGH_TEMPLAR = 3;
+const int AP_Sticky_CLASS_DARK_TEMPLAR = 4;
+const int AP_Sticky_CLASS_ADEPT = 5;
+const int AP_Sticky_CLASS_IMMORTAL = 6;
+const int AP_Sticky_CLASS_COLOSSUS = 7;
+const int AP_Sticky_CLASS_DISRUPTOR = 8;
+const int AP_Sticky_CLASS_PHOENIX = 9;
+const int AP_Sticky_CLASS_VOID_RAY = 10;
+const int AP_Sticky_CLASS_CARRIER = 11;
+const int AP_Sticky_CLASS_TEMPEST = 12;
+const int AP_Sticky_CLASS_ARBITER = 13;
+const int AP_Sticky_NUM_UNIT_CLASSES = 14;
+
+const int AP_Sticky_FACTION_AIUR = 0;
+const int AP_Sticky_FACTION_PURIFIER = 1;
+const int AP_Sticky_FACTION_NERAZIM = 2;
+const int AP_Sticky_FACTION_TALDARIM = 3;
+const int AP_Sticky_NUM_FACTIONS_PER_CLASS = 4;
+
+const int AP_Sticky_NUM_UNITS = 30;
+
+const int AP_Sticky_NUM_GATEWAY_UNITS = 21;
+const int AP_Sticky_NUM_ROBO_UNITS = 9;
+const int AP_Sticky_NUM_STARGATE_UNITS = 11;
+
+const int AP_Sticky_BUILDING_GATEWAY = 0;
+const int AP_Sticky_BUILDING_ROBO = 1;
+const int AP_Sticky_BUILDING_STARGATE = 2;
+const int AP_Sticky_NUM_BUILDINGS = 3;
+
+// Globals
+int[AP_Sticky_NUM_UNIT_CLASSES][AP_Sticky_NUM_FACTIONS_PER_CLASS] abilityIndices;
+int[AP_Sticky_NUM_GATEWAY_UNITS] gatewayTrainToUnitClass;
+int[AP_Sticky_NUM_ROBO_UNITS] roboTrainToUnitClass;
+int[AP_Sticky_NUM_STARGATE_UNITS] stargateTrainToUnitClass;
+string[AP_Sticky_NUM_BUILDINGS] trainAbilNames;
+string[AP_Sticky_NUM_BUILDINGS] warpTrainAbilNames;
+
+void initLists() {
+    // train names
+    trainAbilNames[AP_Sticky_BUILDING_GATEWAY] = "AP_GatewayTrainRedirect";
+    trainAbilNames[AP_Sticky_BUILDING_ROBO] = "AP_RoboticsFacilityTrainRedirect";
+    trainAbilNames[AP_Sticky_BUILDING_STARGATE] = "AP_StargateTrainRedirect";
+    warpTrainAbilNames[AP_Sticky_BUILDING_GATEWAY] = "AP_WarpGateTrainRedirect";
+    warpTrainAbilNames[AP_Sticky_BUILDING_ROBO] = "AP_RoboticsFacilityWarpTrainRedirect";
+    warpTrainAbilNames[AP_Sticky_BUILDING_STARGATE] = "AP_StargateWarpTrainRedirect";
+
+    // gateway train ID -> class
+    gatewayTrainToUnitClass[0] = AP_Sticky_CLASS_ZEALOT;         // Zealot
+    gatewayTrainToUnitClass[1] = AP_Sticky_CLASS_STALKER;        // Stalker
+    gatewayTrainToUnitClass[2] = -1;
+    gatewayTrainToUnitClass[3] = AP_Sticky_CLASS_HIGH_TEMPLAR;   // High Templar
+    gatewayTrainToUnitClass[4] = AP_Sticky_CLASS_HIGH_TEMPLAR;   // Dark Templar
+    gatewayTrainToUnitClass[5] = AP_Sticky_CLASS_SENTRY;         // Sentry
+    gatewayTrainToUnitClass[6] = AP_Sticky_CLASS_ADEPT;          // Adept
+    gatewayTrainToUnitClass[7] = -1;
+    gatewayTrainToUnitClass[8] = AP_Sticky_CLASS_ZEALOT;         // Sentinel
+    gatewayTrainToUnitClass[9] = AP_Sticky_CLASS_ZEALOT;         // Centurion
+    gatewayTrainToUnitClass[10] = AP_Sticky_CLASS_ZEALOT;        // Supplicant
+    gatewayTrainToUnitClass[11] = AP_Sticky_CLASS_STALKER;       // Instigator
+    gatewayTrainToUnitClass[12] = AP_Sticky_CLASS_STALKER;       // Slayer
+    gatewayTrainToUnitClass[13] = AP_Sticky_CLASS_HIGH_TEMPLAR;  // Signifier
+    gatewayTrainToUnitClass[14] = AP_Sticky_CLASS_HIGH_TEMPLAR;  // Ascendant
+    gatewayTrainToUnitClass[15] = AP_Sticky_CLASS_DARK_TEMPLAR;  // Avenger
+    gatewayTrainToUnitClass[16] = AP_Sticky_CLASS_DARK_TEMPLAR;  // Blood Hunter
+    gatewayTrainToUnitClass[17] = AP_Sticky_CLASS_ADEPT;         // Dragoon
+    gatewayTrainToUnitClass[18] = AP_Sticky_CLASS_ADEPT;         // Dark archon
+    gatewayTrainToUnitClass[19] = AP_Sticky_CLASS_SENTRY;        // Energizer
+    gatewayTrainToUnitClass[20] = AP_Sticky_CLASS_SENTRY;        // Havoc
+
+    // robo train ID -> class
+    roboTrainToUnitClass[0] = -1;                         // Warp Prism
+    roboTrainToUnitClass[1] = -1;                         // Observer
+    roboTrainToUnitClass[2] = AP_Sticky_CLASS_COLOSSUS;   // Colossus
+    roboTrainToUnitClass[3] = AP_Sticky_CLASS_IMMORTAL;   // Immortal
+    roboTrainToUnitClass[4] = AP_Sticky_CLASS_COLOSSUS;   // Wrathwalker
+    roboTrainToUnitClass[5] = AP_Sticky_CLASS_IMMORTAL;   // Annihilator
+    roboTrainToUnitClass[6] = AP_Sticky_CLASS_IMMORTAL;   // Vanguard
+    roboTrainToUnitClass[7] = AP_Sticky_CLASS_DISRUPTOR;  // Reaver
+    roboTrainToUnitClass[8] = AP_Sticky_CLASS_DISRUPTOR;  // Disruptor
+
+    // stargate train ID -> class
+    stargateTrainToUnitClass[0] = AP_Sticky_CLASS_PHOENIX;      // Phoenix
+    stargateTrainToUnitClass[1] = AP_Sticky_CLASS_PHOENIX;      // Mirage
+    stargateTrainToUnitClass[2] = AP_Sticky_CLASS_PHOENIX;      // Corsair
+    stargateTrainToUnitClass[3] = AP_Sticky_CLASS_VOID_RAY;     // Void Ray
+    stargateTrainToUnitClass[4] = AP_Sticky_CLASS_VOID_RAY;     // Destroyer
+    stargateTrainToUnitClass[5] = AP_Sticky_CLASS_TEMPEST;      // Tempest
+    stargateTrainToUnitClass[6] = AP_Sticky_CLASS_CARRIER;      // Carrier
+    stargateTrainToUnitClass[7] = AP_Sticky_CLASS_ARBITER;      // Arbiter
+    stargateTrainToUnitClass[8] = AP_Sticky_CLASS_TEMPEST;      // Mothership
+    stargateTrainToUnitClass[9] = AP_Sticky_CLASS_TEMPEST;      // Scout
+    stargateTrainToUnitClass[10] = AP_Sticky_CLASS_ARBITER;     // Oracle
+
+    // (class, faction) -> train ID
+    abilityIndices[AP_Sticky_CLASS_ZEALOT][AP_Sticky_FACTION_AIUR]              =  0;  // Zealot
+    abilityIndices[AP_Sticky_CLASS_ZEALOT][AP_Sticky_FACTION_PURIFIER]          =  8;  // Sentinel
+    abilityIndices[AP_Sticky_CLASS_ZEALOT][AP_Sticky_FACTION_NERAZIM]           =  9;  // Centurion
+    abilityIndices[AP_Sticky_CLASS_ZEALOT][AP_Sticky_FACTION_TALDARIM]          = 10;  // Supplicant
+    abilityIndices[AP_Sticky_CLASS_SENTRY][AP_Sticky_FACTION_AIUR]              =  5;  // Sentry
+    abilityIndices[AP_Sticky_CLASS_SENTRY][AP_Sticky_FACTION_PURIFIER]          = 19;  // Energizer
+    abilityIndices[AP_Sticky_CLASS_SENTRY][AP_Sticky_FACTION_NERAZIM]           = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_SENTRY][AP_Sticky_FACTION_TALDARIM]          = 20;  // Havoc
+    abilityIndices[AP_Sticky_CLASS_STALKER][AP_Sticky_FACTION_AIUR]             = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_STALKER][AP_Sticky_FACTION_PURIFIER]         = 11;  // Instigator
+    abilityIndices[AP_Sticky_CLASS_STALKER][AP_Sticky_FACTION_NERAZIM]          =  1;  // Stalker
+    abilityIndices[AP_Sticky_CLASS_STALKER][AP_Sticky_FACTION_TALDARIM]         = 12;  // Slayer
+    abilityIndices[AP_Sticky_CLASS_HIGH_TEMPLAR][AP_Sticky_FACTION_AIUR]        =  3;  // High Templar
+    abilityIndices[AP_Sticky_CLASS_HIGH_TEMPLAR][AP_Sticky_FACTION_PURIFIER]    = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_HIGH_TEMPLAR][AP_Sticky_FACTION_NERAZIM]     = 13;  // Signifier
+    abilityIndices[AP_Sticky_CLASS_HIGH_TEMPLAR][AP_Sticky_FACTION_TALDARIM]    = 14;  // Ascendant
+    abilityIndices[AP_Sticky_CLASS_DARK_TEMPLAR][AP_Sticky_FACTION_AIUR]        = 15;  // Avenger
+    abilityIndices[AP_Sticky_CLASS_DARK_TEMPLAR][AP_Sticky_FACTION_PURIFIER]    = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_DARK_TEMPLAR][AP_Sticky_FACTION_NERAZIM]     =  4;  // Dark Templar
+    abilityIndices[AP_Sticky_CLASS_DARK_TEMPLAR][AP_Sticky_FACTION_TALDARIM]    = 16;  // Blood Hunter
+    abilityIndices[AP_Sticky_CLASS_ADEPT][AP_Sticky_FACTION_AIUR]               = 17;  // Dragoon
+    abilityIndices[AP_Sticky_CLASS_ADEPT][AP_Sticky_FACTION_PURIFIER]           =  6;  // Adept
+    abilityIndices[AP_Sticky_CLASS_ADEPT][AP_Sticky_FACTION_NERAZIM]            = 18;  // Dark Archon
+    abilityIndices[AP_Sticky_CLASS_ADEPT][AP_Sticky_FACTION_TALDARIM]           = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_IMMORTAL][AP_Sticky_FACTION_AIUR]            =  3;  // Immortal
+    abilityIndices[AP_Sticky_CLASS_IMMORTAL][AP_Sticky_FACTION_PURIFIER]        = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_IMMORTAL][AP_Sticky_FACTION_NERAZIM]         =  5;  // Annihilator
+    abilityIndices[AP_Sticky_CLASS_IMMORTAL][AP_Sticky_FACTION_TALDARIM]        =  6;  // Vanguard
+    abilityIndices[AP_Sticky_CLASS_COLOSSUS][AP_Sticky_FACTION_AIUR]            = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_COLOSSUS][AP_Sticky_FACTION_PURIFIER]        =  2;  // Colossus
+    abilityIndices[AP_Sticky_CLASS_COLOSSUS][AP_Sticky_FACTION_NERAZIM]         = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_COLOSSUS][AP_Sticky_FACTION_TALDARIM]        =  4;  // Wrathwalker
+    abilityIndices[AP_Sticky_CLASS_DISRUPTOR][AP_Sticky_FACTION_AIUR]           =  7;  // Reaver
+    abilityIndices[AP_Sticky_CLASS_DISRUPTOR][AP_Sticky_FACTION_PURIFIER]       =  8;  // Disruptor
+    abilityIndices[AP_Sticky_CLASS_DISRUPTOR][AP_Sticky_FACTION_NERAZIM]        = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_DISRUPTOR][AP_Sticky_FACTION_TALDARIM]       = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_PHOENIX][AP_Sticky_FACTION_AIUR]             =  0;  // Phoenix
+    abilityIndices[AP_Sticky_CLASS_PHOENIX][AP_Sticky_FACTION_PURIFIER]         =  1;  // Mirage
+    abilityIndices[AP_Sticky_CLASS_PHOENIX][AP_Sticky_FACTION_NERAZIM]          =  2;  // Corsair
+    abilityIndices[AP_Sticky_CLASS_PHOENIX][AP_Sticky_FACTION_TALDARIM]         = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_VOID_RAY][AP_Sticky_FACTION_AIUR]            = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_VOID_RAY][AP_Sticky_FACTION_PURIFIER]        = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_VOID_RAY][AP_Sticky_FACTION_NERAZIM]         =  3;  // Void Ray
+    abilityIndices[AP_Sticky_CLASS_VOID_RAY][AP_Sticky_FACTION_TALDARIM]        =  4;  // Destroyer
+    abilityIndices[AP_Sticky_CLASS_CARRIER][AP_Sticky_FACTION_AIUR]             =  6;  // Carrier
+    abilityIndices[AP_Sticky_CLASS_CARRIER][AP_Sticky_FACTION_PURIFIER]         = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_CARRIER][AP_Sticky_FACTION_NERAZIM]          = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_CARRIER][AP_Sticky_FACTION_TALDARIM]         = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_TEMPEST][AP_Sticky_FACTION_AIUR]             =  9;  // Scout
+    abilityIndices[AP_Sticky_CLASS_TEMPEST][AP_Sticky_FACTION_PURIFIER]         =  5;  // Tempest
+    abilityIndices[AP_Sticky_CLASS_TEMPEST][AP_Sticky_FACTION_NERAZIM]          = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_TEMPEST][AP_Sticky_FACTION_TALDARIM]         =  8;  // Mothership
+    abilityIndices[AP_Sticky_CLASS_ARBITER][AP_Sticky_FACTION_AIUR]             =  7;  // Arbiter
+    abilityIndices[AP_Sticky_CLASS_ARBITER][AP_Sticky_FACTION_PURIFIER]         = -1;  // -
+    abilityIndices[AP_Sticky_CLASS_ARBITER][AP_Sticky_FACTION_NERAZIM]          = 10;  // Oracle
+    abilityIndices[AP_Sticky_CLASS_ARBITER][AP_Sticky_FACTION_TALDARIM]         = -1;  // -
+}
+
+int unitToAbilityIndex(unit thisUnit) {
+    return 0;
+}
+
+void AP_Sticky_ShowUnitCommand(int player, int abilIndex, int building) {
+    int unitClass = -1;
+    int factionIndex = 0;
+    int commandIndex = -1;
+
+    if (abilIndex < 0) {
+        return;
+    }
+
+    if (building == AP_Sticky_BUILDING_GATEWAY && abilIndex < AP_Sticky_NUM_GATEWAY_UNITS) {
+        unitClass = gatewayTrainToUnitClass[abilIndex];
+    } else if (building == AP_Sticky_BUILDING_ROBO && abilIndex < AP_Sticky_NUM_ROBO_UNITS) {
+        unitClass = roboTrainToUnitClass[abilIndex];
+    } else if (building == AP_Sticky_BUILDING_STARGATE && abilIndex < AP_Sticky_NUM_STARGATE_UNITS) {
+        unitClass = stargateTrainToUnitClass[abilIndex];
+    }
+
+    if (unitClass == -1) {
+        return;
+    }
+
+    for (; factionIndex < AP_Sticky_NUM_FACTIONS_PER_CLASS; factionIndex += 1) {
+        commandIndex = abilityIndices[unitClass][factionIndex];
+        if (commandIndex >= 0) {
+            TechTreeAbilityAllow(player, AbilityCommand(trainAbilNames[building], commandIndex), commandIndex == abilIndex);
+            TechTreeAbilityAllow(player, AbilityCommand(warpTrainAbilNames[building], commandIndex), commandIndex == abilIndex);
+        }
+    }
+}
+
+void initStickyBuildKeys() {
+    initLists();
+    // initGatewayKeys();
+}
