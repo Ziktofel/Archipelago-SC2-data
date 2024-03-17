@@ -36,6 +36,9 @@ const int AP_Sticky_BUILDING_ROBO = 1;
 const int AP_Sticky_BUILDING_STARGATE = 2;
 const int AP_Sticky_NUM_BUILDINGS = 3;
 
+// Havoc special case
+const int AP_HAVOC_WARP_TRAIN_INDEX = 2;
+
 // Globals
 int[AP_Sticky_NUM_UNIT_CLASSES][AP_Sticky_NUM_FACTIONS_PER_CLASS] abilityIndices;
 int[AP_Sticky_NUM_GATEWAY_UNITS] gatewayTrainToUnitClass;
@@ -173,6 +176,9 @@ void AP_Sticky_ShowUnitCommand(int player, int abilIndex, int building) {
     }
 
     if (building == AP_Sticky_BUILDING_GATEWAY && abilIndex < AP_Sticky_NUM_GATEWAY_UNITS) {
+        if (abilIndex == AP_HAVOC_WARP_TRAIN_INDEX) {
+            abilIndex = abilityIndices[AP_Sticky_CLASS_SENTRY][AP_Sticky_FACTION_TALDARIM];
+        }
         unitClass = gatewayTrainToUnitClass[abilIndex];
     } else if (building == AP_Sticky_BUILDING_ROBO && abilIndex < AP_Sticky_NUM_ROBO_UNITS) {
         unitClass = roboTrainToUnitClass[abilIndex];
@@ -188,6 +194,13 @@ void AP_Sticky_ShowUnitCommand(int player, int abilIndex, int building) {
         commandIndex = abilityIndices[unitClass][factionIndex];
         if (commandIndex >= 0) {
             TechTreeAbilityAllow(player, AbilityCommand(trainAbilNames[building], commandIndex), commandIndex == abilIndex);
+            if (building == AP_Sticky_BUILDING_GATEWAY
+                    && unitClass == AP_Sticky_CLASS_SENTRY
+                    && factionIndex == AP_Sticky_FACTION_TALDARIM
+            ) {
+                // Havoc specific fix - Warp trains have only 20 slots
+                abilIndex = AP_HAVOC_WARP_TRAIN_INDEX;
+            }
             TechTreeAbilityAllow(player, AbilityCommand(warpTrainAbilNames[building], commandIndex), commandIndex == abilIndex);
         }
     }
