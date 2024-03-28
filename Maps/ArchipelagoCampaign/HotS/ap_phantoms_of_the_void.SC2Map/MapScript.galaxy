@@ -40,6 +40,8 @@ const int gv_pLAYER_02_DOMINION22 = 4;
 const int gv_pLAYER_02_DOMINION222 = 5;
 const int gv_pLAYER_02_DOMINION2222 = 6;
 const int gv_pLAYER_02_DOMINION22222 = 7;
+const int gv_tEMPLE_LOCATION_OFFSET = 5;
+const int gv_tEMPLE_COUNT = 5;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -146,6 +148,8 @@ bool gv_midMusicCompleted;
 sound gv_victoryStinger;
 sound gv_victoryNarudDeath;
 unit gv_victoryStukov;
+bool gv_victorySent;
+bool[6] gv_templeSent;
 bool gv_aPIntro;
 
 void InitGlobals () {
@@ -2196,6 +2200,7 @@ bool gt_TempleChanneling_Func (bool testConds, bool runActions) {
     if ((UnitIsAlive(gv_stukov) == true)) {
         gv_templesDeactivated += 1;
         lib5BD4895D_gf_AP_Core_sendLocationLocal(lv_location);
+        gv_templeSent[(lv_location - gv_tEMPLE_LOCATION_OFFSET)] = true;
         ActorSend(lv_templeDoodadActor, "Signal PowerDown");
         if ((lv_templePoint == PointFromId(849))) {
             VisRevealerDestroy(gv_firstTempleReveal);
@@ -2207,7 +2212,11 @@ bool gt_TempleChanneling_Func (bool testConds, bool runActions) {
         TriggerExecute(gt_ObjectiveDeactivateTemplesCreate, true, false);
         lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, gv_templesDeactivated);
         if ((gv_templesDeactivated >= 5)) {
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+            if ((gv_victorySent == false)) {
+                gv_victorySent = true;
+                lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+            }
+
             gv_templesDeactivated = 5;
             TriggerExecute(gt_ObjectiveDeactivateTemplesComplete, true, false);
         }
@@ -3392,7 +3401,15 @@ void gt_VictoryDuelWin_Init () {
 // Trigger: Victory Sequence
 //--------------------------------------------------------------------------------------------------
 bool gt_VictorySequence_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_index;
+
     // Automatic Variable Declarations
+    const int auto50314A0A_ae = gv_tEMPLE_LOCATION_OFFSET;
+    const int auto50314A0A_ai = 1;
+
+    // Variable Initialization
+
     // Actions
     if (!runActions) {
         return true;
@@ -3401,6 +3418,19 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     gv_gameOver = true;
     UnitSetState(gv_kerrigan, c_unitStateInvulnerable, true);
     UnitSetState(gv_stukov, c_unitStateInvulnerable, true);
+    if ((gv_victorySent == false)) {
+        gv_victorySent = true;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    }
+
+    lv_index = 0;
+    for ( ; ( (auto50314A0A_ai >= 0 && lv_index <= auto50314A0A_ae) || (auto50314A0A_ai < 0 && lv_index >= auto50314A0A_ae) ) ; lv_index += auto50314A0A_ai ) {
+        if ((gv_templeSent[lv_index] == false)) {
+            gv_templeSent[lv_index] = true;
+            lib5BD4895D_gf_AP_Core_sendLocationLocal((lv_index + gv_tEMPLE_LOCATION_OFFSET));
+        }
+
+    }
     TriggerExecute(gt_ObjectiveDeactivateTemplesComplete, true, true);
     TriggerExecute(gt_ObjectiveKerriganMustSurviveComplete, true, true);
     libSwaC_gf_RunMissionVictorySequence(gt_VictoryQ);
