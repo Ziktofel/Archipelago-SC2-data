@@ -368,6 +368,7 @@ trigger gt_BrakkKilled;
 trigger gt_TransmissionBrakkAttackQ;
 trigger gt_TransmissionBrakkKillsStuffQ;
 trigger gt_TransmissionBrakkDeathQ;
+trigger gt_MindControlRemoveUnitFromHarvesting;
 trigger gt_VictorySequence;
 trigger gt_Victory;
 trigger gt_DefeatBaseDead;
@@ -5970,6 +5971,46 @@ void gt_TransmissionBrakkDeathQ_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: MindControlRemoveUnitFromHarvesting
+//--------------------------------------------------------------------------------------------------
+bool gt_MindControlRemoveUnitFromHarvesting_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_targetUnit;
+    int lv_index;
+
+    // Automatic Variable Declarations
+    const int autoFD5515AA_ae = 100;
+    const int autoFD5515AA_ai = 1;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_targetUnit = EventUnitTargetUnit();
+    UnitGroupRemove(gv_aIReactionaryGroups, lv_targetUnit);
+    UnitGroupRemove(gv_enemyHarvesters_All, lv_targetUnit);
+    lv_index = 0;
+    for ( ; ( (autoFD5515AA_ai >= 0 && lv_index <= autoFD5515AA_ae) || (autoFD5515AA_ai < 0 && lv_index >= autoFD5515AA_ae) ) ; lv_index += autoFD5515AA_ai ) {
+        UnitGroupRemove(gv_aIHarvestGroups[lv_index], lv_targetUnit);
+        UnitGroupRemove(gv_aIHarvestGroupsArmy[lv_index], lv_targetUnit);
+        UnitGroupRemove(gv_aIHarvestGroupsPeons[lv_index], lv_targetUnit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MindControlRemoveUnitFromHarvesting_Init () {
+    gt_MindControlRemoveUnitFromHarvesting = TriggerCreate("gt_MindControlRemoveUnitFromHarvesting_Func");
+    TriggerAddEventUnitAbility(gt_MindControlRemoveUnitFromHarvesting, null, AbilityCommand("AP_NPSwarm", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_MindControlRemoveUnitFromHarvesting, null, AbilityCommand("AP_DarkArchonMindControl", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_MindControlRemoveUnitFromHarvesting, null, AbilityCommand("AP_MindControl", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_MindControlRemoveUnitFromHarvesting, null, AbilityCommand("AP_NovaHelmetDomination", 0), c_unitAbilStageComplete, false);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Victory Sequence
 //--------------------------------------------------------------------------------------------------
 bool gt_VictorySequence_Func (bool testConds, bool runActions) {
@@ -8456,6 +8497,7 @@ void InitTriggers () {
     gt_TransmissionBrakkAttackQ_Init();
     gt_TransmissionBrakkKillsStuffQ_Init();
     gt_TransmissionBrakkDeathQ_Init();
+    gt_MindControlRemoveUnitFromHarvesting_Init();
     gt_VictorySequence_Init();
     gt_Victory_Init();
     gt_DefeatBaseDead_Init();
