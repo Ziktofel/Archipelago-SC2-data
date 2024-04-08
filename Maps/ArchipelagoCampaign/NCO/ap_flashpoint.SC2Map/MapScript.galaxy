@@ -331,6 +331,7 @@ trigger gt_ObjectiveEliminateZergSpawnsUpdate;
 trigger gt_ObjectiveClearSubwayExitsCreate;
 trigger gt_ObjectiveClearSubwayExitsComplete;
 trigger gt_ObjectiveClearSubwayExitsUpdate;
+trigger gt_ShowChoices;
 trigger gt_BriefingQ;
 trigger gt_BriefingScene00;
 trigger gt_BriefingScene00EstablishZerg;
@@ -5942,6 +5943,34 @@ void gt_ObjectiveClearSubwayExitsUpdate_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Show Choices
+//--------------------------------------------------------------------------------------------------
+bool gt_ShowChoices_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    gv_buttonPressed = false;
+    TriggerExecute(gt_UpdateFlashbackDialog, true, true);
+    libNtve_gf_SetDialogItemText(gv_flashbackDialog.lv_titleLabel, StringExternal("Param/Value/E00E087E"), PlayerGroupAll());
+    DialogSetVisible(gv_flashbackDialog.lv_dialog, PlayerGroupAll(), true);
+    SoundPlayForPlayer(SoundLink("UI_Nova06_SelectionScreen_Open", 0), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
+    SoundPlayForPlayer(SoundLink("UI_Nova06_SelectionScreen_Open2", 0), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
+    UISetCursorVisible(PlayerGroupAll(), true);
+    while (!((gv_buttonPressed == true))) {
+        Wait(0.0625, c_timeGame);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ShowChoices_Init () {
+    gt_ShowChoices = TriggerCreate("gt_ShowChoices_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Briefing Q
 //--------------------------------------------------------------------------------------------------
 bool gt_BriefingQ_Func (bool testConds, bool runActions) {
@@ -7244,9 +7273,12 @@ bool gt_Top1Q_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Top1Setup, true, true);
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
         TriggerExecute(gt_Top1Flashback, true, true);
+        TriggerExecute(gt_Top1Choice, true, true);
     }
-
-    TriggerExecute(gt_Top1Choice, true, true);
+    else {
+        TriggerExecute(gt_ShowChoices, true, true);
+        gf_PlayZergSound(gv_emittersPlaced[gv_emittersPlacedCounter]);
+    }
     TriggerExecute(gt_Top1Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -7699,9 +7731,12 @@ bool gt_Right1Q_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Right1Setup, true, true);
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
         TriggerExecute(gt_Right1Flashback, true, true);
+        TriggerExecute(gt_Right1Choice, true, true);
     }
-
-    TriggerExecute(gt_Right1Choice, true, true);
+    else {
+        TriggerExecute(gt_ShowChoices, true, true);
+        gf_PlayZergSound(gv_emittersPlaced[gv_emittersPlacedCounter]);
+    }
     TriggerExecute(gt_Right1Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -8152,9 +8187,13 @@ bool gt_Top2Q_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Top2Setup, true, true);
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
         TriggerExecute(gt_Top2Flashback, true, true);
+        TriggerExecute(gt_Top2Choice, true, true);
     }
-
-    TriggerExecute(gt_Top2Choice, true, true);
+    else {
+        gv_doubleFlashbackChoice = true;
+        TriggerExecute(gt_ShowChoices, true, true);
+        gf_PlayZergSound(gv_emittersPlaced[gv_emittersPlacedCounter]);
+    }
     TriggerExecute(gt_Top2Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -8598,9 +8637,13 @@ bool gt_Right2Q_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Right2Setup, true, true);
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
         TriggerExecute(gt_Right2Flashback, true, true);
+        TriggerExecute(gt_Right2Choice, true, true);
     }
-
-    TriggerExecute(gt_Right2Choice, true, true);
+    else {
+        gv_doubleFlashbackChoice = true;
+        TriggerExecute(gt_ShowChoices, true, true);
+        gf_PlayZergSound(gv_emittersPlaced[gv_emittersPlacedCounter]);
+    }
     TriggerExecute(gt_Right2Cleanup, true, true);
     TriggerQueueExit();
     return true;
@@ -9483,6 +9526,7 @@ void InitTriggers () {
     gt_ObjectiveClearSubwayExitsCreate_Init();
     gt_ObjectiveClearSubwayExitsComplete_Init();
     gt_ObjectiveClearSubwayExitsUpdate_Init();
+    gt_ShowChoices_Init();
     gt_BriefingQ_Init();
     gt_BriefingScene00_Init();
     gt_BriefingScene00EstablishZerg_Init();
