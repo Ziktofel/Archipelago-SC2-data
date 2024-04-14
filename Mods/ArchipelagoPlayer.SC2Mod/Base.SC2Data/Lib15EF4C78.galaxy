@@ -2907,7 +2907,10 @@ void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, strin
             continue;
         }
 
-        UnitRemove(autoA0E4A284_var);
+        if ((CatalogFieldValueGet(c_gameCatalogUnit, UnitGetType(autoA0E4A284_var), "Race", c_playerAny) != CatalogFieldValueGet(c_gameCatalogRace, lp_desiredFaction, "AttributeId", c_playerAny))) {
+            UnitRemove(autoA0E4A284_var);
+        }
+
     }
 }
 
@@ -2995,68 +2998,55 @@ void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction)
     unitgroup autoA7B8BDD1_g;
     int autoA7B8BDD1_u;
     unit autoA7B8BDD1_var;
-    unitgroup auto70A01468_g;
-    int auto70A01468_u;
-    unit auto70A01468_var;
-    unitgroup autoD30BD377_g;
-    int autoD30BD377_u;
-    unit autoD30BD377_var;
 
     // Variable Initialization
 
     // Implementation
+    auto35E52867_g = UnitGroup("Larva", c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto35E52867_u = UnitGroupCount(auto35E52867_g, c_unitCountAll);
+    for (;; auto35E52867_u -= 1) {
+        auto35E52867_var = UnitGroupUnitFromEnd(auto35E52867_g, auto35E52867_u);
+        if (auto35E52867_var == null) { break; }
+        UnitRemove(auto35E52867_var);
+    }
+    auto9B194416_g = UnitGroup("AP_Larva", c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto9B194416_u = UnitGroupCount(auto9B194416_g, c_unitCountAll);
+    for (;; auto9B194416_u -= 1) {
+        auto9B194416_var = UnitGroupUnitFromEnd(auto9B194416_g, auto9B194416_u);
+        if (auto9B194416_var == null) { break; }
+        UnitRemove(auto9B194416_var);
+    }
     if ((lp_desiredFaction != "Zerg")) {
-        auto35E52867_g = UnitGroup("Larva", c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-        auto35E52867_u = UnitGroupCount(auto35E52867_g, c_unitCountAll);
-        for (;; auto35E52867_u -= 1) {
-            auto35E52867_var = UnitGroupUnitFromEnd(auto35E52867_g, auto35E52867_u);
-            if (auto35E52867_var == null) { break; }
-            UnitRemove(auto35E52867_var);
-        }
-        auto9B194416_g = UnitGroup("AP_Larva", c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-        auto9B194416_u = UnitGroupCount(auto9B194416_g, c_unitCountAll);
-        for (;; auto9B194416_u -= 1) {
-            auto9B194416_var = UnitGroupUnitFromEnd(auto9B194416_g, auto9B194416_u);
-            if (auto9B194416_var == null) { break; }
-            UnitRemove(auto9B194416_var);
-        }
-        if ((lp_desiredFaction == "Terr")) {
+        if ((lp_desiredFaction == "Terr") && (UnitGetType(lp_townHall) != "AP_CommandCenter")) {
             libNtve_gf_ReplaceUnit(lp_townHall, "AP_CommandCenter", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
             lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
         }
-        else {
+
+        if ((lp_desiredFaction == "Prot") && (UnitGetType(lp_townHall) != "AP_Nexus")) {
             libNtve_gf_ReplaceUnit(lp_townHall, "AP_Nexus", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
             lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
         }
+
         CreepModify(UnitGetPosition(lp_townHall), 15.0, false, false);
     }
     else {
-        libNtve_gf_ReplaceUnit(lp_townHall, "AP_Lair", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
-        lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
-        CreepModify(UnitGetPosition(lp_townHall), 15.0, true, false);
-        lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lv_replacedTownHall, 3);
+        if ((UnitGetType(lp_townHall) != "AP_Hatchery") && (UnitGetType(lp_townHall) != "AP_Lair") && (UnitGetType(lp_townHall) != "AP_Hive")) {
+            libNtve_gf_ReplaceUnit(lp_townHall, "AP_Lair", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
+            CreepModify(UnitGetPosition(lp_townHall), 15.0, true, false);
+            lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lv_replacedTownHall, 6);
+        }
+        else {
+            lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lp_townHall, 6);
+        }
     }
     autoA7B8BDD1_g = UnitGroup(null, c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 1.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     autoA7B8BDD1_u = UnitGroupCount(autoA7B8BDD1_g, c_unitCountAll);
     for (;; autoA7B8BDD1_u -= 1) {
         autoA7B8BDD1_var = UnitGroupUnitFromEnd(autoA7B8BDD1_g, autoA7B8BDD1_u);
         if (autoA7B8BDD1_var == null) { break; }
-        if ((autoA7B8BDD1_var != lv_replacedTownHall)) {
-            if ((lp_desiredFaction != "Zerg") && ((UnitGetType(lp_townHall) == "AP_Hatchery") || (UnitGetType(lp_townHall) == "AP_Lair") || (UnitGetType(lp_townHall) == "AP_Hive"))) {
-                auto70A01468_g = UnitGroup("Larva", c_playerAny, RegionCircle(UnitGetPosition(auto70A01468_var), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-                auto70A01468_u = UnitGroupCount(auto70A01468_g, c_unitCountAll);
-                for (;; auto70A01468_u -= 1) {
-                    auto70A01468_var = UnitGroupUnitFromEnd(auto70A01468_g, auto70A01468_u);
-                    if (auto70A01468_var == null) { break; }
-                    UnitRemove(auto70A01468_var);
-                }
-                autoD30BD377_g = UnitGroup("AP_Larva", c_playerAny, RegionCircle(UnitGetPosition(autoD30BD377_var), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-                autoD30BD377_u = UnitGroupCount(autoD30BD377_g, c_unitCountAll);
-                for (;; autoD30BD377_u -= 1) {
-                    autoD30BD377_var = UnitGroupUnitFromEnd(autoD30BD377_g, autoD30BD377_u);
-                    if (autoD30BD377_var == null) { break; }
-                    UnitRemove(autoD30BD377_var);
-                }
+        if ((lv_replacedTownHall != null) && (autoA7B8BDD1_var != lv_replacedTownHall)) {
+            if ((lp_desiredFaction != "Zerg") && ((UnitGetType(autoA7B8BDD1_var) == "AP_Hatchery") || (UnitGetType(autoA7B8BDD1_var) == "AP_Lair") || (UnitGetType(autoA7B8BDD1_var) == "AP_Hive"))) {
                 UnitRemove(autoA7B8BDD1_var);
                 CreepModify(UnitGetPosition(lp_townHall), 15.0, false, false);
             }
