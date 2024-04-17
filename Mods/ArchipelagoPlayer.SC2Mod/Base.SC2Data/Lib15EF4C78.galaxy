@@ -2874,6 +2874,190 @@ int lib15EF4C78_gf_AP_Player_getKerriganLevel (int lp_player) {
     return lib15EF4C78_gv_zS_KerriganLevel[lp_player];
 }
 
+void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, string lp_desiredFaction) {
+    // Automatic Variable Declarations
+    unitgroup autoA0E4A284_g;
+    int autoA0E4A284_u;
+    unit autoA0E4A284_var;
+
+    // Implementation
+    autoA0E4A284_g = lp_startingUnits;
+    autoA0E4A284_u = UnitGroupCount(autoA0E4A284_g, c_unitCountAll);
+    for (;; autoA0E4A284_u -= 1) {
+        autoA0E4A284_var = UnitGroupUnitFromEnd(autoA0E4A284_g, autoA0E4A284_u);
+        if (autoA0E4A284_var == null) { break; }
+        if (((UnitGetType(autoA0E4A284_var) == "AP_Drone") || (UnitGetType(autoA0E4A284_var) == "AP_DroneBurrowed") || (UnitGetType(autoA0E4A284_var) == "AP_SCV") || (UnitGetType(autoA0E4A284_var) == "AP_Probe"))) {
+            lib15EF4C78_gf_ReplaceWorker(autoA0E4A284_var, lp_desiredFaction);
+            continue;
+        }
+
+        if (((UnitGetType(autoA0E4A284_var) == "AP_Hatchery") || (UnitGetType(autoA0E4A284_var) == "AP_Lair") || (UnitGetType(autoA0E4A284_var) == "AP_Hive") || (UnitGetType(autoA0E4A284_var) == "AP_Nexus") || (UnitGetType(autoA0E4A284_var) == "AP_CommandCenter"))) {
+            lib15EF4C78_gf_ReplaceTownHall(autoA0E4A284_var, lp_desiredFaction);
+            continue;
+        }
+
+        if (((UnitGetType(autoA0E4A284_var) == "AP_CreepTumor") || (UnitGetType(autoA0E4A284_var) == "AP_CreepTumorBurrowed") || (UnitGetType(autoA0E4A284_var) == "AP_CreepTumorUsed"))) {
+            UnitRemove(autoA0E4A284_var);
+            CreepModify(UnitGetPosition(autoA0E4A284_var), 15.0, false, false);
+            continue;
+        }
+
+        if (((UnitGetType(autoA0E4A284_var) == "AP_Extractor") || (UnitGetType(autoA0E4A284_var) == "AP_ExtractorPipes") || (UnitGetType(autoA0E4A284_var) == "AP_AutomatedExtractor") || (UnitGetType(autoA0E4A284_var) == "AP_Refinery") || (UnitGetType(autoA0E4A284_var) == "AP_AutomatedRefinery") || (UnitGetType(autoA0E4A284_var) == "AP_Assimilator") || (UnitGetType(autoA0E4A284_var) == "AP_AssimilatorProtossGeyser") || (UnitGetType(autoA0E4A284_var) == "AP_AssimilatorPurifierGeyser") || (UnitGetType(autoA0E4A284_var) == "AP_AssimilatorShakurasGeyser") || (UnitGetType(autoA0E4A284_var) == "AP_AutomatedAssimilator"))) {
+            lib15EF4C78_gf_ReplaceGasStructure(autoA0E4A284_var, lp_desiredFaction);
+            continue;
+        }
+
+        if ((CatalogFieldValueGet(c_gameCatalogUnit, UnitGetType(autoA0E4A284_var), "Race", c_playerAny) != CatalogFieldValueGet(c_gameCatalogRace, lp_desiredFaction, "AttributeId", c_playerAny))) {
+            UnitRemove(autoA0E4A284_var);
+        }
+
+    }
+}
+
+void lib15EF4C78_gf_ReplaceGasStructure (unit lp_gasStructure, string lp_desiredFaction) {
+    // Variable Declarations
+    int lv_initialGas;
+
+    // Automatic Variable Declarations
+    string auto148E77B6_val;
+    unitgroup autoEA05D24C_g;
+    int autoEA05D24C_u;
+    unit autoEA05D24C_var;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_initialGas = UnitGetPropertyInt(lp_gasStructure, c_unitPropResources, c_unitPropCurrent);
+    if ((lv_initialGas > 0)) {
+        auto148E77B6_val = lp_desiredFaction;
+        if (auto148E77B6_val == "Terr") {
+            if ((UnitGetType(lp_gasStructure) != "AP_Refinery") && (UnitGetType(lp_gasStructure) != "AP_AutomatedRefinery")) {
+                libNtve_gf_ReplaceUnit(lp_gasStructure, "AP_Refinery", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+                UnitSetPropertyFixed(libNtve_gf_LastReplacedUnit(), c_unitPropResources, lv_initialGas);
+            }
+
+        }
+        else if (auto148E77B6_val == "Zerg") {
+            if ((UnitGetType(lp_gasStructure) != "AP_Extractor") && (UnitGetType(lp_gasStructure) != "AP_ExtractorPipes") && (UnitGetType(lp_gasStructure) != "AP_AutomatedExtractor")) {
+                libNtve_gf_ReplaceUnit(lp_gasStructure, "AP_Extractor", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+                UnitSetPropertyFixed(libNtve_gf_LastReplacedUnit(), c_unitPropResources, lv_initialGas);
+            }
+
+        }
+        else if (auto148E77B6_val == "Prot") {
+            if ((UnitGetType(lp_gasStructure) != "AP_Assimilator") && (UnitGetType(lp_gasStructure) != "AP_AssimilatorProtossGeyser") && (UnitGetType(lp_gasStructure) != "AP_AssimilatorPurifierGeyser") && (UnitGetType(lp_gasStructure) != "AP_AssimilatorShakurasGeyser") && (UnitGetType(lp_gasStructure) != "AP_AutomatedAssimilator")) {
+                libNtve_gf_ReplaceUnit(lp_gasStructure, "AP_Assimilator", libNtve_ge_ReplaceUnitOptions_NewUnitsDefault);
+                UnitSetPropertyFixed(libNtve_gf_LastReplacedUnit(), c_unitPropResources, lv_initialGas);
+            }
+
+        }
+        else {
+        }
+        autoEA05D24C_g = UnitGroup(null, c_playerAny, RegionCircle(UnitGetPosition(lp_gasStructure), 1.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoEA05D24C_u = UnitGroupCount(autoEA05D24C_g, c_unitCountAll);
+        for (;; autoEA05D24C_u -= 1) {
+            autoEA05D24C_var = UnitGroupUnitFromEnd(autoEA05D24C_g, autoEA05D24C_u);
+            if (autoEA05D24C_var == null) { break; }
+            if (((UnitGetType(autoEA05D24C_var) == "VespeneGeyser") || (UnitGetType(autoEA05D24C_var) == "SpacePlatformGeyser"))) {
+                UnitRemove(autoEA05D24C_var);
+            }
+
+        }
+    }
+
+}
+
+void lib15EF4C78_gf_ReplaceWorker (unit lp_worker, string lp_desiredFaction) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_desiredFaction == "Terr")) {
+        libNtve_gf_ReplaceUnit(lp_worker, "AP_SCV", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+    }
+
+    if ((lp_desiredFaction == "Zerg")) {
+        libNtve_gf_ReplaceUnit(lp_worker, "AP_Drone", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+    }
+
+    if ((lp_desiredFaction == "Prot")) {
+        libNtve_gf_ReplaceUnit(lp_worker, "AP_Probe", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+    }
+
+}
+
+void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction) {
+    // Variable Declarations
+    unit lv_replacedTownHall;
+
+    // Automatic Variable Declarations
+    unitgroup auto35E52867_g;
+    int auto35E52867_u;
+    unit auto35E52867_var;
+    unitgroup auto9B194416_g;
+    int auto9B194416_u;
+    unit auto9B194416_var;
+    unitgroup autoA7B8BDD1_g;
+    int autoA7B8BDD1_u;
+    unit autoA7B8BDD1_var;
+
+    // Variable Initialization
+
+    // Implementation
+    auto35E52867_g = UnitGroup("Larva", c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto35E52867_u = UnitGroupCount(auto35E52867_g, c_unitCountAll);
+    for (;; auto35E52867_u -= 1) {
+        auto35E52867_var = UnitGroupUnitFromEnd(auto35E52867_g, auto35E52867_u);
+        if (auto35E52867_var == null) { break; }
+        UnitRemove(auto35E52867_var);
+    }
+    auto9B194416_g = UnitGroup("AP_Larva", c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto9B194416_u = UnitGroupCount(auto9B194416_g, c_unitCountAll);
+    for (;; auto9B194416_u -= 1) {
+        auto9B194416_var = UnitGroupUnitFromEnd(auto9B194416_g, auto9B194416_u);
+        if (auto9B194416_var == null) { break; }
+        UnitRemove(auto9B194416_var);
+    }
+    if ((lp_desiredFaction != "Zerg")) {
+        if ((lp_desiredFaction == "Terr") && (UnitGetType(lp_townHall) != "AP_CommandCenter")) {
+            libNtve_gf_ReplaceUnit(lp_townHall, "AP_CommandCenter", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
+        }
+
+        if ((lp_desiredFaction == "Prot") && (UnitGetType(lp_townHall) != "AP_Nexus")) {
+            libNtve_gf_ReplaceUnit(lp_townHall, "AP_Nexus", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
+        }
+
+        CreepModify(UnitGetPosition(lp_townHall), 15.0, false, false);
+    }
+    else {
+        if ((UnitGetType(lp_townHall) != "AP_Hatchery") && (UnitGetType(lp_townHall) != "AP_Lair") && (UnitGetType(lp_townHall) != "AP_Hive")) {
+            libNtve_gf_ReplaceUnit(lp_townHall, "AP_Lair", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+            lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
+            CreepModify(UnitGetPosition(lp_townHall), 15.0, true, false);
+            lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lv_replacedTownHall, 6);
+        }
+        else {
+            lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lp_townHall, 6);
+        }
+    }
+    autoA7B8BDD1_g = UnitGroup(null, c_playerAny, RegionCircle(UnitGetPosition(lp_townHall), 1.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoA7B8BDD1_u = UnitGroupCount(autoA7B8BDD1_g, c_unitCountAll);
+    for (;; autoA7B8BDD1_u -= 1) {
+        autoA7B8BDD1_var = UnitGroupUnitFromEnd(autoA7B8BDD1_g, autoA7B8BDD1_u);
+        if (autoA7B8BDD1_var == null) { break; }
+        if ((lv_replacedTownHall != null) && (autoA7B8BDD1_var != lv_replacedTownHall)) {
+            if ((lp_desiredFaction != "Zerg") && ((UnitGetType(autoA7B8BDD1_var) == "AP_Hatchery") || (UnitGetType(autoA7B8BDD1_var) == "AP_Lair") || (UnitGetType(autoA7B8BDD1_var) == "AP_Hive"))) {
+                UnitRemove(autoA7B8BDD1_var);
+                CreepModify(UnitGetPosition(lp_townHall), 15.0, false, false);
+            }
+            else {
+                UnitRemove(autoA7B8BDD1_var);
+            }
+        }
+
+    }
+}
+
 void lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit (unit lp_unit) {
     // Variable Declarations
     string lv_behavior;
