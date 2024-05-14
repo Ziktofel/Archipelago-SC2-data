@@ -3,6 +3,13 @@ include "TriggerLibs/natives"
 //--------------------------------------------------------------------------------------------------
 // Library: ArchipelagoCore
 //--------------------------------------------------------------------------------------------------
+// Preset Declarations
+const int lib5BD4895D_ge_APObjectiveCategory_Primary = 0;
+const int lib5BD4895D_ge_APObjectiveCategory_Secondary = 1;
+const int lib5BD4895D_ge_APObjectiveCategory_Extra = 2;
+const int lib5BD4895D_ge_APObjectiveCategory_Challenge = 3;
+const int lib5BD4895D_ge_APObjectiveCategory_Mastery = 4;
+
 // Constants
 const int lib5BD4895D_gv_aP_Core_locationVictory = 0;
 const int lib5BD4895D_gv_aP_Core_locationInit = -1;
@@ -33,6 +40,7 @@ struct lib5BD4895D_gs_chatbox {
 struct lib5BD4895D_gs_APObjective {
     int lv_objective;
     int lv_panel;
+    int lv_category;
     int lv_checkbox;
     int lv_label;
     int lv_extraLines;
@@ -92,6 +100,7 @@ bool[21] lib5BD4895D_gv_aP_Core_rainbowKiller;
 int lib5BD4895D_gv_aP_Core_BonusMinerals;
 int lib5BD4895D_gv_aP_Core_BonusVespene;
 int lib5BD4895D_gv_aP_Core_objectiveUsedCategories;
+bool[4] lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled;
 timer lib5BD4895D_gv_aP_Core_objectiveDefaultTimer;
 lib5BD4895D_gs_APObjectiveMainPanel lib5BD4895D_gv_aP_Core_objectivePanel;
 
@@ -115,11 +124,15 @@ void lib5BD4895D_gf_AP_Core_setFactionColor (string lp_faction, int lp_colorInde
 void lib5BD4895D_gf_AP_Core_onLoadFinished ();
 void lib5BD4895D_gf_AP_Core_SwitchKerriganSwarmToPrimalZerg ();
 void lib5BD4895D_gf_AP_Core_initObjectivePanel ();
-void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer);
+void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer);
 void lib5BD4895D_gf_AP_Core_addObjectiveSimple (int lp_objective);
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple (int lp_objective, int lp_category);
 void lib5BD4895D_gf_AP_Core_addObjectiveWithCounter (int lp_objective, string lp_counterSuffix, int lp_counterValue, int lp_counterMax);
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter (int lp_objective, int lp_category, string lp_counterSuffix, int lp_counterValue, int lp_counterMax);
 void lib5BD4895D_gf_AP_Core_addObjectiveWithTimer (int lp_objective, timer lp_timer);
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer (int lp_objective, int lp_category, timer lp_timer);
 void lib5BD4895D_gf_AP_Core_addObjectiveFromData (int lp_objective, string lp_data, string lp_counterSuffix, int lp_counterValue);
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveFromData (int lp_objective, int lp_category, string lp_data, string lp_counterSuffix, int lp_counterValue);
 void lib5BD4895D_gf_AP_Core_enableObjectiveCounter (int lp_objective, string lp_counterSuffix, int lp_counterValue, int lp_counterMax);
 void lib5BD4895D_gf_AP_Core_setObjectiveCounter (int lp_objective, int lp_counterValue);
 void lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix (int lp_objective, string lp_counterSuffix);
@@ -128,12 +141,16 @@ void lib5BD4895D_gf_AP_Core_updateObjectiveDescription (int lp_objective);
 void lib5BD4895D_gf_AP_Core_addObjectiveExtraLine (int lp_objective);
 void lib5BD4895D_gf_AP_Core_deleteObjective (int lp_objective);
 void lib5BD4895D_gf_AP_Core_showObjective (int lp_objective);
+bool lib5BD4895D_gf_AP_Core_objectiveEnabled (int lp_category, int lp_locationID);
 void lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout (int lp_categoryIndex, int lp_objectiveIndex, bool lp_addTimer);
 void lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate (int lp_categoryIndex, int lp_objectiveIndex);
 void lib5BD4895D_gf_AP_Core_resizeObjectivePanel ();
-int lib5BD4895D_gf_AP_Core_objectiveIndex (int lp_objective);
+int lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger (int lp_category);
+int lib5BD4895D_gf_AP_Core_objectiveIntegerToCategory (int lp_category);
+int lib5BD4895D_gf_AP_Core_objectiveIndex (int lp_objective, int lp_categoryIndex);
 void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int lp_to, bool lp_cleanFrom);
 int lib5BD4895D_gf_AP_Core_objectiveCategoryIndex (int lp_objective);
+int lib5BD4895D_gf_AP_Core_deprecatedObjectiveCategoryIndex (int lp_objective);
 text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer, bool lp_finished);
 void lib5BD4895D_gf_AP_Core_updateObjectiveText (int lp_category, int lp_index);
 void lib5BD4895D_gf_AP_Core_setObjectiveCompleted (int lp_objective);
@@ -150,6 +167,7 @@ trigger lib5BD4895D_gt_chatboxshow;
 trigger lib5BD4895D_gt_AP_Core_rainbowColorsInit;
 trigger lib5BD4895D_gt_AP_Core_giveStartingResources;
 trigger lib5BD4895D_gt_AP_Core_setFactionColorHandler;
+trigger lib5BD4895D_gt_AP_Core_setObjectiveCategoriesEnabled;
 trigger lib5BD4895D_gt_AP_Triggers_loadFinished;
 trigger lib5BD4895D_gt_AP_Core_clearChat;
 trigger lib5BD4895D_gt_AP_Core_objectiveTimerUpdate;
