@@ -34,6 +34,14 @@ const int gv_p04_ZERG = 4;
 const int gv_p05_TOSH = 5;
 const int gv_p06_SWANN = 6;
 const int gv_cRITTER_GROUPS = 11;
+const int gv_LOCATION_ID_TOSHS_MINERS = 1;
+const int gv_LOCATION_ID_BRUTALISK = 2;
+const int gv_LOCATION_ID_NORTH_REAPERS = 3;
+const int gv_LOCATION_ID_MIDDLE_REAPERS = 4;
+const int gv_LOCATION_ID_SOUTHWEST_REAPERS = 5;
+const int gv_LOCATION_ID_SOUTHEAST_REAPERS = 6;
+const int gv_LOCATION_ID_EAST_REAPERS = 7;
+const int gv_LOCATION_ID_ZERG_CLEARED = 8;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -78,13 +86,16 @@ bool gv_timerCreated;
 bool gv_firstWarning;
 int gv_objectiveMineralsQuota;
 int gv_objectiveCollect;
+int gv_objectiveCollectChecks;
 int gv_objectiveRescue;
+int gv_objectiveRescueChecks;
 int gv_researchObjectiveKilltheBrutalisk;
 int gv_brutaliskKilled;
 unit gv_brutalisk;
 int gv_objectiveDestroyZerg;
 int gv_objectiveFindReaperGroups;
 int gv_reaperGroupsLeft;
+int gv_objectiveReaperChecks;
 unit gv_briefing_SCV5;
 unit gv_briefing_SCV4;
 unit gv_briefing_SCV3;
@@ -236,10 +247,10 @@ trigger gt_ObjectiveRescuePartyCreateQ;
 trigger gt_ObjectiveRescuePartyComplete;
 trigger gt_ResearchObjectiveKilltheBrutaliskCreateQ;
 trigger gt_ResearchObjectiveKilltheBrutaliskUpdate;
-trigger gt_onZergBuildingDie;
 trigger gt_ObjectiveDestroyZergCreateQ;
 trigger gt_ObjectiveDestroyZergComplete;
-trigger gt_ObjectiveRescueRepaersCreateQ;
+trigger gt_ObjectiveDestroyZergQueueVictory;
+trigger gt_ObjectiveRescueReapersCreateQ;
 trigger gt_ObjectiveRescueReapersUpdate;
 trigger gt_ObjectiveRescueReapersComplete;
 trigger gt_ArchInit;
@@ -1609,6 +1620,10 @@ bool gt_BrutaliskIntroTimed_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_BRUTALISK) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1654,6 +1669,10 @@ bool gt_BrutaliskIntroProximity_Func (bool testConds, bool runActions) {
         }
 
         if (!((UnitFilterMatch(EventUnit(), gv_p01_USER, UnitFilter(0, 0, (1 << c_targetFilterMissile), 0)) == true))) {
+            return false;
+        }
+
+        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_BRUTALISK) == true))) {
             return false;
         }
     }
@@ -2252,7 +2271,7 @@ bool gt_IntroReapersChangeOwner_Func (bool testConds, bool runActions) {
         UnitIssueOrder(autoDFF77333_var, OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(18))), c_orderQueueReplace);
     }
     TriggerExecute(gt_AchievementAllReapersFound, true, false);
-    TriggerExecute(gt_ObjectiveRescueRepaersCreateQ, true, false);
+    TriggerExecute(gt_ObjectiveRescueReapersCreateQ, true, false);
     return true;
 }
 
@@ -2303,7 +2322,7 @@ bool gt_IntroReapersChangeFailsafe_Func (bool testConds, bool runActions) {
         libNtve_gf_RescueUnit(auto2D9551B0_var, gv_p01_USER, true);
     }
     TriggerExecute(gt_AchievementAllReapersFound, true, false);
-    TriggerExecute(gt_ObjectiveRescueRepaersCreateQ, true, false);
+    TriggerExecute(gt_ObjectiveRescueReapersCreateQ, true, false);
     return true;
 }
 
@@ -2383,8 +2402,16 @@ bool gt_ReapersReinforcements01_Func (bool testConds, bool runActions) {
     }
 
     gv_reaperGroupsLeft = (gv_reaperGroupsLeft - 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
     TriggerExecute(gt_ObjectiveRescueReapersUpdate, true, false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_REAPERS) == true)) {
+        gv_objectiveReaperChecks -= 1;
+    }
+
+    while (!((gv_objectiveFindReaperGroups != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveFindReaperGroups, gv_objectiveReaperChecks);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHEAST_REAPERS);
     return true;
 }
 
@@ -2465,8 +2492,16 @@ bool gt_ReapersReinforcements02_Func (bool testConds, bool runActions) {
     }
 
     gv_reaperGroupsLeft = (gv_reaperGroupsLeft - 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
     TriggerExecute(gt_ObjectiveRescueReapersUpdate, true, false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_REAPERS) == true)) {
+        gv_objectiveReaperChecks -= 1;
+    }
+
+    while (!((gv_objectiveFindReaperGroups != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveFindReaperGroups, gv_objectiveReaperChecks);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EAST_REAPERS);
     return true;
 }
 
@@ -2547,8 +2582,16 @@ bool gt_ReapersReinforcements03_Func (bool testConds, bool runActions) {
     }
 
     gv_reaperGroupsLeft = (gv_reaperGroupsLeft - 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     TriggerExecute(gt_ObjectiveRescueReapersUpdate, true, false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_REAPERS) == true)) {
+        gv_objectiveReaperChecks -= 1;
+    }
+
+    while (!((gv_objectiveFindReaperGroups != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveFindReaperGroups, gv_objectiveReaperChecks);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_MIDDLE_REAPERS);
     return true;
 }
 
@@ -2629,8 +2672,16 @@ bool gt_ReapersReinforcements04_Func (bool testConds, bool runActions) {
     }
 
     gv_reaperGroupsLeft = (gv_reaperGroupsLeft - 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     TriggerExecute(gt_ObjectiveRescueReapersUpdate, true, false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_REAPERS) == true)) {
+        gv_objectiveReaperChecks -= 1;
+    }
+
+    while (!((gv_objectiveFindReaperGroups != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveFindReaperGroups, gv_objectiveReaperChecks);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTH_REAPERS);
     return true;
 }
 
@@ -2711,8 +2762,16 @@ bool gt_ReapersReinforcements05_Func (bool testConds, bool runActions) {
     }
 
     gv_reaperGroupsLeft = (gv_reaperGroupsLeft - 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
     TriggerExecute(gt_ObjectiveRescueReapersUpdate, true, false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_REAPERS) == true)) {
+        gv_objectiveReaperChecks -= 1;
+    }
+
+    while (!((gv_objectiveFindReaperGroups != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveFindReaperGroups, gv_objectiveReaperChecks);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHWEST_REAPERS);
     return true;
 }
 
@@ -4545,9 +4604,13 @@ bool gt_ObjectiveCollectCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(lib5BD4895D_gv_aP_Core_locationVictory) == true)) {
+        gv_objectiveCollectChecks = 1;
+    }
+
     TriggerQueueEnter();
     ObjectiveCreate((TextReplaceWord(StringExternal("Param/Value/D3C035F7"), StringExternal("Param/Value/8BAF666E"), IntToText(gv_objectiveMineralsQuota), c_stringReplaceAll, c_stringCase)), StringExternal("Param/Value/0022CD68"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, gv_objectiveCollectChecks);
     gv_objectiveCollect = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTosh01Objective1, ObjectiveLastCreated(), (TextReplaceWord(StringExternal("Param/Value/21CBD08C"), StringExternal("Param/Value/9163F2DB"), IntToText(gv_objectiveMineralsQuota), c_stringReplaceAll, c_stringCase)));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -4579,6 +4642,7 @@ bool gt_ObjectiveCollectComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveCollectCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveCollect, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveCollect);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -4607,9 +4671,13 @@ bool gt_ObjectiveRescuePartyCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_TOSHS_MINERS) == true)) {
+        gv_objectiveRescueChecks += 1;
+    }
+
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/F42E1CF8"), StringExternal("Param/Value/51C93208"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Secondary, gv_objectiveRescueChecks);
     gv_objectiveRescue = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTosh01Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/72448821"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -4641,7 +4709,11 @@ bool gt_ObjectiveRescuePartyComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRescuePartyCreateQ, true, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    while (!((gv_objectiveRescue != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveRescue, 0);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_TOSHS_MINERS);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescue);
     Wait(5.0, c_timeReal);
     TriggerExecute(gt_CommandCenterLiftOffTipQ, true, false);
@@ -4663,6 +4735,10 @@ bool gt_ResearchObjectiveKilltheBrutaliskCreateQ_Func (bool testConds, bool runA
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_BRUTALISK) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -4673,7 +4749,7 @@ bool gt_ResearchObjectiveKilltheBrutaliskCreateQ_Func (bool testConds, bool runA
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/C79B3655"), StringExternal("Param/Value/E8235891"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Secondary, 1);
     gv_researchObjectiveKilltheBrutalisk = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTosh01Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/F6AF0A0A"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -4704,6 +4780,10 @@ bool gt_ResearchObjectiveKilltheBrutaliskUpdate_Func (bool testConds, bool runAc
         if (!((gv_inCinematic == false))) {
             return false;
         }
+
+        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_BRUTALISK) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -4717,7 +4797,11 @@ bool gt_ResearchObjectiveKilltheBrutaliskUpdate_Func (bool testConds, bool runAc
     gv_brutaliskKilled = 1;
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectKilltheBrutalisk, EventUnit(), gv_p01_USER);
     TriggerExecute(gt_ResearchObjectiveKilltheBrutaliskCreateQ, true, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    while (!((gv_researchObjectiveKilltheBrutalisk != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_researchObjectiveKilltheBrutalisk, 0);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_BRUTALISK);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_researchObjectiveKilltheBrutalisk);
     if ((libNtve_gf_DifficultyValueInt(0, 1, 1, 1) == 1) && (libNtve_gf_KillingPlayer() == gv_p03_LAVA)) {
         AchievementAward(gv_p01_USER, "TTosh01_2");
@@ -4738,47 +4822,23 @@ void gt_ResearchObjectiveKilltheBrutaliskUpdate_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: onZergBuildingDie
-//--------------------------------------------------------------------------------------------------
-bool gt_onZergBuildingDie_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((UnitGroupCount(UnitGroup(null, gv_p02_ZERG, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) <= 0))) {
-            return false;
-        }
-
-        if (!((UnitGroupCount(UnitGroup(null, gv_p04_ZERG, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) <= 0))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
-    PlayerModifyPropertyInt(gv_p01_USER, c_playerPropMinerals, c_playerPropOperAdd, 10000);
-    TriggerExecute(gt_VictoryCollectedQuota, true, false);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_onZergBuildingDie_Init () {
-    gt_onZergBuildingDie = TriggerCreate("gt_onZergBuildingDie_Func");
-    TriggerAddEventUnitDied(gt_onZergBuildingDie, null);
-}
-
-//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Destroy Zerg Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyZergCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_ZERG_CLEARED) == true))) {
             return false;
         }
     }
@@ -4791,7 +4851,7 @@ bool gt_ObjectiveDestroyZergCreateQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/EB258005"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lv_category, 1);
     gv_objectiveDestroyZerg = ObjectiveLastCreated();
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -4810,7 +4870,19 @@ bool gt_ObjectiveDestroyZergComplete_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+        if (!((UnitGroupCount(UnitGroup(null, gv_p02_ZERG, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) <= 0))) {
+            return false;
+        }
+
+        if (!((UnitGroupCount(UnitGroup(null, gv_p04_ZERG, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) <= 0))) {
+            return false;
+        }
+
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
             return false;
         }
     }
@@ -4821,23 +4893,47 @@ bool gt_ObjectiveDestroyZergComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyZergQueueVictory, false, false);
     TriggerExecute(gt_ObjectiveDestroyZergCreateQ, true, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    while (!((gv_objectiveDestroyZerg != c_invalidObjectiveId))) {
+        Wait(0.1, c_timeGame);
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDestroyZerg, 0);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_ZERG_CLEARED);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZerg);
-    Wait(5.0, c_timeReal);
-    TriggerExecute(gt_CommandCenterLiftOffTipQ, true, false);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyZergComplete_Init () {
     gt_ObjectiveDestroyZergComplete = TriggerCreate("gt_ObjectiveDestroyZergComplete_Func");
+    TriggerAddEventUnitDied(gt_ObjectiveDestroyZergComplete, null);
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Rescue Repaers Create Q
+// Trigger: Objective Destroy Zerg Queue Victory
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveRescueRepaersCreateQ_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyZergQueueVictory_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    PlayerModifyPropertyInt(gv_p01_USER, c_playerPropMinerals, c_playerPropOperAdd, 10000);
+    TriggerExecute(gt_VictoryCollectedQuota, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyZergQueueVictory_Init () {
+    gt_ObjectiveDestroyZergQueueVictory = TriggerCreate("gt_ObjectiveDestroyZergQueueVictory_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Rescue Reapers Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRescueReapersCreateQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -4852,9 +4948,29 @@ bool gt_ObjectiveRescueRepaersCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_REAPERS) == true)) {
+        gv_objectiveReaperChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_REAPERS) == true)) {
+        gv_objectiveReaperChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_REAPERS) == true)) {
+        gv_objectiveReaperChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_REAPERS) == true)) {
+        gv_objectiveReaperChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_REAPERS) == true)) {
+        gv_objectiveReaperChecks += 1;
+    }
+
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/0C674C18"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "Groups Left", gv_reaperGroupsLeft, 0);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Secondary, "Groups Left", gv_reaperGroupsLeft, 0, gv_objectiveReaperChecks);
     gv_objectiveFindReaperGroups = ObjectiveLastCreated();
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -4862,8 +4978,8 @@ bool gt_ObjectiveRescueRepaersCreateQ_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveRescueRepaersCreateQ_Init () {
-    gt_ObjectiveRescueRepaersCreateQ = TriggerCreate("gt_ObjectiveRescueRepaersCreateQ_Func");
+void gt_ObjectiveRescueReapersCreateQ_Init () {
+    gt_ObjectiveRescueReapersCreateQ = TriggerCreate("gt_ObjectiveRescueReapersCreateQ_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4876,7 +4992,7 @@ bool gt_ObjectiveRescueReapersUpdate_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    TriggerExecute(gt_ObjectiveRescueRepaersCreateQ, true, false);
+    TriggerExecute(gt_ObjectiveRescueReapersCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveFindReaperGroups, gv_reaperGroupsLeft);
     if ((gv_reaperGroupsLeft == 0)) {
         TriggerExecute(gt_ObjectiveRescueReapersComplete, true, false);
@@ -4908,7 +5024,6 @@ bool gt_ObjectiveRescueReapersComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveRescueRepaersCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFindReaperGroups);
     return true;
 }
@@ -5736,10 +5851,10 @@ void InitTriggers () {
     gt_ObjectiveRescuePartyComplete_Init();
     gt_ResearchObjectiveKilltheBrutaliskCreateQ_Init();
     gt_ResearchObjectiveKilltheBrutaliskUpdate_Init();
-    gt_onZergBuildingDie_Init();
     gt_ObjectiveDestroyZergCreateQ_Init();
     gt_ObjectiveDestroyZergComplete_Init();
-    gt_ObjectiveRescueRepaersCreateQ_Init();
+    gt_ObjectiveDestroyZergQueueVictory_Init();
+    gt_ObjectiveRescueReapersCreateQ_Init();
     gt_ObjectiveRescueReapersUpdate_Init();
     gt_ObjectiveRescueReapersComplete_Init();
     gt_ArchInit_Init();

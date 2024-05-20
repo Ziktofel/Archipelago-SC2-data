@@ -60,9 +60,6 @@ void lib5BD4895D_InitVariables () {
         lib5BD4895D_gv_aP_Core_rainbowColors[init_i] = 1;
     }
     lib5BD4895D_gv_aP_Core_objectiveUsedCategories = 4;
-    for (init_i = 0; init_i <= 3; init_i += 1) {
-        lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled[init_i] = true;
-    }
     lib5BD4895D_gv_aP_Core_objectiveDefaultTimer = TimerCreate();
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_dialogPanel = c_invalidDialogControlId;
     for (init_i1 = 0; init_i1 <= 8; init_i1 += 1) {
@@ -87,10 +84,10 @@ void lib5BD4895D_InitVariables () {
 
 // Presets
 // Functions
-bool lib5BD4895D_gf_AP_Core_isLocationUncollected (int lp_locationIdLocal) {
+bool lib5BD4895D_gf_AP_Core_isLocationCollectable (int lp_locationIdLocal) {
     // Automatic Variable Declarations
     // Implementation
-    return lib5BD4895D_gv_aP_Core_locationCollectStatus[lp_locationIdLocal];
+    return lib5BD4895D_gv_aP_Core_locationCollectable[lp_locationIdLocal];
 }
 
 void lib5BD4895D_gf_AP_Core_MapConfig_setAffectedPlayers (playergroup lp_players) {
@@ -146,6 +143,10 @@ void lib5BD4895D_gf_AP_Core_sendLocationLocal (int lp_locationIdLocal) {
     // Variable Initialization
 
     // Implementation
+    if ((lp_locationIdLocal >= 0)) {
+        lib5BD4895D_gv_aP_Core_locationCollectable[lp_locationIdLocal] = false;
+    }
+
     lv_value = lp_locationIdLocal + 1;;
     if ((lib5BD4895D_gv_aP_Core_initFinished == true)) {
         if ((lib5BD4895D_gf_AP_Core_IsControllerNotInitialized())) {
@@ -498,7 +499,7 @@ void lib5BD4895D_gf_AP_Core_initObjectivePanel () {
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lib5BD4895D_ge_APObjectiveCategory_Mastery)].lv_listPanel = DialogControlLastCreated();
 }
 
-void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer) {
+void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, int lp_checks, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer) {
     // Variable Declarations
     int lv_new_panel;
     int lv_new_label;
@@ -516,7 +517,7 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, boo
     lv_visualrollingindex = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex;
 
     // Implementation
-    if (((lib5BD4895D_gf_AP_Core_objectiveEnabled(lp_category, -1) == false) || (lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex) != -1))) {
+    if ((lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex) != -1)) {
         return ;
     }
 
@@ -534,7 +535,7 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, boo
     DialogControlSetSize(DialogControlLastCreated(), PlayerGroupAll(), 700, 30);
     lv_new_panel = DialogControlLastCreated();
     DialogControlCreateInPanelFromTemplate(lv_new_panel, c_triggerControlTypeLabel, "ap_ObjectivePanel/AP_ObjectiveNameLabel");
-    libNtve_gf_SetDialogItemText(DialogControlLastCreated(), lib5BD4895D_gf_AP_Core_objectiveText(ObjectiveGetName(lp_objective), lp_hasCounter, lp_counterSuffix, lp_counterValue, lp_counterMax, lp_hasTimer, lp_timer, false), PlayerGroupAll());
+    libNtve_gf_SetDialogItemText(DialogControlLastCreated(), lib5BD4895D_gf_AP_Core_objectiveText(ObjectiveGetName(lp_objective), lp_checks, lp_hasCounter, lp_counterSuffix, lp_counterValue, lp_counterMax, lp_hasTimer, lp_timer, false), PlayerGroupAll());
     DialogControlFadeTransparency(DialogControlLastCreated(), PlayerGroupAll(), 0.0, 100.0);
     lv_new_label = DialogControlLastCreated();
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_label = DialogControlLastCreated();
@@ -543,6 +544,7 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, boo
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_panel = lv_new_panel;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_category = lp_category;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective = lp_objective;
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_checks = lp_checks;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_hasCounter = lp_hasCounter;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_counterSuffix = lp_counterSuffix;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_counterValue = lp_counterValue;
@@ -573,13 +575,13 @@ void lib5BD4895D_gf_AP_Core_addObjectiveSimple (int lp_objective) {
     else {
         lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
     }
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple (int lp_objective, int lp_category) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple (int lp_objective, int lp_category, int lp_checks) {
     // Automatic Variable Declarations
     // Implementation
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
 }
 
 void lib5BD4895D_gf_AP_Core_addObjectiveWithCounter (int lp_objective, string lp_counterSuffix, int lp_counterValue, int lp_counterMax) {
@@ -597,13 +599,13 @@ void lib5BD4895D_gf_AP_Core_addObjectiveWithCounter (int lp_objective, string lp
     else {
         lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
     }
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter (int lp_objective, int lp_category, string lp_counterSuffix, int lp_counterValue, int lp_counterMax) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter (int lp_objective, int lp_category, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, int lp_checks) {
     // Automatic Variable Declarations
     // Implementation
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
 }
 
 void lib5BD4895D_gf_AP_Core_addObjectiveWithTimer (int lp_objective, timer lp_timer) {
@@ -621,13 +623,13 @@ void lib5BD4895D_gf_AP_Core_addObjectiveWithTimer (int lp_objective, timer lp_ti
     else {
         lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
     }
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, false, "", 0, 0, true, lp_timer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, false, "", 0, 0, true, lp_timer);
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer (int lp_objective, int lp_category, timer lp_timer) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer (int lp_objective, int lp_category, timer lp_timer, int lp_checks) {
     // Automatic Variable Declarations
     // Implementation
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, false, "", 0, 0, true, lp_timer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, false, "", 0, 0, true, lp_timer);
 }
 
 void lib5BD4895D_gf_AP_Core_addObjectiveFromData (int lp_objective, string lp_data, string lp_counterSuffix, int lp_counterValue) {
@@ -651,14 +653,14 @@ void lib5BD4895D_gf_AP_Core_addObjectiveFromData (int lp_objective, string lp_da
     }
     ObjectiveSetName(lp_objective, lv_name);
     if ((lv_counterMax > 1)) {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
     }
     else {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
     }
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveFromData (int lp_objective, int lp_category, string lp_data, string lp_counterSuffix, int lp_counterValue) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveFromData (int lp_objective, int lp_category, string lp_data, string lp_counterSuffix, int lp_counterValue, int lp_checks) {
     // Variable Declarations
     int lv_counterMax;
     text lv_name;
@@ -671,10 +673,10 @@ void lib5BD4895D_gf_AP_Core_addCategoryObjectiveFromData (int lp_objective, int 
     // Implementation
     ObjectiveSetName(lp_objective, lv_name);
     if ((lv_counterMax > 1)) {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
     }
     else {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
     }
 }
 
@@ -700,7 +702,25 @@ void lib5BD4895D_gf_AP_Core_enableObjectiveCounter (int lp_objective, string lp_
     lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
 }
 
-void lib5BD4895D_gf_AP_Core_setObjectiveCounter (int lp_objective, int lp_counterValue) {
+trigger auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_Trigger = null;
+int auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_lp_objective;
+int auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_lp_checks;
+
+void lib5BD4895D_gf_AP_Core_setObjectiveChecks (int lp_objective, int lp_checks) {
+    auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_lp_objective = lp_objective;
+    auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_lp_checks = lp_checks;
+
+    if (auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_Trigger == null) {
+        auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_Trigger = TriggerCreate("auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_Trigger, false, false);
+}
+
+bool auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_TriggerFunc (bool testConds, bool runActions) {
+    int lp_objective = auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_lp_objective;
+    int lp_checks = auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_lp_checks;
+
     // Variable Declarations
     int lv_categoryindex;
     int lv_objectiveindex;
@@ -712,11 +732,50 @@ void lib5BD4895D_gf_AP_Core_setObjectiveCounter (int lp_objective, int lp_counte
 
     // Implementation
     if ((lv_objectiveindex == -1)) {
-        return ;
+        return true;
+    }
+
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_checks = lp_checks;
+    lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
+    return true;
+}
+
+trigger auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_Trigger = null;
+int auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_lp_objective;
+int auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_lp_counterValue;
+
+void lib5BD4895D_gf_AP_Core_setObjectiveCounter (int lp_objective, int lp_counterValue) {
+    auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_lp_objective = lp_objective;
+    auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_lp_counterValue = lp_counterValue;
+
+    if (auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_Trigger == null) {
+        auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_Trigger = TriggerCreate("auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_Trigger, false, false);
+}
+
+bool auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_TriggerFunc (bool testConds, bool runActions) {
+    int lp_objective = auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_lp_objective;
+    int lp_counterValue = auto_lib5BD4895D_gf_AP_Core_setObjectiveCounter_lp_counterValue;
+
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
+
+    // Implementation
+    if ((lv_objectiveindex == -1)) {
+        return true;
     }
 
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_counterValue = lp_counterValue;
     lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
+    return true;
 }
 
 void lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix (int lp_objective, string lp_counterSuffix) {
@@ -890,35 +949,6 @@ void lib5BD4895D_gf_AP_Core_showObjective (int lp_objective) {
     lib5BD4895D_gf_AP_Core_resizeObjectivePanel();
 }
 
-bool lib5BD4895D_gf_AP_Core_objectiveEnabled (int lp_category, int lp_locationID) {
-    // Variable Declarations
-    int lv_categoryindex;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lp_category);
-
-    // Implementation
-    if ((lp_category == lib5BD4895D_ge_APObjectiveCategory_Primary)) {
-        return true;
-    }
-
-    if ((lp_category == lib5BD4895D_ge_APObjectiveCategory_Secondary)) {
-        if ((lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled[lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lib5BD4895D_ge_APObjectiveCategory_Primary)] == true)) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    if ((lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled[lv_categoryindex] == false)) {
-        return false;
-    }
-
-    return true;
-}
-
 trigger auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_Trigger = null;
 int auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_categoryIndex;
 int auto_lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout_lp_objectiveIndex;
@@ -1051,10 +1081,10 @@ void lib5BD4895D_gf_AP_Core_resizeObjectivePanel () {
             }
         }
         if ((lv_objectivecount > 0)) {
-            DialogControlSetSize(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), 700, (35 * (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex - lv_hidden) + (16 * lv_extralines) + 10));
+            DialogControlSetSize(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), 750, (35 * (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex - lv_hidden) + (16 * lv_extralines) + 10));
         }
         else {
-            DialogControlSetSize(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), 700, -22);
+            DialogControlSetSize(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), 750, -22);
         }
     }
 }
@@ -1151,6 +1181,7 @@ void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_panel = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_panel;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_label = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_label;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_category = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_category;
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_checks = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_checks;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_checkbox = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_checkbox;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_objective = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_objective;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_hasCounter = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_hasCounter;
@@ -1202,6 +1233,7 @@ void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_category = lib5BD4895D_ge_APObjectiveCategory_Primary;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_checkbox = c_invalidDialogControlId;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_objective = c_invalidObjectiveId;
+        lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_checks = 0;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_hasCounter = false;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_counterSuffix = "";
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_counterValue = 0;
@@ -1256,8 +1288,9 @@ int lib5BD4895D_gf_AP_Core_deprecatedObjectiveCategoryIndex (int lp_objective) {
     }
 }
 
-text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer, bool lp_finished) {
+text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, int lp_checks, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer, bool lp_finished) {
     // Variable Declarations
+    text lv_checkstext;
     text lv_countertext;
     text lv_countersuffix;
     text lv_countermax;
@@ -1266,6 +1299,7 @@ text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, bool lp_hasCounter, str
 
     // Automatic Variable Declarations
     // Variable Initialization
+    lv_checkstext = StringToText("");
     lv_countertext = StringToText("");
     lv_countersuffix = StringToText("");
     lv_countermax = StringToText("");
@@ -1273,6 +1307,22 @@ text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, bool lp_hasCounter, str
     lv_finishedstrip = StringToText("");
 
     // Implementation
+    if ((lp_checks > 0)) {
+        if ((lp_checks == 1)) {
+            TextExpressionSetToken("Param/Expression/lib_5BD4895D_9D1F97B6", "style_start", StringExternal("Param/Value/lib_5BD4895D_E71C1AAC"));
+            TextExpressionSetToken("Param/Expression/lib_5BD4895D_9D1F97B6", "text", StringExternal("Param/Value/lib_5BD4895D_E339DF85"));
+            TextExpressionSetToken("Param/Expression/lib_5BD4895D_9D1F97B6", "style_end", StringExternal("Param/Value/lib_5BD4895D_CF8E4FDB"));
+            lv_checkstext = (TextExpressionAssemble("Param/Expression/lib_5BD4895D_9D1F97B6"));
+        }
+        else {
+            TextExpressionSetToken("Param/Expression/lib_5BD4895D_AA94B924", "style_start", StringExternal("Param/Value/lib_5BD4895D_0BF8E2A4"));
+            TextExpressionSetToken("Param/Expression/lib_5BD4895D_AA94B924", "checks", IntToText(lp_checks));
+            TextExpressionSetToken("Param/Expression/lib_5BD4895D_AA94B924", "text", StringExternal("Param/Value/lib_5BD4895D_08B14846"));
+            TextExpressionSetToken("Param/Expression/lib_5BD4895D_AA94B924", "style_end", StringExternal("Param/Value/lib_5BD4895D_89711AAB"));
+            lv_checkstext = (TextExpressionAssemble("Param/Expression/lib_5BD4895D_AA94B924"));
+        }
+    }
+
     if ((lp_hasCounter == true)) {
         if ((StringLength(lp_counterSuffix) > 0)) {
             if ((StringFind(lp_counterSuffix, ")", c_stringCase) == 1)) {
@@ -1310,12 +1360,14 @@ text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, bool lp_hasCounter, str
     TextExpressionSetToken("Param/Expression/lib_5BD4895D_C0906947", "text", lp_text);
     TextExpressionSetToken("Param/Expression/lib_5BD4895D_C0906947", "counter_text", lv_countertext);
     TextExpressionSetToken("Param/Expression/lib_5BD4895D_C0906947", "timer_text", lv_timer);
+    TextExpressionSetToken("Param/Expression/lib_5BD4895D_C0906947", "checks_text", lv_checkstext);
     return (TextExpressionAssemble("Param/Expression/lib_5BD4895D_C0906947"));
 }
 
 void lib5BD4895D_gf_AP_Core_updateObjectiveText (int lp_category, int lp_index) {
     // Variable Declarations
     int lv_objective;
+    int lv_checks;
     bool lv_hascounter;
     int lv_countervalue;
     int lv_countermax;
@@ -1327,6 +1379,7 @@ void lib5BD4895D_gf_AP_Core_updateObjectiveText (int lp_category, int lp_index) 
     // Automatic Variable Declarations
     // Variable Initialization
     lv_objective = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_objective;
+    lv_checks = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_checks;
     lv_hascounter = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_hasCounter;
     lv_countervalue = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_counterValue;
     lv_countermax = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_counterMax;
@@ -1336,7 +1389,7 @@ void lib5BD4895D_gf_AP_Core_updateObjectiveText (int lp_category, int lp_index) 
     lv_finished = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_finished;
 
     // Implementation
-    libNtve_gf_SetDialogItemText(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_label, lib5BD4895D_gf_AP_Core_objectiveText(ObjectiveGetName(lv_objective), lv_hascounter, lv_countersuffix, lv_countervalue, lv_countermax, lv_hastimer, lv_timer, lv_finished), PlayerGroupAll());
+    libNtve_gf_SetDialogItemText(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_index].lv_label, lib5BD4895D_gf_AP_Core_objectiveText(ObjectiveGetName(lv_objective), lv_checks, lv_hascounter, lv_countersuffix, lv_countervalue, lv_countermax, lv_hastimer, lv_timer, lv_finished), PlayerGroupAll());
 }
 
 void lib5BD4895D_gf_AP_Core_setObjectiveCompleted (int lp_objective) {
@@ -1726,45 +1779,6 @@ void lib5BD4895D_gt_AP_Core_setFactionColorHandler_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: AP_Core_setObjectiveCategoriesEnabled
-//--------------------------------------------------------------------------------------------------
-bool lib5BD4895D_gt_AP_Core_setObjectiveCategoriesEnabled_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    string lv_vanilla;
-    string lv_extra;
-    string lv_challenge;
-    string lv_mastery;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-    lv_vanilla = "";
-    lv_extra = "";
-    lv_challenge = "";
-    lv_mastery = "";
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    lv_vanilla = StringWord(EventChatMessage(false), 2);
-    lv_extra = StringWord(EventChatMessage(false), 3);
-    lv_challenge = StringWord(EventChatMessage(false), 4);
-    lv_mastery = StringWord(EventChatMessage(false), 5);
-    lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled[lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lib5BD4895D_ge_APObjectiveCategory_Primary)] = !(StringEqual(lv_vanilla, "-", c_stringCase));
-    lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled[lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lib5BD4895D_ge_APObjectiveCategory_Extra)] = !(StringEqual(lv_extra, "-", c_stringCase));
-    lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled[lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lib5BD4895D_ge_APObjectiveCategory_Challenge)] = !(StringEqual(lv_challenge, "-", c_stringCase));
-    lib5BD4895D_gv_aP_Core_objectiveCategoryEnabled[lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lib5BD4895D_ge_APObjectiveCategory_Mastery)] = !(StringEqual(lv_mastery, "-", c_stringCase));
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void lib5BD4895D_gt_AP_Core_setObjectiveCategoriesEnabled_Init () {
-    lib5BD4895D_gt_AP_Core_setObjectiveCategoriesEnabled = TriggerCreate("lib5BD4895D_gt_AP_Core_setObjectiveCategoriesEnabled_Func");
-    TriggerAddEventChatMessage(lib5BD4895D_gt_AP_Core_setObjectiveCategoriesEnabled, c_playerAny, "?EnableObjectiveCategories", false);
-}
-
-//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Triggers_loadFinished
 //--------------------------------------------------------------------------------------------------
 bool lib5BD4895D_gt_AP_Triggers_loadFinished_Func (bool testConds, bool runActions) {
@@ -1808,10 +1822,10 @@ bool lib5BD4895D_gt_AP_Triggers_uncollectedLocations_Func (bool testConds, bool 
     auto515366FE_ae = (2 + lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP);
     lv_index = 2;
     for ( ; ( (auto515366FE_ai >= 0 && lv_index <= auto515366FE_ae) || (auto515366FE_ai < 0 && lv_index >= auto515366FE_ae) ) ; lv_index += auto515366FE_ai ) {
-        lv_word = StringWord(EventChatMessage(false), 1);
+        lv_word = StringWord(EventChatMessage(false), lv_index);
         if ((lv_word != null) && (lv_word != "") && (lv_word != " ")) {
             lv_locationIdLocal = StringToInt(lv_word);
-            lib5BD4895D_gv_aP_Core_locationCollectStatus[lv_locationIdLocal] = true;
+            lib5BD4895D_gv_aP_Core_locationCollectable[lv_locationIdLocal] = true;
         }
 
     }
@@ -1897,7 +1911,6 @@ void lib5BD4895D_InitTriggers () {
     lib5BD4895D_gt_AP_Core_rainbowColorsInit_Init();
     lib5BD4895D_gt_AP_Core_giveStartingResources_Init();
     lib5BD4895D_gt_AP_Core_setFactionColorHandler_Init();
-    lib5BD4895D_gt_AP_Core_setObjectiveCategoriesEnabled_Init();
     lib5BD4895D_gt_AP_Triggers_loadFinished_Init();
     lib5BD4895D_gt_AP_Triggers_uncollectedLocations_Init();
     lib5BD4895D_gt_AP_Core_clearChat_Init();
