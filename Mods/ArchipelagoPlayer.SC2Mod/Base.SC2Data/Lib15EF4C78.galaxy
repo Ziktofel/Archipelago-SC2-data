@@ -247,6 +247,52 @@ void lib15EF4C78_InitCustomScript () {
 
 // Presets
 // Functions
+int lib15EF4C78_gf_AP_GetPlayerId () {
+    // Variable Declarations
+    int lv_player_index;
+
+    // Automatic Variable Declarations
+    playergroup autoE815632A_g;
+
+    // Variable Initialization
+    lv_player_index = -1;
+
+    // Implementation
+    autoE815632A_g = PlayerGroupAll();
+    lv_player_index = -1;
+    while (true) {
+        lv_player_index = PlayerGroupNextPlayer(autoE815632A_g, lv_player_index);
+        if (lv_player_index < 0) { break; }
+        if ((PlayerType(lv_player_index) == c_playerTypeUser)) {
+            return lv_player_index;
+        }
+
+    }
+    return 1;
+}
+
+void lib15EF4C78_gf_AP_ApplyDetectionUpgrades () {
+    // Variable Declarations
+    int lv_human_player_id;
+    int lv_player_index;
+
+    // Automatic Variable Declarations
+    const int autoAF3B14EE_ae = 15;
+    const int autoAF3B14EE_ai = 1;
+
+    // Variable Initialization
+    lv_human_player_id = lib15EF4C78_gf_AP_GetPlayerId();
+
+    // Implementation
+    lv_player_index = 2;
+    for ( ; ( (autoAF3B14EE_ai >= 0 && lv_player_index <= autoAF3B14EE_ae) || (autoAF3B14EE_ai < 0 && lv_player_index >= autoAF3B14EE_ae) ) ; lv_player_index += autoAF3B14EE_ai ) {
+        if (((libNtve_gf_PlayerIsEnemy(lv_human_player_id, lv_player_index, libNtve_ge_PlayerRelation_Enemy) == true) || (libNtve_gf_PlayerIsEnemy(lv_human_player_id, lv_player_index, libNtve_ge_PlayerRelation_EnemyMutual) == true))) {
+            libNtve_gf_SetUpgradeLevelForPlayer(lv_player_index, "AP_DetectionEnemy", 1);
+        }
+
+    }
+}
+
 string lib15EF4C78_gf_AP_Player_findNovaWeapon (unit lp_sourceNovaUnit) {
     // Automatic Variable Declarations
     // Implementation
@@ -3420,6 +3466,26 @@ bool lib15EF4C78_gf_AP_Player_isPlayerInCinematicMode (int lp_player) {
 
 // Triggers
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_InitDetectionFactions
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_InitDetectionFactions_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_ApplyDetectionUpgrades();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_InitDetectionFactions_Init () {
+    lib15EF4C78_gt_AP_InitDetectionFactions = TriggerCreate("lib15EF4C78_gt_AP_InitDetectionFactions_Func");
+    TriggerAddEventMapInit(lib15EF4C78_gt_AP_InitDetectionFactions);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: ArchipelagoPlayerHandlersConstructor
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_ArchipelagoPlayerHandlersConstructor_Func (bool testConds, bool runActions) {
@@ -4658,6 +4724,44 @@ bool lib15EF4C78_gt_PM_CinematicModeOff_Func (bool testConds, bool runActions) {
 void lib15EF4C78_gt_PM_CinematicModeOff_Init () {
     lib15EF4C78_gt_PM_CinematicModeOff = TriggerCreate("lib15EF4C78_gt_PM_CinematicModeOff_Func");
     TriggerAddEventGeneric(lib15EF4C78_gt_PM_CinematicModeOff, "CinematicModeOff");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: SoA Apply Guardian Shell Player Response
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_SoAApplyGuardianShellPlayerResponse_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((EventUpgradeName() == "AP_SOAHeroicShield"))) {
+            return false;
+        }
+
+        if (!((lib15EF4C78_gv_pM_SoAAutonomousCasterEnabledForPlayer[EventPlayer()] == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((EventUpgradeLevelDelta() >= 1)) {
+        PlayerAddResponse(EventPlayer(), "AP_SoAGuardianShellPlayerResponse");
+    }
+
+    if ((EventUpgradeLevelDelta() <= -1)) {
+        PlayerRemoveResponse(EventPlayer(), "AP_SoAGuardianShellPlayerResponse");
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_SoAApplyGuardianShellPlayerResponse_Init () {
+    lib15EF4C78_gt_SoAApplyGuardianShellPlayerResponse = TriggerCreate("lib15EF4C78_gt_SoAApplyGuardianShellPlayerResponse_Func");
+    TriggerAddEventUpgradeLevelChanged(lib15EF4C78_gt_SoAApplyGuardianShellPlayerResponse, c_playerAny);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6852,6 +6956,7 @@ void lib15EF4C78_gt_EmitTransformerLand_Init () {
 }
 
 void lib15EF4C78_InitTriggers () {
+    lib15EF4C78_gt_AP_InitDetectionFactions_Init();
     lib15EF4C78_gt_ArchipelagoPlayerHandlersConstructor_Init();
     lib15EF4C78_gt_AP_Player_GatewayStickyKeys_Init();
     lib15EF4C78_gt_AP_Player_RoboStickyKeys_Init();
@@ -6889,6 +6994,7 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_PM_SoAAutonomousStatusWatch_Init();
     lib15EF4C78_gt_PM_CinematicModeOn_Init();
     lib15EF4C78_gt_PM_CinematicModeOff_Init();
+    lib15EF4C78_gt_SoAApplyGuardianShellPlayerResponse_Init();
     lib15EF4C78_gt_PM_SoATargetingForceOff_Init();
     lib15EF4C78_gt_PM_SoATargetingDeactivated_Init();
     lib15EF4C78_gt_PM_SoATargetingPointChosen_Init();
