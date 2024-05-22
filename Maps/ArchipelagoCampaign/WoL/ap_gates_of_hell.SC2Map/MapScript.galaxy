@@ -29,6 +29,17 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_LARGE_ARMY = 1;
+const int gv_LOCATION_ID_2_DROP_PODS = 2;
+const int gv_LOCATION_ID_4_DROP_PODS = 3;
+const int gv_LOCATION_ID_6_DROP_PODS = 4;
+const int gv_LOCATION_ID_8_DROP_PODS = 5;
+const int gv_LOCATION_ID_SOUTHWEST_SPORE_CANNON = 6;
+const int gv_LOCATION_ID_NORTHWEST_SPORE_CANNON = 7;
+const int gv_LOCATION_ID_NORTHEAST_SPORE_CANNON = 8;
+const int gv_LOCATION_ID_EAST_SPORE_CANNON = 9;
+const int gv_LOCATION_ID_SOUTHEAST_SPORE_CANNON = 10;
+const int gv_LOCATION_ID_EXPANSION_SPORE_CANNON = 11;
 const int gv_p00_NEUTRAL_PALLETS = 0;
 const int gv_p01_USER = 1;
 const int gv_p02_ZERG_PURPLE_NE = 2;
@@ -65,13 +76,12 @@ const int ge_NormalBuildingDropPodFlyability_CanNot = 1;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
-bool gv_twoDropPods;
-bool gv_fourDropPods;
-bool gv_sixDropPods;
-bool gv_eightDropPods;
+int gv_objectiveDropPods;
+int gv_objectiveDropPodsChecks;
 int gv_objectiveSporeCannonsTotal;
 int gv_objectiveSporeCannonsUpdate;
 int gv_objectiveSporeCannons;
+int gv_objectiveSporeCannonChecks;
 unit gv_nydusOBJ01;
 unit gv_nydusOBJ02;
 unit gv_nydusOBJ03;
@@ -157,6 +167,7 @@ string gv_tempNydusType;
 fixed gv_nydusSpawnDelay;
 bool gv_stopFallingDebrisAndStuctures;
 int gv_obejctiveTroopsSupplyTotal;
+int gv_objectiveTroopsChecks;
 fixed gv_existingSupplyUpdate;
 int gv_troopSupply;
 unitgroup gv_sCVGroup;
@@ -164,6 +175,7 @@ bool gv_objectiveTroopsCompleted;
 int gv_objectiveNydusWormsTotal;
 int gv_objectiveNydusWormsUpdate;
 int gv_objectiveNydusWorms;
+int gv_objectiveNydusChecks;
 gs_RECORD_BriefingSlaughterArea[5] gv_briefingSlaughterAreas;
 bool gv_sandbagGet01;
 bool gv_sandbagMovingToPlaceLeft;
@@ -207,6 +219,7 @@ void InitGlobals () {
     int init_i;
     int init_j;
 
+    gv_objectiveDropPods = c_invalidObjectiveId;
     gv_objectiveSporeCannonsTotal = 6;
     gv_objectiveSporeCannons = c_invalidObjectiveId;
     gv_zergPlayers = PlayerGroupEmpty();
@@ -280,11 +293,14 @@ void gf_SpawnCrashingDoodad (point lp_crashPoint, string lp_crashingDoodadType);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
-trigger gt_CheckDropPodCount;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveDropPodsCreate;
+trigger gt_CheckDropPodCount;
+trigger gt_ObjectiveDropPodsUpdate;
+trigger gt_ObjectiveDropPodsComplete;
 trigger gt_ObjectiveSporeCannonsCreate;
 trigger gt_ObjectiveSporeCannonsUpdate;
 trigger gt_ObjectiveSporeCannonsComplete;
@@ -798,44 +814,6 @@ bool auto_gf_SpawnCrashingDoodad_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Check Drop Pod Count
-//--------------------------------------------------------------------------------------------------
-bool gt_CheckDropPodCount_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((gv_statDropPodsRescued >= 2) && (gv_twoDropPods == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
-        gv_twoDropPods = true;
-    }
-
-    if ((gv_statDropPodsRescued >= 4) && (gv_fourDropPods == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
-        gv_fourDropPods = true;
-    }
-
-    if ((gv_statDropPodsRescued >= 6) && (gv_sixDropPods == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
-        gv_sixDropPods = true;
-    }
-
-    if ((gv_statDropPodsRescued >= 8) && (gv_eightDropPods == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
-        gv_eightDropPods = true;
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_CheckDropPodCount_Init () {
-    gt_CheckDropPodCount = TriggerCreate("gt_CheckDropPodCount_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -968,9 +946,135 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: ObjectiveSporeCannons Create
+// Trigger: ObjectiveDropPods Create
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveSporeCannonsCreate_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDropPodsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_2_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_4_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_6_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_8_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks += 1;
+    }
+
+    ObjectiveCreate(StringExternal("Param/Value/59279D09"), StringToText(""), c_objectiveStateActive, false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lv_category, "", gv_statDropPodsRescued, 10, gv_objectiveDropPodsChecks);
+    gv_objectiveDropPods = ObjectiveLastCreated();
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDropPodsCreate_Init () {
+    gt_ObjectiveDropPodsCreate = TriggerCreate("gt_ObjectiveDropPodsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Check Drop Pod Count
+//--------------------------------------------------------------------------------------------------
+bool gt_CheckDropPodCount_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((gv_statDropPodsRescued >= 2) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_2_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_2_DROP_PODS);
+    }
+
+    if ((gv_statDropPodsRescued >= 4) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_4_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_4_DROP_PODS);
+    }
+
+    if ((gv_statDropPodsRescued >= 6) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_6_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_6_DROP_PODS);
+    }
+
+    if ((gv_statDropPodsRescued >= 8) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_8_DROP_PODS) == true)) {
+        gv_objectiveDropPodsChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_8_DROP_PODS);
+    }
+
+    TriggerExecute(gt_ObjectiveDropPodsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_CheckDropPodCount_Init () {
+    gt_CheckDropPodCount = TriggerCreate("gt_CheckDropPodCount_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ObjectiveDropPods Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDropPodsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveDropPodsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDropPods, gv_objectiveDropPodsChecks);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDropPods, gv_statDropPodsRescued);
+    if ((gv_statDropPodsRescued == 10)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveDropPodsComplete, true, false);
+    }
+    else {
+        Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDropPodsUpdate_Init () {
+    gt_ObjectiveDropPodsUpdate = TriggerCreate("gt_ObjectiveDropPodsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ObjectiveDropPods Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDropPodsComplete_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -985,8 +1089,70 @@ bool gt_ObjectiveSporeCannonsCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDropPodsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDropPods);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDropPodsComplete_Init () {
+    gt_ObjectiveDropPodsComplete = TriggerCreate("gt_ObjectiveDropPodsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ObjectiveSporeCannons Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSporeCannonsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!(((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_SPORE_CANNON) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_SPORE_CANNON) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHWEST_SPORE_CANNON) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHEAST_SPORE_CANNON) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_SPORE_CANNON) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_SPORE_CANNON) == true)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHWEST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHEAST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks += 1;
+    }
+
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks += 1;
+    }
+
     ObjectiveCreate(StringExternal("Param/Value/46F53229"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_objectiveSporeCannonsUpdate, gv_objectiveSporeCannonsTotal);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lv_category, "", gv_objectiveSporeCannonsUpdate, gv_objectiveSporeCannonsTotal, gv_objectiveSporeCannonChecks);
     gv_objectiveSporeCannons = ObjectiveLastCreated();
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -1016,6 +1182,7 @@ bool gt_ObjectiveSporeCannonsUpdate_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_ObjectiveSporeCannonsCreate, true, false);
     gv_objectiveSporeCannonsUpdate += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveSporeCannons, gv_objectiveSporeCannonChecks);
     lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSporeCannons, gv_objectiveSporeCannonsUpdate);
     if ((gv_objectiveSporeCannonsUpdate == gv_objectiveSporeCannonsTotal)) {
         TriggerEnable(TriggerGetCurrent(), false);
@@ -1098,6 +1265,10 @@ bool gt_SouthwestSporeCannon_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((gv_objectiveSporeCannons != c_invalidObjectiveId))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1106,7 +1277,11 @@ bool gt_SouthwestSporeCannon_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHWEST_SPORE_CANNON);
+    }
+
     TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
     return true;
 }
@@ -1127,6 +1302,10 @@ bool gt_NorthwestSporeCannon_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((gv_objectiveSporeCannons != c_invalidObjectiveId))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1135,7 +1314,11 @@ bool gt_NorthwestSporeCannon_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHWEST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTHWEST_SPORE_CANNON);
+    }
+
     TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
     return true;
 }
@@ -1156,6 +1339,10 @@ bool gt_NortheastSporeCannon_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((gv_objectiveSporeCannons != c_invalidObjectiveId))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1164,7 +1351,11 @@ bool gt_NortheastSporeCannon_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHEAST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTHEAST_SPORE_CANNON);
+    }
+
     TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
     return true;
 }
@@ -1185,6 +1376,10 @@ bool gt_EastSporeCannon_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((gv_objectiveSporeCannons != c_invalidObjectiveId))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1193,7 +1388,11 @@ bool gt_EastSporeCannon_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EAST_SPORE_CANNON);
+    }
+
     TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
     return true;
 }
@@ -1214,6 +1413,10 @@ bool gt_SoutheastSporeCannon_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((gv_objectiveSporeCannons != c_invalidObjectiveId))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1222,7 +1425,11 @@ bool gt_SoutheastSporeCannon_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHEAST_SPORE_CANNON);
+    }
+
     TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
     return true;
 }
@@ -1243,6 +1450,10 @@ bool gt_ExpansionSporeCannon_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((gv_objectiveSporeCannons != c_invalidObjectiveId))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1251,7 +1462,11 @@ bool gt_ExpansionSporeCannon_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_SPORE_CANNON) == true)) {
+        gv_objectiveSporeCannonChecks -= 1;
+        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EXPANSION_SPORE_CANNON);
+    }
+
     TriggerExecute(gt_ObjectiveSporeCannonsUpdate, true, false);
     return true;
 }
@@ -2012,6 +2227,7 @@ bool gt_FirstDropRescue_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     PingDestroy(gv_dropPodFirstPing);
     gv_statDropPodsRescued += 1;
+    TriggerExecute(gt_CheckDropPodCount, true, false);
     TriggerExecute(gt_AchievementRescuealldroppods, true, false);
     auto747B84E6_g = UnitGroup(null, gv_p08_RESCUABLE, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto747B84E6_u = UnitGroupCount(auto747B84E6_g, c_unitCountAll);
@@ -6659,9 +6875,13 @@ bool gt_ObjectiveTroopSupplyCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_LARGE_ARMY) == true)) {
+        gv_objectiveTroopsChecks = 1;
+    }
+
     TriggerQueueEnter();
     ObjectiveCreate(StringExternal("Param/Value/1204A177"), StringExternal("Param/Value/ACD3FC1A"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", FixedToInt(gv_existingSupplyUpdate), gv_obejctiveTroopsSupplyTotal);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, "", FixedToInt(gv_existingSupplyUpdate), gv_obejctiveTroopsSupplyTotal, gv_objectiveTroopsChecks);
     gv_troopSupply = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian01Objective2, gv_troopSupply, StringExternal("Param/Value/099D9D4B"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -6692,9 +6912,10 @@ bool gt_ObjectiveTroopSupplyComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_LARGE_ARMY);
     gv_objectiveTroopsCompleted = true;
     TriggerExecute(gt_ObjectiveTroopSupplyCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_troopSupply, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_troopSupply);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     libCamp_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/FF1C27F9"));
@@ -6846,8 +7067,12 @@ bool gt_ObjectiveNydusWormsCreateHidden_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(lib5BD4895D_gv_aP_Core_locationVictory) == true)) {
+        gv_objectiveNydusChecks = 1;
+    }
+
     ObjectiveCreate(StringExternal("Param/Value/408B1BB0"), StringExternal("Param/Value/C5E5B9B1"), c_objectiveStateHidden, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_objectiveNydusWormsUpdate, gv_objectiveNydusWormsTotal);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objectiveNydusWormsUpdate, gv_objectiveNydusWormsTotal, gv_objectiveNydusChecks);
     gv_objectiveNydusWorms = ObjectiveLastCreated();
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian01Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/F35D34B8"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -6913,6 +7138,7 @@ bool gt_ObjectiveNydusWormsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveNydusWormsCreateHidden, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveNydusWorms, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveNydusWorms);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_VictoryPrimaryObjectiveCompleted, true, false);
@@ -9093,11 +9319,14 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
-    gt_CheckDropPodCount_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveDropPodsCreate_Init();
+    gt_CheckDropPodCount_Init();
+    gt_ObjectiveDropPodsUpdate_Init();
+    gt_ObjectiveDropPodsComplete_Init();
     gt_ObjectiveSporeCannonsCreate_Init();
     gt_ObjectiveSporeCannonsUpdate_Init();
     gt_ObjectiveSporeCannonsComplete_Init();
