@@ -19933,6 +19933,7 @@
         <!-- Override -->
         <On Terms="Abil.AP_ZergBuild.BuiltStart" Send="Create"/>
         <On Terms="Abil.AP_QueenBuild.BuiltStart" Send="Create"/>
+        <On Terms="Abil.AP_OverseerBuild.BuiltStart" Send="Create"/>
         <On Terms="AbilMorph.*.Start; MorphTo AP_GreaterSpire" Send="Create"/>
         <On Terms="ProgressLevel.AP_LurkerDenMorph.Start; Level 0" Send="Create"/>
         <On Terms="ProgressLevel.AP_ZergHatcheryToLair.Start; Level 0" Send="Create"/>
@@ -31935,4 +31936,228 @@
         <On Terms="Upgrade.AP_Liberator360DegreeSensorArray.Remove" Send="Destroy"/>
         <Weapon value="AP_LiberatorAGWeapon"/>
     </CActorRange>
+    <CActorMissile id="AP_ContaminateMissile" parent="GenericAttackMissile" unitName="AP_ContaminateWeapon">
+        <Model value="ContaminateWeapon"/>
+    </CActorMissile>
+    <CActorAction id="AP_Contaminate" parent="GenericAttack" effectImpact="AP_ContaminateDummy" effectLaunch="AP_ContaminateLaunchMissile">
+        <ImpactSiteOps Ops="SOpAttachHarness VoidRaySOpForwardLaunch SOpForwardLaunchGuide"/>
+        <AccuracyHalfArc value="10.000000"/>
+        <ShieldFlashType value="None"/>
+    </CActorAction>
+    <CActorSound id="AP_ContaminateLaunchSound" parent="SoundOneShot">
+        <Sound value="Corruptor_CorruptionLaunch"/>
+        <On Terms="Abil.AP_Contaminate.SourceChannelStop" Send="Create"/>
+        <On Terms="Abil.AP_Contaminate.SourceCastStart" Send="Create"/>
+    </CActorSound>
+    <CActorSound id="AP_ContaminateLoopSound" parent="SoundContinuous">
+        <Sound value="Corruptor_CorruptionLoop"/>
+        <On Terms="Abil.AP_Contaminate.SourceChannelStart" Send="Create"/>
+        <On Terms="Abil.AP_Contaminate.SourceChannelStop" Send="Destroy"/>
+    </CActorSound>
+    <CActorModel id="AP_ContaminateModel" parent="ModelAddition">
+        <Model value="ContaminateModel"/>
+        <AutoScaleFactor value="0.500000"/>
+        <Inherits index="TintColor" value="0"/>
+        <!-- This value will get inherited with then model is copied in a snapshot.  Transfering
+             it will only cause the prop to double up with the prop inherited from the parent,
+             which will cause the model to change scale when it goes under the FoW. -->
+        <AcceptedHostedPropTransfers index="BaseModelScale" value="0"/>
+        <Remove Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="Behavior.AP_Contaminated.On" Send="Create"/>
+        <On Terms="Behavior.AP_Contaminated.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="ActorOrphan" Send="AnimBracketStop BSD"/>
+        <!-- This needs to be a soft attach to prevent crazy giant scales against a Command
+             Center under construction. -->
+        <HostSiteOps Ops="SOpAttachCenterSoft"/>
+    </CActorModel>
+    <CActorRange id="AP_ContaminateRange" parent="RangeAbil" abil="AP_Contaminate"/>
+    <CActorSound id="AP_ContaminateImpactSound" parent="SoundOneShot">
+        <Sound value="Corruptor_CorruptionImpact"/>
+        <On Terms="Behavior.AP_Contaminated.On" Send="Create"/>
+    </CActorSound>
+    <CActorSound id="AP_ContaminateEndSound" parent="SoundOneShot">
+        <Sound value="Corruptor_CorruptionEnd"/>
+        <On Terms="Behavior.AP_Contaminated.Off" Send="Create"/>
+    </CActorSound>
+    <CActorUnit id="AP_Overseer" parent="GenericUnitMorph" unitName="AP_Overseer">
+        <On Terms="AbilMorph.AP_MorphToOverseer.Finish" Send="$Birth 0 0.000000 -1.000000 0.000000"/>
+        <On Terms="UnitBirth.AP_OverseerSiegeMode" Send="Create"/>
+        <On Terms="UnitBirth.AP_OverseerSiegeMode" Send="Create AP_OverseerOversightEyeStalkAddition"/>
+        <On Terms="AbilMorph.*.Start; MorphTo AP_OverseerSiegeMode" Send="Create AP_OverseerOversightEyeStalkAddition"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_OverseerSiegeMode" Target="AP_OverseerOversightEyeStalkAddition" Send="AnimBracketStop BSD"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create Overseer_Land"/>
+        <On Terms="Abil.AP_SpawnChangeling.SourceCastStart" Send="$Spell"/>
+        <On Terms="Abil.AP_SpawnChangelingTarget.SourceCastStart" Send="$Spell"/>
+        <On Terms="Abil.AP_Contaminate.SourceCastStart" Send="$Spell"/>
+        <On Terms="Upgrade.AP_K5ImprovedOverlords.Add" Send="SetScale 1.250000 1.000000"/>
+        <On Terms="Upgrade.AP_K5ImprovedOverlords.Remove" Send="SetScale 1.000000 1.000000"/>
+        <On Terms="ActorCreation; ValidateUnit AP_HaveK5ImprovedOverlords" Send="SetScale 1.250000"/>
+        <On Terms="Abil.AP_OverseerBuild.WorkerStart" Send="Create AP_OverlordGenerateCreepModel"/>
+        <On Terms="Abil.AP_OverseerBuild.WorkerStart" Send="Create AP_OverlordGenerateCreepSound"/>
+        <On Terms="Abil.AP_OverseerBuild.WorkerStart" Send="TimerSet 1 CreepTumorAnimClear"/>
+        <On Terms="TimerExpired; TimerName CreepTumorAnimClear" Target="AP_OverlordGenerateCreepModel" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName CreepTumorAnimClear" Target="AP_OverlordGenerateCreepSound" Send="Destroy"/>
+        <Model value="Overseer"/>
+        <DeathArray index="Normal" ModelLink="OverseerDeath" SoundLink="Overseer_Death_Splat"/>
+        <PortraitModel value="OverseerPortrait"/>
+        <BarOffset value="70"/>
+        <NameOffset value="70"/>
+        <UnitIcon value="Assets\Textures\btn-unit-zerg-overseer.dds"/>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-overseer.dds"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-Zerg-Overseer.dds"/>
+        </GroupIcon>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-Zerg-Overseer.dds"/>
+        </Wireframe>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-flyercarapace-level0.dds"/>
+        <SelectAbilCmd value="FungalGrowth,Execute"/>
+        <Aliases value="_UnitLarge"/>
+        <Macros value="PhysicsDeathsSwarmAir"/>
+        <Macros value="PhysicsDeathsVoidAir"/>
+        <DeathCustoms>
+            <ActorModel value="OverseerDeathRagdoll"/>
+            <ModelLink value="OverseerDeathRagdoll"/>
+            <Name value="RagdollBasic"/>
+            <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollNuke" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollFire" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollAcid" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollOverkillDPRH" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
+        <DeathActorModel value="UnitDeathModelWithDeathMotionFlier"/>
+        <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <SoundArray index="Ready" value="Overseer_Ready"/>
+        <SoundArray index="Help" value="Overseer_Help"/>
+        <SoundArray index="What" value="Overseer_What"/>
+        <SoundArray index="Yes" value="Overseer_Yes"/>
+        <SoundArray index="Attack" value="Overseer_Attack"/>
+        <SoundArray index="Pissed" value="Overseer_Pissed"/>
+        <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
+        <StatusColors index="Shields">
+            <ColorArray index="0" value="255,0,128,0"/>
+        </StatusColors>
+        <VitalColors index="Shields">
+            <ColorArray value="255,0,128,0"/>
+        </VitalColors>
+        <VitalNames index="Shields" value="Vital/ZergShields"/>
+        <WireframeShieldColor value="255,0,128,0"/>
+    </CActorUnit>
+    <CActorSound id="AP_Overseer_Death" parent="SoundOneShot">
+        <On Terms="UnitDeath.AP_Overseer; PassChance 25.000000" Send="Create"/>
+    </CActorSound>
+    <CActorModel id="AP_OverseerOversightEyeStalkAddition" parent="ModelAnimationStyleContinuous">
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <On Terms="ActorCreation" Send="Create AP_OverseerOversightMode"/>
+        <On Terms="ActorCreation" Send="Create AP_Overseer_OversightAuraSound"/>
+        <On Terms="ActorCreation" Send="Create AP_Overseer_OversightEyeBirthSound"/>
+        <On Terms="AnimBracketStop" Target="AP_OverseerOversightMode" Send="Destroy"/>
+        <On Terms="AnimBracketStop" Send="Create AP_Overseer_OversightEndSound"/>
+        <On Terms="AnimBracketStop" Target="AP_Overseer_OversightAuraSound" Send="Destroy"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOverhead"/>
+        <Model value="OverseerOversightAddition"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_OverseerOversightMode" parent="ModelAnimationStyleContinuous">
+        <Model value="OverseerOversightMode"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <Host Subject="::Creator"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_OverseerDeathRagdoll" parent="UnitDeathRagdollFlier">
+        <Model value="OverseerDeathRagdoll"/>
+        <On Terms="ActorCreation" Send="Create AP_OverseerDeathRagdollDetonationForce"/>
+    </CActorModel>
+    <CActorForceSphere id="AP_OverseerDeathRagdollDetonationForce">
+        <Host Subject="::Main"/>
+        <HostSiteOps Ops="SOpAttachInternalDetonation SOpMoveDownByDot5 SOpRandomPointInCircleDot35" HoldPosition="1"/>
+        <Receiver Subject="::Main"/>
+        <Duration value="0.150000"/>
+        <Magnitude value="15.000000,5.000000"/>
+        <Radius value="1.000000,0.500000"/>
+    </CActorForceSphere>
+    <CActorSound id="AP_Overseer_Land" parent="SoundOneShot">
+        <Sound value="Overseer_Land"/>
+    </CActorSound>
+    <CActorSound id="AP_Overseer_OversightAuraSound" parent="SoundOneShot">
+        <Sound value="Overseer_OversightAura"/>
+    </CActorSound>
+    <CActorSound id="AP_Overseer_OversightEndSound" parent="SoundOneShot">
+        <Sound value="Overseer_OversightEnd"/>
+    </CActorSound>
+    <CActorSound id="AP_Overseer_OversightEyeBirthSound" parent="SoundOneShot">
+        <Sound value="Overseer_OversightEyeBirth"/>
+    </CActorSound>
+    <CActorUnit id="AP_OverlordCocoon" parent="GenericUnitMorph" unitName="AP_OverlordCocoon">
+        <Model value="OverlordCocoon"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_OverlordCocoon; MorphFrom AP_Overlord" Send="AnimBaselineStop"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_OverlordCocoon; MorphFrom AP_Overlord" Send="$Birth 0 0.000000 -1.000000 0.000000"/>
+        <On Terms="AnimDone; AnimName Birth" Send="AnimBaselineStart"/>
+        <DeathArray index="Normal" ModelLink="OverlordCocoonDeath" SoundLink="OverlordEgg_Explode"/>
+        <PortraitModel value="OverseerCocoonPortrait"/>
+        <BarWidth value="78"/>
+        <BarOffset value="60"/>
+        <UnitIcon value="Assets\Textures\Wireframe-Zerg-OverseerEgg.dds"/>
+        <HeroIcon value="Assets\Textures\Wireframe-Zerg-OverseerEgg.dds"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-Zerg-OverseerEgg.dds"/>
+        </GroupIcon>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-Zerg-OverseerEgg.dds"/>
+        </Wireframe>
+        <SoundArray index="What" value="OverlordEgg_What"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-flyercarapace-level0.dds"/>
+        <HostSiteOps Ops="SOpRotVariancerForward30"/>
+        <Aliases value="_UnitLarge"/>
+        <PlacementModel value="OverseerCocoon"/>
+        <SoundArray index="Ready" value="OverlordCocoon_Ready"/>
+        <SoundArray index="Help" value="OverlordCocoon_Help"/>
+        <SoundArray index="What" value="OverlordCocoon_What"/>
+        <SoundArray index="Yes" value="OverlordCocoon_Yes"/>
+        <SoundArray index="Attack" value="OverlordCocoon_Attack"/>
+        <SoundArray index="Pissed" value="OverlordCocoon_Pissed"/>
+        <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
+        <StatusColors index="Shields">
+            <ColorArray index="0" value="255,0,128,0"/>
+        </StatusColors>
+        <VitalColors index="Shields">
+            <ColorArray value="255,0,128,0"/>
+        </VitalColors>
+        <VitalNames index="Shields" value="Vital/ZergShields"/>
+        <WireframeShieldColor value="255,0,128,0"/>
+    </CActorUnit>
+    <CActorModel id="AP_OverlordCocoonHatch">
+        <Inherits index="Visibility" value="1"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_OverlordCocoon; ValidateUnit NotDead" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_OverlordCocoon; ValidateUnit NotDead" Send="$Death"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_OverlordCocoon" Send="Destroy"/>
+        <On Terms="AnimDone; AnimName Death" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create CocoonCancelOrCocoonComplete"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOriginStationary"/>
+        <Model value="OverseerCocoon"/>
+    </CActorModel>
+    <CActorSound id="AP_OverlordEggBirth" parent="SoundOneShot">
+        <On Terms="AbilMorph.*.Start; MorphTo AP_OverlordCocoon" Send="Create"/>
+        <Sound value="OverlordEgg_Birth"/>
+    </CActorSound>
+    <CActorSound id="AP_OverlordEgg_Death" parent="SoundOneShot">
+        <Sound value="OverlordEgg_Death"/>
+        <On Terms="UnitDeath.AP_OverlordCocoon; PassChance 25.000000" Send="Create"/>
+    </CActorSound>
 </Catalog>

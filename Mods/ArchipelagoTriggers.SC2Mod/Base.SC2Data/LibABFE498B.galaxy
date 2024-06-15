@@ -929,7 +929,7 @@ void libABFE498B_gf_AP_Triggers_unlockZergMorph (int lp_player, int lp_bitArrayV
         libABFE498B_gf_AP_Triggers_Zerg_unlockLurker, // 1
         libABFE498B_gf_AP_Triggers_Zerg_unlockBroodLord, // 2
         libABFE498B_gf_AP_Triggers_Zerg_unlockViper, // 3
-        ap_triggers_PlayerConsumer_sig, // 4
+        libABFE498B_gf_AP_Triggers_Zerg_unlockOverseer, // 4
         libABFE498B_gf_AP_Triggers_Zerg_unlockBaneling, // 5
         libABFE498B_gf_AP_Triggers_Zerg_unlockGuardian, // 6
         libABFE498B_gf_AP_Triggers_Zerg_unlockDevourer, // 7
@@ -1052,9 +1052,9 @@ void libABFE498B_gf_AP_Triggers_unlockZergEvolutionPit (int lp_player, int lp_bi
         libABFE498B_gf_AP_Triggers_Zerg_MalignantCreep, // 4
         libABFE498B_gf_AP_Triggers_Zerg_VespeneEfficiency, // 5
         libABFE498B_gf_AP_Triggers_Zerg_OverlordVentralSacs, // 6
-        ap_triggers_PlayerConsumer_sig, // 7
-        ap_triggers_PlayerConsumer_sig, // 8
-        ap_triggers_PlayerConsumer_sig, // 9
+        libABFE498B_gf_AP_Triggers_Zerg_OverlordGenerateCreep, // 7
+        libABFE498B_gf_AP_Triggers_Zerg_OverlordAntennae, // 8
+        libABFE498B_gf_AP_Triggers_Zerg_OverlordPneumatizedCarapace, // 9
         ap_triggers_PlayerConsumer_sig, // 10
         ap_triggers_PlayerConsumer_sig, // 11
         ap_triggers_PlayerConsumer_sig, // 12
@@ -4923,6 +4923,24 @@ void libABFE498B_gf_AP_Triggers_Zerg_OverlordVentralSacs (int lp_player) {
     libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_overlordtransport", 1);
 }
 
+void libABFE498B_gf_AP_Triggers_Zerg_OverlordGenerateCreep (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_OverlordGenerateCreep", 1);
+}
+
+void libABFE498B_gf_AP_Triggers_Zerg_OverlordAntennae (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_OverlordSightUpgrade", 1);
+}
+
+void libABFE498B_gf_AP_Triggers_Zerg_OverlordPneumatizedCarapace (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_OverlordSpeed", 1);
+}
+
 void libABFE498B_gf_AP_Triggers_Zerg_CorruptorCausticSpray (int lp_player) {
     // Automatic Variable Declarations
     // Implementation
@@ -5338,6 +5356,12 @@ void libABFE498B_gf_AP_Triggers_Zerg_unlockDevourer (int lp_player) {
         libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_EnableMorphling", 1);
     }
 
+}
+
+void libABFE498B_gf_AP_Triggers_Zerg_unlockOverseer (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_OverlordMorphOverseer", 1);
 }
 
 void libABFE498B_gf_AP_Triggers_Zerg_unlockMeleeAttacks (int lp_player, int lp_level) {
@@ -5761,6 +5785,32 @@ void libABFE498B_gf_AP_Triggers_Zerg_unlockHive (int lp_player) {
     TechTreeAbilityAllow(lp_player, AbilityCommand("AP_UpgradeToHive", 0), true);
 }
 
+void libABFE498B_gf_AP_Triggers_Zerg_unlockOverlordEnergy (int lp_player) {
+    // Variable Declarations
+    unit lv_currentUnit;
+    int lv_upgradeLevels;
+
+    // Automatic Variable Declarations
+    unitgroup auto6027F01E_g;
+    int auto6027F01E_u;
+
+    // Variable Initialization
+
+    // Implementation
+    lv_upgradeLevels = TechTreeUpgradeCount(lp_player, "AP_OverlordSpellcaster", c_techCountQueuedOrBetter);
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_OverlordSpellcaster", 1);
+    if ((lv_upgradeLevels == 0)) {
+        auto6027F01E_g = UnitGroup("AP_Overlord", lp_player, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        auto6027F01E_u = UnitGroupCount(auto6027F01E_g, c_unitCountAll);
+        for (;; auto6027F01E_u -= 1) {
+            lv_currentUnit = UnitGroupUnitFromEnd(auto6027F01E_g, auto6027F01E_u);
+            if (lv_currentUnit == null) { break; }
+            UnitSetPropertyFixed(lv_currentUnit, c_unitPropEnergy, 50.0);
+        }
+    }
+
+}
+
 void libABFE498B_gf_AP_Triggers_clearZergTech (int lp_player) {
     // Automatic Variable Declarations
     // Implementation
@@ -5827,6 +5877,7 @@ void libABFE498B_gf_AP_Triggers_giveZergDefaultTech (int lp_player) {
     // Automatic Variable Declarations
     // Implementation
     libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_KerriganPostLabSounds", 1);
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_OverlordContaminate", 1);
 }
 
 void libABFE498B_gf_AP_Triggers_Protoss_unlockAiurZealot (int lp_player) {
