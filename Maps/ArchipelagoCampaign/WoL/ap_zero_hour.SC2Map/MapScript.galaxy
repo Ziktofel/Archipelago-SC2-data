@@ -336,6 +336,7 @@ trigger gt_VictoryNydusSpawn06;
 trigger gt_ObjectiveHatcheriesCreateQ;
 trigger gt_ObjectiveHatcheriesComplete;
 trigger gt_ArchInit;
+trigger gt_FactionswapInit;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -1571,6 +1572,13 @@ void gt_TaurenOuthouseLaunch_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_CreateBunkerPingsandTooltips_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
+            return false;
+        }
+    }
+
     // Actions
     if (!runActions) {
         return true;
@@ -1806,7 +1814,7 @@ bool gt_CreateUnitTooltips_Func (bool testConds, bool runActions) {
     }
 
     UnitSetInfoText(UnitFromId(258), StringExternal("Param/Value/6341641B"), StringToText(""), StringToText(""));
-    if ((libNtve_gf_DifficultyValueInt(1, 0, 0, 0) == 1)) {
+    if ((libNtve_gf_DifficultyValueInt(1, 0, 0, 0) == 1) && ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr"))) {
         auto2F23254E_g = UnitGroup("AP_MissileTurret", gv_pLAYER01_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
         auto2F23254E_u = UnitGroupCount(auto2F23254E_g, c_unitCountAll);
         for (;; auto2F23254E_u -= 1) {
@@ -3479,6 +3487,10 @@ bool gt_TransmissionCallForRetreatQ_Func (bool testConds, bool runActions) {
         if (!((UnitGroupCount(UnitGroup("AP_Bunker", gv_pLAYER01_USER, RegionFromId(56), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0))) {
             return false;
         }
+
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
+            return false;
+        }
     }
 
     // Actions
@@ -4178,6 +4190,10 @@ bool gt_TipRepairQ_Func (bool testConds, bool runActions) {
         }
 
         if (!((PlayerDifficulty(gv_pLAYER01_USER) != 4))) {
+            return false;
+        }
+
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
             return false;
         }
     }
@@ -6101,6 +6117,69 @@ void gt_ArchInit_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction-swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionswapInit_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    point lv_macroHatchPosition;
+
+    // Automatic Variable Declarations
+    unitgroup autoB612AA7F_g;
+    int autoB612AA7F_u;
+    unit autoB612AA7F_var;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Zerg")) {
+        lv_macroHatchPosition = UnitGetPosition(UnitFromId(387029667));
+        autoB612AA7F_g = UnitGroup("AP_Larva", c_playerAny, RegionCircle(lv_macroHatchPosition, 5.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoB612AA7F_u = UnitGroupCount(autoB612AA7F_g, c_unitCountAll);
+        for (;; autoB612AA7F_u -= 1) {
+            autoB612AA7F_var = UnitGroupUnitFromEnd(autoB612AA7F_g, autoB612AA7F_u);
+            if (autoB612AA7F_var == null) { break; }
+            UnitRemove(autoB612AA7F_var);
+        }
+        UnitRemove(UnitFromId(387029667));
+        CreepModify(lv_macroHatchPosition, 12.0, false, false);
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Terr");
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(6), "Terr");
+        lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+    }
+    else {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(6), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace);
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER01_USER);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_pLAYER01_USER);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            PlayerSetRace(1, "Zerg");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(1, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+            }
+
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionswapInit_Init () {
+    gt_FactionswapInit = TriggerCreate("gt_FactionswapInit_Func");
+    TriggerAddEventGeneric(gt_FactionswapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -6357,6 +6436,7 @@ void InitTriggers () {
     gt_ObjectiveHatcheriesCreateQ_Init();
     gt_ObjectiveHatcheriesComplete_Init();
     gt_ArchInit_Init();
+    gt_FactionswapInit_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
