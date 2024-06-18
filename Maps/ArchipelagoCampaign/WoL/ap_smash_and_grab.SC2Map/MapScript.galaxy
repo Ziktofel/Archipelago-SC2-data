@@ -81,6 +81,7 @@ unitgroup gv_zerglingGroupSouth;
 bool gv_gameOver;
 bool gv_inCinematic;
 playergroup gv_protossPlayers;
+bool gv_dragoonSpawnComplete;
 
 void InitGlobals () {
     gv_outsideProtossBaseDefenders = UnitGroupEmpty();
@@ -131,6 +132,7 @@ trigger gt_DefenseQ;
 trigger gt_StalkerGather;
 trigger gt_MarauderQ;
 trigger gt_MarauderQ2;
+trigger gt_DragoonWarpIn;
 trigger gt_StatueInitialization;
 trigger gt_ArtifactVisibility;
 trigger gt_ArtifactGuardianActivationNorth;
@@ -212,6 +214,7 @@ trigger gt_SecondRelicObtained;
 trigger gt_ThirdRelicObtained;
 trigger gt_FourthRelicObtained;
 trigger gt_ArchInit;
+trigger gt_FactionSwapInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -1084,6 +1087,7 @@ void gt_StalkerGather_Init () {
 bool gt_MarauderQ_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unit lv_swannDropship;
+    region lv_roachDropRegion;
 
     // Automatic Variable Declarations
     // Variable Initialization
@@ -1128,20 +1132,47 @@ bool gt_MarauderQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueExit();
-    libNtve_gf_CreateUnitsAtPoint2(1, "SpecialOpsDropship", 0, gv_p1_USER, PointFromId(166));
-    UnitSetState(UnitLastCreated(), c_unitStateTargetable, false);
-    libNtve_gf_MakeUnitUncommandable(UnitLastCreated(), true);
-    lv_swannDropship = UnitLastCreated();
-    UnitCargoCreate(lv_swannDropship, "AP_Marauder", libNtve_gf_DifficultyValueInt(4, 4, 4, 3));
-    UnitIssueOrder(lv_swannDropship, OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), PointFromId(439)), c_orderQueueReplace);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        lv_roachDropRegion = RegionCircle(PointFromId(439), 1.0);
+        Wait(2.0, c_timeGame);
+        libNtve_gf_CreateUnitsWithDefaultFacing(libNtve_gf_DifficultyValueInt(4, 4, 4, 3), "AP_Roach", 0, 1, PointFromId(439));
+        libCamp_gf_CreateDropPod(libCamp_ge_DropPodRace_Zerg, RegionRandomPoint(lv_roachDropRegion), UnitLastCreatedGroup(), false);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Ravager", 0, 1, PointFromId(439));
+        libCamp_gf_CreateDropPod(libCamp_ge_DropPodRace_Zerg, RegionRandomPoint(lv_roachDropRegion), UnitLastCreatedGroup(), false);
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarpPrism", 0, 8, PointFromId(166));
+            UnitSetState(UnitLastCreated(), c_unitStateTargetable, false);
+            libNtve_gf_MakeUnitUncommandable(UnitLastCreated(), true);
+            lv_swannDropship = UnitLastCreated();
+            UnitIssueOrder(lv_swannDropship, OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(439)), c_orderQueueReplace);
+            UnitIssueOrder(lv_swannDropship, Order(AbilityCommand("AP_PhasingMode", 0)), c_orderQueueAddToEnd);
+        }
+        else {
+            libNtve_gf_CreateUnitsAtPoint2(1, "SpecialOpsDropship", 0, gv_p1_USER, PointFromId(166));
+            UnitSetState(UnitLastCreated(), c_unitStateTargetable, false);
+            libNtve_gf_MakeUnitUncommandable(UnitLastCreated(), true);
+            lv_swannDropship = UnitLastCreated();
+            UnitCargoCreate(lv_swannDropship, "AP_Marauder", libNtve_gf_DifficultyValueInt(4, 4, 4, 3));
+            UnitIssueOrder(lv_swannDropship, OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), PointFromId(439)), c_orderQueueReplace);
+        }
+    }
     while (true) {
         Wait(1.0, c_timeGame);
-        if ((UnitCargoValue(lv_swannDropship, c_unitCargoUnitCount) == 0)) {
+        if ((UnitCargoValue(lv_swannDropship, c_unitCargoUnitCount) == 0) && ((gv_dragoonSpawnComplete == true) || (UnitGetType(lv_swannDropship) == "SpecialOpsDropship"))) {
             UnitIssueOrder(lv_swannDropship, OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(166)), c_orderQueueReplace);
             break;
         }
         else {
-            UnitIssueOrder(lv_swannDropship, OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), PointFromId(439)), c_orderQueueReplace);
+            if ((UnitGetType(lv_swannDropship) == "SpecialOpsDropship")) {
+                UnitIssueOrder(lv_swannDropship, OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), PointFromId(439)), c_orderQueueReplace);
+            }
+            else {
+                UnitIssueOrder(lv_swannDropship, OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(439)), c_orderQueueReplace);
+                UnitIssueOrder(lv_swannDropship, Order(AbilityCommand("AP_PhasingMode", 0)), c_orderQueueAddToEnd);
+            }
         }
     }
     while (true) {
@@ -1195,13 +1226,32 @@ bool gt_MarauderQ2_Func (bool testConds, bool runActions) {
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "TTychus01MusicSwann", c_soundtrackCueAny, c_soundtrackIndexAny, false);
-    // Transmission - SoundLink("TTychus01Swann00003", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus01Swann00003", -1), c_transmissionDurationAdd, 0.0, true);
-    // Transmission - SoundLink("TTychus01Raynor00005", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus01Raynor00005", -1), c_transmissionDurationAdd, 0.0, true);
-    // Transmission - SoundLink("TTychus01Swann00006", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus01Swann00006", -1), c_transmissionDurationAdd, 0.0, true);
-    UIAlertUnit("Trigger", gv_p1_USER, StringToText(""), null, UnitGroupRandomUnit(UnitGroup("Marauder", gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive));
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        // Transmission - SoundLink("TValerian02AStetmann00084", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02AStetmann00084", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("TTychus05TaldarimExecutor00046", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus05TaldarimExecutor00046", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("TValerian02AStetmann00096", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02AStetmann00096", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+            // Transmission - SoundLink("TZeratul02Zeratul00012", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul02Zeratul00012", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("TTychus02Raynor00067", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00067", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("TZeratul01Zeratul00051", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul01Zeratul00051", -1), c_transmissionDurationAdd, 0.0, true);
+        }
+        else {
+            // Transmission - SoundLink("TTychus01Swann00003", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus01Swann00003", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("TTychus01Raynor00005", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus01Raynor00005", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("TTychus01Swann00006", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus01Swann00006", -1), c_transmissionDurationAdd, 0.0, true);
+        }
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     TriggerQueueExit();
     if ((UnitGroupCount(gv_initialStalkers, c_unitCountAlive) > 0) && (gv_gameOver == false)) {
@@ -1227,6 +1277,56 @@ bool gt_MarauderQ2_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_MarauderQ2_Init () {
     gt_MarauderQ2 = TriggerCreate("gt_MarauderQ2_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Dragoon Warp-In
+//--------------------------------------------------------------------------------------------------
+bool gt_DragoonWarpIn_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    const int auto8EA0E4C9_n = 3;
+    int auto8EA0E4C9_i;
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetOwner(EventUnit()) == 8))) {
+            return false;
+        }
+
+        if (!((gv_dragoonSpawnComplete == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    Wait(1.0, c_timeGame);
+    for (auto8EA0E4C9_i = 1; auto8EA0E4C9_i <= auto8EA0E4C9_n; auto8EA0E4C9_i += 1) {
+        UnitIssueOrder(UnitFromId(960890996), OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 4), RegionRandomPoint(RegionCircle(PointFromId(439), 1.0))), c_orderQueueReplace);
+        Wait(0.25, c_timeGame);
+    }
+    Wait(7.0, c_timeGame);
+    libNtve_gf_RescueUnit2(UnitGroup("AP_Dragoon", 8, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1, true);
+    while (true) {
+        if ((UnitGetType(EventUnit()) == "AP_WarpPrism")) {
+            break;
+        }
+        else {
+            UnitIssueOrder(EventUnit(), Order(AbilityCommand("AP_TransportMode", 0)), c_orderQueueReplace);
+            Wait(0.25, c_timeAI);
+        }
+    }
+    gv_dragoonSpawnComplete = true;
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_DragoonWarpIn_Init () {
+    gt_DragoonWarpIn = TriggerCreate("gt_DragoonWarpIn_Func");
+    TriggerAddEventUnitAbility(gt_DragoonWarpIn, null, AbilityCommand("AP_PhasingMode", 0), c_unitAbilStageComplete, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5110,7 +5210,6 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 
     TriggerExecute(lib88187CC2_gt_ArchipelagoPlayerWoLHandlersConstructor, true, false);
     TriggerExecute(gt_Init02Players, true, false);
-    lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p1_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
     lib5BD4895D_gf_AP_Core_MapConfig_setMapInit(gt_Initialization);
     libABFE498B_gf_AP_Triggers_MapConfig_setDifficultySetup(gt_onDifficultyCasual, gt_onDifficultyNormal, gt_onDifficultyHard, gt_onDifficultyBrutal);
     lib5BD4895D_gf_AP_Core_initObjectivePanel();
@@ -5121,6 +5220,45 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 void gt_ArchInit_Init () {
     gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
     TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Terr");
+        lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p1_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+    }
+    else {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace);
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), 1);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(1);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            PlayerSetRace(1, "Zerg");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p1_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(1, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p1_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+            }
+
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5189,6 +5327,7 @@ bool gt_Init02Players_Func (bool testConds, bool runActions) {
     libNtve_gf_SetAlliance(gv_p1_USER, gv_p5_UPPER_CAUSEWAY, libNtve_ge_AllianceSetting_Enemy);
     libNtve_gf_SetAlliance(gv_p1_USER, gv_p6_FIRST_PROTOSS, libNtve_ge_AllianceSetting_Enemy);
     libNtve_gf_SetAlliance(gv_p1_USER, gv_p7_PROTOSS_RELIC, libNtve_ge_AllianceSetting_Neutral);
+    libNtve_gf_SetAlliance(gv_p1_USER, 8, libNtve_ge_AllianceSetting_Ally);
     libNtve_gf_SetAlliance(gv_p2_ZERG, gv_p3_TEMPLE, libNtve_ge_AllianceSetting_Enemy);
     libNtve_gf_SetAlliance(gv_p2_ZERG, gv_p4_LOWER_CAUSEWAY, libNtve_ge_AllianceSetting_Enemy);
     libNtve_gf_SetAlliance(gv_p2_ZERG, gv_p5_UPPER_CAUSEWAY, libNtve_ge_AllianceSetting_Enemy);
@@ -5215,6 +5354,8 @@ bool gt_Init02Players_Func (bool testConds, bool runActions) {
     PlayerModifyPropertyInt(gv_p5_UPPER_CAUSEWAY, c_playerPropVespene, c_playerPropOperSetTo, 5000);
     PlayerModifyPropertyInt(gv_p3_TEMPLE, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
     PlayerModifyPropertyInt(gv_p3_TEMPLE, c_playerPropVespene, c_playerPropOperSetTo, 5000);
+    PlayerModifyPropertyInt(8, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
+    PlayerModifyPropertyInt(8, c_playerPropVespene, c_playerPropOperSetTo, 5000);
     PlayerSetState(gv_p3_TEMPLE, c_playerStateShowScore, false);
     PlayerSetState(gv_p6_FIRST_PROTOSS, c_playerStateShowScore, false);
     return true;
@@ -5546,6 +5687,7 @@ void InitTriggers () {
     gt_StalkerGather_Init();
     gt_MarauderQ_Init();
     gt_MarauderQ2_Init();
+    gt_DragoonWarpIn_Init();
     gt_StatueInitialization_Init();
     gt_ArtifactVisibility_Init();
     gt_ArtifactGuardianActivationNorth_Init();
@@ -5627,6 +5769,7 @@ void InitTriggers () {
     gt_ThirdRelicObtained_Init();
     gt_FourthRelicObtained_Init();
     gt_ArchInit_Init();
+    gt_FactionSwapInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
