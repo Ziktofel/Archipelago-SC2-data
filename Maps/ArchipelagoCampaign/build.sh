@@ -5,10 +5,10 @@ process_map() {
     mpqfile="$campaign"_build/$(sed "s/^$campaign\///g" <<< "$map")
     smpq -c $mpqfile
     pushd $map
-        for file in $(find . -type f) ; do
+        while read -r -d "" file ; do
             file=$(cut -c 3- <<< "$file")
             smpq -a ../../$mpqfile $file
-        done
+        done <  <(find . -type f  -print0)
     popd
 }
 export -f process_map
