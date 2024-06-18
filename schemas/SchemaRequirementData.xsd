@@ -1,0 +1,59 @@
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="Catalog" type="RequirementDataCatalog"/>
+
+    <xs:complexType name="RequirementDataCatalog">
+        <xs:sequence maxOccurs="unbounded">
+            <xs:element name="CRequirement" type="Requirement"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Seems RedHat's vscode extension doesn't support xsd 1.1, so we have to do some jank for -->
+    <!-- mixed "only once" and "unbounded" elements in an unsequenced list. -->
+    <!-- Based off this SO answer: https://stackoverflow.com/a/12012599 -->
+    <xs:group name="unboundedElements">
+        <xs:choice>
+            <xs:element ref="NodeArray"/>
+            <xs:element ref="CanBeSuppressed"/>
+        </xs:choice>
+    </xs:group>
+    <xs:complexType name="Requirement">
+        <xs:sequence>
+            <xs:group ref="unboundedElements" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element ref="EditorCategories" minOccurs="0" maxOccurs="1"/>
+            <xs:group ref="unboundedElements" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="id" use="required" type="xs:ID"/>
+        <xs:attribute name="default" use="optional" type="ZeroOrOne"/>
+        <xs:attribute name="parent" use="optional" type="xs:IDREF"/>
+    </xs:complexType>
+
+    <xs:element name="EditorCategories" type="EditorCategories"/>
+    <xs:element name="NodeArray" type="RequirementNodeLink"/>
+    <xs:element name="CanBeSuppressed" type="CanBeSuppressed"/>
+    
+    <xs:complexType name="RequirementNodeLink">
+        <xs:attribute name="index" type="UseOrShow"/>
+        <xs:attribute name="Link" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="EditorCategories">
+        <xs:attribute name="value" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="CanBeSuppressed">
+        <xs:attribute name="index" type="xs:string"/>
+        <xs:attribute name="value" type="ZeroOrOne"/>
+    </xs:complexType>
+
+    <xs:simpleType name="ZeroOrOne">
+        <xs:restriction base="xs:int">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="UseOrShow">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Use"/>
+            <xs:enumeration value="Show"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema> 
