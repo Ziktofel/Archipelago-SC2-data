@@ -907,6 +907,10 @@ void lib5BD4895D_gf_AP_Core_updateObjectiveDescription (int lp_objective) {
     lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
 
     // Implementation
+    if ((lv_objectiveindex == -1)) {
+        return ;
+    }
+
 }
 
 trigger auto_lib5BD4895D_gf_AP_Core_addObjectiveExtraLine_Trigger = null;
@@ -1065,6 +1069,7 @@ void lib5BD4895D_gf_AP_Core_setObjectiveVisibility (int lp_objective, bool lp_vi
         for ( ; ( (autoBC92EBC7_ai >= 0 && lv_rollingindex <= autoBC92EBC7_ae) || (autoBC92EBC7_ai < 0 && lv_rollingindex >= autoBC92EBC7_ae) ) ; lv_rollingindex += autoBC92EBC7_ai ) {
             if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective != c_invalidObjectiveId) && (ObjectiveGetState(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective) != c_objectiveStateHidden)) {
                 lv_hidecategory = false;
+                break;
             }
 
         }
@@ -1287,14 +1292,17 @@ int lib5BD4895D_gf_AP_Core_objectiveIndex (int lp_objective, int lp_categoryInde
     // Variable Initialization
 
     // Implementation
-    auto8ED4B630_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_rollingIndex - 1);
-    lv_index = 0;
-    for ( ; ( (auto8ED4B630_ai >= 0 && lv_index <= auto8ED4B630_ae) || (auto8ED4B630_ai < 0 && lv_index >= auto8ED4B630_ae) ) ; lv_index += auto8ED4B630_ai ) {
-        if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_objectives[lv_index].lv_objective == lp_objective)) {
-            return lv_index;
-        }
+    if (((lp_categoryIndex >= 0) && (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_rollingIndex > 0))) {
+        auto8ED4B630_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_rollingIndex - 1);
+        lv_index = 0;
+        for ( ; ( (auto8ED4B630_ai >= 0 && lv_index <= auto8ED4B630_ae) || (auto8ED4B630_ai < 0 && lv_index >= auto8ED4B630_ae) ) ; lv_index += auto8ED4B630_ai ) {
+            if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_objectives[lv_index].lv_objective == lp_objective)) {
+                return lv_index;
+            }
 
+        }
     }
+
     return -1;
 }
 
@@ -1533,6 +1541,10 @@ int lib5BD4895D_gf_AP_Core_getNumOfObjectiveLocations (int lp_objective) {
     lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
 
     // Implementation
+    if ((lv_objectiveindex == -1)) {
+        return 0;
+    }
+
     auto16908517_ae = (lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP - 1);
     lv_index = 0;
     for ( ; ( (auto16908517_ai >= 0 && lv_index <= auto16908517_ae) || (auto16908517_ai < 0 && lv_index >= auto16908517_ae) ) ; lv_index += auto16908517_ai ) {
@@ -1595,7 +1607,7 @@ void lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation (int lp_objective, in
     lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
 
     // Implementation
-    if (((lp_locationID <= -1) || (lib5BD4895D_gv_aP_Core_locationCollectable[lp_locationID] == false))) {
+    if (((lv_objectiveindex == -1) || (lp_locationID <= -1) || (lib5BD4895D_gv_aP_Core_locationCollectable[lp_locationID] == false))) {
         return ;
     }
 
@@ -1608,6 +1620,8 @@ void lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation (int lp_objective, in
         }
 
     }
+    TextExpressionSetToken("Param/Expression/lib_5BD4895D_C3A5CCFD", "A", IntToText(lp_locationID));
+    UIDisplayMessage(PlayerGroupAll(), c_messageAreaError, TextExpressionAssemble("Param/Expression/lib_5BD4895D_C3A5CCFD"));
 }
 
 void lib5BD4895D_gf_AP_Core_disassociateLocationFromObjective (int lp_objective, int lp_locationID) {
@@ -1625,7 +1639,7 @@ void lib5BD4895D_gf_AP_Core_disassociateLocationFromObjective (int lp_objective,
     lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
 
     // Implementation
-    if ((lp_locationID <= -1)) {
+    if (((lp_locationID <= -1) || (lv_objectiveindex == -1))) {
         return ;
     }
 
