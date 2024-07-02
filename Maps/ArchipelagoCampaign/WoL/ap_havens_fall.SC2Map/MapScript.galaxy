@@ -90,9 +90,7 @@ const int ge_UnitData_udEggColony = 2;
 //--------------------------------------------------------------------------------------------------
 int gv_objectiveGasPickupsCollected;
 int gv_objectiveGasPickups;
-int gv_objectiveGasChecks;
 int gv_objectiveKeepColonyBasesNotInfested;
-int gv_objectiveKeepNotInfestedChecks;
 bool gv_gameOver;
 bool gv_inCinematic;
 int gv_zergInfestationCounter;
@@ -136,7 +134,6 @@ int gv_vikingStructureKills;
 int gv_stat_ColoniesSaved;
 int gv_stat_VirophagesKilled;
 int gv_objectiveDestroyInfestation;
-int gv_objectiveDestroyInfestationChecks;
 unit gv_briefingZergling;
 unitgroup gv_briefingGroup;
 bool gv_introCinematicCompleted;
@@ -1041,10 +1038,6 @@ bool gt_ObjectiveGasPickupsCreateQ_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!(((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_GAS_PICKUPS) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_GAS_PICKUPS) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_GAS_PICKUPS) == true)))) {
-            return false;
-        }
     }
 
     // Actions
@@ -1053,21 +1046,13 @@ bool gt_ObjectiveGasPickupsCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_GAS_PICKUPS) == true)) {
-        gv_objectiveGasChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_GAS_PICKUPS) == true)) {
-        gv_objectiveGasChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_GAS_PICKUPS) == true)) {
-        gv_objectiveGasChecks += 1;
-    }
-
-    ObjectiveCreate(StringExternal("Param/Value/938EB678"), StringToText(""), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/938EB678"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveGasPickups = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveGasPickups, lv_category, "", gv_objectiveGasPickupsCollected, 3, gv_objectiveGasChecks);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveGasPickups, lv_category, "", gv_objectiveGasPickupsCollected, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveGasPickups, gv_LOCATION_ID_SOUTHWEST_GAS_PICKUPS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveGasPickups, gv_LOCATION_ID_SOUTHEAST_GAS_PICKUPS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveGasPickups, gv_LOCATION_ID_EAST_GAS_PICKUPS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveGasPickups, true);
     return true;
 }
 
@@ -1087,7 +1072,6 @@ bool gt_ObjectiveGasPickupsUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveKeepColonyBasesnotinfestedCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveGasPickups, gv_objectiveGasChecks);
     lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveGasPickups, gv_objectiveGasPickupsCollected);
     if ((gv_objectiveGasPickupsCollected >= 3)) {
         lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveGasPickups);
@@ -1135,11 +1119,7 @@ bool gt_SouthwestGas_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_GAS_PICKUPS) == true)) {
-        gv_objectiveGasChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHWEST_GAS_PICKUPS);
-    }
-
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_GAS_PICKUPS);
     gv_objectiveGasPickupsCollected = (gv_objectiveGasPickupsCollected + 1);
     TriggerExecute(gt_ObjectiveGasPickupsUpdate, true, false);
     return true;
@@ -1185,11 +1165,7 @@ bool gt_EastGas_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_GAS_PICKUPS) == true)) {
-        gv_objectiveGasChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EAST_GAS_PICKUPS);
-    }
-
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_GAS_PICKUPS);
     gv_objectiveGasPickupsCollected = (gv_objectiveGasPickupsCollected + 1);
     TriggerExecute(gt_ObjectiveGasPickupsUpdate, true, false);
     return true;
@@ -1235,11 +1211,7 @@ bool gt_SouthEastGas_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_GAS_PICKUPS) == true)) {
-        gv_objectiveGasChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHEAST_GAS_PICKUPS);
-    }
-
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_GAS_PICKUPS);
     gv_objectiveGasPickupsCollected = (gv_objectiveGasPickupsCollected + 1);
     TriggerExecute(gt_ObjectiveGasPickupsUpdate, true, false);
     return true;
@@ -1267,10 +1239,6 @@ bool gt_ObjectiveKeepColonyBasesnotinfestedCreateQ_Func (bool testConds, bool ru
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!(((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHEAST_COLONY_BASE) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_COLONY_BASE) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_COLONY_BASE) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_COLONY_BASE) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_COLONY_BASE) == true)))) {
-            return false;
-        }
     }
 
     // Actions
@@ -1279,29 +1247,15 @@ bool gt_ObjectiveKeepColonyBasesnotinfestedCreateQ_Func (bool testConds, bool ru
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHEAST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks += 1;
-    }
-
-    ObjectiveCreate(StringExternal("Param/Value/FAC71E9A"), StringToText(""), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/FAC71E9A"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveKeepColonyBasesNotInfested = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lv_category, "Remaining", gv_stat_ColoniesSaved, 0, gv_objectiveKeepNotInfestedChecks);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveKeepColonyBasesNotInfested, lv_category, "Remaining", gv_stat_ColoniesSaved, 0, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeepColonyBasesNotInfested, gv_LOCATION_ID_SOUTHWEST_COLONY_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeepColonyBasesNotInfested, gv_LOCATION_ID_SOUTHEAST_COLONY_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeepColonyBasesNotInfested, gv_LOCATION_ID_NORTHEAST_COLONY_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeepColonyBasesNotInfested, gv_LOCATION_ID_MIDDLE_COLONY_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeepColonyBasesNotInfested, gv_LOCATION_ID_EAST_COLONY_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKeepColonyBasesNotInfested, true);
     return true;
 }
 
@@ -1344,12 +1298,7 @@ bool gt_NorthHive_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_HIVE) == true)) {
-        gv_objectiveDestroyInfestationChecks -= 1;
-        lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDestroyInfestation, gv_objectiveDestroyInfestationChecks);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTH_HIVE);
-    }
-
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_HIVE);
     return true;
 }
 
@@ -1369,12 +1318,7 @@ bool gt_EastHive_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_HIVE) == true)) {
-        gv_objectiveDestroyInfestationChecks -= 1;
-        lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDestroyInfestation, gv_objectiveDestroyInfestationChecks);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EAST_HIVE);
-    }
-
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_HIVE);
     return true;
 }
 
@@ -1394,12 +1338,7 @@ bool gt_SouthHive_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTH_HIVE) == true)) {
-        gv_objectiveDestroyInfestationChecks -= 1;
-        lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDestroyInfestation, gv_objectiveDestroyInfestationChecks);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTH_HIVE);
-    }
-
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_HIVE);
     return true;
 }
 
@@ -4065,40 +4004,32 @@ bool gt_VictoryInfestationCleansedCompleted_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((gv_infestationColonyLost[ge_ColonyIndex_Base6Yellow] == false) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHEAST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTHEAST_COLONY_BASE);
+    if ((gv_infestationColonyLost[ge_ColonyIndex_Base6Yellow] == false)) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_COLONY_BASE);
     }
 
-    if ((gv_infestationColonyLost[ge_ColonyIndex_Base3Purple] == false) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EAST_COLONY_BASE);
+    if ((gv_infestationColonyLost[ge_ColonyIndex_Base3Purple] == false)) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_COLONY_BASE);
     }
 
-    if ((gv_infestationColonyLost[ge_ColonyIndex_Base5White] == false) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_MIDDLE_COLONY_BASE);
+    if ((gv_infestationColonyLost[ge_ColonyIndex_Base5White] == false)) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MIDDLE_COLONY_BASE);
     }
 
-    if ((gv_infestationColonyLost[ge_ColonyIndex_Base4Red] == false) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHEAST_COLONY_BASE);
+    if ((gv_infestationColonyLost[ge_ColonyIndex_Base4Red] == false)) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_COLONY_BASE);
     }
 
-    if ((gv_infestationColonyLost[ge_ColonyIndex_Base1Green] == false) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_COLONY_BASE) == true)) {
-        gv_objectiveKeepNotInfestedChecks -= 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHWEST_COLONY_BASE);
+    if ((gv_infestationColonyLost[ge_ColonyIndex_Base1Green] == false)) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_COLONY_BASE);
     }
 
     if ((gv_objectiveKeepColonyBasesNotInfested != c_invalidObjectiveId)) {
-        lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveKeepColonyBasesNotInfested, gv_objectiveKeepNotInfestedChecks);
         lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKeepColonyBasesNotInfested);
     }
 
     if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(lib5BD4895D_gv_aP_Core_locationVictory) == true)) {
-        gv_objectiveDestroyInfestationChecks -= 1;
-        lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDestroyInfestation, gv_objectiveDestroyInfestationChecks);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     }
 
     Wait(1.0, c_timeGame);
@@ -4402,26 +4333,15 @@ bool gt_ObjectiveDestroyInfestationCreateQ_Func (bool testConds, bool runActions
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(lib5BD4895D_gv_aP_Core_locationVictory) == true)) {
-        gv_objectiveDestroyInfestationChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_HIVE) == true)) {
-        gv_objectiveDestroyInfestationChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_HIVE) == true)) {
-        gv_objectiveDestroyInfestationChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTH_HIVE) == true)) {
-        gv_objectiveDestroyInfestationChecks += 1;
-    }
-
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/6F5E40BB"), StringExternal("Param/Value/E1B705C0"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, "Remaining", 4, 0, gv_objectiveDestroyInfestationChecks);
+    ObjectiveCreate(StringExternal("Param/Value/6F5E40BB"), StringExternal("Param/Value/E1B705C0"), c_objectiveStateHidden, true);
     gv_objectiveDestroyInfestation = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyInfestation, lib5BD4895D_ge_APObjectiveCategory_Primary, "Remaining", 4, 0, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestation, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestation, gv_LOCATION_ID_NORTH_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestation, gv_LOCATION_ID_SOUTH_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestation, gv_LOCATION_ID_EAST_HIVE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyInfestation, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03BObjective1, ObjectiveLastCreated(), StringExternal("Param/Value/F987298E"));
     libNtve_gf_CreatePingFacingAngle(PlayerGroupAll(), "PingObjective", RegionGetCenter(RegionFromId(4)), ColorWithAlpha(0.00, 100.00, 0.00, 0.00), 0.0, 270.0);
     PingSetTooltip(PingLastCreated(), StringExternal("Param/Value/AFAADAC0"));
