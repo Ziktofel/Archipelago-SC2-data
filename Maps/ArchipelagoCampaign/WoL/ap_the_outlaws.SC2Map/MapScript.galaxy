@@ -99,10 +99,8 @@ int gv_numberOfPallets;
 bool gv_barracksBuilt;
 int gv_objectiveDominionBase;
 int gv_dominionBasePing;
-int gv_objectiveDominionBaseChecks;
 int gv_objectiveRebels;
 int gv_rebelPing;
-int gv_objectiveRebelsChecks;
 bool gv_victoryCinematicCompleted;
 unitgroup gv_closeResources;
 unitgroup gv_northResources;
@@ -4119,13 +4117,11 @@ bool gt_ObjectiveDestroytheDominionBaseCreate_Func (bool testConds, bool runActi
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gv_aP_Core_locationCollectable[lib5BD4895D_gv_aP_Core_locationVictory] == true)) {
-        gv_objectiveDominionBaseChecks = 1;
-    }
-
-    ObjectiveCreate(StringExternal("Param/Value/F014BD9E"), StringExternal("Param/Value/1834D61B"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, gv_objectiveDominionBaseChecks);
+    ObjectiveCreate(StringExternal("Param/Value/F014BD9E"), StringExternal("Param/Value/1834D61B"), c_objectiveStateHidden, true);
     gv_objectiveDominionBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDominionBase, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDominionBase, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDominionBase, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TRaynor02Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/DE4A6E49"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -4188,9 +4184,8 @@ bool gt_ObjectiveDestroytheDominionBaseComplete_Func (bool testConds, bool runAc
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_ObjectiveDestroytheDominionBaseCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDominionBase, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDominionBase);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     PingDestroy(gv_dominionBasePing);
@@ -4226,13 +4221,11 @@ bool gt_ObjectiveRebelsCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_REBEL_BASE] == true)) {
-        gv_objectiveRebelsChecks = 1;
-    }
-
-    ObjectiveCreate(StringExternal("Param/Value/CF60F8FD"), StringExternal("Param/Value/5E553DF6"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lv_category, gv_objectiveRebelsChecks);
+    ObjectiveCreate(StringExternal("Param/Value/CF60F8FD"), StringExternal("Param/Value/5E553DF6"), c_objectiveStateHidden, false);
     gv_objectiveRebels = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveRebels, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRebels, gv_LOCATION_ID_REBEL_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRebels, true);
     libNtve_gf_CreatePingFacingAngle(PlayerGroupAll(), "PingObjective", PointFromId(577), ColorWithAlpha(100.00, 100.00, 0.00, 0.00), 0.0, 270.0);
     gv_rebelPing = PingLastCreated();
     PingSetTooltip(PingLastCreated(), StringExternal("Param/Value/2192741C"));
@@ -4294,10 +4287,8 @@ bool gt_ObjectiveRebelsComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_REBEL_BASE);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_REBEL_BASE);
     TriggerExecute(gt_ObjectiveRebelsCreate, true, false);
-    ObjectiveShow(gv_objectiveRebels, PlayerGroupAll(), true);
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveRebels, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRebels);
     PingDestroy(gv_rebelPing);
     return true;
@@ -4872,10 +4863,6 @@ bool gt_ObjectiveCloseResourceCacheCreate_Func (bool testConds, bool runActions)
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_CLOSE_RESOURCE_PICKUPS) == true))) {
-            return false;
-        }
     }
 
     // Actions
@@ -4884,9 +4871,11 @@ bool gt_ObjectiveCloseResourceCacheCreate_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/62DC26C8"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lv_category, 1);
+    ObjectiveCreate(StringExternal("Param/Value/62DC26C8"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveClaimCloseResourceCaches = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveClaimCloseResourceCaches, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClaimCloseResourceCaches, gv_LOCATION_ID_CLOSE_RESOURCE_PICKUPS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClaimCloseResourceCaches, true);
     return true;
 }
 
@@ -4905,10 +4894,6 @@ bool gt_ObjectiveCloseResourceCacheComplete_Func (bool testConds, bool runAction
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_CLOSE_RESOURCE_PICKUPS) == true))) {
-            return false;
-        }
     }
 
     // Actions
@@ -4917,9 +4902,8 @@ bool gt_ObjectiveCloseResourceCacheComplete_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_CLOSE_RESOURCE_PICKUPS);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_RESOURCE_PICKUPS);
     TriggerExecute(gt_ObjectiveCloseResourceCacheCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveClaimCloseResourceCaches, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClaimCloseResourceCaches);
     return true;
 }
@@ -4945,10 +4929,6 @@ bool gt_ObjectiveNorthResourceCacheCreate_Func (bool testConds, bool runActions)
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_RESOURCE_PICKUPS) == true))) {
-            return false;
-        }
     }
 
     // Actions
@@ -4957,9 +4937,11 @@ bool gt_ObjectiveNorthResourceCacheCreate_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/33DADAB2"), StringExternal("Param/Value/43B9678C"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lv_category, 1);
+    ObjectiveCreate(StringExternal("Param/Value/33DADAB2"), StringExternal("Param/Value/43B9678C"), c_objectiveStateHidden, false);
     gv_objectiveClaimNorthResourceCaches = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveClaimNorthResourceCaches, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClaimNorthResourceCaches, gv_LOCATION_ID_NORTH_RESOURCE_PICKUPS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClaimNorthResourceCaches, true);
     return true;
 }
 
@@ -4978,10 +4960,6 @@ bool gt_ObjectiveNorthResourceCacheComplete_Func (bool testConds, bool runAction
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_RESOURCE_PICKUPS) == true))) {
-            return false;
-        }
     }
 
     // Actions
@@ -4990,9 +4968,8 @@ bool gt_ObjectiveNorthResourceCacheComplete_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTH_RESOURCE_PICKUPS);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_RESOURCE_PICKUPS);
     TriggerExecute(gt_ObjectiveNorthResourceCacheCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveClaimNorthResourceCaches, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClaimNorthResourceCaches);
     return true;
 }
@@ -5030,9 +5007,11 @@ bool gt_ObjectiveBunkerCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/58314BB8"), StringExternal("Param/Value/BCFF634C"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lv_category, 1);
+    ObjectiveCreate(StringExternal("Param/Value/58314BB8"), StringExternal("Param/Value/BCFF634C"), c_objectiveStateHidden, false);
     gv_objectiveDoANiceJobClearingThatBunker = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDoANiceJobClearingThatBunker, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDoANiceJobClearingThatBunker, gv_LOCATION_ID_BUNKER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDoANiceJobClearingThatBunker, true);
     return true;
 }
 
@@ -5051,10 +5030,6 @@ bool gt_ObjectiveBunkerComplete_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_BUNKER) == true))) {
-            return false;
-        }
     }
 
     // Actions
@@ -5063,9 +5038,8 @@ bool gt_ObjectiveBunkerComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_BUNKER);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_BUNKER);
     TriggerExecute(gt_ObjectiveBunkerCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDoANiceJobClearingThatBunker, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDoANiceJobClearingThatBunker);
     return true;
 }
