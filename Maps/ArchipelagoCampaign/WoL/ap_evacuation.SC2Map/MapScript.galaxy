@@ -29,6 +29,12 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_NORTH_CHRYSALIS = 1;
+const int gv_LOCATION_ID_WEST_CHRYSALIS = 2;
+const int gv_LOCATION_ID_EAST_CHRYSALIS = 3;
+const int gv_LOCATION_ID_REACH_HANSON = 4;
+const int gv_LOCATION_ID_SECRET_RESOURCE_STASH = 5;
+const int gv_LOCATION_ID_FLAWLESS = 6;
 const int gv_p1_USER = 1;
 
 //--------------------------------------------------------------------------------------------------
@@ -108,6 +114,8 @@ int gv_objPing_ReachHanson;
 int gv_objective_ReachHanson;
 int gv_objective_SaveColonists;
 int gv_objective_DontLetColonistsDie;
+int gv_objective_Flawless;
+bool gv_flawless_Failed;
 int gv_bonusObjectiveCollectChrysalis;
 int gv_bonusObjectiveCollectChrysalisNeeded;
 int gv_bonusObjectiveCollectChrysalisFound;
@@ -154,6 +162,7 @@ void InitGlobals () {
     gv_objective_ReachHanson = c_invalidObjectiveId;
     gv_objective_SaveColonists = c_invalidObjectiveId;
     gv_objective_DontLetColonistsDie = c_invalidObjectiveId;
+    gv_objective_Flawless = c_invalidObjectiveId;
     gv_bonusObjectiveCollectChrysalis = c_invalidObjectiveId;
 }
 
@@ -297,6 +306,7 @@ trigger gt_MainObjectiveSaveColonistsComplete;
 trigger gt_ResearchObjectiveChrysalisCreateQ;
 trigger gt_ResearchObjectiveChrysalisUpdate;
 trigger gt_ResearchObjectiveChrysalisComplete;
+trigger gt_ResearchObjectiveChrysalisRemove;
 trigger gt_BriefingQ;
 trigger gt_BriefingSetup;
 trigger gt_BriefingAction01Road;
@@ -661,7 +671,13 @@ void gt_onDifficultyBrutal_Init () {
 // Trigger: Objective Find Secret resource Stash Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindSecretresourceStashCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -675,9 +691,11 @@ bool gt_ObjectiveFindSecretresourceStashCreate_Func (bool testConds, bool runAct
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/2F57DEE3"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/2F57DEE3"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveFindTheSecretResourceStash = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveFindTheSecretResourceStash, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindTheSecretResourceStash, gv_LOCATION_ID_SECRET_RESOURCE_STASH);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindTheSecretResourceStash, true);
     return true;
 }
 
@@ -737,7 +755,7 @@ bool gt_FindSecretResourceStashImpl_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECRET_RESOURCE_STASH);
     TriggerExecute(gt_ObjectiveFindSecretresourceStashComplete, true, false);
     return true;
 }
@@ -806,7 +824,7 @@ bool gt_FirstChysalis_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_CHRYSALIS);
     return true;
 }
 
@@ -833,7 +851,7 @@ bool gt_SecondChysalis_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_CHRYSALIS);
     return true;
 }
 
@@ -860,7 +878,7 @@ bool gt_ThirdChysalis_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_CHRYSALIS);
     return true;
 }
 
@@ -1900,7 +1918,7 @@ bool gt_SwitchtoEscortPhase_Func (bool testConds, bool runActions) {
         }
 
     }
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_REACH_HANSON);
     UnitSetPropertyFixed(UnitFromId(236), c_unitPropEnergy, 50.0);
     UnitIssueOrder(UnitFromId(236), OrderTargetingUnit(null, UnitFromId(236)), c_orderQueueReplace);
     auto338F5CC8_g = UnitGroup("AP_SCV", gv_p1_USER, RegionEntireMap(), UnitFilter(0, 0, 0, (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
@@ -4681,6 +4699,11 @@ bool gt_ColonistKilled_Func (bool testConds, bool runActions) {
     }
 
     gv_colonistsKilled = (gv_colonistsKilled + 1);
+    if ((gv_flawless_Failed == false)) {
+        gv_flawless_Failed = true;
+        lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Flawless);
+    }
+
     if ((libNtve_gf_DifficultyValueInt(0, 0, 1, 1) == 1)) {
         lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DontLetColonistsDie, gv_colonistsKilled);
     }
@@ -4873,6 +4896,11 @@ bool gt_Playerkillscolonists_Func (bool testConds, bool runActions) {
     }
 
     gv_colonistsKilled = (gv_colonistsKilled + 1);
+    if ((gv_flawless_Failed == false)) {
+        gv_flawless_Failed = true;
+        lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Flawless);
+    }
+
     if ((UnitGetType(EventUnit()) == "ColonistTransport")) {
         gv_convoyTrucksKilled = (gv_convoyTrucksKilled + 1);
     }
@@ -5459,9 +5487,9 @@ bool gt_VictoryPlayerSavesEnoughColonists_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     if ((gv_colonistsKilled == 0)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FLAWLESS);
     }
 
     TimerStart(lv_Timer, 7.0, false, c_timeGame);
@@ -5695,9 +5723,11 @@ bool gt_MainObjectiveReachHansonCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/E2D2B8C2"), StringExternal("Param/Value/75A746D2"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/E2D2B8C2"), StringExternal("Param/Value/75A746D2"), c_objectiveStateHidden, true);
     gv_objective_ReachHanson = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_ReachHanson, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ReachHanson, gv_LOCATION_ID_REACH_HANSON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ReachHanson, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson01Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/36494D64"));
     return true;
 }
@@ -5791,17 +5821,26 @@ bool gt_MainObjectiveSaveColonistsCreate_Func (bool testConds, bool runActions) 
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/19E961B1"), StringExternal("Param/Value/2A5C2427"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_colonistsSaved, gv_colonistsSaveQuota);
+    ObjectiveCreate(StringExternal("Param/Value/19E961B1"), StringExternal("Param/Value/2A5C2427"), c_objectiveStateHidden, true);
     gv_objective_SaveColonists = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_SaveColonists, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_colonistsSaved, gv_colonistsSaveQuota, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SaveColonists, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_SaveColonists, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson01Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/08EAF061"));
     if ((libNtve_gf_DifficultyValueInt(0, 0, 1, 1) == 1)) {
-        ObjectiveCreate(TextReplaceWord(StringExternal("Param/Value/E27BA2C4"), StringExternal("Param/Value/62B67181"), IntToText(gv_colonistsDeathQuota), c_stringReplaceAll, c_stringCase), StringExternal("Param/Value/9A73EBCA"), c_objectiveStateActive, true);
-        lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "Dead", gv_colonistsKilled, 0);
+        ObjectiveCreate(TextReplaceWord(StringExternal("Param/Value/E27BA2C4"), StringExternal("Param/Value/62B67181"), IntToText(gv_colonistsDeathQuota), c_stringReplaceAll, c_stringCase), StringExternal("Param/Value/9A73EBCA"), c_objectiveStateHidden, true);
         gv_objective_DontLetColonistsDie = ObjectiveLastCreated();
+        lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_DontLetColonistsDie, lib5BD4895D_ge_APObjectiveCategory_Primary, "Dead", gv_colonistsKilled, 0, false);
+        lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DontLetColonistsDie, true);
         libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson01Objective4, ObjectiveLastCreated(), StringExternal("Param/Value/0F66C14F"));
     }
 
+    Wait(3.0, c_timeGame);
+    ObjectiveCreate(StringExternal("Param/Value/24E3DD38"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_Flawless = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Flawless, lib5BD4895D_ge_APObjectiveCategory_Challenge, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Flawless, gv_LOCATION_ID_FLAWLESS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Flawless, true);
     return true;
 }
 
@@ -5865,6 +5904,10 @@ bool gt_MainObjectiveSaveColonistsComplete_Func (bool testConds, bool runActions
         lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_DontLetColonistsDie);
     }
 
+    if ((gv_colonistsKilled == 0)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Flawless);
+    }
+
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5878,7 +5921,13 @@ void gt_MainObjectiveSaveColonistsComplete_Init () {
 // Trigger: Research Objective - Chrysalis - Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ResearchObjectiveChrysalisCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5893,9 +5942,13 @@ bool gt_ResearchObjectiveChrysalisCreateQ_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/7594386A"), StringExternal("Param/Value/05BF0798"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (3 - gv_bonusObjectiveCollectChrysalisFound), 0);
+    ObjectiveCreate(StringExternal("Param/Value/7594386A"), StringExternal("Param/Value/05BF0798"), c_objectiveStateHidden, false);
     gv_bonusObjectiveCollectChrysalis = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_bonusObjectiveCollectChrysalis, lv_category, "", gv_bonusObjectiveCollectChrysalisFound, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveCollectChrysalis, gv_LOCATION_ID_NORTH_CHRYSALIS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveCollectChrysalis, gv_LOCATION_ID_WEST_CHRYSALIS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveCollectChrysalis, gv_LOCATION_ID_EAST_CHRYSALIS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_bonusObjectiveCollectChrysalis, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson01Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/D82AA183"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5936,7 +5989,7 @@ bool gt_ResearchObjectiveChrysalisUpdate_Func (bool testConds, bool runActions) 
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectFindChrysalisDNA, EventUnit(), gv_p1_USER);
     UnitKill(EventUnit());
     gv_bonusObjectiveCollectChrysalisFound += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_bonusObjectiveCollectChrysalis, (3 - gv_bonusObjectiveCollectChrysalisFound));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_bonusObjectiveCollectChrysalis, gv_bonusObjectiveCollectChrysalisFound);
     if ((gv_bonusObjectiveCollectChrysalisFound == gv_bonusObjectiveCollectChrysalisNeeded)) {
         TriggerExecute(gt_ResearchObjectiveChrysalisComplete, true, false);
     }
@@ -5977,6 +6030,40 @@ bool gt_ResearchObjectiveChrysalisComplete_Func (bool testConds, bool runActions
 //--------------------------------------------------------------------------------------------------
 void gt_ResearchObjectiveChrysalisComplete_Init () {
     gt_ResearchObjectiveChrysalisComplete = TriggerCreate("gt_ResearchObjectiveChrysalisComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Research Objective - Chrysalis - Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ResearchObjectiveChrysalisRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_CHRYSALIS) == false) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_WEST_CHRYSALIS) == false) && (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EAST_CHRYSALIS) == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ChrysalisPing, false);
+    TriggerEnable(gt_ChrysalisTipQ, false);
+    TriggerEnable(gt_ChrysalisTipTriggerA, false);
+    TriggerEnable(gt_ChrysalisTipTriggerB, false);
+    TriggerEnable(gt_ChrysalisTipTriggerC, false);
+    UnitRemove(UnitFromId(2010));
+    UnitRemove(UnitFromId(397));
+    UnitRemove(UnitFromId(612));
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ResearchObjectiveChrysalisRemove_Init () {
+    gt_ResearchObjectiveChrysalisRemove = TriggerCreate("gt_ResearchObjectiveChrysalisRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ResearchObjectiveChrysalisRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7023,6 +7110,7 @@ void InitTriggers () {
     gt_ResearchObjectiveChrysalisCreateQ_Init();
     gt_ResearchObjectiveChrysalisUpdate_Init();
     gt_ResearchObjectiveChrysalisComplete_Init();
+    gt_ResearchObjectiveChrysalisRemove_Init();
     gt_BriefingQ_Init();
     gt_BriefingSetup_Init();
     gt_BriefingAction01Road_Init();

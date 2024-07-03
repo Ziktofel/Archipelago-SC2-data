@@ -36,6 +36,13 @@ const int gv_pLAYER_04_INFESTEDREFUGEES = 4;
 const int gv_pLAYER_05_REFUGEES = 5;
 const int gv_pLAYER_06_INFESTORS = 6;
 const int gv_pLAYER_08_SWANN = 8;
+const int gv_LOCATION_ID_LEFT_INFESTOR = 1;
+const int gv_LOCATION_ID_RIGHT_INFESTOR = 2;
+const int gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER = 3;
+const int gv_LOCATION_ID_SOUTH_INFESTED_COMMAND_CENTER = 4;
+const int gv_LOCATION_ID_NORTHWEST_BAR = 5;
+const int gv_LOCATION_ID_NORTH_BAR = 6;
+const int gv_LOCATION_ID_SOUTH_BAR = 7;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -3649,6 +3656,10 @@ bool gt_TransmissionInfestorsAtNightQ_Func (bool testConds, bool runActions) {
         if (!((TriggerGetExecCount(TriggerGetCurrent()) == 0))) {
             return false;
         }
+
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_LEFT_INFESTOR] == true) || (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_RIGHT_INFESTOR] == true)))) {
+            return false;
+        }
     }
 
     // Actions
@@ -4300,7 +4311,7 @@ bool gt_VictoryInfestationPurged_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     TimerWindowDestroy(gv_mainTimerWindow);
     TimerPause(gv_mainTimer, true);
@@ -4505,10 +4516,12 @@ bool gt_ObjectiveCleansetheInfestationCreateQ_Func (bool testConds, bool runActi
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/705F7F74"), StringExternal("Param/Value/43FE14C8"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "Structures Remaining", UnitGroupCount(UnitGroup(null, gv_pLAYER_03_INFESTED_REFUGEES, null, UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, 0, 0), 0), c_unitCountAlive), 0);
-    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/705F7F74"), StringExternal("Param/Value/43FE14C8"), c_objectiveStateHidden, true);
     gv_objectiveCleanseInfestation = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, "Structures Remaining", UnitGroupCount(UnitGroup(null, gv_pLAYER_03_INFESTED_REFUGEES, null, UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, 0, 0), 0), c_unitCountAlive), 0, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveCleanseInfestation, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(gv_objectiveCleanseInfestation);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveCleanseInfestation, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson02Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/35E5FAF4"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -4606,7 +4619,13 @@ void gt_ObjectiveCleansetheInfestationFailed_Init () {
 // Trigger: Research Objective Kill the Infestors Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ResearchObjectiveKilltheInfestorsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4621,9 +4640,12 @@ bool gt_ResearchObjectiveKilltheInfestorsCreateQ_Func (bool testConds, bool runA
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/B4DF2B38"), StringExternal("Param/Value/84F789E6"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (2 - gv_infestorsKilled), 0);
+    ObjectiveCreate(StringExternal("Param/Value/B4DF2B38"), StringExternal("Param/Value/84F789E6"), c_objectiveStateHidden, false);
     gv_researchObjectiveKilltheInfestors = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_researchObjectiveKilltheInfestors, lv_category, "", gv_infestorsKilled, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_researchObjectiveKilltheInfestors, gv_LOCATION_ID_LEFT_INFESTOR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_researchObjectiveKilltheInfestors, gv_LOCATION_ID_RIGHT_INFESTOR);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_researchObjectiveKilltheInfestors, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson02Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/AE390633"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -4659,7 +4681,7 @@ bool gt_ResearchObjectiveKilltheInfestorsUpdate_Func (bool testConds, bool runAc
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectKilltheInfestors, EventUnit(), gv_pLAYER_01_USER);
     TriggerExecute(gt_ResearchObjectiveKilltheInfestorsCreateQ, true, false);
     gv_infestorsKilled += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_researchObjectiveKilltheInfestors, (2 - gv_infestorsKilled));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_researchObjectiveKilltheInfestors, gv_infestorsKilled);
     if ((gv_infestorsKilled == 2)) {
         TriggerExecute(gt_ResearchObjectiveKilltheInfestorsComplete, true, false);
         TriggerEnable(TriggerGetCurrent(), false);
@@ -4706,7 +4728,13 @@ void gt_ResearchObjectiveKilltheInfestorsComplete_Init () {
 // Trigger: Objective Destroy Infested Command Centers Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyInfestedCommandCentersCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4721,9 +4749,12 @@ bool gt_ObjectiveDestroyInfestedCommandCentersCreate_Func (bool testConds, bool 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/4E1B9680"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (2 - gv_infestedCommandCentersDestroyed), 0);
+    ObjectiveCreate(StringExternal("Param/Value/4E1B9680"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveDestroyInfestedCommandCenters = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyInfestedCommandCenters, lv_category, "", gv_infestedCommandCentersDestroyed, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestedCommandCenters, gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestedCommandCenters, gv_LOCATION_ID_SOUTH_INFESTED_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyInfestedCommandCenters, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -4757,7 +4788,7 @@ bool gt_ObjectiveDestroyInfestedCommandCentersUpdate_Func (bool testConds, bool 
 
     TriggerExecute(gt_ObjectiveDestroyInfestedCommandCentersCreate, true, false);
     gv_infestedCommandCentersDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyInfestedCommandCenters, (2 - gv_infestedCommandCentersDestroyed));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyInfestedCommandCenters, gv_infestedCommandCentersDestroyed);
     if ((gv_infestedCommandCentersDestroyed == 2)) {
         TriggerExecute(gt_ObjectiveDestroyInfestedCommandCentersComplete, true, false);
         TriggerEnable(TriggerGetCurrent(), false);
@@ -4804,7 +4835,13 @@ void gt_ObjectiveDestroyInfestedCommandCentersComplete_Init () {
 // Trigger: Objective Destroy Infested Bars Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyInfestedBarsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4819,9 +4856,13 @@ bool gt_ObjectiveDestroyInfestedBarsCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/0C2494F2"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (3 - gv_infestedBarsDestroyed), 0);
+    ObjectiveCreate(StringExternal("Param/Value/0C2494F2"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveDestroyInfestedBars = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyInfestedBars, lv_category, "", gv_infestedCommandCentersDestroyed, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestedBars, gv_LOCATION_ID_NORTH_BAR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestedBars, gv_LOCATION_ID_NORTHWEST_BAR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestedBars, gv_LOCATION_ID_SOUTH_BAR);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyInfestedBars, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -4855,7 +4896,7 @@ bool gt_ObjectiveDestroyInfestedBarsUpdate_Func (bool testConds, bool runActions
 
     TriggerExecute(gt_ObjectiveDestroyInfestedBarsCreate, true, false);
     gv_infestedBarsDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyInfestedBars, (3 - gv_infestedBarsDestroyed));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyInfestedBars, gv_infestedBarsDestroyed);
     if ((gv_infestedBarsDestroyed == 3)) {
         TriggerExecute(gt_ObjectiveDestroyInfestedBarsComplete, true, false);
         TriggerEnable(TriggerGetCurrent(), false);
@@ -4916,7 +4957,7 @@ bool gt_NorthInfestedCommandCenter_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER);
     return true;
 }
 
@@ -4944,7 +4985,7 @@ bool gt_SouthInfestedCommandCenter_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_INFESTED_COMMAND_CENTER);
     return true;
 }
 
@@ -4972,7 +5013,7 @@ bool gt_NorthwestInfestedBar_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_BAR);
     return true;
 }
 
@@ -5000,7 +5041,7 @@ bool gt_NorthInfestedBar_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_BAR);
     return true;
 }
 
@@ -5028,7 +5069,7 @@ bool gt_SouthInfestedBar_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_BAR);
     return true;
 }
 
@@ -5213,7 +5254,7 @@ bool gt_RightInfestor_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_RIGHT_INFESTOR);
     return true;
 }
 
@@ -5240,7 +5281,7 @@ bool gt_LeftInfestor_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LEFT_INFESTOR);
     return true;
 }
 
