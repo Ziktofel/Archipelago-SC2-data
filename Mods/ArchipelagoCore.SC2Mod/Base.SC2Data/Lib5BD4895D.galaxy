@@ -18,6 +18,7 @@ void lib5BD4895D_InitVariables () {
     int init_i1;
     int init_j1;
     int init_i2;
+    int init_i3;
 
     if (lib5BD4895D_InitVariables_completed) {
         return;
@@ -73,6 +74,9 @@ void lib5BD4895D_InitVariables () {
             lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[init_i1].lv_objectives[init_i2].lv_label = c_invalidDialogControlId;
             lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[init_i1].lv_objectives[init_i2].lv_counterSuffix = "";
             lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[init_i1].lv_objectives[init_i2].lv_timer = lib5BD4895D_gv_aP_Core_objectiveDefaultTimer;
+            for (init_i3 = 0; init_i3 <= lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP; init_i3 += 1) {
+                lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[init_i1].lv_objectives[init_i2].lv_locations[init_i3] = -1;
+            }
         }
     }
     for (init_i1 = 0; init_i1 <= 8; init_i1 += 1) {
@@ -499,7 +503,7 @@ void lib5BD4895D_gf_AP_Core_initObjectivePanel () {
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lib5BD4895D_gf_AP_Core_objectiveCategoryToInteger(lib5BD4895D_ge_APObjectiveCategory_Mastery)].lv_listPanel = DialogControlLastCreated();
 }
 
-void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, int lp_checks, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer) {
+void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, bool lp_hasCounter, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hasTimer, timer lp_timer, bool lp_hideIfNoLocs) {
     // Variable Declarations
     int lv_new_panel;
     int lv_new_label;
@@ -535,7 +539,7 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, int
     DialogControlSetSize(DialogControlLastCreated(), PlayerGroupAll(), 700, 30);
     lv_new_panel = DialogControlLastCreated();
     DialogControlCreateInPanelFromTemplate(lv_new_panel, c_triggerControlTypeLabel, "ap_ObjectivePanel/AP_ObjectiveNameLabel");
-    libNtve_gf_SetDialogItemText(DialogControlLastCreated(), lib5BD4895D_gf_AP_Core_objectiveText(ObjectiveGetName(lp_objective), lp_checks, lp_hasCounter, lp_counterSuffix, lp_counterValue, lp_counterMax, lp_hasTimer, lp_timer, false), PlayerGroupAll());
+    libNtve_gf_SetDialogItemText(DialogControlLastCreated(), lib5BD4895D_gf_AP_Core_objectiveText(ObjectiveGetName(lp_objective), 0, lp_hasCounter, lp_counterSuffix, lp_counterValue, lp_counterMax, lp_hasTimer, lp_timer, false), PlayerGroupAll());
     DialogControlFadeTransparency(DialogControlLastCreated(), PlayerGroupAll(), 0.0, 100.0);
     lv_new_label = DialogControlLastCreated();
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_label = DialogControlLastCreated();
@@ -544,13 +548,14 @@ void lib5BD4895D_gf_AP_Core_addObjective (int lp_objective, int lp_category, int
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_panel = lv_new_panel;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_category = lp_category;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective = lp_objective;
-    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_checks = lp_checks;
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_checks = 0;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_hasCounter = lp_hasCounter;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_counterSuffix = lp_counterSuffix;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_counterValue = lp_counterValue;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_counterMax = lp_counterMax;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_hasTimer = lp_hasTimer;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_timer = lp_timer;
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_hideIfNoLocs = lp_hideIfNoLocs;
     if ((ObjectiveGetState(lp_objective) == c_objectiveStateHidden)) {
         DialogControlSetVisible(lv_new_panel, PlayerGroupAll(), false);
     }
@@ -575,13 +580,13 @@ void lib5BD4895D_gf_AP_Core_addObjectiveSimple (int lp_objective) {
     else {
         lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
     }
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, false);
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple (int lp_objective, int lp_category, int lp_checks) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple (int lp_objective, int lp_category, bool lp_hideIfNoLocs) {
     // Automatic Variable Declarations
     // Implementation
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, lp_hideIfNoLocs);
 }
 
 void lib5BD4895D_gf_AP_Core_addObjectiveWithCounter (int lp_objective, string lp_counterSuffix, int lp_counterValue, int lp_counterMax) {
@@ -599,13 +604,13 @@ void lib5BD4895D_gf_AP_Core_addObjectiveWithCounter (int lp_objective, string lp
     else {
         lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
     }
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, false);
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter (int lp_objective, int lp_category, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, int lp_checks) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter (int lp_objective, int lp_category, string lp_counterSuffix, int lp_counterValue, int lp_counterMax, bool lp_hideIfNoLocs) {
     // Automatic Variable Declarations
     // Implementation
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, true, lp_counterSuffix, lp_counterValue, lp_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, lp_hideIfNoLocs);
 }
 
 void lib5BD4895D_gf_AP_Core_addObjectiveWithTimer (int lp_objective, timer lp_timer) {
@@ -623,13 +628,13 @@ void lib5BD4895D_gf_AP_Core_addObjectiveWithTimer (int lp_objective, timer lp_ti
     else {
         lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
     }
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, false, "", 0, 0, true, lp_timer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, false, "", 0, 0, true, lp_timer, false);
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer (int lp_objective, int lp_category, timer lp_timer, int lp_checks) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer (int lp_objective, int lp_category, timer lp_timer, bool lp_hideIfNoLocs) {
     // Automatic Variable Declarations
     // Implementation
-    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, false, "", 0, 0, true, lp_timer);
+    lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, false, "", 0, 0, true, lp_timer, lp_hideIfNoLocs);
 }
 
 void lib5BD4895D_gf_AP_Core_addObjectiveFromData (int lp_objective, string lp_data, string lp_counterSuffix, int lp_counterValue) {
@@ -653,14 +658,14 @@ void lib5BD4895D_gf_AP_Core_addObjectiveFromData (int lp_objective, string lp_da
     }
     ObjectiveSetName(lp_objective, lv_name);
     if ((lv_counterMax > 1)) {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, false);
     }
     else {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, 0, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lv_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, false);
     }
 }
 
-void lib5BD4895D_gf_AP_Core_addCategoryObjectiveFromData (int lp_objective, int lp_category, string lp_data, string lp_counterSuffix, int lp_counterValue, int lp_checks) {
+void lib5BD4895D_gf_AP_Core_addCategoryObjectiveFromData (int lp_objective, int lp_category, string lp_data, string lp_counterSuffix, int lp_counterValue, bool lp_hideIfNoLocs) {
     // Variable Declarations
     int lv_counterMax;
     text lv_name;
@@ -673,10 +678,10 @@ void lib5BD4895D_gf_AP_Core_addCategoryObjectiveFromData (int lp_objective, int 
     // Implementation
     ObjectiveSetName(lp_objective, lv_name);
     if ((lv_counterMax > 1)) {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, true, lp_counterSuffix, lp_counterValue, lv_counterMax, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, lp_hideIfNoLocs);
     }
     else {
-        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, lp_checks, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer);
+        lib5BD4895D_gf_AP_Core_addObjective(lp_objective, lp_category, false, "", 0, 0, false, lib5BD4895D_gv_aP_Core_objectiveDefaultTimer, lp_hideIfNoLocs);
     }
 }
 
@@ -737,6 +742,81 @@ bool auto_lib5BD4895D_gf_AP_Core_setObjectiveChecks_TriggerFunc (bool testConds,
 
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_checks = lp_checks;
     lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
+    return true;
+}
+
+trigger auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_Trigger = null;
+int auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_lp_objective;
+
+void lib5BD4895D_gf_AP_Core_updateObjectiveChecks (int lp_objective) {
+    auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_lp_objective = lp_objective;
+
+    if (auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_Trigger == null) {
+        auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_Trigger = TriggerCreate("auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_Trigger, false, false);
+}
+
+bool auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_TriggerFunc (bool testConds, bool runActions) {
+    int lp_objective = auto_lib5BD4895D_gf_AP_Core_updateObjectiveChecks_lp_objective;
+
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
+
+    // Implementation
+    if ((lv_objectiveindex == -1)) {
+        return true;
+    }
+
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_checks = lib5BD4895D_gf_AP_Core_getNumOfObjectiveLocations(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_objective);
+    lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
+    return true;
+}
+
+trigger auto_lib5BD4895D_gf_AP_Core_updateAllObjectiveChecks_Trigger = null;
+
+void lib5BD4895D_gf_AP_Core_updateAllObjectiveChecks () {
+    if (auto_lib5BD4895D_gf_AP_Core_updateAllObjectiveChecks_Trigger == null) {
+        auto_lib5BD4895D_gf_AP_Core_updateAllObjectiveChecks_Trigger = TriggerCreate("auto_lib5BD4895D_gf_AP_Core_updateAllObjectiveChecks_TriggerFunc");
+    }
+
+    TriggerExecute(auto_lib5BD4895D_gf_AP_Core_updateAllObjectiveChecks_Trigger, false, false);
+}
+
+bool auto_lib5BD4895D_gf_AP_Core_updateAllObjectiveChecks_TriggerFunc (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+
+    // Automatic Variable Declarations
+    int auto1065C613_ae;
+    const int auto1065C613_ai = 1;
+    int auto31852837_ae;
+    const int auto31852837_ai = 1;
+
+    // Variable Initialization
+
+    // Implementation
+    auto1065C613_ae = (lib5BD4895D_gv_aP_Core_objectiveUsedCategories - 1);
+    lv_categoryindex = 0;
+    for ( ; ( (auto1065C613_ai >= 0 && lv_categoryindex <= auto1065C613_ae) || (auto1065C613_ai < 0 && lv_categoryindex >= auto1065C613_ae) ) ; lv_categoryindex += auto1065C613_ai ) {
+        auto31852837_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex - 1);
+        lv_objectiveindex = 0;
+        for ( ; ( (auto31852837_ai >= 0 && lv_objectiveindex <= auto31852837_ae) || (auto31852837_ai < 0 && lv_objectiveindex >= auto31852837_ae) ) ; lv_objectiveindex += auto31852837_ai ) {
+            if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_objective != c_invalidObjectiveId)) {
+                lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_checks = lib5BD4895D_gf_AP_Core_getNumOfObjectiveLocations(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_objective);
+                lib5BD4895D_gf_AP_Core_objectiveThreadedUpdate(lv_categoryindex, lv_objectiveindex);
+            }
+
+        }
+    }
     return true;
 }
 
@@ -827,6 +907,10 @@ void lib5BD4895D_gf_AP_Core_updateObjectiveDescription (int lp_objective) {
     lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
 
     // Implementation
+    if ((lv_objectiveindex == -1)) {
+        return ;
+    }
+
 }
 
 trigger auto_lib5BD4895D_gf_AP_Core_addObjectiveExtraLine_Trigger = null;
@@ -905,6 +989,7 @@ void lib5BD4895D_gf_AP_Core_showObjective (int lp_objective) {
     int lv_rollingindex;
     bool lv_hidecategory;
     int lv_visualrollingindex;
+    int lv_locationscount;
 
     // Automatic Variable Declarations
     int auto05D885EE_ae;
@@ -914,12 +999,14 @@ void lib5BD4895D_gf_AP_Core_showObjective (int lp_objective) {
     lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
     lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
     lv_hidecategory = true;
+    lv_locationscount = lib5BD4895D_gf_AP_Core_getNumOfObjectiveLocations(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_objective);
 
     // Implementation
-    if ((lv_objectiveindex == -1)) {
+    if (((lv_objectiveindex == -1) || ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_hideIfNoLocs == true) && (lv_locationscount <= 0)))) {
         return ;
     }
 
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_checks = lv_locationscount;
     if ((ObjectiveGetState(lp_objective) == c_objectiveStateHidden)) {
         DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_panel, PlayerGroupAll(), false);
         auto05D885EE_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex - 1);
@@ -927,6 +1014,62 @@ void lib5BD4895D_gf_AP_Core_showObjective (int lp_objective) {
         for ( ; ( (auto05D885EE_ai >= 0 && lv_rollingindex <= auto05D885EE_ae) || (auto05D885EE_ai < 0 && lv_rollingindex >= auto05D885EE_ae) ) ; lv_rollingindex += auto05D885EE_ai ) {
             if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective != c_invalidObjectiveId) && (ObjectiveGetState(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective) != c_objectiveStateHidden)) {
                 lv_hidecategory = false;
+            }
+
+        }
+        if ((lv_hidecategory == true)) {
+            DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleLabel, PlayerGroupAll(), false);
+            DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleBackground, PlayerGroupAll(), false);
+            DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), false);
+        }
+
+    }
+    else {
+        DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_panel, PlayerGroupAll(), true);
+        DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleLabel, PlayerGroupAll(), true);
+        DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_titleBackground, PlayerGroupAll(), true);
+        DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_listPanel, PlayerGroupAll(), true);
+        libNtve_gf_SetDialogItemTextWriteout(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_label, true, PlayerGroupAll());
+        lib5BD4895D_gf_AP_Core_updateObjectiveText(lv_categoryindex, lv_objectiveindex);
+        lib5BD4895D_gf_AP_Core_objectiveThreadedWriteout(lv_categoryindex, lv_objectiveindex, false);
+    }
+    lib5BD4895D_gf_AP_Core_resizeObjectivePanel();
+}
+
+void lib5BD4895D_gf_AP_Core_setObjectiveVisibility (int lp_objective, bool lp_visibility) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+    int lv_rollingindex;
+    bool lv_hidecategory;
+    int lv_visualrollingindex;
+    int lv_locationscount;
+
+    // Automatic Variable Declarations
+    int autoBC92EBC7_ae;
+    const int autoBC92EBC7_ai = 1;
+
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
+    lv_hidecategory = true;
+    lv_locationscount = lib5BD4895D_gf_AP_Core_getNumOfObjectiveLocations(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_objective);
+
+    // Implementation
+    if (((lv_objectiveindex == -1) || ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_hideIfNoLocs == true) && (lv_locationscount <= 0)))) {
+        return ;
+    }
+
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_checks = lv_locationscount;
+    ObjectiveShow(lp_objective, PlayerGroupAll(), lp_visibility);
+    if ((lp_visibility == false)) {
+        DialogControlSetVisible(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_panel, PlayerGroupAll(), false);
+        autoBC92EBC7_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex - 1);
+        lv_rollingindex = 0;
+        for ( ; ( (autoBC92EBC7_ai >= 0 && lv_rollingindex <= autoBC92EBC7_ae) || (autoBC92EBC7_ai < 0 && lv_rollingindex >= autoBC92EBC7_ae) ) ; lv_rollingindex += autoBC92EBC7_ai ) {
+            if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective != c_invalidObjectiveId) && (ObjectiveGetState(lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_rollingindex].lv_objective) != c_objectiveStateHidden)) {
+                lv_hidecategory = false;
+                break;
             }
 
         }
@@ -1149,7 +1292,7 @@ int lib5BD4895D_gf_AP_Core_objectiveIndex (int lp_objective, int lp_categoryInde
     // Variable Initialization
 
     // Implementation
-    if ((lp_categoryIndex >= 0) && (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_rollingIndex > 0)) {
+    if (((lp_categoryIndex >= 0) && (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_rollingIndex > 0))) {
         auto8ED4B630_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_categoryIndex].lv_rollingIndex - 1);
         lv_index = 0;
         for ( ; ( (auto8ED4B630_ai >= 0 && lv_index <= auto8ED4B630_ae) || (auto8ED4B630_ai < 0 && lv_index >= auto8ED4B630_ae) ) ; lv_index += auto8ED4B630_ai ) {
@@ -1168,14 +1311,19 @@ void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int
     bool lv_previoustimer;
     int lv_timerindex;
     int lv_timerrollingindex;
+    int lv_locationsindex;
 
     // Automatic Variable Declarations
+    const int auto46C95F9A_ae = lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP;
+    const int auto46C95F9A_ai = 1;
     int auto9DE4E82E_ae;
     const int auto9DE4E82E_ai = 1;
     int autoC1E1AF7F_ae;
     const int autoC1E1AF7F_ai = 1;
     int autoAE91E7AF_ae;
     const int autoAE91E7AF_ai = 1;
+    const int autoAD4F72F2_ae = lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP;
+    const int autoAD4F72F2_ai = 1;
 
     // Variable Initialization
     lv_previoustimer = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_hasTimer;
@@ -1196,6 +1344,11 @@ void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_extraLines = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_extraLines;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_waiting = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_waiting;
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_finished = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_finished;
+    lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_hideIfNoLocs = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_hideIfNoLocs;
+    lv_locationsindex = 0;
+    for ( ; ( (auto46C95F9A_ai >= 0 && lv_locationsindex <= auto46C95F9A_ae) || (auto46C95F9A_ai < 0 && lv_locationsindex >= auto46C95F9A_ae) ) ; lv_locationsindex += auto46C95F9A_ai ) {
+        lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_to].lv_locations[lv_locationsindex] = lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_locations[lv_locationsindex];
+    }
     if ((lv_previoustimer == true)) {
         auto9DE4E82E_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_timerRollingIndex - 1);
         lv_timerindex = 0;
@@ -1246,6 +1399,11 @@ void lib5BD4895D_gf_AP_Core_copyObjectiveData (int lp_category, int lp_from, int
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_extraLines = 0;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_waiting = false;
         lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_finished = false;
+        lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_hideIfNoLocs = false;
+        lv_locationsindex = 0;
+        for ( ; ( (autoAD4F72F2_ai >= 0 && lv_locationsindex <= autoAD4F72F2_ae) || (autoAD4F72F2_ai < 0 && lv_locationsindex >= autoAD4F72F2_ae) ) ; lv_locationsindex += autoAD4F72F2_ai ) {
+            lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lp_category].lv_objectives[lp_from].lv_locations[lv_locationsindex] = -1;
+        }
     }
 
 }
@@ -1365,6 +1523,157 @@ text lib5BD4895D_gf_AP_Core_objectiveText (text lp_text, int lp_checks, bool lp_
     TextExpressionSetToken("Param/Expression/lib_5BD4895D_C0906947", "timer_text", lv_timer);
     TextExpressionSetToken("Param/Expression/lib_5BD4895D_C0906947", "checks_text", lv_checkstext);
     return (TextExpressionAssemble("Param/Expression/lib_5BD4895D_C0906947"));
+}
+
+int lib5BD4895D_gf_AP_Core_getNumOfObjectiveLocations (int lp_objective) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+    int lv_index;
+    int lv_count;
+
+    // Automatic Variable Declarations
+    int auto16908517_ae;
+    const int auto16908517_ai = 1;
+
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
+
+    // Implementation
+    if ((lv_objectiveindex == -1)) {
+        return 0;
+    }
+
+    auto16908517_ae = (lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP - 1);
+    lv_index = 0;
+    for ( ; ( (auto16908517_ai >= 0 && lv_index <= auto16908517_ae) || (auto16908517_ai < 0 && lv_index >= auto16908517_ae) ) ; lv_index += auto16908517_ai ) {
+        if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_locations[lv_index] != -1)) {
+            lv_count += 1;
+        }
+
+    }
+    return lv_count;
+}
+
+int lib5BD4895D_gf_AP_Core_locationToObjective (int lp_locationID) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+    int lv_locationindex;
+
+    // Automatic Variable Declarations
+    int auto23B4A4BE_ae;
+    const int auto23B4A4BE_ai = 1;
+    int autoF9E8AC3D_ae;
+    const int autoF9E8AC3D_ai = 1;
+    int auto33CF2460_ae;
+    const int auto33CF2460_ai = 1;
+
+    // Variable Initialization
+
+    // Implementation
+    auto23B4A4BE_ae = (lib5BD4895D_gv_aP_Core_objectiveUsedCategories - 1);
+    lv_categoryindex = 0;
+    for ( ; ( (auto23B4A4BE_ai >= 0 && lv_categoryindex <= auto23B4A4BE_ae) || (auto23B4A4BE_ai < 0 && lv_categoryindex >= auto23B4A4BE_ae) ) ; lv_categoryindex += auto23B4A4BE_ai ) {
+        autoF9E8AC3D_ae = (lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_rollingIndex - 1);
+        lv_objectiveindex = 0;
+        for ( ; ( (autoF9E8AC3D_ai >= 0 && lv_objectiveindex <= autoF9E8AC3D_ae) || (autoF9E8AC3D_ai < 0 && lv_objectiveindex >= autoF9E8AC3D_ae) ) ; lv_objectiveindex += autoF9E8AC3D_ai ) {
+            auto33CF2460_ae = (lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP - 1);
+            lv_locationindex = 0;
+            for ( ; ( (auto33CF2460_ai >= 0 && lv_locationindex <= auto33CF2460_ae) || (auto33CF2460_ai < 0 && lv_locationindex >= auto33CF2460_ae) ) ; lv_locationindex += auto33CF2460_ai ) {
+                if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_locations[lv_locationindex] == lp_locationID)) {
+                    return lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_objective;
+                }
+
+            }
+        }
+    }
+    return c_invalidObjectiveId;
+}
+
+void lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation (int lp_objective, int lp_locationID) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+    int lv_locationindex;
+
+    // Automatic Variable Declarations
+    int autoFF749E50_ae;
+    const int autoFF749E50_ai = 1;
+
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
+
+    // Implementation
+    if (((lv_objectiveindex == -1) || (lp_locationID <= -1) || (lib5BD4895D_gv_aP_Core_locationCollectable[lp_locationID] == false))) {
+        return ;
+    }
+
+    autoFF749E50_ae = (lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP - 1);
+    lv_locationindex = 0;
+    for ( ; ( (autoFF749E50_ai >= 0 && lv_locationindex <= autoFF749E50_ae) || (autoFF749E50_ai < 0 && lv_locationindex >= autoFF749E50_ae) ) ; lv_locationindex += autoFF749E50_ai ) {
+        if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_locations[lv_locationindex] == -1)) {
+            lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_locations[lv_locationindex] = lp_locationID;
+            return ;
+        }
+
+    }
+    TextExpressionSetToken("Param/Expression/lib_5BD4895D_C3A5CCFD", "A", IntToText(lp_locationID));
+    UIDisplayMessage(PlayerGroupAll(), c_messageAreaError, TextExpressionAssemble("Param/Expression/lib_5BD4895D_C3A5CCFD"));
+}
+
+void lib5BD4895D_gf_AP_Core_disassociateLocationFromObjective (int lp_objective, int lp_locationID) {
+    // Variable Declarations
+    int lv_categoryindex;
+    int lv_objectiveindex;
+    int lv_locationindex;
+
+    // Automatic Variable Declarations
+    int autoF187F783_ae;
+    const int autoF187F783_ai = 1;
+
+    // Variable Initialization
+    lv_categoryindex = lib5BD4895D_gf_AP_Core_objectiveCategoryIndex(lp_objective);
+    lv_objectiveindex = lib5BD4895D_gf_AP_Core_objectiveIndex(lp_objective, lv_categoryindex);
+
+    // Implementation
+    if (((lp_locationID <= -1) || (lv_objectiveindex == -1))) {
+        return ;
+    }
+
+    autoF187F783_ae = (lib5BD4895D_gv_aP_Core_LOCATIONS_PER_MAP - 1);
+    lv_locationindex = 0;
+    for ( ; ( (autoF187F783_ai >= 0 && lv_locationindex <= autoF187F783_ae) || (autoF187F783_ai < 0 && lv_locationindex >= autoF187F783_ae) ) ; lv_locationindex += autoF187F783_ai ) {
+        if ((lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_locations[lv_locationindex] == lp_locationID)) {
+            lib5BD4895D_gv_aP_Core_objectivePanel.lv_categories[lv_categoryindex].lv_objectives[lv_objectiveindex].lv_locations[lv_locationindex] = -1;
+            return ;
+        }
+
+    }
+}
+
+void lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective (int lp_locationID) {
+    // Variable Declarations
+    int lv_objective;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_objective = c_invalidObjectiveId;
+
+    // Implementation
+    if (((lp_locationID <= -1) || (lib5BD4895D_gv_aP_Core_locationCollectable[lp_locationID] == false))) {
+        return ;
+    }
+
+    lv_objective = lib5BD4895D_gf_AP_Core_locationToObjective(lp_locationID);
+    lib5BD4895D_gf_AP_Core_sendLocationLocal(lp_locationID);
+    if ((lv_objective != c_invalidObjectiveId)) {
+        lib5BD4895D_gf_AP_Core_disassociateLocationFromObjective(lv_objective, lp_locationID);
+        lib5BD4895D_gf_AP_Core_updateObjectiveChecks(lv_objective);
+    }
+
 }
 
 void lib5BD4895D_gf_AP_Core_updateObjectiveText (int lp_category, int lp_index) {

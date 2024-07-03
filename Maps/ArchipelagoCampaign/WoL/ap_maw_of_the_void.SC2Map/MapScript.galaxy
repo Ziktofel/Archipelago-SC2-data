@@ -56,7 +56,6 @@ const int gv_pLAYER_07_Prisoners = 7;
 int gv_objectiveDestroyTheMothership;
 int gv_objectiveDestroyTheRipFieldGenerators;
 int gv_destroyedRipGenerators;
-int gv_objectiveRipGeneratorsChecks;
 actor gv_outhouse;
 bool gv_inCinematic;
 bool gv_gameOver;
@@ -118,14 +117,11 @@ int gv_protossStructuresRemainingTotal;
 unit gv_victoryArtifact;
 int gv_objectiveClearLZ;
 int gv_pINGClearLZ;
-int gv_objectiveClearLZChecks;
 int gv_objectiveRetrieveArtifact;
 int gv_pINGObjectiveArtifact;
 actor gv_vaultReticule;
-int gv_objectiveRetrieveArtifactChecks;
 int gv_iNTProtossRescued;
 int gv_objectiveRescuePrisoners;
-int gv_objectiveRescueChecks;
 bool gv_introCinematicCompleted;
 unitgroup gv_introHiddenProtossGroup;
 unitgroup gv_introCineProtossGroup;
@@ -406,10 +402,6 @@ bool gt_ObjectiveMothershipCreateQ_Func (bool testConds, bool runActions) {
         if (!((TriggerGetExecCount(TriggerGetCurrent()) == 0))) {
             return false;
         }
-
-        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MOTHERSHIP) == true))) {
-            return false;
-        }
     }
 
     // Actions
@@ -419,9 +411,11 @@ bool gt_ObjectiveMothershipCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/55209BE8"), StringExternal("Param/Value/B5C53F3B"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lv_category, 1);
+    ObjectiveCreate(StringExternal("Param/Value/55209BE8"), StringExternal("Param/Value/B5C53F3B"), c_objectiveStateHidden, false);
     gv_objectiveDestroyTheMothership = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyTheMothership, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheMothership, gv_LOCATION_ID_MOTHERSHIP);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyTheMothership, true);
     TriggerQueueExit();
     return true;
 }
@@ -441,10 +435,6 @@ bool gt_ObjectiveMothershipComplete_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
-
-        if (!((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MOTHERSHIP) == true))) {
-            return false;
-        }
     }
 
     // Actions
@@ -454,11 +444,7 @@ bool gt_ObjectiveMothershipComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveMothershipCreateQ, true, false);
-    while (!((gv_objectiveDestroyTheMothership != c_invalidObjectiveId))) {
-        Wait(0.1, c_timeGame);
-    }
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDestroyTheMothership, 0);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_MOTHERSHIP);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MOTHERSHIP);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyTheMothership);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -485,10 +471,6 @@ bool gt_ObjectiveRipFieldGeneratorsCreateQ_Func (bool testConds, bool runActions
         if (!((TriggerGetExecCount(TriggerGetCurrent()) == 0))) {
             return false;
         }
-
-        if (!(((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_RIP_FIELD_GENERATOR) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_RIP_FIELD_GENERATOR) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_RIP_FIELD_GENERATOR) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_STARGATE_RIP_FIELD_GENERATOR) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHWEST_RIP_FIELD_GENERATOR) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_WEST_RIP_FIELD_GENERATOR) == true) || (lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_RIP_FIELD_GENERATOR) == true)))) {
-            return false;
-        }
     }
 
     // Actions
@@ -497,38 +479,18 @@ bool gt_ObjectiveRipFieldGeneratorsCreateQ_Func (bool testConds, bool runActions
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_STARGATE_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHWEST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_WEST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks += 1;
-    }
-
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/BE2DF526"), StringExternal("Param/Value/75631DBD"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lv_category, "", gv_destroyedRipGenerators, 7, gv_objectiveRipGeneratorsChecks);
+    ObjectiveCreate(StringExternal("Param/Value/BE2DF526"), StringExternal("Param/Value/75631DBD"), c_objectiveStateHidden, false);
     gv_objectiveDestroyTheRipFieldGenerators = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyTheRipFieldGenerators, lv_category, "", gv_destroyedRipGenerators, 7, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheRipFieldGenerators, gv_LOCATION_ID_EXPANSION_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheRipFieldGenerators, gv_LOCATION_ID_MIDDLE_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheRipFieldGenerators, gv_LOCATION_ID_NORTHWEST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheRipFieldGenerators, gv_LOCATION_ID_SOUTHEAST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheRipFieldGenerators, gv_LOCATION_ID_SOUTHWEST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheRipFieldGenerators, gv_LOCATION_ID_STARGATE_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheRipFieldGenerators, gv_LOCATION_ID_WEST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyTheRipFieldGenerators, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -553,7 +515,6 @@ bool gt_ObjectiveRipFieldGeneratorsUpdate_Func (bool testConds, bool runActions)
     while (!((gv_objectiveDestroyTheRipFieldGenerators != c_invalidObjectiveId))) {
         Wait(0.1, c_timeGame);
     }
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveDestroyTheRipFieldGenerators, gv_objectiveRipGeneratorsChecks);
     lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyTheRipFieldGenerators, gv_destroyedRipGenerators);
     if ((gv_destroyedRipGenerators == 7)) {
         TriggerExecute(gt_ObjectiveRipFieldGeneratorsComplete, true, false);
@@ -607,11 +568,7 @@ bool gt_ExpansionRipFieldGenerator_Func (bool testConds, bool runActions) {
     }
 
     gv_destroyedRipGenerators += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EXPANSION_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EXPANSION_RIP_FIELD_GENERATOR);
     TriggerExecute(gt_ObjectiveRipFieldGeneratorsUpdate, true, false);
     return true;
 }
@@ -633,11 +590,7 @@ bool gt_MiddleRipFieldGenerator_Func (bool testConds, bool runActions) {
     }
 
     gv_destroyedRipGenerators += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_MIDDLE_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_MIDDLE_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MIDDLE_RIP_FIELD_GENERATOR);
     TriggerExecute(gt_ObjectiveRipFieldGeneratorsUpdate, true, false);
     return true;
 }
@@ -659,11 +612,7 @@ bool gt_SoutheastRipFieldGenerator_Func (bool testConds, bool runActions) {
     }
 
     gv_destroyedRipGenerators += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHEAST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHEAST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_RIP_FIELD_GENERATOR);
     TriggerExecute(gt_ObjectiveRipFieldGeneratorsUpdate, true, false);
     return true;
 }
@@ -685,11 +634,7 @@ bool gt_StargateRipFieldGenerator_Func (bool testConds, bool runActions) {
     }
 
     gv_destroyedRipGenerators += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_STARGATE_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_STARGATE_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_STARGATE_RIP_FIELD_GENERATOR);
     TriggerExecute(gt_ObjectiveRipFieldGeneratorsUpdate, true, false);
     return true;
 }
@@ -711,11 +656,7 @@ bool gt_NorthwestRipFieldGenerator_Func (bool testConds, bool runActions) {
     }
 
     gv_destroyedRipGenerators += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTHWEST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTHWEST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_RIP_FIELD_GENERATOR);
     TriggerExecute(gt_ObjectiveRipFieldGeneratorsUpdate, true, false);
     return true;
 }
@@ -737,11 +678,7 @@ bool gt_WestRipFieldGenerator_Func (bool testConds, bool runActions) {
     }
 
     gv_destroyedRipGenerators += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_WEST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_WEST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_RIP_FIELD_GENERATOR);
     TriggerExecute(gt_ObjectiveRipFieldGeneratorsUpdate, true, false);
     return true;
 }
@@ -763,11 +700,7 @@ bool gt_SouthwestRipFieldGenerator_Func (bool testConds, bool runActions) {
     }
 
     gv_destroyedRipGenerators += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTHWEST_RIP_FIELD_GENERATOR) == true)) {
-        gv_objectiveRipGeneratorsChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTHWEST_RIP_FIELD_GENERATOR);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_RIP_FIELD_GENERATOR);
     TriggerExecute(gt_ObjectiveRipFieldGeneratorsUpdate, true, false);
     return true;
 }
@@ -2111,11 +2044,7 @@ bool gt_Prisonrelease1_Func (bool testConds, bool runActions) {
     }
 
     gv_iNTProtossRescued += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_PRISONERS) == true)) {
-        gv_objectiveRescueChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_EXPANSION_PRISONERS);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EXPANSION_PRISONERS);
     libNtve_gf_KillModel(gv_aCTORPrisonReticule[1]);
     PingDestroy(gv_pINGPrison[1]);
     TriggerExecute(gt_TIPPrisonersQ, true, false);
@@ -2164,11 +2093,7 @@ bool gt_Prisonrelease2_Func (bool testConds, bool runActions) {
     }
 
     gv_iNTProtossRescued += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTH_CLOSE_PRISONERS) == true)) {
-        gv_objectiveRescueChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTH_CLOSE_PRISONERS);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_CLOSE_PRISONERS);
     libNtve_gf_KillModel(gv_aCTORPrisonReticule[2]);
     PingDestroy(gv_pINGPrison[2]);
     TriggerExecute(gt_TIPPrisonersQ, true, false);
@@ -2217,11 +2142,7 @@ bool gt_Prisonrelease3_Func (bool testConds, bool runActions) {
     }
 
     gv_iNTProtossRescued += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_PRISONERS) == true)) {
-        gv_objectiveRescueChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_NORTH_PRISONERS);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_PRISONERS);
     libNtve_gf_KillModel(gv_aCTORPrisonReticule[3]);
     PingDestroy(gv_pINGPrison[3]);
     TriggerExecute(gt_TIPPrisonersQ, true, false);
@@ -2270,11 +2191,7 @@ bool gt_Prisonrelease4_Func (bool testConds, bool runActions) {
     }
 
     gv_iNTProtossRescued += 1;
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTH_FAR_PRISONERS) == true)) {
-        gv_objectiveRescueChecks -= 1;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_SOUTH_FAR_PRISONERS);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_FAR_PRISONERS);
     libNtve_gf_KillModel(gv_aCTORPrisonReticule[4]);
     PingDestroy(gv_pINGPrison[4]);
     TriggerExecute(gt_TIPPrisonersQ, true, false);
@@ -4062,7 +3979,7 @@ bool gt_VictoryRetrieveArtifactCompleted_Func (bool testConds, bool runActions) 
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     Wait(0.1, c_timeGame);
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "ArtifactPiece5", c_unitCreateIgnorePlacement, gv_pLAYER_01_USER, PointFromId(321));
@@ -4857,14 +4774,12 @@ bool gt_ObjectiveClearLZCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_LANDING_ZONE_CLEARED) == true)) {
-        gv_objectiveClearLZChecks = 1;
-    }
-
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/80FDEA62"), StringExternal("Param/Value/F1616B29"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, gv_objectiveClearLZChecks);
+    ObjectiveCreate(StringExternal("Param/Value/80FDEA62"), StringExternal("Param/Value/F1616B29"), c_objectiveStateHidden, true);
     gv_objectiveClearLZ = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveClearLZ, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearLZ, gv_LOCATION_ID_LANDING_ZONE_CLEARED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClearLZ, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus05Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/92D46B9F"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     PingCreate(gv_fORCEGOOD_GUYS, "PingObjective", UnitGetPosition(UnitFromId(37)), ColorWithAlpha(0.00, 100.00, 0.00, 0.00), 0.0);
@@ -4906,11 +4821,7 @@ bool gt_ObjectiveClearLZComplete_Func (bool testConds, bool runActions) {
     PingDestroy(gv_pINGClearLZ);
     TriggerEnable(gt_DefeatLZUnitsDead, false);
     TriggerExecute(gt_ObjectiveClearLZCreateQ, true, false);
-    while (!((gv_objectiveClearLZ != c_invalidObjectiveId))) {
-        Wait(0.1, c_timeGame);
-    }
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveClearLZ, 0);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_LOCATION_ID_LANDING_ZONE_CLEARED);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LANDING_ZONE_CLEARED);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClearLZ);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_BaseMidQ, true, true);
@@ -4942,14 +4853,12 @@ bool gt_ObjectiveArtifactCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(lib5BD4895D_gv_aP_Core_locationVictory) == true)) {
-        gv_objectiveRetrieveArtifactChecks = 1;
-    }
-
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/21481D55"), StringExternal("Param/Value/F7199170"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(ObjectiveLastCreated(), lib5BD4895D_ge_APObjectiveCategory_Primary, gv_objectiveRetrieveArtifactChecks);
+    ObjectiveCreate(StringExternal("Param/Value/21481D55"), StringExternal("Param/Value/F7199170"), c_objectiveStateHidden, true);
     gv_objectiveRetrieveArtifact = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveRetrieveArtifact, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRetrieveArtifact, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRetrieveArtifact, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus05Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/1345D7BB"));
     PingCreate(gv_fORCEGOOD_GUYS, "PingObjective", UnitGetPosition(gv_uNITVault), ColorWithAlpha(0.00, 100.00, 0.00, 0.00), 0.0);
     PingSetTooltip(PingLastCreated(), StringExternal("Param/Value/B86C6224"));
@@ -4987,7 +4896,6 @@ bool gt_ObjectiveArtifactComplete_Func (bool testConds, bool runActions) {
     while (!((gv_objectiveRetrieveArtifact != c_invalidObjectiveId))) {
         Wait(0.1, c_timeGame);
     }
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveRetrieveArtifact, 0);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRetrieveArtifact);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -5026,26 +4934,15 @@ bool gt_ObjectivePrisonersCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_EXPANSION_PRISONERS) == true)) {
-        gv_objectiveRescueChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_NORTH_PRISONERS) == true)) {
-        gv_objectiveRescueChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTH_CLOSE_PRISONERS) == true)) {
-        gv_objectiveRescueChecks += 1;
-    }
-
-    if ((lib5BD4895D_gf_AP_Core_isLocationCollectable(gv_LOCATION_ID_SOUTH_FAR_PRISONERS) == true)) {
-        gv_objectiveRescueChecks += 1;
-    }
-
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/D1875F24"), StringExternal("Param/Value/3DBB5373"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(ObjectiveLastCreated(), lv_category, "", gv_iNTProtossRescued, 4, gv_objectiveRescueChecks);
+    ObjectiveCreate(StringExternal("Param/Value/D1875F24"), StringExternal("Param/Value/3DBB5373"), c_objectiveStateHidden, false);
     gv_objectiveRescuePrisoners = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveRescuePrisoners, lv_category, "", gv_iNTProtossRescued, 4, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescuePrisoners, gv_LOCATION_ID_EXPANSION_PRISONERS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescuePrisoners, gv_LOCATION_ID_NORTH_PRISONERS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescuePrisoners, gv_LOCATION_ID_SOUTH_CLOSE_PRISONERS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescuePrisoners, gv_LOCATION_ID_SOUTH_FAR_PRISONERS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRescuePrisoners, true);
     lv_iNT = 2;
     for ( ; ( (auto100BE4B3_ai >= 0 && lv_iNT <= auto100BE4B3_ae) || (auto100BE4B3_ai < 0 && lv_iNT >= auto100BE4B3_ae) ) ; lv_iNT += auto100BE4B3_ai ) {
         if ((gv_aCTORPrisonReticule[lv_iNT] == null) && (UnitIsAlive(gv_uNITPrison[lv_iNT]) == true)) {
@@ -5081,7 +4978,6 @@ bool gt_ObjectivePrisonersUpdate_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_setObjectiveChecks(gv_objectiveRescuePrisoners, gv_objectiveRescueChecks);
     lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescuePrisoners, gv_iNTProtossRescued);
     libCamp_gf_AddProgressToStoryResearch(libCamp_ge_StoryResearchObject_ResearchObjectRescuePrisoners, 1);
     if ((gv_iNTProtossRescued == 4)) {
