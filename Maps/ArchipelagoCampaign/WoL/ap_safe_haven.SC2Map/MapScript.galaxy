@@ -29,6 +29,12 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_NORTH_NEXUS = 1;
+const int gv_LOCATION_ID_EAST_NEXUS = 2;
+const int gv_LOCATION_ID_SOUTH_NEXUS = 3;
+const int gv_LOCATION_ID_FIRST_TERROR_FLEET = 4;
+const int gv_LOCATION_ID_SECOND_TERROR_FLEET = 5;
+const int gv_LOCATION_ID_THIRD_TERROR_FLEET = 6;
 const int gv_pLAYER01_USER = 1;
 const int gv_pLAYER02_PROTOSS = 2;
 const int gv_pLAYER03_COLONIST = 3;
@@ -596,7 +602,7 @@ bool gt_NorthNexus_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_NEXUS);
     return true;
 }
 
@@ -616,7 +622,7 @@ bool gt_EastNexus_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_NEXUS);
     return true;
 }
 
@@ -636,7 +642,7 @@ bool gt_SouthNexus_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_NEXUS);
     return true;
 }
 
@@ -5501,17 +5507,17 @@ bool gt_VictoryPurifierDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     if ((gv_firstFleetObjectiveFailed == false) && (gv_firstTerrorFleetStopped == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_TERROR_FLEET);
     }
 
     if ((gv_secondFleetObjectiveFailed == false) && (gv_secondTerrorFleetStopped == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_TERROR_FLEET);
     }
 
     if ((gv_thirdFleetObjectiveFailed == false) && (gv_thirdTerrorFleetStopped == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_TERROR_FLEET);
     }
 
     Wait(1.0, c_timeGame);
@@ -5738,9 +5744,13 @@ bool gt_ObjectiveDestroyNexusCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/AD2F9FE8"), StringExternal("Param/Value/A1645D39"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", 0, 3);
+    ObjectiveCreate(StringExternal("Param/Value/AD2F9FE8"), StringExternal("Param/Value/A1645D39"), c_objectiveStateHidden, true);
     gv_primaryObjectiveDestroyProtossNexus = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_primaryObjectiveDestroyProtossNexus, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_nexusDestroyed, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveDestroyProtossNexus, gv_LOCATION_ID_NORTH_NEXUS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveDestroyProtossNexus, gv_LOCATION_ID_EAST_NEXUS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveDestroyProtossNexus, gv_LOCATION_ID_SOUTH_NEXUS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_primaryObjectiveDestroyProtossNexus, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective1, ObjectiveLastCreated(), StringExternal("Param/Value/E20ACD09"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5827,9 +5837,11 @@ bool gt_ObjectiveDestroyPurifierCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/D5ED231C"), StringExternal("Param/Value/3BF6C822"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/D5ED231C"), StringExternal("Param/Value/3BF6C822"), c_objectiveStateHidden, true);
     gv_primaryObjectiveDestroyPurifier = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_primaryObjectiveDestroyPurifier, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveDestroyPurifier, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_primaryObjectiveDestroyPurifier, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective2, ObjectiveLastCreated(), StringExternal("Param/Value/F92933A7"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5875,7 +5887,13 @@ void gt_ObjectiveDestroyPurifierComplete_Init () {
 // Trigger: Objective Destroy First Fleet Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyFirstFleetCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5890,9 +5908,11 @@ bool gt_ObjectiveDestroyFirstFleetCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/523C2823"), StringExternal("Param/Value/35629878"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/523C2823"), StringExternal("Param/Value/35629878"), c_objectiveStateHidden, false);
     gv_bonusObjectiveDestroyFirstTerrorFleet = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_bonusObjectiveDestroyFirstTerrorFleet, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveDestroyFirstTerrorFleet, gv_LOCATION_ID_FIRST_TERROR_FLEET);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_bonusObjectiveDestroyFirstTerrorFleet, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective3, ObjectiveLastCreated(), StringExternal("Param/Value/501EA7FB"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5924,7 +5944,7 @@ bool gt_ObjectiveDestroyFirstFleetComplete_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyFirstFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_bonusObjectiveDestroyFirstTerrorFleet);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_TERROR_FLEET);
     gv_firstTerrorFleetStopped = true;
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -5971,7 +5991,13 @@ void gt_ObjectiveDestroyFirstFleetFailed_Init () {
 // Trigger: Objective Destroy Second Fleet Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroySecondFleetCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5986,9 +6012,11 @@ bool gt_ObjectiveDestroySecondFleetCreate_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/8BE98668"), StringExternal("Param/Value/27A32384"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/8BE98668"), StringExternal("Param/Value/27A32384"), c_objectiveStateHidden, false);
     gv_bonusObjectiveDestroySecondTerrorFleet = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_bonusObjectiveDestroySecondTerrorFleet, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveDestroySecondTerrorFleet, gv_LOCATION_ID_SECOND_TERROR_FLEET);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_bonusObjectiveDestroySecondTerrorFleet, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective4, ObjectiveLastCreated(), StringExternal("Param/Value/FDF11DB0"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -6020,7 +6048,7 @@ bool gt_ObjectiveDestroySecondFleetComplete_Func (bool testConds, bool runAction
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroySecondFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_bonusObjectiveDestroySecondTerrorFleet);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_TERROR_FLEET);
     gv_secondTerrorFleetStopped = true;
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -6067,7 +6095,13 @@ void gt_ObjectiveDestroySecondFleetFailed_Init () {
 // Trigger: Objective Destroy Third Fleet Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyThirdFleetCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6082,9 +6116,11 @@ bool gt_ObjectiveDestroyThirdFleetCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/E5B125BB"), StringExternal("Param/Value/3794325E"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/E5B125BB"), StringExternal("Param/Value/3794325E"), c_objectiveStateHidden, false);
     gv_bonusObjectiveDestroyThirdTerrorFleet = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_bonusObjectiveDestroyThirdTerrorFleet, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveDestroyThirdTerrorFleet, gv_LOCATION_ID_THIRD_TERROR_FLEET);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_bonusObjectiveDestroyThirdTerrorFleet, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THanson03AObjective5, ObjectiveLastCreated(), StringExternal("Param/Value/DC5A680F"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -6116,7 +6152,7 @@ bool gt_ObjectiveDestroyThirdFleetComplete_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyThirdFleetCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_bonusObjectiveDestroyThirdTerrorFleet);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_TERROR_FLEET);
     gv_thirdTerrorFleetStopped = true;
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
