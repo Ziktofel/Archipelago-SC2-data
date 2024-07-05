@@ -36,6 +36,13 @@ const int gv_pLAYER04_PROTOSS = 4;
 const int gv_pLAYER05_RELICS = 5;
 const int gv_pLAYER06_RESOURCES = 6;
 const int gv_pLAYER08_DEATHSUN = 8;
+const int gv_LOCATION_ID_WEST_RELIC = 1;
+const int gv_LOCATION_ID_NORTH_RELIC = 2;
+const int gv_LOCATION_ID_SOUTH_RELIC = 3;
+const int gv_LOCATION_ID_EAST_RELIC = 4;
+const int gv_LOCATION_ID_LANDING_ZONE_CLEARED = 5;
+const int gv_LOCATION_ID_MIDDLE_BASE = 6;
+const int gv_LOCATION_ID_SOUTHEAST_BASE = 7;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -204,6 +211,7 @@ trigger gt_ObjectiveDestroytheArtifactVaultFailed;
 trigger gt_ResearchObjectiveProtossRelicsCreateQ;
 trigger gt_ResearchObjectiveProtossRelicsUpdate;
 trigger gt_ResearchObjectiveProtossRelicsComplete;
+trigger gt_ResearchObjectiveProtossRelicsRemove;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -2380,7 +2388,7 @@ bool gt_TransmissionP04BaseDestroyedQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MIDDLE_BASE);
     gv_protossBasesTrashed = (gv_protossBasesTrashed + 1);
     TriggerExecute(gt_ObjectiveDestroyProtossBasesatResourceSpotsUpdate, true, false);
     TriggerQueueEnter();
@@ -2802,7 +2810,7 @@ bool gt_VictoryDestroytheArtifactVaultCompleted_Func (bool testConds, bool runAc
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNtve_gf_CreateUnitsAtPoint2(1, "ArtifactPiece4", 0, 0, PointFromId(1422));
     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropHeight, 1.0);
     gv_gameOver = true;
@@ -3087,9 +3095,11 @@ bool gt_ObjectiveCleartheLZCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/D6E15F55"), StringExternal("Param/Value/B2B5C286"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/D6E15F55"), StringExternal("Param/Value/B2B5C286"), c_objectiveStateHidden, true);
     gv_objectiveClearTheLZ = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveClearTheLZ, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearTheLZ, gv_LOCATION_ID_LANDING_ZONE_CLEARED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClearTheLZ, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3120,7 +3130,7 @@ bool gt_ObjectiveCleartheLZComplete_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveCleartheLZCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClearTheLZ);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LANDING_ZONE_CLEARED);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3176,9 +3186,11 @@ bool gt_ObjectiveDestroytheArtifactVaultCreateQ_Func (bool testConds, bool runAc
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/57F9FE34"), StringExternal("Param/Value/530572D0"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/57F9FE34"), StringExternal("Param/Value/530572D0"), c_objectiveStateHidden, true);
     gv_objectiveDestroyTheArtifactVault = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyTheArtifactVault, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheArtifactVault, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyTheArtifactVault, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3249,7 +3261,13 @@ void gt_ObjectiveDestroytheArtifactVaultFailed_Init () {
 // Trigger: Research Objective Protoss Relics Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ResearchObjectiveProtossRelicsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -3264,9 +3282,14 @@ bool gt_ResearchObjectiveProtossRelicsCreateQ_Func (bool testConds, bool runActi
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/EF340DB3"), StringExternal("Param/Value/B3C5C286"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", 4, 0);
+    ObjectiveCreate(StringExternal("Param/Value/EF340DB3"), StringExternal("Param/Value/B3C5C286"), c_objectiveStateHidden, false);
     gv_researchObjectiveProtossRelics = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_researchObjectiveProtossRelics, lv_category, "", gv_protossRelicsFound, 4, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_researchObjectiveProtossRelics, gv_LOCATION_ID_WEST_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_researchObjectiveProtossRelics, gv_LOCATION_ID_NORTH_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_researchObjectiveProtossRelics, gv_LOCATION_ID_SOUTH_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_researchObjectiveProtossRelics, gv_LOCATION_ID_EAST_RELIC);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_researchObjectiveProtossRelics, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus04Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/089BF255"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -3299,7 +3322,7 @@ bool gt_ResearchObjectiveProtossRelicsUpdate_Func (bool testConds, bool runActio
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectFindProtossRelics, EventUnit(), gv_pLAYER01_USER);
     UnitKill(EventUnit());
     gv_protossRelicsFound += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_researchObjectiveProtossRelics, (4 - gv_protossRelicsFound));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_researchObjectiveProtossRelics, gv_protossRelicsFound);
     if ((gv_protossRelicsFound == gv_protossRelicsTotal)) {
         TriggerExecute(gt_ResearchObjectiveProtossRelicsComplete, true, false);
     }
@@ -3340,6 +3363,42 @@ bool gt_ResearchObjectiveProtossRelicsComplete_Func (bool testConds, bool runAct
 //--------------------------------------------------------------------------------------------------
 void gt_ResearchObjectiveProtossRelicsComplete_Init () {
     gt_ResearchObjectiveProtossRelicsComplete = TriggerCreate("gt_ResearchObjectiveProtossRelicsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Research Objective Protoss Relics Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ResearchObjectiveProtossRelicsRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_WEST_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_RELIC] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(229));
+    UnitRemove(UnitFromId(231));
+    UnitRemove(UnitFromId(264));
+    UnitRemove(UnitFromId(65));
+    TriggerEnable(gt_ResearchObjectiveProtossRelicsCreateQ, false);
+    TriggerEnable(gt_ResearchObjectiveProtossRelicsUpdate, false);
+    TriggerEnable(gt_FirstProtossRelic, false);
+    TriggerEnable(gt_SecondProtossRelic, false);
+    TriggerEnable(gt_ThirdProtossRelic, false);
+    TriggerEnable(gt_FourthProtossRelic, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ResearchObjectiveProtossRelicsRemove_Init () {
+    gt_ResearchObjectiveProtossRelicsRemove = TriggerCreate("gt_ResearchObjectiveProtossRelicsRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ResearchObjectiveProtossRelicsRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -3503,7 +3562,13 @@ void gt_ArchInit_Init () {
 // Trigger: Objective Destroy Protoss Bases at Resource Spots Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyProtossBasesatResourceSpotsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -3518,9 +3583,12 @@ bool gt_ObjectiveDestroyProtossBasesatResourceSpotsCreateQ_Func (bool testConds,
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/C7B59EBC"), StringExternal("Param/Value/F6A6AA15"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (2 - gv_protossBasesTrashed), 0);
+    ObjectiveCreate(StringExternal("Param/Value/C7B59EBC"), StringExternal("Param/Value/F6A6AA15"), c_objectiveStateHidden, false);
     gv_objectiveDestroyTheProtossBasesAtResourceSpots = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyTheProtossBasesAtResourceSpots, lv_category, "", gv_protossBasesTrashed, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheProtossBasesAtResourceSpots, gv_LOCATION_ID_MIDDLE_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheProtossBasesAtResourceSpots, gv_LOCATION_ID_SOUTHEAST_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyTheProtossBasesAtResourceSpots, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -3542,7 +3610,7 @@ bool gt_ObjectiveDestroyProtossBasesatResourceSpotsUpdate_Func (bool testConds, 
     }
 
     TriggerExecute(gt_ObjectiveDestroyProtossBasesatResourceSpotsCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyTheProtossBasesAtResourceSpots, (2 - gv_protossBasesTrashed));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyTheProtossBasesAtResourceSpots, gv_protossBasesTrashed);
     if ((gv_protossBasesTrashed == 2)) {
         TriggerExecute(gt_ObjectiveDestroyProtossBasesatResourceSpotsComplete, true, false);
     }
@@ -3601,7 +3669,7 @@ bool gt_FirstProtossRelic_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_RELIC);
     return true;
 }
 
@@ -3628,7 +3696,7 @@ bool gt_SecondProtossRelic_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_RELIC);
     return true;
 }
 
@@ -3655,7 +3723,7 @@ bool gt_ThirdProtossRelic_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_RELIC);
     return true;
 }
 
@@ -3682,7 +3750,7 @@ bool gt_FourthProtossRelic_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_RELIC);
     return true;
 }
 
@@ -3702,7 +3770,7 @@ bool gt_SEBase_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_BASE);
     gv_protossBasesTrashed = (gv_protossBasesTrashed + 1);
     TriggerExecute(gt_ObjectiveDestroyProtossBasesatResourceSpotsUpdate, true, false);
     return true;
@@ -4666,6 +4734,7 @@ void InitTriggers () {
     gt_ResearchObjectiveProtossRelicsCreateQ_Init();
     gt_ResearchObjectiveProtossRelicsUpdate_Init();
     gt_ResearchObjectiveProtossRelicsComplete_Init();
+    gt_ResearchObjectiveProtossRelicsRemove_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();

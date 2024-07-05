@@ -29,6 +29,14 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_LEFT_RELIC = 1;
+const int gv_LOCATION_ID_RIGHT_GROUND_RELIC = 2;
+const int gv_LOCATION_ID_RIGHT_CLIFF_RELIC = 3;
+const int gv_LOCATION_ID_MOEBIUS_BASE = 4;
+const int gv_LOCATION_ID_DOOR_OUTER_LAYER = 5;
+const int gv_LOCATION_ID_DOOR_THERMAL_BARRIER = 6;
+const int gv_LOCATION_ID_CUTTING_THROUGH_THE_CORE = 7;
+const int gv_LOCATION_ID_STRUCTURE_ACCESS_IMMINENT = 8;
 const int gv_p1_USER = 1;
 
 //--------------------------------------------------------------------------------------------------
@@ -266,6 +274,7 @@ trigger gt_PrimaryObjectiveOpenShrineCompleted;
 trigger gt_ObjectiveRelicsCreateQ;
 trigger gt_ObjectiveRelicsUpdate;
 trigger gt_ObjectiveRelicsComplete;
+trigger gt_ObjectiveRelicsRemove;
 trigger gt_BriefingQ;
 trigger gt_BriefingScene00;
 trigger gt_BriefingScene01;
@@ -560,7 +569,7 @@ bool gt_RightGroundRelicCollect_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_RIGHT_GROUND_RELIC);
     return true;
 }
 
@@ -587,7 +596,7 @@ bool gt_RightCliffRelicCollect_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_RIGHT_CLIFF_RELIC);
     return true;
 }
 
@@ -614,7 +623,7 @@ bool gt_LeftRelicCollect_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LEFT_RELIC);
     return true;
 }
 
@@ -1894,6 +1903,10 @@ bool gt_RevealRelicShrinesQ_Func (bool testConds, bool runActions) {
         if (!((TriggerGetExecCount(TriggerGetCurrent()) == 0))) {
             return false;
         }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -2756,7 +2769,7 @@ bool gt_TempleHPLow1Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DOOR_OUTER_LAYER);
     TriggerQueueEnter();
     if ((gv_gameOver == true)) {
         return true;
@@ -2795,7 +2808,7 @@ bool gt_TempleHPLow2Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DOOR_THERMAL_BARRIER);
     TriggerQueueEnter();
     if ((gv_gameOver == true)) {
         return true;
@@ -2834,7 +2847,7 @@ bool gt_TempleHPLow3Q19m_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CUTTING_THROUGH_THE_CORE);
     TriggerQueueEnter();
     if ((gv_gameOver == true)) {
         return true;
@@ -2875,7 +2888,7 @@ bool gt_TempleHPLow4Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_STRUCTURE_ACCESS_IMMINENT);
     TriggerQueueEnter();
     if ((gv_gameOver == true)) {
         return true;
@@ -4596,7 +4609,7 @@ bool gt_VictoryDestroyDoor_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNtve_gf_ChangeUnitDamage(gv_tHEONEDRILL, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     libNtve_gf_PlayAnimation(libNtve_gf_MainActorofUnit(EventUnit()), c_animNameDefault, "Stand D End", c_animFlagPlayForever | c_animFlagNonLooping, c_animTimeDefault);
     libNtve_gf_ShowHideBossBar(false, gv_templeDoorBossBar);
@@ -4686,7 +4699,7 @@ bool gt_VictoryDestroyProtoss_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_TempleHPLow1Q, true, false);
     TriggerExecute(gt_TempleHPLow2Q, true, false);
     TriggerExecute(gt_TempleHPLow3Q19m, true, false);
@@ -4964,9 +4977,11 @@ bool gt_PrimaryObjectiveExploreCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/9F7E8FE1"), StringExternal("Param/Value/A0CD3338"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/9F7E8FE1"), StringExternal("Param/Value/A0CD3338"), c_objectiveStateHidden, true);
     gv_primaryObjectiveExplorePreviousExpedition = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_primaryObjectiveExplorePreviousExpedition, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveExplorePreviousExpedition, gv_LOCATION_ID_MOEBIUS_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_primaryObjectiveExplorePreviousExpedition, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus02Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/404193A5"));
     return true;
 }
@@ -5022,7 +5037,7 @@ bool gt_PrimaryObjectiveExploreCompleted_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_PrimaryObjectiveExploreCreate, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MOEBIUS_BASE);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_primaryObjectiveExplorePreviousExpedition);
     return true;
 }
@@ -5050,14 +5065,21 @@ bool gt_PrimaryObjectiveOpenShrineCreate_Func (bool testConds, bool runActions) 
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/BEB494E2"), StringExternal("Param/Value/5881BE00"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/BEB494E2"), StringExternal("Param/Value/5881BE00"), c_objectiveStateHidden, true);
     gv_primaryObjectiveMeltOpenTemple = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_primaryObjectiveMeltOpenTemple, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveMeltOpenTemple, gv_LOCATION_ID_DOOR_OUTER_LAYER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveMeltOpenTemple, gv_LOCATION_ID_DOOR_THERMAL_BARRIER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveMeltOpenTemple, gv_LOCATION_ID_CUTTING_THROUGH_THE_CORE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveMeltOpenTemple, gv_LOCATION_ID_STRUCTURE_ACCESS_IMMINENT);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveMeltOpenTemple, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_primaryObjectiveMeltOpenTemple, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus02Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/0478497B"));
     Wait(2.0, c_timeGame);
-    ObjectiveCreate(StringExternal("Param/Value/3EC50D05"), StringExternal("Param/Value/BD1F81D5"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/3EC50D05"), StringExternal("Param/Value/BD1F81D5"), c_objectiveStateHidden, true);
     gv_primaryObjectiveLaserDrillMustSurvive = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_primaryObjectiveLaserDrillMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_primaryObjectiveLaserDrillMustSurvive, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus02Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/47DB3148"));
     return true;
 }
@@ -5128,7 +5150,13 @@ void gt_PrimaryObjectiveOpenShrineCompleted_Init () {
 // Trigger: Objective - Relics - Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRelicsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5142,9 +5170,13 @@ bool gt_ObjectiveRelicsCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/EF67845A"), StringExternal("Param/Value/54858326"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (gv_bonusObjectiveCollectRelicsNeeded - gv_bonusObjectiveCollectRelicsFound), 0);
+    ObjectiveCreate(StringExternal("Param/Value/EF67845A"), StringExternal("Param/Value/54858326"), c_objectiveStateHidden, false);
     gv_bonusObjectiveCollectRelics = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_bonusObjectiveCollectRelics, lv_category, "", gv_bonusObjectiveCollectRelicsFound, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveCollectRelics, gv_LOCATION_ID_LEFT_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveCollectRelics, gv_LOCATION_ID_RIGHT_GROUND_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveCollectRelics, gv_LOCATION_ID_RIGHT_CLIFF_RELIC);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_bonusObjectiveCollectRelics, true);
     TriggerQueueEnter();
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     Wait(libCamp_gv_campaignHintDelay, c_timeReal);
@@ -5179,7 +5211,7 @@ bool gt_ObjectiveRelicsUpdate_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveRelicsCreateQ, true, false);
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectFindProtossRelics, EventUnit(), gv_p1_USER);
     UnitKill(EventUnit());
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_bonusObjectiveCollectRelics, (gv_bonusObjectiveCollectRelicsNeeded - gv_bonusObjectiveCollectRelicsFound));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_bonusObjectiveCollectRelics, gv_bonusObjectiveCollectRelicsFound);
     if ((gv_bonusObjectiveCollectRelicsFound == gv_bonusObjectiveCollectRelicsNeeded)) {
         TriggerExecute(gt_ObjectiveRelicsComplete, true, false);
     }
@@ -5219,6 +5251,44 @@ bool gt_ObjectiveRelicsComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveRelicsComplete_Init () {
     gt_ObjectiveRelicsComplete = TriggerCreate("gt_ObjectiveRelicsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Relics - Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRelicsRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_LEFT_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_RIGHT_GROUND_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_RIGHT_CLIFF_RELIC] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(126));
+    UnitRemove(UnitFromId(109));
+    UnitRemove(UnitFromId(139));
+    TriggerEnable(gt_ObjectiveRelicsCreateQ, false);
+    TriggerEnable(gt_ObjectiveRelicsUpdate, false);
+    TriggerEnable(gt_RevealRelicShrinesQ, false);
+    TriggerEnable(gt_LeftRelicCollect, false);
+    TriggerEnable(gt_RightCliffRelicCollect, false);
+    TriggerEnable(gt_RightGroundRelicCollect, false);
+    TriggerEnable(gt_Shrine1Killed, false);
+    TriggerEnable(gt_Shrine2Killed, false);
+    TriggerEnable(gt_Shrine3Killed, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRelicsRemove_Init () {
+    gt_ObjectiveRelicsRemove = TriggerCreate("gt_ObjectiveRelicsRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveRelicsRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6344,6 +6414,7 @@ void InitTriggers () {
     gt_ObjectiveRelicsCreateQ_Init();
     gt_ObjectiveRelicsUpdate_Init();
     gt_ObjectiveRelicsComplete_Init();
+    gt_ObjectiveRelicsRemove_Init();
     gt_BriefingQ_Init();
     gt_BriefingScene00_Init();
     gt_BriefingScene01_Init();
