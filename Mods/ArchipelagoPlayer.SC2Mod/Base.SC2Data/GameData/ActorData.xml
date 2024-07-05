@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Catalog>
+    <CActorGlobalConfig id="SYSTEM_ActorConfig">
+        <DeathCustomPriorityList value="Taldarim"/>
+    </CActorGlobalConfig>
     <const id="$AP_LurkerSpineSiteOps" value="{AP_LurkerSOpAoEVariancer SOpShadow SOpForwardCasterPoint SOp2DRotation AP_LurkerSOpShadowSpine SOpRotVariancerUp15}"/>
     <CActorUnit default="1" id="GenericUnitStandard">
         <!-- Override -->
@@ -3408,6 +3411,7 @@
     </CActorSound>
     <CActorSound id="AP_Battlecruiser_TacticalJumpCursorSound" parent="SoundOneShot">
         <On Terms="Abil.AP_Hyperjump.TargetApproachStart" Send="Create"/>
+        <On Terms="Abil.AP_CarrierHyperjump.TargetApproachStart" Send="Create"/>
         <On Terms="Abil.AP_ScienceVesselTacticalJump.TargetApproachStart" Send="Create"/>
         <Sound value="Battlecruiser_TacticalJumpCursor"/>
         <ScopeBearingsTracking value="ForceOff"/>
@@ -5254,6 +5258,7 @@
     <CActorSound id="AP_CarrierInterceptorLaunch" parent="SoundOneShot">
         <On Terms="Abil.AP_CarrierHangar.Launch" Send="Create"/>
         <On Terms="Abil.AP_CarrierAiurHanger.Launch" Send="Create"/>
+        <On Terms="Abil.AP_CarrierTaldarimHanger.Launch" Send="Create"/>
         <!--        <On Terms="Abil.AP_CarrierHangarVoid.Launch" Send="Create"/>-->
         <Sound value="Carrier_InterceptorLaunch"/>
     </CActorSound>
@@ -11708,6 +11713,9 @@
     </CActorSound>
     <CActorUnit id="AP_Interceptor" parent="GenericUnitStandard" unitName="AP_Interceptor">
         <Model value="Interceptor"/>
+        <On Terms="UnitBirth.AP_InterceptorTaldarim" Send="Create"/>
+        <On Terms="ActorCreation; ValidateUnit AP_IsInterceptorTaldarim" Send="ModelSwap Interceptor_Taldarim_Collection"/>
+        <On Terms="UnitDeathCustomize; ValidateUnit AP_IsInterceptorTaldarim" Send="DeathCustomize Taldarim"/>
         <On Terms="Upgrade.AP_DarkProtoss.Add" Send="ModelSwap DarkInterceptor"/>
         <On Terms="UnitBirth; ValidateUnit AP_NoDarkProtoss" Send="ModelSwap DarkInterceptor"/>
         <On Terms="UnitDeathCustomize; ValidateUnit AP_NoDarkProtoss" Send="DeathCustomize DarkProtoss"/>
@@ -11739,7 +11747,8 @@
         <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
         <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
         <DeathCustoms ModelLink="DarkInterceptorDeath" Name="DarkProtoss"/>
-        <DeathCustoms ModelLink="HallucinationDeath" SoundLink="Sentry_HallucinationDeathSmall" Name="Hallucination"/>
+        <DeathCustoms ModelLink="Interceptor_Taldarim_Collection_Death" Name="Taldarim"/>
+        <Hallucination ModelLink="HallucinationDeath" SoundLink="Sentry_HallucinationDeathSmall" Name="Hallucination"/>
         <DeathCustoms>
             <ModelLink value="DeathVoidShadowSmall"/>
             <SoundLink value="ShadowUnit_Small_DeathFX"/>
@@ -32640,6 +32649,9 @@
         <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_VoidRay_Land"/>
         <On Terms="Behavior.Hallucination.On" Send="Create HallucinationBirthSoundLarge"/>
         <On Terms="UnitDeathCustomize; ValidateUnit IsHallucination" Send="DeathCustomize Hallucination"/>
+        <On Terms="Behavior.WarpInEffect.On" Send="ModelSwap AP_VoidRayPurifierWarpInStargate"/>
+        <On Terms="Behavior.WarpInEffect.On" Send="$Spell"/>
+        <On Terms="AnimDone; AnimName Spell" Send="ModelSwap AP_VoidRayPurifier"/>
         <DeathArray index="Normal" ModelLink="VoidRay_Purifier_Collection_Death" SoundLink="VoidRay_Explode"/>
         <DeathActorModel value="UnitDeathModelWithDeathMotionFlier"/>
         <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
@@ -32774,4 +32786,54 @@
         <Sound value="VoidRay_PrismaticAligntmentOn3"/>
         <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On" Send="Create"/>
     </CActorSound>
+    <CActorUnit id="AP_CarrierTaldarim" parent="GenericUnitStandard" unitName="AP_CarrierTaldarim">
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <On Terms="Abil.AP_CarrierHangar.Launch" Send="AnimPlay Cover Cover 0 0.500000 0.500000 3.000000 AsDuration"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Carrier_Land"/>
+        <On Terms="Abil.AP_CarrierHyperjump.SourceCastStart" Send="SetTintColor 0,192,255 6.000000 OneShot HyperjumpingTint"/>
+        <On Terms="Abil.AP_CarrierHyperjump.SourceFinishStart" Send="ClearTintColor 0.000000 HyperjumpingTint"/>
+        <On Terms="Abil.AP_CarrierHyperjump.SourceCastStart" Send="SetOpacity 0.100000 6.000000 HyperjumpingOpacity"/>
+        <On Terms="Abil.AP_CarrierHyperjump.SourceFinishStart" Send="ClearOpacity 0.000000 HyperjumpingOpacity"/>
+        <On Terms="Behavior.AP_HyperjumpTeleportOut.On" Send="Create AP_CarrierHyperjumpTeleportOut"/>
+        <On Terms="Behavior.AP_HyperjumpTeleportIn.On" Send="Create AP_CarrierHyperjumpTeleportIn"/>
+        <Baselines index="Walk" BlendIn="1.500000" BlendOut="2.000000"/>
+        <PortraitModel value="Carrier_Taldarim_Collection_Portrait"/>
+        <Model value="Carrier_Taldarim_Collection"/>
+        <BuildModel value="AP_CarrierTaldarimWarpIn"/>
+        <PlacementModel value="Carrier_Taldarim_Collection"/>
+        <DeathArray index="Normal" ModelLink="Carrier_Taldarim_Collection_Death" SoundLink=""/>
+        <AnimBlendTime value="0.750000"/>
+        <BarWidth value="156"/>
+        <BarOffset value="60"/>
+        <NameOffset value="110"/>
+        <UnitIcon value="Assets\Textures\btn-unit-collection-taldarim-carrier.dds"/>
+        <HeroIcon value="Assets\Textures\btn-unit-collection-taldarim-carrier.dds"/>
+        <WireframeShield>
+            <Image value="Assets\Textures\Wireframe-collection-taldarim-Carrier-Shield01.dds"/>
+            <Image value="Assets\Textures\Wireframe-collection-taldarim-Carrier-Shield02.dds"/>
+            <Image value="Assets\Textures\Wireframe-collection-taldarim-Carrier-Shield03.dds"/>
+        </WireframeShield>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-collection-taldarim-Carrier.dds"/>
+        </GroupIcon>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-collection-taldarim-Carrier.dds"/>
+        </Wireframe>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-protoss-airarmorlevel0.dds"/>
+        <HostSiteOps Ops="SOpBankerCarrier"/>
+        <SoundArray index="Ready" value="Carrier_Ready"/>
+        <SoundArray index="Help" value="CarrierVoid_Help"/>
+        <SoundArray index="What" value="Carrier_What"/>
+        <SoundArray index="Yes" value="CarrierVoid_Yes"/>
+        <SoundArray index="Attack" value="Carrier_Attack"/>
+        <SoundArray index="Pissed" value="Carrier_Pissed"/>
+        <SoundArray index="Movement" value="Carrier_Movement"/>
+        <Aliases value="_UnitHuge"/>
+    </CActorUnit>
+    <CActorModel id="AP_CarrierHyperjumpTeleportIn" parent="ModelAnimationStyleOneShotNoOrphan">
+        <Model value="AP_AirUnits_TeleportIn_COOP"/>
+    </CActorModel>
+    <CActorModel id="AP_CarrierHyperjumpTeleportOut" parent="ModelAnimationStyleOneShotNoOrphan">
+        <Model value="AP_AirUnits_TeleportOut_COOP"/>
+    </CActorModel>
 </Catalog>
