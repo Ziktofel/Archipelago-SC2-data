@@ -38,6 +38,10 @@ const int gv_p8_ALLIED_PINK = 8;
 const int gv_p9_ALLIED_GREEN = 9;
 const int gv_p11_ALLIED_CELLBLOCK_A = 11;
 const int gv_p12_ALLIED_CELLBLOCK_B = 12;
+const int gv_LOCATION_ID_DIAMONDBACK_PRISON = 1;
+const int gv_LOCATION_ID_SIEGE_TANK_PRISON = 2;
+const int gv_LOCATION_ID_FIRST_CHECKPOINT = 3;
+const int gv_LOCATION_ID_SECOND_CHECKPOINT = 4;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -101,6 +105,8 @@ int gv_cellBlock_B_Ping;
 int gv_objectiveCellBlock_B;
 unitgroup gv_victoryHiddenUnitGroup;
 bool gv_victoryCinematicCompleted;
+int gv_objectiveClearForwardPositions;
+int gv_forwardPositionsCleared;
 
 void InitGlobals () {
     gv_tosh = UnitFromId(326);
@@ -119,6 +125,7 @@ void InitGlobals () {
     gv_objectiveToshMustSurvive = c_invalidObjectiveId;
     gv_objectiveCellBlock_A = c_invalidObjectiveId;
     gv_objectiveCellBlock_B = c_invalidObjectiveId;
+    gv_objectiveClearForwardPositions = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -255,6 +262,9 @@ trigger gt_VictoryDoorAnimation;
 trigger gt_VictoryCinematicDoorSounds;
 trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
+trigger gt_ObjectiveClearForwardPositionsCreateQ;
+trigger gt_ObjectiveClearForwardPositionsUpdate;
+trigger gt_ObjectiveClearForwardPositionsComplete;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -1120,6 +1130,7 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveClearMainPrisonCreateQ, true, false);
     TriggerExecute(gt_StorymodeTipsQ, true, false);
     Wait(4.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveClearForwardPositionsCreateQ, true, false);
     TriggerExecute(gt_OpeningDialogueQ, true, false);
     TriggerExecute(gt_TIPCloakingQ, true, false);
     TriggerEnable(gt_MedicMana, true);
@@ -2985,7 +2996,8 @@ bool gt_OutpostCheck01_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_stage = 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_CHECKPOINT);
+    TriggerExecute(gt_ObjectiveClearForwardPositionsUpdate, true, false);
     TriggerExecute(gt_OutpostBuild01AutoSaveQ, true, false);
     TriggerExecute(gt_DefenseOutpost01Create, true, false);
     return true;
@@ -3109,7 +3121,8 @@ bool gt_OutpostCheck02_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_stage = 2;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_CHECKPOINT);
+    TriggerExecute(gt_ObjectiveClearForwardPositionsUpdate, true, false);
     TriggerExecute(gt_OutpostBuild02AutoSaveQ, true, false);
     TriggerExecute(gt_DefenseOutpost02Create, true, false);
     return true;
@@ -4557,7 +4570,7 @@ bool gt_VictoryMainPrisonCleared_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     Wait(1.0, c_timeGame);
     gv_gameOver = true;
     TriggerEnable(gt_CellBlockDriversGetInVehicles, false);
@@ -4797,9 +4810,11 @@ bool gt_ObjectiveClearMainPrisonCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/D2D30F59"), StringExternal("Param/Value/AEA83BA8"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/D2D30F59"), StringExternal("Param/Value/AEA83BA8"), c_objectiveStateHidden, true);
     gv_objectiveClearMainPrison = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveClearMainPrison, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearMainPrison, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClearMainPrison, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTosh03AObjective1, ObjectiveLastCreated(), StringExternal("Param/Value/FDD20C03"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     VisRevealArea(gv_p1_USER, RegionFromId(8), 16.0, false);
@@ -4807,9 +4822,10 @@ bool gt_ObjectiveClearMainPrisonCreateQ_Func (bool testConds, bool runActions) {
     libNtve_gf_CreatePingFacingAngle(PlayerGroupAll(), "PingObjective", RegionGetCenter(RegionFromId(8)), ColorWithAlpha(0.00, 100.00, 0.00, 0.00), 0.0, 270.0);
     gv_mainPrisonPing = PingLastCreated();
     PingSetTooltip(gv_mainPrisonPing, StringExternal("Param/Value/8D06E3F4"));
-    ObjectiveCreate(StringExternal("Param/Value/19F8DA70"), StringExternal("Param/Value/C829731D"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/19F8DA70"), StringExternal("Param/Value/C829731D"), c_objectiveStateHidden, true);
     gv_objectiveToshMustSurvive = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveToshMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveToshMustSurvive, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTosh03AObjective4, ObjectiveLastCreated(), StringExternal("Param/Value/30EB4842"));
     TriggerQueueExit();
     return true;
@@ -4882,7 +4898,13 @@ void gt_ObjectiveClearMainPrisonFailed_Init () {
 // Trigger: Objective Cell Block_A Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveCellBlock_ACreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4896,9 +4918,11 @@ bool gt_ObjectiveCellBlock_ACreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/1A489F89"), StringExternal("Param/Value/A5253672"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/1A489F89"), StringExternal("Param/Value/A5253672"), c_objectiveStateHidden, false);
     gv_objectiveCellBlock_A = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveCellBlock_A, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveCellBlock_A, gv_LOCATION_ID_DIAMONDBACK_PRISON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveCellBlock_A, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTosh03AObjective2, ObjectiveLastCreated(), StringExternal("Param/Value/8EDB0902"));
     return true;
 }
@@ -4926,7 +4950,7 @@ bool gt_ObjectiveCellBlock_AComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DIAMONDBACK_PRISON);
     PingDestroy(gv_cellBlock_A_Ping);
     TriggerExecute(gt_ObjectiveCellBlock_ACreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveCellBlock_A);
@@ -4943,7 +4967,13 @@ void gt_ObjectiveCellBlock_AComplete_Init () {
 // Trigger: Objective Cell Block_B Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveCellBlock_BCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4957,9 +4987,11 @@ bool gt_ObjectiveCellBlock_BCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/05DF4AC2"), StringExternal("Param/Value/F0DF8BF5"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/05DF4AC2"), StringExternal("Param/Value/F0DF8BF5"), c_objectiveStateHidden, false);
     gv_objectiveCellBlock_B = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveCellBlock_B, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveCellBlock_B, gv_LOCATION_ID_SIEGE_TANK_PRISON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveCellBlock_B, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTosh03AObjective3, ObjectiveLastCreated(), StringExternal("Param/Value/98C738B2"));
     return true;
 }
@@ -4987,7 +5019,7 @@ bool gt_ObjectiveCellBlock_BComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SIEGE_TANK_PRISON);
     PingDestroy(gv_cellBlock_B_Ping);
     TriggerExecute(gt_ObjectiveCellBlock_BCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveCellBlock_B);
@@ -5456,6 +5488,96 @@ void gt_VictoryCleanup_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Forward Positions Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearForwardPositionsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/CECCCDBD"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveClearForwardPositions = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveClearForwardPositions, lv_category, "", gv_forwardPositionsCleared, 2, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearForwardPositions, gv_LOCATION_ID_FIRST_CHECKPOINT);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearForwardPositions, gv_LOCATION_ID_SECOND_CHECKPOINT);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClearForwardPositions, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearForwardPositionsCreateQ_Init () {
+    gt_ObjectiveClearForwardPositionsCreateQ = TriggerCreate("gt_ObjectiveClearForwardPositionsCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Forward Positions Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearForwardPositionsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    gv_forwardPositionsCleared += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveClearForwardPositions, gv_forwardPositionsCleared);
+    if ((gv_forwardPositionsCleared == 2)) {
+        TriggerExecute(gt_ObjectiveClearForwardPositionsComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearForwardPositionsUpdate_Init () {
+    gt_ObjectiveClearForwardPositionsUpdate = TriggerCreate("gt_ObjectiveClearForwardPositionsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Forward Positions Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearForwardPositionsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveClearForwardPositionsCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClearForwardPositions);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearForwardPositionsComplete_Init () {
+    gt_ObjectiveClearForwardPositionsComplete = TriggerCreate("gt_ObjectiveClearForwardPositionsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -5746,6 +5868,9 @@ void InitTriggers () {
     gt_VictoryCinematicDoorSounds_Init();
     gt_VictoryCinematicEnd_Init();
     gt_VictoryCleanup_Init();
+    gt_ObjectiveClearForwardPositionsCreateQ_Init();
+    gt_ObjectiveClearForwardPositionsUpdate_Init();
+    gt_ObjectiveClearForwardPositionsComplete_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
