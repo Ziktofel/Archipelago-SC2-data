@@ -30,6 +30,12 @@ void InitLibs () {
 // Constants
 //--------------------------------------------------------------------------------------------------
 const fixed gv_vIDEO_PADDING = 5.0;
+const int gv_LOCATION_ID_FIRST_RELIC = 1;
+const int gv_LOCATION_ID_SECOND_RELIC = 2;
+const int gv_LOCATION_ID_THIRD_RELIC = 3;
+const int gv_LOCATION_ID_FOURTH_RELIC = 4;
+const int gv_LOCATION_ID_FIRST_FORCEFIELD_AREA_BUSTED = 5;
+const int gv_LOCATION_ID_SECOND_FORCEFIELD_AREA_BUSTED = 6;
 const int gv_p1_USER = 1;
 const int gv_p2_ZERG = 2;
 const int gv_p3_TEMPLE = 3;
@@ -48,12 +54,11 @@ unitgroup gv_initialStalkers;
 unit gv_artifact;
 unitgroup gv_artifactGuardiansNorth;
 unitgroup gv_artifactGuardiansSouth;
-int gv_statuesKilled;
 revealer gv_artifactRevealer;
 unitgroup gv_zergArtifactAttackers;
 bool gv_victoryPending;
 timer gv_guardianTimer;
-int gv_statuesDestoyed;
+int gv_statuesDestroyed;
 fixed gv_statueHealth;
 int gv_spineCrawlerSize;
 unit[51] gv_spineCrawlers;
@@ -78,6 +83,8 @@ int gv_relicsNeeded;
 bool gv_victoryCinematicCompleted;
 unitgroup gv_zerglingGroupNorth;
 unitgroup gv_zerglingGroupSouth;
+int gv_objective_Forcefields;
+int gv_forcefieldsBusted;
 bool gv_gameOver;
 bool gv_inCinematic;
 playergroup gv_protossPlayers;
@@ -100,6 +107,7 @@ void InitGlobals () {
     gv_objective_Relics = c_invalidObjectiveId;
     gv_zerglingGroupNorth = UnitGroupEmpty();
     gv_zerglingGroupSouth = UnitGroupEmpty();
+    gv_objective_Forcefields = c_invalidObjectiveId;
     gv_protossPlayers = PlayerGroupEmpty();
 }
 
@@ -194,6 +202,7 @@ trigger gt_ObjectiveRelicsCreateQ;
 trigger gt_ObjectiveRelicsDiscover;
 trigger gt_ObjectiveRelicsUpdate;
 trigger gt_ObjectiveRelicsComplete;
+trigger gt_ObjectiveRelicsRemove;
 trigger gt_RelicTipQ;
 trigger gt_IntroBriefingQ;
 trigger gt_IntroBriefingCinematic;
@@ -207,12 +216,15 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
-trigger gt_FirstForcefieldAreaBusted;
-trigger gt_SecondForcefieldAreaBusted;
 trigger gt_FirstRelicObtained;
 trigger gt_SecondRelicObtained;
 trigger gt_ThirdRelicObtained;
 trigger gt_FourthRelicObtained;
+trigger gt_ObjectiveForcefieldsCreateQ;
+trigger gt_ObjectiveForcefieldsUpdate;
+trigger gt_ObjectiveForcefieldsComplete;
+trigger gt_FirstForcefieldAreaBusted;
+trigger gt_SecondForcefieldAreaBusted;
 trigger gt_ArchInit;
 trigger gt_FactionSwapInit;
 trigger gt_Initialization;
@@ -343,6 +355,8 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_CampaignTipsQ, true, false);
     Wait(8.0, c_timeReal);
     TriggerExecute(gt_ArtifactRaceQ, true, false);
+    Wait(8.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveForcefieldsCreateQ, true, true);
     return true;
 }
 
@@ -1760,8 +1774,8 @@ bool gt_ArtifactGuardianDestroyed_Func (bool testConds, bool runActions) {
 
     SoundPlayAtPoint(SoundLink("Thor_Movement", -1), PlayerGroupAll(), UnitGetPosition(EventUnit()), 0.0, 100.0, 0.0);
     if ((UnitGroupHasUnit(gv_artifactGuardiansSouth, EventUnit()) == true)) {
-        gv_statuesDestoyed += 1;
-        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DestroytheStatues, gv_statuesDestoyed);
+        gv_statuesDestroyed += 1;
+        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DestroytheStatues, gv_statuesDestroyed);
     }
 
     if (((UnitGroupCount(gv_artifactGuardiansSouth, c_unitCountAlive) == 0) || ((UnitGroupCount(gv_artifactGuardiansNorth, c_unitCountAlive) == 0) && (UnitGroupCount(UnitGroup(null, gv_p1_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > UnitGroupCount(UnitGroup(null, gv_p2_ZERG, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive))))) {
@@ -1772,7 +1786,7 @@ bool gt_ArtifactGuardianDestroyed_Func (bool testConds, bool runActions) {
         libNtve_gf_PlayAnimationOnDoodadsInRegion(RegionFromId(66), "ArtifactShrine", c_animNameDefault, "Stand Work End A", c_animFlagPlayForever | c_animFlagNonLooping, c_animTimeDefault);
         Wait(2.0, c_timeGame);
         libNtve_gf_PlayAnimationOnDoodadsInRegion(RegionFromId(66), "ArtifactShrine", c_animNameDefault, "Stand A", c_animFlagPlayForever, c_animTimeDefault);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
         Wait(1.0, c_timeGame);
         TriggerExecute(gt_ObjectiveGettotheArtifactComplete, true, false);
         TriggerExecute(gt_ObjectiveDestroytheStatuesComplete, true, false);
@@ -3816,9 +3830,10 @@ bool gt_ObjectiveGettotheArtifactCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/9E172D60"), StringExternal("Param/Value/7B506F18"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/9E172D60"), StringExternal("Param/Value/7B506F18"), c_objectiveStateHidden, true);
     gv_objective_GetToTheArtifact = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_GetToTheArtifact, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_GetToTheArtifact, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus01Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/CDC448F8"));
     return true;
 }
@@ -3922,9 +3937,11 @@ bool gt_ObjectiveDestroytheStatuesCreate_Func (bool testConds, bool runActions) 
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/88629B8D"), StringExternal("Param/Value/35A1F683"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", 0, 3);
+    ObjectiveCreate(StringExternal("Param/Value/88629B8D"), StringExternal("Param/Value/35A1F683"), c_objectiveStateHidden, true);
     gv_objective_DestroytheStatues = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_DestroytheStatues, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_statuesDestroyed, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroytheStatues, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DestroytheStatues, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus01Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/92024AE5"));
     return true;
 }
@@ -3957,7 +3974,6 @@ bool gt_ObjectiveDestroytheStatuesDiscover_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroytheStatuesCreate, true, false);
-    ObjectiveSetState(gv_objective_DestroytheStatues, c_objectiveStateActive);
     return true;
 }
 
@@ -4001,7 +4017,13 @@ void gt_ObjectiveDestroytheStatuesComplete_Init () {
 // Trigger: Objective - Relics - Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRelicsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4016,9 +4038,14 @@ bool gt_ObjectiveRelicsCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/CBDA1C7D"), StringExternal("Param/Value/3A5CA4C7"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (4 - gv_relicsFound), 0);
+    ObjectiveCreate(StringExternal("Param/Value/CBDA1C7D"), StringExternal("Param/Value/3A5CA4C7"), c_objectiveStateHidden, false);
     gv_objective_Relics = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_Relics, lv_category, "", gv_relicsFound, 4, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Relics, gv_LOCATION_ID_FIRST_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Relics, gv_LOCATION_ID_SECOND_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Relics, gv_LOCATION_ID_THIRD_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Relics, gv_LOCATION_ID_FOURTH_RELIC);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Relics, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus01Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/7ED37176"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -4102,7 +4129,7 @@ bool gt_ObjectiveRelicsUpdate_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveRelicsCreateQ, true, false);
     UnitKill(EventUnit());
     gv_relicsFound += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_Relics, (4 - gv_relicsFound));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_Relics, gv_relicsFound);
     if ((gv_relicsFound == gv_relicsNeeded)) {
         TriggerExecute(gt_ObjectiveRelicsComplete, true, false);
     }
@@ -4147,6 +4174,40 @@ bool gt_ObjectiveRelicsComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveRelicsComplete_Init () {
     gt_ObjectiveRelicsComplete = TriggerCreate("gt_ObjectiveRelicsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Relics - Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRelicsRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FIRST_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SECOND_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_THIRD_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FOURTH_RELIC] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(584));
+    UnitRemove(UnitFromId(430));
+    UnitRemove(UnitFromId(832));
+    UnitRemove(UnitFromId(649));
+    TriggerEnable(gt_RelicTipQ, false);
+    TriggerEnable(gt_ObjectiveRelicsDiscover, false);
+    TriggerEnable(gt_ObjectiveRelicsCreateQ, false);
+    TriggerEnable(gt_ObjectiveRelicsUpdate, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRelicsRemove_Init () {
+    gt_ObjectiveRelicsRemove = TriggerCreate("gt_ObjectiveRelicsRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveRelicsRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5022,6 +5083,209 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: First Relic Obtained
+//--------------------------------------------------------------------------------------------------
+bool gt_FirstRelicObtained_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((EventUnit() == UnitFromId(430)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_RELIC);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FirstRelicObtained_Init () {
+    gt_FirstRelicObtained = TriggerCreate("gt_FirstRelicObtained_Func");
+    TriggerAddEventUnitAbility(gt_FirstRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Second Relic Obtained
+//--------------------------------------------------------------------------------------------------
+bool gt_SecondRelicObtained_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((EventUnit() == UnitFromId(584)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_RELIC);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_SecondRelicObtained_Init () {
+    gt_SecondRelicObtained = TriggerCreate("gt_SecondRelicObtained_Func");
+    TriggerAddEventUnitAbility(gt_SecondRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Third Relic Obtained
+//--------------------------------------------------------------------------------------------------
+bool gt_ThirdRelicObtained_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((EventUnit() == UnitFromId(832)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_RELIC);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ThirdRelicObtained_Init () {
+    gt_ThirdRelicObtained = TriggerCreate("gt_ThirdRelicObtained_Func");
+    TriggerAddEventUnitAbility(gt_ThirdRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Fourth Relic Obtained
+//--------------------------------------------------------------------------------------------------
+bool gt_FourthRelicObtained_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((EventUnit() == UnitFromId(649)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FOURTH_RELIC);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FourthRelicObtained_Init () {
+    gt_FourthRelicObtained = TriggerCreate("gt_FourthRelicObtained_Func");
+    TriggerAddEventUnitAbility(gt_FourthRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Forcefields - Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveForcefieldsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/B4F7F5A8"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_Forcefields = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_Forcefields, lv_category, "", gv_forcefieldsBusted, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Forcefields, gv_LOCATION_ID_FIRST_FORCEFIELD_AREA_BUSTED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Forcefields, gv_LOCATION_ID_SECOND_FORCEFIELD_AREA_BUSTED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Forcefields, true);
+    libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TTychus01Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/9F5DDE87"));
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveForcefieldsCreateQ_Init () {
+    gt_ObjectiveForcefieldsCreateQ = TriggerCreate("gt_ObjectiveForcefieldsCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Forcefields - Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveForcefieldsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveForcefieldsCreateQ, true, false);
+    gv_forcefieldsBusted += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_Forcefields, gv_forcefieldsBusted);
+    if ((gv_forcefieldsBusted == 2)) {
+        TriggerExecute(gt_ObjectiveForcefieldsComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveForcefieldsUpdate_Init () {
+    gt_ObjectiveForcefieldsUpdate = TriggerCreate("gt_ObjectiveForcefieldsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Forcefields - Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveForcefieldsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveForcefieldsCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Forcefields);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveForcefieldsComplete_Init () {
+    gt_ObjectiveForcefieldsComplete = TriggerCreate("gt_ObjectiveForcefieldsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: First Forcefield Area Busted
 //--------------------------------------------------------------------------------------------------
 bool gt_FirstForcefieldAreaBusted_Func (bool testConds, bool runActions) {
@@ -5043,7 +5307,8 @@ bool gt_FirstForcefieldAreaBusted_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_FORCEFIELD_AREA_BUSTED);
+    TriggerExecute(gt_ObjectiveForcefieldsUpdate, true, false);
     return true;
 }
 
@@ -5075,7 +5340,8 @@ bool gt_SecondForcefieldAreaBusted_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_FORCEFIELD_AREA_BUSTED);
+    TriggerExecute(gt_ObjectiveForcefieldsUpdate, true, false);
     return true;
 }
 
@@ -5083,114 +5349,6 @@ bool gt_SecondForcefieldAreaBusted_Func (bool testConds, bool runActions) {
 void gt_SecondForcefieldAreaBusted_Init () {
     gt_SecondForcefieldAreaBusted = TriggerCreate("gt_SecondForcefieldAreaBusted_Func");
     TriggerAddEventUnitRegion(gt_SecondForcefieldAreaBusted, null, RegionFromId(73), true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: First Relic Obtained
-//--------------------------------------------------------------------------------------------------
-bool gt_FirstRelicObtained_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((EventUnit() == UnitFromId(430)))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_FirstRelicObtained_Init () {
-    gt_FirstRelicObtained = TriggerCreate("gt_FirstRelicObtained_Func");
-    TriggerAddEventUnitAbility(gt_FirstRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Second Relic Obtained
-//--------------------------------------------------------------------------------------------------
-bool gt_SecondRelicObtained_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((EventUnit() == UnitFromId(584)))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SecondRelicObtained_Init () {
-    gt_SecondRelicObtained = TriggerCreate("gt_SecondRelicObtained_Func");
-    TriggerAddEventUnitAbility(gt_SecondRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Third Relic Obtained
-//--------------------------------------------------------------------------------------------------
-bool gt_ThirdRelicObtained_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((EventUnit() == UnitFromId(832)))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ThirdRelicObtained_Init () {
-    gt_ThirdRelicObtained = TriggerCreate("gt_ThirdRelicObtained_Func");
-    TriggerAddEventUnitAbility(gt_ThirdRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Fourth Relic Obtained
-//--------------------------------------------------------------------------------------------------
-bool gt_FourthRelicObtained_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((EventUnit() == UnitFromId(649)))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_FourthRelicObtained_Init () {
-    gt_FourthRelicObtained = TriggerCreate("gt_FourthRelicObtained_Func");
-    TriggerAddEventUnitAbility(gt_FourthRelicObtained, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5758,6 +5916,7 @@ void InitTriggers () {
     gt_ObjectiveRelicsDiscover_Init();
     gt_ObjectiveRelicsUpdate_Init();
     gt_ObjectiveRelicsComplete_Init();
+    gt_ObjectiveRelicsRemove_Init();
     gt_RelicTipQ_Init();
     gt_IntroBriefingQ_Init();
     gt_IntroBriefingCinematic_Init();
@@ -5771,12 +5930,15 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
-    gt_FirstForcefieldAreaBusted_Init();
-    gt_SecondForcefieldAreaBusted_Init();
     gt_FirstRelicObtained_Init();
     gt_SecondRelicObtained_Init();
     gt_ThirdRelicObtained_Init();
     gt_FourthRelicObtained_Init();
+    gt_ObjectiveForcefieldsCreateQ_Init();
+    gt_ObjectiveForcefieldsUpdate_Init();
+    gt_ObjectiveForcefieldsComplete_Init();
+    gt_FirstForcefieldAreaBusted_Init();
+    gt_SecondForcefieldAreaBusted_Init();
     gt_ArchInit_Init();
     gt_FactionSwapInit_Init();
     gt_Initialization_Init();
