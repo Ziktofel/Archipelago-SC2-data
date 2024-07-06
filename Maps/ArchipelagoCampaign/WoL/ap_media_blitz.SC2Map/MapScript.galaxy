@@ -37,6 +37,15 @@ const int gv_p05_DOMINION_RAIDER = 5;
 const int gv_p06_CIVILIANS = 6;
 const int gv_p07_HORNERBASE = 7;
 const int gv_p08_DOMINION = 8;
+const int gv_LOCATION_ID_TOWER_1 = 1;
+const int gv_LOCATION_ID_TOWER_2 = 2;
+const int gv_LOCATION_ID_TOWER_3 = 3;
+const int gv_LOCATION_ID_SCIENCE_FACILITY = 4;
+const int gv_LOCATION_ID_ALL_BARRACKS = 5;
+const int gv_LOCATION_ID_ALL_FACTORIES = 6;
+const int gv_LOCATION_ID_ALL_STARPORTS = 7;
+const int gv_LOCATION_ID_ODIN_NOT_TRASHED = 8;
+const int gv_LOCATION_ID_SURPRISE_ATTACK_ENDS = 9;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -2264,7 +2273,7 @@ bool gt_SecretDocumentsRetrievedUnlockHorner05S_Func (bool testConds, bool runAc
     gv_secretsFound = 1;
     UnitKill(gv_secretDocuments);
     ConversationDataStateSetValue("StoryState|HornerSecretMissionOn", 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SCIENCE_FACILITY);
     TriggerExecute(gt_ObjectiveFindComplete, true, false);
     return true;
 }
@@ -4558,9 +4567,9 @@ bool gt_VictoryBroadcastTowersCompleted_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     if ((gv_odinDead == false)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ODIN_NOT_TRASHED);
         TriggerExecute(gt_ObjectiveOdinComplete, true, false);
     }
 
@@ -5649,7 +5658,13 @@ void gt_TrainTroopsTipQ_Init () {
 // Trigger: Objective Find Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5664,9 +5679,11 @@ bool gt_ObjectiveFindCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/1A40C316"), StringExternal("Param/Value/EDD3E368"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/1A40C316"), StringExternal("Param/Value/EDD3E368"), c_objectiveStateHidden, false);
     gv_objectiveFindHiddenLab = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveFindHiddenLab, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindHiddenLab, gv_LOCATION_ID_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindHiddenLab, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5725,9 +5742,11 @@ bool gt_ObjectiveDestroyCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/CA64DF53"), StringExternal("Param/Value/159C9C00"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/CA64DF53"), StringExternal("Param/Value/159C9C00"), c_objectiveStateHidden, true);
     gv_objectiveDestroyDominionForces = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyDominionForces, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionForces, gv_LOCATION_ID_SURPRISE_ATTACK_ENDS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionForces, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner04Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/5F35D842"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5790,17 +5809,23 @@ bool gt_ObjectiveAccessBroadcastTowersCreateQ_Func (bool testConds, bool runActi
     TriggerEnable(gt_ObjectiveMisterUniverseUpdateAAirBaseTowerQ, true);
     TriggerEnable(gt_ObjectiveMisterUniverseUpdateBSiegeBaseTowerQ, true);
     TriggerEnable(gt_ObjectiveMisterUniverseUpdateCRaiderBaseTowerQ, true);
-    ObjectiveCreate(StringExternal("Param/Value/05E3338B"), StringExternal("Param/Value/7C54A1E1"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/05E3338B"), StringExternal("Param/Value/7C54A1E1"), c_objectiveStateHidden, true);
     gv_objectiveAccessTower1 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveAccessTower1, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveAccessTower1, gv_LOCATION_ID_TOWER_1);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveAccessTower1, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner04Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/26108934"));
-    ObjectiveCreate(StringExternal("Param/Value/7B03FE31"), StringExternal("Param/Value/A9280EFD"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/7B03FE31"), StringExternal("Param/Value/A9280EFD"), c_objectiveStateHidden, true);
     gv_objectiveAccessTower2 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveAccessTower2, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveAccessTower2, gv_LOCATION_ID_TOWER_2);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveAccessTower2, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner04Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/0A4F3766"));
-    ObjectiveCreate(StringExternal("Param/Value/60581E90"), StringExternal("Param/Value/43AA9BFF"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/60581E90"), StringExternal("Param/Value/43AA9BFF"), c_objectiveStateHidden, true);
     gv_objectiveAccessTower3 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveAccessTower3, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveAccessTower3, gv_LOCATION_ID_TOWER_3);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveAccessTower3, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner04Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/CE0A4A63"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5864,7 +5889,7 @@ bool gt_ObjectiveAccessBroadcastTower1Complete_Func (bool testConds, bool runAct
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveAccessBroadcastTowersCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_TOWER_1);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveAccessTower1);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -5894,7 +5919,7 @@ bool gt_ObjectiveAccessBroadcastTower2Complete_Func (bool testConds, bool runAct
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveAccessBroadcastTowersCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_TOWER_2);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveAccessTower2);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -5924,7 +5949,7 @@ bool gt_ObjectiveAccessBroadcastTower3Complete_Func (bool testConds, bool runAct
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveAccessBroadcastTowersCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_TOWER_3);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveAccessTower3);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -6857,8 +6882,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     TriggerEnable(gt_TransmissionOdinNearVikingQ, false);
     TimerWindowDestroy(gv_distractionTimerWindow);
     VisRevealerDestroy(gv_korhalRevealer);
-    ObjectiveShow(gv_objectiveDestroyDominionForces, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionForces);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionForces, false);
     libNtve_gf_KillModel(gv_pingActor_Tower1);
     libNtve_gf_KillModel(gv_pingActor_Tower2);
     libNtve_gf_KillModel(gv_pingActor_Tower3);
@@ -6957,7 +6981,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_p01_USER);
     gv_inCinematic = false;
     libCamp_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/3DF4DD57"));
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SURPRISE_ATTACK_ENDS);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_StartGameStage2, true, false);
     return true;
@@ -7382,7 +7406,13 @@ void gt_VictoryTowerScene_Init () {
 // Trigger: Objective Barracks Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveBarracksCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -7397,9 +7427,11 @@ bool gt_ObjectiveBarracksCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/B3049FFD"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/B3049FFD"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveTrashAllBarracks = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveTrashAllBarracks, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveTrashAllBarracks, gv_LOCATION_ID_ALL_BARRACKS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveTrashAllBarracks, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -7429,7 +7461,7 @@ bool gt_ObjectiveBarracksComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveBarracksCreateQ, true, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ALL_BARRACKS);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveTrashAllBarracks);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -7444,7 +7476,13 @@ void gt_ObjectiveBarracksComplete_Init () {
 // Trigger: Objective Factories Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFactoriesCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -7459,9 +7497,11 @@ bool gt_ObjectiveFactoriesCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/721BE5D9"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/721BE5D9"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveTrashAllFactories = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveTrashAllFactories, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveTrashAllFactories, gv_LOCATION_ID_ALL_FACTORIES);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveTrashAllFactories, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -7491,7 +7531,7 @@ bool gt_ObjectiveFactoriesComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFactoriesCreateQ, true, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ALL_FACTORIES);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveTrashAllFactories);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -7506,7 +7546,13 @@ void gt_ObjectiveFactoriesComplete_Init () {
 // Trigger: Objective Starports Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveStarportsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -7521,9 +7567,11 @@ bool gt_ObjectiveStarportsCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/D4EBC9E0"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/D4EBC9E0"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveTrashAllStarports = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveTrashAllStarports, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveTrashAllStarports, gv_LOCATION_ID_ALL_STARPORTS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveTrashAllStarports, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -7553,7 +7601,7 @@ bool gt_ObjectiveStarportsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveStarportsCreateQ, true, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ALL_STARPORTS);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveTrashAllStarports);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -7673,7 +7721,13 @@ void gt_onStarportDie_Init () {
 // Trigger: Objective Odin Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveOdinCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -7688,9 +7742,11 @@ bool gt_ObjectiveOdinCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/9234F53A"), StringToText(""), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/9234F53A"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveDontTrashOdin = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDontTrashOdin, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDontTrashOdin, gv_LOCATION_ID_ODIN_NOT_TRASHED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDontTrashOdin, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;

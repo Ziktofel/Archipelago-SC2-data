@@ -38,6 +38,20 @@ const int gv_pLAYER_06_TRAIN = 6;
 const int gv_pLAYER_07_DEFILERBONESAMPLE = 7;
 const fixed gv_tRAIN_CAR_SEPERATION = 0.1;
 const fixed gv_tRAIN_RADIUS = 1.75;
+const int gv_LOCATION_ID_NORTH_DEFILER = 1;
+const int gv_LOCATION_ID_MID_DEFILER = 2;
+const int gv_LOCATION_ID_SOUTH_DEFILER = 3;
+const int gv_LOCATION_ID_CLOSE_DIAMONDBACK = 4;
+const int gv_LOCATION_ID_NORTHWEST_DIAMONDBACK = 5;
+const int gv_LOCATION_ID_NORTH_DIAMONDBACK = 6;
+const int gv_LOCATION_ID_NORTHEAST_DIAMONDBACK = 7;
+const int gv_LOCATION_ID_SOUTHWEST_DIAMONDBACK = 8;
+const int gv_LOCATION_ID_SOUTHEAST_DIAMONDBACK = 9;
+const int gv_LOCATION_ID_KILL_TEAM = 10;
+const int gv_LOCATION_ID_FLAWLESS = 11;
+const int gv_LOCATION_ID_2_TRAINS_DESTROYED = 12;
+const int gv_LOCATION_ID_4_TRAINS_DESTROYED = 13;
+const int gv_LOCATION_ID_6_TRAINS_DESTROYED = 14;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -142,11 +156,13 @@ bool gv_sCVTrained;
 int gv_objective_TheGreatTrainRobbery;
 int gv_objective_DontMissTrains;
 int gv_trainsMissed;
-int gv_objective_Locate;
+int gv_objective_Locate_Diamondbacks;
 int gv_objective_DefilerSkeletons;
 int gv_defilerSkeletonsFound;
 int gv_defilerSkeletonsNeeded;
 int gv_objectiveDestroyTheDominionKillTeam;
+int gv_objective_Flawless;
+bool gv_flawlessFailed;
 bool gv_victoryCinematicCompleted;
 unitgroup gv_victoryHiddenUnitGroup;
 
@@ -186,9 +202,10 @@ void InitGlobals () {
     gv_patrolSingle = UnitGroupEmpty();
     gv_objective_TheGreatTrainRobbery = c_invalidObjectiveId;
     gv_objective_DontMissTrains = c_invalidObjectiveId;
-    gv_objective_Locate = c_invalidObjectiveId;
+    gv_objective_Locate_Diamondbacks = c_invalidObjectiveId;
     gv_objective_DefilerSkeletons = c_invalidObjectiveId;
     gv_objectiveDestroyTheDominionKillTeam = c_invalidObjectiveId;
+    gv_objective_Flawless = c_invalidObjectiveId;
     gv_victoryHiddenUnitGroup = UnitGroupEmpty();
 }
 
@@ -299,10 +316,11 @@ trigger gt_ObjectiveTheGreatTrainRobberyComplete;
 trigger gt_ObjectiveDontMissTrainsCreate;
 trigger gt_ObjectiveDontMissTrainsComplete;
 trigger gt_ObjectiveDontMissTrainsFailed;
-trigger gt_ObjectiveLocateCreateQ;
-trigger gt_ObjectiveLocateDiscover;
-trigger gt_ObjectiveLocateComplete;
+trigger gt_ObjectiveLocateDiamondbacksCreateQ;
+trigger gt_ObjectiveLocateDiamondbacksDiscover;
+trigger gt_ObjectiveLocateDiamondbacksComplete;
 trigger gt_ObjectiveDefilerSkeletonsCreate;
+trigger gt_ObjectiveDefilerSkeletonsRemove;
 trigger gt_ObjectiveDefilerSkeletonsUpdate;
 trigger gt_DefilerSkeletonFinding;
 trigger gt_onDifficultyCasual;
@@ -315,6 +333,8 @@ trigger gt_NorthDefiler;
 trigger gt_MidDefiler;
 trigger gt_SouthDefiler;
 trigger gt_onKillTeamMemberDie;
+trigger gt_ObjectiveFlawlessCreateQ;
+trigger gt_ObjectiveFlawlessComplete;
 trigger gt_ArchInit;
 trigger gt_BriefingQ;
 trigger gt_BriefingScene00;
@@ -491,32 +511,32 @@ bool auto_gf_RescueDiamondback_TriggerFunc (bool testConds, bool runActions) {
     }
 
     if ((lp_diamondback == UnitFromId(668))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_DIAMONDBACK);
     }
     else if ((lp_diamondback == UnitFromId(667))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_DIAMONDBACK);
     }
     else if ((lp_diamondback == UnitFromId(338))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_DIAMONDBACK);
     }
     else if ((lp_diamondback == UnitFromId(332))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_DIAMONDBACK);
     }
     else if ((lp_diamondback == UnitFromId(463))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_DIAMONDBACK);
     }
     else if ((lp_diamondback == UnitFromId(1318))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_DIAMONDBACK);
     }
     gv_diamondbacksFound += 1;
     gv_diamondbacksUsed += 1;
-    TriggerExecute(gt_ObjectiveLocateDiscover, true, true);
+    TriggerExecute(gt_ObjectiveLocateDiamondbacksDiscover, true, true);
     if ((gv_diamondbacksFound <= gv_totalDiamondbacks)) {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_Locate, (gv_totalDiamondbacks - gv_diamondbacksFound));
+        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_Locate_Diamondbacks, gv_diamondbacksFound);
     }
 
     if ((gv_diamondbacksFound == gv_totalDiamondbacks)) {
-        TriggerExecute(gt_ObjectiveLocateComplete, true, false);
+        TriggerExecute(gt_ObjectiveLocateDiamondbacksComplete, true, false);
         Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
         TriggerExecute(gt_DiamondbacksRescuedQ, true, false);
     }
@@ -1061,7 +1081,7 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_CampaignTipsQ, true, false);
     Wait(6.0, c_timeReal);
-    TriggerExecute(gt_ObjectiveLocateDiscover, true, true);
+    TriggerExecute(gt_ObjectiveLocateDiamondbacksDiscover, true, true);
     TriggerExecute(gt_DiamondbacksQ, true, true);
     Wait(5.0, c_timeGame);
     TriggerExecute(gt_ObjectiveDefilerSkeletonsCreate, true, true);
@@ -2379,15 +2399,15 @@ bool gt_TrainDeathQ_Func (bool testConds, bool runActions) {
     }
 
     if ((gv_trainsDestroyed == 2)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(12);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_2_TRAINS_DESTROYED);
     }
 
     if ((gv_trainsDestroyed == 4)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(13);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_4_TRAINS_DESTROYED);
     }
 
     if ((gv_trainsDestroyed == 6)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(14);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_6_TRAINS_DESTROYED);
     }
 
     TriggerQueueEnter();
@@ -2461,6 +2481,11 @@ bool gt_TrainDespawn_Func (bool testConds, bool runActions) {
     }
     if ((UnitGetType(EventUnit()) == "Caboose") && (gv_inCinematic == false) && (libNtve_gf_DifficultyValueInt(1, 1, 1, 0) == 1)) {
         gv_trainsMissed += 1;
+        if ((gv_flawlessFailed == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FLAWLESS] == true)) {
+            gv_flawlessFailed = true;
+            lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Flawless);
+        }
+
         lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DontMissTrains, gv_trainsMissed);
         if ((gv_trainsMissed == 1)) {
             TriggerExecute(gt_Train1MissedQ, true, false);
@@ -2478,6 +2503,11 @@ bool gt_TrainDespawn_Func (bool testConds, bool runActions) {
 
     if ((UnitGetType(EventUnit()) == "Caboose") && (gv_inCinematic == false) && (libNtve_gf_DifficultyValueInt(0, 0, 0, 1) == 1)) {
         gv_trainsMissed += 1;
+        if ((gv_flawlessFailed == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FLAWLESS] == true)) {
+            gv_flawlessFailed = true;
+            lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Flawless);
+        }
+
         lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DontMissTrains, gv_trainsMissed);
         if ((gv_trainsMissed == 1)) {
             TriggerExecute(gt_Train1MissedQ, true, false);
@@ -5081,9 +5111,10 @@ bool gt_VictoryAllTrainsDead_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     if ((gv_trainsMissed == 0)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FLAWLESS);
+        TriggerExecute(gt_ObjectiveFlawlessComplete, true, false);
     }
 
     gv_gameOver = true;
@@ -5109,7 +5140,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    if ((ObjectiveGetState(gv_objective_TheGreatTrainRobbery) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_Locate) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_DefilerSkeletons) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_DontMissTrains) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_TheGreatTrainRobbery) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_Locate_Diamondbacks) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_DefilerSkeletons) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_DontMissTrains) == c_objectiveStateCompleted)) {
         AchievementAward(gv_pLAYER_01_USER, "THorner01_1");
     }
 
@@ -5311,12 +5342,18 @@ bool gt_ObjectiveTheGreatTrainRobberyCreateQ_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/B21AB0F7"), StringExternal("Param/Value/119F32A8"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_trainsDestroyed, gv_trainsNeeded);
+    ObjectiveCreate(StringExternal("Param/Value/B21AB0F7"), StringExternal("Param/Value/119F32A8"), c_objectiveStateHidden, true);
     gv_objective_TheGreatTrainRobbery = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_TheGreatTrainRobbery, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_trainsDestroyed, gv_trainsNeeded, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_TheGreatTrainRobbery, gv_LOCATION_ID_2_TRAINS_DESTROYED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_TheGreatTrainRobbery, gv_LOCATION_ID_4_TRAINS_DESTROYED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_TheGreatTrainRobbery, gv_LOCATION_ID_6_TRAINS_DESTROYED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_TheGreatTrainRobbery, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_TheGreatTrainRobbery, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner01Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/0FADFAEB"));
     TriggerExecute(gt_ObjectiveDontMissTrainsCreate, true, false);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerExecute(gt_ObjectiveFlawlessCreateQ, true, false);
     TriggerQueueExit();
     return true;
 }
@@ -5377,16 +5414,16 @@ bool gt_ObjectiveDontMissTrainsCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     if ((libNtve_gf_DifficultyValueInt(1, 1, 1, 0) == 1)) {
-        ObjectiveCreate(StringExternal("Param/Value/CAB03E6C"), StringExternal("Param/Value/E0AD56FA"), c_objectiveStateActive, true);
-        lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "missed", gv_trainsMissed, 0);
+        ObjectiveCreate(StringExternal("Param/Value/CAB03E6C"), StringExternal("Param/Value/E0AD56FA"), c_objectiveStateHidden, true);
         libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner01Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/256CC246"));
     }
     else {
-        ObjectiveCreate(StringExternal("Param/Value/EA5E2E7C"), StringExternal("Param/Value/1061A0FF"), c_objectiveStateActive, true);
-        lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "missed", gv_trainsMissed, 0);
+        ObjectiveCreate(StringExternal("Param/Value/EA5E2E7C"), StringExternal("Param/Value/1061A0FF"), c_objectiveStateHidden, true);
         libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner01Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/7A1A9FCF"));
     }
     gv_objective_DontMissTrains = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_DontMissTrains, lib5BD4895D_ge_APObjectiveCategory_Primary, "Missed", gv_trainsMissed, 0, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DontMissTrains, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeGame);
     TriggerQueueExit();
     return true;
@@ -5454,10 +5491,16 @@ void gt_ObjectiveDontMissTrainsFailed_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective - Locate - Create Q
+// Trigger: Objective - Locate Diamondbacks - Create Q
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveLocateCreateQ_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveLocateDiamondbacksCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5472,9 +5515,16 @@ bool gt_ObjectiveLocateCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/933BCC66"), StringExternal("Param/Value/EF484F1C"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (gv_totalDiamondbacks - gv_diamondbacksFound), 0);
-    gv_objective_Locate = ObjectiveLastCreated();
+    ObjectiveCreate(StringExternal("Param/Value/933BCC66"), StringExternal("Param/Value/EF484F1C"), c_objectiveStateHidden, false);
+    gv_objective_Locate_Diamondbacks = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_Locate_Diamondbacks, lv_category, "", gv_diamondbacksFound, 6, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Locate_Diamondbacks, gv_LOCATION_ID_CLOSE_DIAMONDBACK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Locate_Diamondbacks, gv_LOCATION_ID_NORTHWEST_DIAMONDBACK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Locate_Diamondbacks, gv_LOCATION_ID_NORTH_DIAMONDBACK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Locate_Diamondbacks, gv_LOCATION_ID_NORTHEAST_DIAMONDBACK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Locate_Diamondbacks, gv_LOCATION_ID_SOUTHWEST_DIAMONDBACK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Locate_Diamondbacks, gv_LOCATION_ID_SOUTHEAST_DIAMONDBACK);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Locate_Diamondbacks, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner01Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/217E769A"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeGame);
     TriggerQueueExit();
@@ -5482,14 +5532,14 @@ bool gt_ObjectiveLocateCreateQ_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveLocateCreateQ_Init () {
-    gt_ObjectiveLocateCreateQ = TriggerCreate("gt_ObjectiveLocateCreateQ_Func");
+void gt_ObjectiveLocateDiamondbacksCreateQ_Init () {
+    gt_ObjectiveLocateDiamondbacksCreateQ = TriggerCreate("gt_ObjectiveLocateDiamondbacksCreateQ_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective - Locate - Discover
+// Trigger: Objective - Locate Diamondbacks - Discover
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveLocateDiscover_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveLocateDiamondbacksDiscover_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -5504,20 +5554,20 @@ bool gt_ObjectiveLocateDiscover_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveLocateCreateQ, true, false);
-    ObjectiveSetState(gv_objective_Locate, c_objectiveStateActive);
+    TriggerExecute(gt_ObjectiveLocateDiamondbacksCreateQ, true, false);
+    ObjectiveSetState(gv_objective_Locate_Diamondbacks, c_objectiveStateActive);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveLocateDiscover_Init () {
-    gt_ObjectiveLocateDiscover = TriggerCreate("gt_ObjectiveLocateDiscover_Func");
+void gt_ObjectiveLocateDiamondbacksDiscover_Init () {
+    gt_ObjectiveLocateDiamondbacksDiscover = TriggerCreate("gt_ObjectiveLocateDiamondbacksDiscover_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective - Locate - Complete
+// Trigger: Objective - Locate Diamondbacks - Complete
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveLocateComplete_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveLocateDiamondbacksComplete_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -5532,21 +5582,27 @@ bool gt_ObjectiveLocateComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveLocateCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Locate);
+    TriggerExecute(gt_ObjectiveLocateDiamondbacksCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Locate_Diamondbacks);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveLocateComplete_Init () {
-    gt_ObjectiveLocateComplete = TriggerCreate("gt_ObjectiveLocateComplete_Func");
+void gt_ObjectiveLocateDiamondbacksComplete_Init () {
+    gt_ObjectiveLocateDiamondbacksComplete = TriggerCreate("gt_ObjectiveLocateDiamondbacksComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
 // Trigger: Objective - Defiler Skeletons - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDefilerSkeletonsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5561,9 +5617,13 @@ bool gt_ObjectiveDefilerSkeletonsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/198DC5F3"), StringExternal("Param/Value/C2BBE6CB"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_defilerSkeletonsFound, gv_defilerSkeletonsNeeded);
+    ObjectiveCreate(StringExternal("Param/Value/198DC5F3"), StringExternal("Param/Value/C2BBE6CB"), c_objectiveStateHidden, false);
     gv_objective_DefilerSkeletons = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_DefilerSkeletons, lv_category, "", gv_defilerSkeletonsFound, gv_defilerSkeletonsNeeded, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DefilerSkeletons, gv_LOCATION_ID_NORTH_DEFILER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DefilerSkeletons, gv_LOCATION_ID_MID_DEFILER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DefilerSkeletons, gv_LOCATION_ID_SOUTH_DEFILER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DefilerSkeletons, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner01Objective32, ObjectiveLastCreated(), StringExternal("Param/Value/B9692C6A"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeGame);
     TriggerQueueExit();
@@ -5573,6 +5633,39 @@ bool gt_ObjectiveDefilerSkeletonsCreate_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDefilerSkeletonsCreate_Init () {
     gt_ObjectiveDefilerSkeletonsCreate = TriggerCreate("gt_ObjectiveDefilerSkeletonsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Defiler Skeletons - Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDefilerSkeletonsRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_DEFILER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_MID_DEFILER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_DEFILER] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(2479));
+    UnitRemove(UnitFromId(2481));
+    UnitRemove(UnitFromId(2480));
+    TriggerEnable(gt_DefilerSkeletonsTipQ, false);
+    TriggerEnable(gt_DefilerSkeletonFinding, false);
+    TriggerEnable(gt_ObjectiveDefilerSkeletonsCreate, false);
+    TriggerEnable(gt_ObjectiveDefilerSkeletonsUpdate, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDefilerSkeletonsRemove_Init () {
+    gt_ObjectiveDefilerSkeletonsRemove = TriggerCreate("gt_ObjectiveDefilerSkeletonsRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDefilerSkeletonsRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5780,7 +5873,13 @@ void gt_onDifficultyBrutal_Init () {
 // Trigger: Objective - Destroy The Kill Team Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyTheKillTeamCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5795,9 +5894,11 @@ bool gt_ObjectiveDestroyTheKillTeamCreateQ_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/9EB7C13F"), StringExternal("Param/Value/631BEDF2"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate(StringExternal("Param/Value/9EB7C13F"), StringExternal("Param/Value/631BEDF2"), c_objectiveStateHidden, false);
     gv_objectiveDestroyTheDominionKillTeam = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyTheDominionKillTeam, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyTheDominionKillTeam, gv_LOCATION_ID_KILL_TEAM);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyTheDominionKillTeam, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeGame);
     TriggerQueueExit();
     return true;
@@ -5826,7 +5927,7 @@ bool gt_ObjectiveDestroyTheKillTeamComplete_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_TEAM);
     TriggerExecute(gt_ObjectiveDestroyTheKillTeamCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyTheDominionKillTeam);
     return true;
@@ -5858,7 +5959,7 @@ bool gt_NorthDefiler_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_DEFILER);
     return true;
 }
 
@@ -5889,7 +5990,7 @@ bool gt_MidDefiler_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MID_DEFILER);
     return true;
 }
 
@@ -5920,7 +6021,7 @@ bool gt_SouthDefiler_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_DEFILER);
     return true;
 }
 
@@ -5964,6 +6065,74 @@ bool gt_onKillTeamMemberDie_Func (bool testConds, bool runActions) {
 void gt_onKillTeamMemberDie_Init () {
     gt_onKillTeamMemberDie = TriggerCreate("gt_onKillTeamMemberDie_Func");
     TriggerAddEventUnitDied(gt_onKillTeamMemberDie, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Flawless Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFlawlessCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/77A8E50C"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_Flawless = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Flawless, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Flawless, gv_LOCATION_ID_FLAWLESS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Flawless, true);
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeGame);
+    TriggerQueueExit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFlawlessCreateQ_Init () {
+    gt_ObjectiveFlawlessCreateQ = TriggerCreate("gt_ObjectiveFlawlessCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Flawless Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFlawlessComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveFlawlessCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Flawless);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFlawlessComplete_Init () {
+    gt_ObjectiveFlawlessComplete = TriggerCreate("gt_ObjectiveFlawlessComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6544,10 +6713,11 @@ void InitTriggers () {
     gt_ObjectiveDontMissTrainsCreate_Init();
     gt_ObjectiveDontMissTrainsComplete_Init();
     gt_ObjectiveDontMissTrainsFailed_Init();
-    gt_ObjectiveLocateCreateQ_Init();
-    gt_ObjectiveLocateDiscover_Init();
-    gt_ObjectiveLocateComplete_Init();
+    gt_ObjectiveLocateDiamondbacksCreateQ_Init();
+    gt_ObjectiveLocateDiamondbacksDiscover_Init();
+    gt_ObjectiveLocateDiamondbacksComplete_Init();
     gt_ObjectiveDefilerSkeletonsCreate_Init();
+    gt_ObjectiveDefilerSkeletonsRemove_Init();
     gt_ObjectiveDefilerSkeletonsUpdate_Init();
     gt_DefilerSkeletonFinding_Init();
     gt_onDifficultyCasual_Init();
@@ -6560,6 +6730,8 @@ void InitTriggers () {
     gt_MidDefiler_Init();
     gt_SouthDefiler_Init();
     gt_onKillTeamMemberDie_Init();
+    gt_ObjectiveFlawlessCreateQ_Init();
+    gt_ObjectiveFlawlessComplete_Init();
     gt_ArchInit_Init();
     gt_BriefingQ_Init();
     gt_BriefingScene00_Init();
