@@ -27,6 +27,12 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_FIRST_CHARGE = 1;
+const int gv_LOCATION_ID_SECOND_CHARGE = 2;
+const int gv_LOCATION_ID_THIRD_CHARGE = 3;
+const int gv_LOCATION_ID_FIRST_GROUP_RESCUED = 4;
+const int gv_LOCATION_ID_SECOND_GROUP_RESCUED = 5;
+const int gv_LOCATION_ID_THIRD_GROUP_RESCUED = 6;
 const int gv_p1_USER = 1;
 const int gv_p2_ZERG = 2;
 const int gv_p4_DOMINIONALLIES = 4;
@@ -35,7 +41,7 @@ const int gv_p5_EGGS = 5;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
-int gv_objectiveRescudeDominionTeams;
+int gv_objectiveRescueDominionTeams;
 int gv_dominionTeamsRescued;
 bool gv_gameOver;
 bool gv_inCinematic;
@@ -159,7 +165,7 @@ doodad gv_cinematicFissureDoodad;
 bool gv_briefingActionMercDismissed;
 
 void InitGlobals () {
-    gv_objectiveRescudeDominionTeams = c_invalidObjectiveId;
+    gv_objectiveRescueDominionTeams = c_invalidObjectiveId;
     gv_tHEONEBROODMOTHER = UnitFromId(2318);
     gv_nonHeroicDudes = UnitGroupEmpty();
     gv__1BroodchamberAllUnits = UnitGroupEmpty();
@@ -678,22 +684,22 @@ void gf_ResetHeroCooldowns () {
 
 void gf_ObjectivePlantSeismicChargesUpdate (int lp_nukesPlanted) {
     // Automatic Variable Declarations
+    int auto10F18FEE_val;
+
     // Implementation
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_oBJPlantSeismicCharges, (3 - lp_nukesPlanted));
-    if ((lp_nukesPlanted >= 3)) {
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_oBJPlantSeismicCharges, lp_nukesPlanted);
+    auto10F18FEE_val = lp_nukesPlanted;
+    if (auto10F18FEE_val == 1) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_CHARGE);
+    }
+    else if (auto10F18FEE_val == 2) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_CHARGE);
+    }
+    else if (auto10F18FEE_val == 3) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_CHARGE);
         lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_oBJPlantSeismicCharges);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
     }
     else {
-        if ((lp_nukesPlanted == 1)) {
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
-        }
-        else {
-            if ((lp_nukesPlanted == 2)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
-            }
-
-        }
     }
 }
 
@@ -708,7 +714,13 @@ void gf_CinematicDeployNukeWrapper (unit lp_unit) {
 // Trigger: Objective Rescue Dominion Teams Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRescueDominionTeamsCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -723,9 +735,13 @@ bool gt_ObjectiveRescueDominionTeamsCreateQ_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/21224AA7"), StringExternal("Param/Value/83FD56F1"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (3 - gv_dominionTeamsRescued), 0);
-    gv_objectiveRescudeDominionTeams = ObjectiveLastCreated();
+    ObjectiveCreate(StringExternal("Param/Value/21224AA7"), StringExternal("Param/Value/83FD56F1"), c_objectiveStateHidden, false);
+    gv_objectiveRescueDominionTeams = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveRescueDominionTeams, lv_category, "", 0, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueDominionTeams, gv_LOCATION_ID_FIRST_GROUP_RESCUED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueDominionTeams, gv_LOCATION_ID_SECOND_GROUP_RESCUED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueDominionTeams, gv_LOCATION_ID_THIRD_GROUP_RESCUED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRescueDominionTeams, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -755,7 +771,7 @@ bool gt_ObjectiveRescueDominionTeamsComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRescueDominionTeamsCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescudeDominionTeams);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueDominionTeams);
     return true;
 }
 
@@ -787,7 +803,7 @@ bool gt_ObjectiveRescueDominionTeamsUpdate_Func (bool testConds, bool runActions
 
     TriggerExecute(gt_ObjectiveRescueDominionTeamsCreateQ, true, false);
     gv_dominionTeamsRescued += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescudeDominionTeams, (3 - gv_dominionTeamsRescued));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueDominionTeams, gv_dominionTeamsRescued);
     if ((gv_dominionTeamsRescued == 3)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveRescueDominionTeamsComplete, true, false);
@@ -3062,7 +3078,7 @@ bool gt__1SaveDominionQ_Func (bool testConds, bool runActions) {
 
     PingDestroy(gv__1RescueDominionPing);
     TriggerEnable(gt__1CallforHelpSNUFFED, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_GROUP_RESCUED);
     TriggerExecute(gt_ObjectiveRescueDominionTeamsUpdate, true, false);
     autoFEEFD5BB_g = gv__1RescuableDominionGroup;
     autoFEEFD5BB_u = UnitGroupCount(autoFEEFD5BB_g, c_unitCountAll);
@@ -5120,7 +5136,7 @@ bool gt__2SaveDominionQ_Func (bool testConds, bool runActions) {
 
     PingDestroy(gv__2RescueDominionPing);
     TriggerEnable(gt__2CallforHelpSNUFFED, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_GROUP_RESCUED);
     TriggerExecute(gt_ObjectiveRescueDominionTeamsUpdate, true, false);
     autoA409A568_g = gv__2RescuableDominionGroup;
     autoA409A568_u = UnitGroupCount(autoA409A568_g, c_unitCountAll);
@@ -7151,7 +7167,7 @@ bool gt__3SaveDominionQ_Func (bool testConds, bool runActions) {
 
     PingDestroy(gv__3RescueDominionPing);
     TriggerEnable(gt__3CallforHelpSNUFFED, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_GROUP_RESCUED);
     TriggerExecute(gt_ObjectiveRescueDominionTeamsUpdate, true, false);
     auto70C592E4_g = gv__3RescuableDominionGroup;
     auto70C592E4_u = UnitGroupCount(auto70C592E4_g, c_unitCountAll);
@@ -8507,7 +8523,7 @@ bool gt__4Extraction_Func (bool testConds, bool runActions) {
     }
 
     if ((gv__4HeroesSaved == 4)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
         gv__4HeroesSaved += 1;
         SoundPlay(SoundLink("Terran_Veterancy", -1), PlayerGroupAll(), 100.0, 0.0);
         UnitKill(UnitFromId(2406));
@@ -9532,9 +9548,13 @@ bool gt_ObjectivePlantSeismicChargesCreateQ_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/70CCCF96"), StringExternal("Param/Value/45096F8B"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", 3, 0);
+    ObjectiveCreate(StringExternal("Param/Value/70CCCF96"), StringExternal("Param/Value/45096F8B"), c_objectiveStateHidden, true);
     gv_oBJPlantSeismicCharges = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_oBJPlantSeismicCharges, lib5BD4895D_ge_APObjectiveCategory_Primary, "", 0, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_oBJPlantSeismicCharges, gv_LOCATION_ID_FIRST_CHARGE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_oBJPlantSeismicCharges, gv_LOCATION_ID_SECOND_CHARGE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_oBJPlantSeismicCharges, gv_LOCATION_ID_THIRD_CHARGE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_oBJPlantSeismicCharges, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian02AObjective1, ObjectiveLastCreated(), StringExternal("Param/Value/9E819C5A"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -9595,9 +9615,11 @@ bool gt_ObjectiveExfiltrationCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/2364874E"), StringExternal("Param/Value/DD330B9F"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/2364874E"), StringExternal("Param/Value/DD330B9F"), c_objectiveStateHidden, true);
     gv_oBJExfiltrate = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_oBJExfiltrate, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_oBJExfiltrate, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_oBJExfiltrate, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian02AObjective2, ObjectiveLastCreated(), StringExternal("Param/Value/2864B30D"));
     TriggerQueueExit();
     return true;
