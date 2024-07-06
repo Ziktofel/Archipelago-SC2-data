@@ -40,6 +40,13 @@ const int gv_pLAYER_02_DOMINION4 = 6;
 const int gv_pLAYER_02_DOMINION2222 = 8;
 const fixed gv_c_S01_DelayTimeAmount = 10.0;
 const fixed gv_c_S01_InitialDelayTimeAmount = 5.0;
+const int gv_LOCATION_ID_GATHER_MINERALS = 1;
+const int gv_LOCATION_ID_SOUTH_ZERGLING_GROUP = 2;
+const int gv_LOCATION_ID_EAST_ZERGLING_GROUP = 3;
+const int gv_LOCATION_ID_WEST_ZERGLING_GROUP = 4;
+const int gv_LOCATION_ID_HATCHERY = 5;
+const int gv_LOCATION_ID_OVERLORD = 6;
+const int gv_LOCATION_ID_GAS_TURRETS = 7;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -158,23 +165,6 @@ int gv_overlordStarted_Transmission02;
 int gv_overlordStarted_Transmission03;
 actor gv_overlordHatcheryActor;
 int gv_overlordHatcheryText;
-actor gv_spawningPoolActor;
-bool gv_spawningPoolBuildingStarted;
-bool gv_spawningPoolBuildingCompleted;
-bool gv_spawningPoolButtonClicked;
-bool gv_spawningPoolCancelled;
-bool gv_spawningPoolDroneSelected;
-bool gv_spawningPoolBasicMutationClicked;
-actor gv_spawningPoolPlaceHolder;
-int gv_spawningPoolTextTag;
-int gv_spawningPoolMutationLine1;
-int gv_spawningPoolMutationLine2;
-int gv_spawningPoolMutationLine3;
-bool gv_zerglingButtonClicked;
-bool gv_zerglingMorphDone;
-bool gv_zerglingHatcherySelected;
-bool gv_zerglingLarvaSelected;
-bool gv_zerglingSelectLarvaButtonPressed;
 actor gv_arrow01;
 bool gv_arrowShown01;
 bool gv_playPlatformAlert;
@@ -213,21 +203,18 @@ timer gv_factoriesDestroyedTimer;
 int gv_largestZerglingForce;
 int gv_zerglingsLost;
 int gv_factoriesDestroyed;
-int gv_objectiveDestroyDominionBase3;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase3222;
+int gv_objectiveSelectDrone;
+int gv_objectiveMutateHatchery;
+int gv_objectiveHarvest;
 int gv_mineralAmount;
-int gv_objectiveDestroyDominionBase322;
+int gv_objectiveMorphOverlord;
 int gv_overlordAmount;
-int gv_objectiveDestroyDominionBase2;
-int gv_objectiveDestroyDominionBase323;
-int gv_zerglingCount;
-int gv_objectiveDestroyDominionBase32;
+int gv_objectiveGasTurrets;
 int gv_objective_GasTurretKILLS;
-int gv_objectiveDestroyDominionBase3233;
+int gv_objectiveKillWarbot;
 actor gv_warbotActor;
 int gv_warbotTag;
-int gv_objectiveDestroyDominionBase3232;
+int gv_objectiveSaveZerglings;
 int gv_savedZerglingCount;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicTempUnits;
@@ -301,10 +288,6 @@ void InitGlobals () {
     gv_overlordStarted_Transmission02 = c_invalidTransmissionId;
     gv_overlordStarted_Transmission03 = c_invalidTransmissionId;
     gv_overlordHatcheryText = c_textTagNone;
-    gv_spawningPoolTextTag = c_textTagNone;
-    gv_spawningPoolMutationLine1 = c_invalidTransmissionId;
-    gv_spawningPoolMutationLine2 = c_invalidTransmissionId;
-    gv_spawningPoolMutationLine3 = c_invalidTransmissionId;
     gv_attackLesson = TimerCreate();
     gv_zerglingPing = c_invalidPingId;
     gv_scientistsGroup = UnitGroupEmpty();
@@ -319,16 +302,14 @@ void InitGlobals () {
     gv_generatorRoom05Tag = c_textTagNone;
     gv_speedRunTimer = TimerCreate();
     gv_factoriesDestroyedTimer = TimerCreate();
-    gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase3222 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase322 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase323 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase32 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase3233 = c_invalidObjectiveId;
+    gv_objectiveSelectDrone = c_invalidObjectiveId;
+    gv_objectiveMutateHatchery = c_invalidObjectiveId;
+    gv_objectiveHarvest = c_invalidObjectiveId;
+    gv_objectiveMorphOverlord = c_invalidObjectiveId;
+    gv_objectiveGasTurrets = c_invalidObjectiveId;
+    gv_objectiveKillWarbot = c_invalidObjectiveId;
     gv_warbotTag = c_textTagNone;
-    gv_objectiveDestroyDominionBase3232 = c_invalidObjectiveId;
+    gv_objectiveSaveZerglings = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
@@ -357,12 +338,6 @@ void gf_CreateFirstDroneHelper (bool lp_withText);
 void gf_DestroyFirstDroneHelper ();
 void gf_CreateOverlordHatcheryHelper ();
 void gf_DestroyOverlordHatcheryHelper ();
-void gf_CreateSpawningPoolDroneHelper (bool lp_withText);
-void gf_DestroySpawningPoolDroneHelper ();
-void gf_CreateSpawningPoolHelper ();
-void gf_DestroySpawningPoolHelper ();
-void gf_CreateZerglingHatcheryHelper ();
-void gf_DestroyZerglingHatcheryHelper ();
 void gf_SpawnEradicatorReinforcements (unit lp_spawner, int lp_limit, int lp_whichPlayer, point lp_spawnAt, point lp_attackTo, point lp_attackTo2);
 void gf_PowerDownDoodadsIn (region lp_rEGION);
 void gf_PowerDownDoodadsIn2 (region lp_rEGION);
@@ -430,32 +405,6 @@ trigger gt_OverlordCompleted;
 trigger gt_OverlordCancelled;
 trigger gt_OverlordCancelledLineQ;
 trigger gt_OverlordLimitQ;
-trigger gt_SpawningPoolTeachtoMutate;
-trigger gt_SpawningPoolLeftClick;
-trigger gt_SpawningPoolLeftClickEnd;
-trigger gt_SpawningPoolStartTransmissionQ;
-trigger gt_SpawningPoolMutationUIUpdate;
-trigger gt_SpawningPoolDroneSelected;
-trigger gt_SpawningPoolBasicMutationClicked;
-trigger gt_SpawningPoolButtonClicked;
-trigger gt_SpawningPoolHelpLines;
-trigger gt_SpawningPoolLine01Q;
-trigger gt_SpawningPoolLine02Q;
-trigger gt_SpawningPoolLine03Q;
-trigger gt_SpawningPoolMutationStartedQ;
-trigger gt_SpawningPoolCancelledLineQ;
-trigger gt_ZerglingTeachQ;
-trigger gt_ZerglingMorphStarted;
-trigger gt_ZerglingMorphStartedQ;
-trigger gt_ZerglingMorphUIUpdate;
-trigger gt_ZerglingHatcherySelected;
-trigger gt_ZerglingLarvaSelected;
-trigger gt_ZerglingSelectLarvaClicked;
-trigger gt_ZerglingHelpLines;
-trigger gt_ZerglingHatcheryHelpSelectQ;
-trigger gt_ZerglingLine01Q;
-trigger gt_ZerglingLine02Q;
-trigger gt_ZerglingCancelled;
 trigger gt_OverlordTriestoLeave;
 trigger gt_ValerianAttackQ;
 trigger gt_StartGameStage02Q;
@@ -529,11 +478,6 @@ trigger gt_ObjectiveHarvestCompleteQ;
 trigger gt_ObjectiveHarvestUpdate;
 trigger gt_ObjectiveMorphOverlordCreateQ;
 trigger gt_ObjectiveMorphOverlordComplete;
-trigger gt_ObjectiveMutateSpawningPoolCreateQ;
-trigger gt_ObjectiveMutateSpawningPoolComplete;
-trigger gt_ObjectiveMorphZerglingsCreate;
-trigger gt_ObjectiveMorphZerglingsUpdate;
-trigger gt_ObjectiveMorphZerglingsComplete;
 trigger gt_ObjectiveGasTurretsCreate;
 trigger gt_ObjectiveGasTurretsUpdate;
 trigger gt_ObjectiveGasTurretsComplete;
@@ -647,8 +591,7 @@ void gf_HideObjective (int lp_objective) {
     // Automatic Variable Declarations
     // Implementation
     if ((ObjectiveGetState(lp_objective) == c_objectiveStateCompleted)) {
-        ObjectiveShow(lp_objective, PlayerGroupAll(), false);
-        lib5BD4895D_gf_AP_Core_showObjective(lp_objective);
+        lib5BD4895D_gf_AP_Core_setObjectiveVisibility(lp_objective, false);
     }
 
 }
@@ -772,151 +715,6 @@ void gf_CreateOverlordHatcheryHelper () {
 }
 
 void gf_DestroyOverlordHatcheryHelper () {
-    // Automatic Variable Declarations
-    // Implementation
-    if ((gv_overlordHatcheryActor != null)) {
-        libNtve_gf_KillModel(gv_overlordHatcheryActor);
-        gv_overlordHatcheryActor = null;
-    }
-
-    if ((gv_overlordHatcheryText != c_textTagNone)) {
-        TextTagDestroy(gv_overlordHatcheryText);
-        gv_overlordHatcheryText = c_textTagNone;
-    }
-
-}
-
-void gf_CreateSpawningPoolDroneHelper (bool lp_withText) {
-    // Variable Declarations
-    unit lv_drone;
-    int lv_index;
-    text lv_hint;
-
-    // Automatic Variable Declarations
-    int auto57108BE3_ae;
-    const int auto57108BE3_ai = 1;
-    unitgroup auto0AE297F2_g;
-    int auto0AE297F2_u;
-    unit auto0AE297F2_var;
-
-    // Variable Initialization
-
-    // Implementation
-    if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == false)) {
-        return ;
-    }
-
-    auto57108BE3_ae = gv_s01_NumberOfDroneActors;
-    lv_index = 1;
-    for ( ; ( (auto57108BE3_ai >= 0 && lv_index <= auto57108BE3_ae) || (auto57108BE3_ai < 0 && lv_index >= auto57108BE3_ae) ) ; lv_index += auto57108BE3_ai ) {
-        if ((gv_s01_DroneActors[lv_index] != null)) {
-            return ;
-        }
-
-    }
-    gv_s01_NumberOfDroneActors = 0;
-    if ((lp_withText == false)) {
-        auto0AE297F2_g = UnitGroup("Drone", gv_pLAYER_01_USER, RegionFromId(47), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-        auto0AE297F2_u = UnitGroupCount(auto0AE297F2_g, c_unitCountAll);
-        for (;; auto0AE297F2_u -= 1) {
-            auto0AE297F2_var = UnitGroupUnitFromEnd(auto0AE297F2_g, auto0AE297F2_u);
-            if (auto0AE297F2_var == null) { break; }
-            gv_s01_NumberOfDroneActors += 1;
-            gf_CreateHelperonUnit(null, auto0AE297F2_var, libSwaC_ge_CampaginReticleType_TerranMainObjective, libSwaC_ge_CampaginReticleSize_Small, 0.0);
-            gv_s01_DroneActors[gv_s01_NumberOfDroneActors] = libNtve_gf_ActorLastCreated();
-            if ((gv_s01_NumberOfDroneActors >= 10)) {
-                break;
-            }
-
-        }
-    }
-    else {
-        lv_hint = StringExternal("Param/Value/917CD5B6");
-        gv_s01_NumberOfDroneActors += 1;
-        lv_drone = UnitGroupClosestToPoint(UnitGroup("Drone", gv_pLAYER_01_USER, RegionFromId(47), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), PointFromId(164));
-        gf_CreateHelperonUnit(lv_hint, lv_drone, libSwaC_ge_CampaginReticleType_TerranMainObjective, libSwaC_ge_CampaginReticleSize_Small, 0.0);
-        gv_s01_DroneActors[gv_s01_NumberOfDroneActors] = libNtve_gf_ActorLastCreated();
-        gv_s01_DroneTextTags[gv_s01_NumberOfDroneActors] = TextTagLastCreated();
-    }
-}
-
-void gf_DestroySpawningPoolDroneHelper () {
-    // Variable Declarations
-    int lv_index;
-
-    // Automatic Variable Declarations
-    int auto655F7F72_ae;
-    const int auto655F7F72_ai = 1;
-
-    // Variable Initialization
-
-    // Implementation
-    auto655F7F72_ae = gv_s01_NumberOfDroneActors;
-    lv_index = 1;
-    for ( ; ( (auto655F7F72_ai >= 0 && lv_index <= auto655F7F72_ae) || (auto655F7F72_ai < 0 && lv_index >= auto655F7F72_ae) ) ; lv_index += auto655F7F72_ai ) {
-        if ((gv_s01_DroneActors[lv_index] != null)) {
-            libNtve_gf_KillModel(gv_s01_DroneActors[lv_index]);
-            gv_s01_DroneActors[lv_index] = null;
-        }
-
-        if ((gv_s01_DroneTextTags[lv_index] != c_textTagNone)) {
-            TextTagDestroy(gv_s01_DroneTextTags[lv_index]);
-            gv_s01_DroneTextTags[lv_index] = c_textTagNone;
-        }
-
-    }
-    gv_s01_NumberOfDroneActors = 0;
-}
-
-void gf_CreateSpawningPoolHelper () {
-    // Automatic Variable Declarations
-    // Implementation
-    if ((gv_spawningPoolActor != null)) {
-        return ;
-    }
-
-    gf_CreateHelperatPoint(PointFromId(164), StringExternal("Param/Value/FD5AC7C2"), libSwaC_ge_CampaginReticleType_TerranMainObjective, libSwaC_ge_CampaginReticleSize_Medium, 0.0);
-    gv_spawningPoolActor = libNtve_gf_ActorLastCreated();
-    gv_spawningPoolTextTag = TextTagLastCreated();
-}
-
-void gf_DestroySpawningPoolHelper () {
-    // Variable Declarations
-    int lv_index;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Implementation
-    if ((gv_spawningPoolActor != null)) {
-        libNtve_gf_KillModel(gv_spawningPoolActor);
-        gv_spawningPoolActor = null;
-    }
-
-    if ((gv_spawningPoolTextTag != c_textTagNone)) {
-        TextTagDestroy(gv_spawningPoolTextTag);
-        gv_spawningPoolTextTag = c_textTagNone;
-    }
-
-}
-
-void gf_CreateZerglingHatcheryHelper () {
-    // Automatic Variable Declarations
-    // Implementation
-    if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == false)) {
-        return ;
-    }
-
-    if ((gv_overlordHatcheryActor != null)) {
-        return ;
-    }
-
-    gf_CreateHelperonUnit(StringExternal("Param/Value/AC4C3D7C"), gv_firstHatchery, libSwaC_ge_CampaginReticleType_TerranMainObjective, libSwaC_ge_CampaginReticleSize_Large, 0.0);
-    gv_overlordHatcheryActor = libNtve_gf_ActorLastCreated();
-    gv_overlordHatcheryText = TextTagLastCreated();
-}
-
-void gf_DestroyZerglingHatcheryHelper () {
     // Automatic Variable Declarations
     // Implementation
     if ((gv_overlordHatcheryActor != null)) {
@@ -1530,7 +1328,6 @@ bool gt_DebugStage2_Func (bool testConds, bool runActions) {
     libNtve_gf_KillModel(gv_s01_FirstDroneActor);
     TriggerDebugOutput(1, StringExternal("Param/Value/A8154979"), true);
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Lair", 0, gv_pLAYER_01_USER, PointFromId(3));
-    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SpawningPool", 0, gv_pLAYER_01_USER, PointFromId(164));
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Overlord", 0, gv_pLAYER_01_USER, PointFromId(3));
     libNtve_gf_CreateUnitsWithDefaultFacing(5, "AP_Drone", 0, gv_pLAYER_01_USER, PointFromId(24));
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(263));
@@ -1539,25 +1336,16 @@ bool gt_DebugStage2_Func (bool testConds, bool runActions) {
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(266));
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(267));
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(268));
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("ZergBuild", 3), true);
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("ZergBuild", 0), true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("LarvaTrain", 1), true);
     TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("LarvaTrain", 2), true);
     UnitIssueOrder(UnitFromId(673), Order(AbilityCommand("UmojanLabDoorsThinRightLowered", 0)), c_orderQueueReplace);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase3, c_objectiveStateCompleted);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase, c_objectiveStateCompleted);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase322, c_objectiveStateCompleted);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase2, c_objectiveStateCompleted);
-    libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective06");
-    gv_objectiveDestroyDominionBase323 = ObjectiveLastCreated();
-    Wait(2.0, c_timeGame);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase323, c_objectiveStateCompleted);
+    ObjectiveSetState(gv_objectiveSelectDrone, c_objectiveStateCompleted);
+    ObjectiveSetState(gv_objectiveMutateHatchery, c_objectiveStateCompleted);
+    ObjectiveSetState(gv_objectiveMorphOverlord, c_objectiveStateCompleted);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    ObjectiveShow(gv_objectiveDestroyDominionBase3, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase322, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase2, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase323, PlayerGroupAll(), false);
+    ObjectiveShow(gv_objectiveSelectDrone, PlayerGroupAll(), false);
+    ObjectiveShow(gv_objectiveMutateHatchery, PlayerGroupAll(), false);
+    ObjectiveShow(gv_objectiveMorphOverlord, PlayerGroupAll(), false);
     TriggerEnable(gt_DefeatAllUnitsKilled, true);
     TriggerExecute(gt_MidQ, false, false);
     return true;
@@ -1806,13 +1594,10 @@ bool gt_HideCompletedObjectives_Func (bool testConds, bool runActions) {
     }
 
     Wait(7.0, c_timeReal);
-    gf_HideObjective(gv_objectiveDestroyDominionBase3);
-    gf_HideObjective(gv_objectiveDestroyDominionBase);
-    gf_HideObjective(gv_objectiveDestroyDominionBase3222);
-    gf_HideObjective(gv_objectiveDestroyDominionBase322);
-    gf_HideObjective(gv_objectiveDestroyDominionBase2);
-    gf_HideObjective(gv_objectiveDestroyDominionBase323);
-    gf_HideObjective(gv_objectiveDestroyDominionBase323);
+    gf_HideObjective(gv_objectiveSelectDrone);
+    gf_HideObjective(gv_objectiveMutateHatchery);
+    gf_HideObjective(gv_objectiveHarvest);
+    gf_HideObjective(gv_objectiveMorphOverlord);
     return true;
 }
 
@@ -4082,7 +3867,6 @@ bool gt_OverlordCompleted_Func (bool testConds, bool runActions) {
     gv_overlordCompleted = true;
     libSwaC_gf_EnableDisableNeedOverlordInfo(true);
     TriggerExecute(gt_ObjectiveMorphOverlordComplete, true, true);
-    TriggerExecute(gt_SpawningPoolTeachtoMutate, true, false);
     return true;
 }
 
@@ -4235,1484 +4019,6 @@ void gt_OverlordLimitQ_Init () {
     gt_OverlordLimitQ = TriggerCreate("gt_OverlordLimitQ_Func");
     TriggerEnable(gt_OverlordLimitQ, false);
     TriggerAddEventPlayerPropChange(gt_OverlordLimitQ, gv_pLAYER_01_USER, c_playerPropSuppliesUsed);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Teach to Mutate
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolTeachtoMutate_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    bool lv_anyDronesSelected;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase3222) == c_objectiveStateCompleted))) {
-            return false;
-        }
-
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase322) == c_objectiveStateCompleted))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_SpawningPoolStartTransmissionQ, true, true);
-    TriggerExecute(gt_ObjectiveMutateSpawningPoolCreateQ, true, false);
-    TechTreeUnitAllow(1, "AP_SpawningPool", true);
-    TechTreeAbilityAllow(gv_pLAYER_01_USER, AbilityCommand("AP_ZergBuild", 3), true);
-    if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
-        UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("ZergBuild", 3), true);
-    }
-
-    if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
-        if ((libNtve_gf_UnitTypeIsSelected("Drone", gv_pLAYER_01_USER) == true)) {
-            TriggerExecute(gt_SpawningPoolDroneSelected, false, false);
-        }
-        else {
-            gf_CreateSpawningPoolDroneHelper(false);
-            if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
-                CameraPan(gv_pLAYER_01_USER, PointWithOffset(PointFromId(514), 0.0, -2.0), 1.0, -1, 10, true);
-            }
-
-        }
-    }
-    else {
-        if ((libNtve_gf_UnitTypeIsSelected("Drone", gv_pLAYER_01_USER) == true)) {
-            TriggerExecute(gt_SpawningPoolDroneSelected, false, false);
-        }
-
-    }
-    TriggerExecute(gt_SpawningPoolMutationUIUpdate, true, false);
-    TriggerEnable(gt_SpawningPoolDroneSelected, true);
-    TriggerEnable(gt_SpawningPoolBasicMutationClicked, true);
-    TriggerEnable(gt_SpawningPoolButtonClicked, true);
-    TriggerEnable(gt_SpawningPoolLeftClick, true);
-    TriggerExecute(gt_HideCompletedObjectives, true, false);
-    TriggerExecute(gt_SpawningPoolHelpLines, true, false);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolTeachtoMutate_Init () {
-    gt_SpawningPoolTeachtoMutate = TriggerCreate("gt_SpawningPoolTeachtoMutate_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Left - Click
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolLeftClick_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    point lv_target;
-    fixed lv_duration;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_spawningPoolBuildingStarted == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-
-        if (!((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerEnable(gt_SpawningPoolLeftClickEnd, true);
-    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false)) {
-        CameraLockInput(gv_pLAYER_01_USER, true);
-        lv_target = PointWithOffset(PointFromId(164), 0.0, -1.5);
-        lv_duration = MinF(0.5, (DistanceBetweenPoints(CameraGetTarget(gv_pLAYER_01_USER), lv_target) * 0.5));
-        CameraPan(gv_pLAYER_01_USER, lv_target, lv_duration, -1, 10.0, false);
-        Wait(lv_duration, c_timeGame);
-    }
-
-    if ((gv_spawningPoolButtonClicked == false)) {
-        gf_DisplayMouseClickHint(StringExternal("Param/Value/A42A137C"), PointFromId(164));
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolLeftClick_Init () {
-    gt_SpawningPoolLeftClick = TriggerCreate("gt_SpawningPoolLeftClick_Func");
-    TriggerEnable(gt_SpawningPoolLeftClick, false);
-    TriggerAddEventTargetModeUpdate(gt_SpawningPoolLeftClick, gv_pLAYER_01_USER, AbilityCommand("ZergBuild", 3), c_targetModeStateOn);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Left - Click End
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolLeftClickEnd_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-
-        if (!((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerEnable(gt_SpawningPoolLeftClick, true);
-    CameraLockInput(gv_pLAYER_01_USER, false);
-    gf_CleanMouseClickHint();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolLeftClickEnd_Init () {
-    gt_SpawningPoolLeftClickEnd = TriggerCreate("gt_SpawningPoolLeftClickEnd_Func");
-    TriggerAddEventTargetModeUpdate(gt_SpawningPoolLeftClickEnd, gv_pLAYER_01_USER, AbilityCommand("ZergBuild", 3), c_targetModeStateOff);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Start Transmission Q
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolStartTransmissionQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
-    libSwaC_gf_SendTransmissionCampaign(gv_vALERIAN, "zMission_Lab01|Line00019", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-    TransmissionWait(TransmissionLastSent(), 0.0);
-    libSwaC_gf_SendTransmissionCampaign(gv_vALERIAN, "zMission_Lab01|Line00048", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-    TransmissionWait(gv_s01_TransmissionCurrent01, 0.0);
-    libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolStartTransmissionQ_Init () {
-    gt_SpawningPoolStartTransmissionQ = TriggerCreate("gt_SpawningPoolStartTransmissionQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Mutation UI Update
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolMutationUIUpdate_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    while (true) {
-        if (((gv_gameOver == true) || (gv_inCinematic == true))) {
-            return true;
-        }
-
-        if ((gv_spawningPoolBuildingCompleted == true)) {
-            gf_DestroySpawningPoolDroneHelper();
-            gf_DestroySpawningPoolHelper();
-            UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("ZergBuild", 3), false);
-            return true;
-        }
-
-        if ((gv_spawningPoolBuildingStarted == false)) {
-            if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
-                UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("ZergBuild", 3), true);
-            }
-
-            if ((libNtve_gf_UnitTypeIsSelected("Drone", gv_pLAYER_01_USER) == false)) {
-                gf_CreateSpawningPoolDroneHelper(true);
-                gf_DestroySpawningPoolHelper();
-            }
-            else {
-                gf_DestroySpawningPoolDroneHelper();
-                gf_CreateSpawningPoolHelper();
-            }
-        }
-        else {
-            gf_DestroySpawningPoolDroneHelper();
-            gf_DestroySpawningPoolHelper();
-            UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("ZergBuild", 3), false);
-        }
-        Wait(0.5, c_timeGame);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolMutationUIUpdate_Init () {
-    gt_SpawningPoolMutationUIUpdate = TriggerCreate("gt_SpawningPoolMutationUIUpdate_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Drone Selected
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolDroneSelected_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_i;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((libNtve_gf_UnitTypeIsSelected("Drone", gv_pLAYER_01_USER) == true))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    gv_spawningPoolDroneSelected = true;
-    TransmissionClear(gv_adjutantMorphPool01);
-    gf_DestroySpawningPoolDroneHelper();
-    if ((gv_spawningPoolPlaceHolder != null)) {
-        return true;
-    }
-
-    if ((libABFE498B_gv_aP_Triggers_disableForcedCamera == false) && (libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
-        CameraPan(gv_pLAYER_01_USER, PointWithOffset(PointFromId(164), 0.0, -2.0), 2.0, -1, 10, true);
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolDroneSelected_Init () {
-    gt_SpawningPoolDroneSelected = TriggerCreate("gt_SpawningPoolDroneSelected_Func");
-    TriggerEnable(gt_SpawningPoolDroneSelected, false);
-    TriggerAddEventUnitSelected(gt_SpawningPoolDroneSelected, null, gv_pLAYER_01_USER, true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Basic Mutation Clicked
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolBasicMutationClicked_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(gt_SpawningPoolDroneSelected, false);
-    TriggerEnable(TriggerGetCurrent(), false);
-    gv_spawningPoolDroneSelected = true;
-    gv_spawningPoolBasicMutationClicked = true;
-    TransmissionClear(gv_adjutantMorphPool01);
-    TransmissionClear(gv_adjutantMorphPool02);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolBasicMutationClicked_Init () {
-    gt_SpawningPoolBasicMutationClicked = TriggerCreate("gt_SpawningPoolBasicMutationClicked_Func");
-    TriggerEnable(gt_SpawningPoolBasicMutationClicked, false);
-    TriggerAddEventButtonPressed(gt_SpawningPoolBasicMutationClicked, gv_pLAYER_01_USER, "ZergBuild");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Button Clicked
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolButtonClicked_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(gt_SpawningPoolDroneSelected, false);
-    TriggerEnable(gt_SpawningPoolBasicMutationClicked, false);
-    TriggerEnable(TriggerGetCurrent(), false);
-    gv_spawningPoolDroneSelected = true;
-    gv_spawningPoolBasicMutationClicked = true;
-    gv_spawningPoolButtonClicked = true;
-    TransmissionClear(gv_adjutantMorphPool01);
-    TransmissionClear(gv_adjutantMorphPool02);
-    TransmissionClear(gv_adjutantMorphPool03);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolButtonClicked_Init () {
-    gt_SpawningPoolButtonClicked = TriggerCreate("gt_SpawningPoolButtonClicked_Func");
-    TriggerEnable(gt_SpawningPoolButtonClicked, false);
-    TriggerAddEventButtonPressed(gt_SpawningPoolButtonClicked, gv_pLAYER_01_USER, "SpawningPool");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Help Lines
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolHelpLines_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerExecute(gt_SpawningPoolLine01Q, true, true);
-    TriggerExecute(gt_SpawningPoolLine02Q, true, true);
-    TriggerExecute(gt_SpawningPoolLine03Q, true, true);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolHelpLines_Init () {
-    gt_SpawningPoolHelpLines = TriggerCreate("gt_SpawningPoolHelpLines_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Line 01 Q
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolLine01Q_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    fixed autoE3578C48_at;
-    fixed auto12B408D8_at;
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    autoE3578C48_at = 0;
-    while (!(((gv_gameOver == true) || (gv_spawningPoolDroneSelected == true))) && autoE3578C48_at <= gv_c_S01_InitialDelayTimeAmount) {
-        Wait(0.5, c_timeGame);
-        autoE3578C48_at = autoE3578C48_at + 0.5;
-    }
-    while (true) {
-        if ((gv_gameOver == false) && (gv_spawningPoolDroneSelected == false)) {
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00039", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-            gv_adjutantMorphPool01 = TransmissionLastSent();
-            TransmissionWait(TransmissionLastSent(), 0.0);
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-            auto12B408D8_at = 0;
-            while (!(((gv_gameOver == true) || (gv_spawningPoolDroneSelected == true))) && auto12B408D8_at <= gv_c_S01_DelayTimeAmount) {
-                Wait(0.5, c_timeGame);
-                auto12B408D8_at = auto12B408D8_at + 0.5;
-            }
-        }
-        else {
-            return true;
-        }
-    }
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolLine01Q_Init () {
-    gt_SpawningPoolLine01Q = TriggerCreate("gt_SpawningPoolLine01Q_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Line 02 Q
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolLine02Q_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    fixed auto78376C72_at;
-    fixed autoE64215B0_at;
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    auto78376C72_at = 0;
-    while (!(((gv_gameOver == true) || (gv_spawningPoolBasicMutationClicked == true))) && auto78376C72_at <= gv_c_S01_InitialDelayTimeAmount) {
-        Wait(0.5, c_timeGame);
-        auto78376C72_at = auto78376C72_at + 0.5;
-    }
-    while (true) {
-        if ((gv_gameOver == false) && (gv_spawningPoolBasicMutationClicked == false)) {
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00203", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-            gv_adjutantMorphPool02 = TransmissionLastSent();
-            if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true) && (UnitGroupCount(UnitGroupFilter("Drone", gv_pLAYER_01_USER, UnitGroupSelected(gv_pLAYER_01_USER), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
-                libNtve_gf_DisplayScreenImage(1, "Assets\\Textures\\tutorialcommandcardhighlight.dds", c_triggerBlendModeAdd, 503, 348, c_anchorBottomRight, 5, -2);
-                libNtve_gf_PulseScreenImage(1, 1.75, 100.0, 0.0);
-                TriggerExecute(gt_UIPulseAudio, true, false);
-            }
-
-            TransmissionWait(TransmissionLastSent(), 0.0);
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-            libNtve_gf_StopPulsingScreenImage(1);
-            libNtve_gf_HideScreenImage(false, 1);
-            TriggerStop(gt_UIPulseAudio);
-            autoE64215B0_at = 0;
-            while (!(((gv_gameOver == true) || (gv_spawningPoolBasicMutationClicked == true))) && autoE64215B0_at <= gv_c_S01_DelayTimeAmount) {
-                Wait(0.5, c_timeGame);
-                autoE64215B0_at = autoE64215B0_at + 0.5;
-            }
-        }
-        else {
-            return true;
-        }
-    }
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolLine02Q_Init () {
-    gt_SpawningPoolLine02Q = TriggerCreate("gt_SpawningPoolLine02Q_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Line 03 Q
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolLine03Q_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    fixed autoEA851498_at;
-    fixed autoFC047771_at;
-    fixed autoB62B43DF_at;
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    autoEA851498_at = 0;
-    while (!(((gv_gameOver == true) || (gv_spawningPoolButtonClicked == true))) && autoEA851498_at <= gv_c_S01_InitialDelayTimeAmount) {
-        Wait(0.5, c_timeGame);
-        autoEA851498_at = autoEA851498_at + 0.5;
-    }
-    while (true) {
-        if ((gv_gameOver == false) && (gv_spawningPoolButtonClicked == false)) {
-            autoFC047771_at = 0;
-            while (!(((gv_gameOver == true) || (gv_spawningPoolButtonClicked == true) || (PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropMinerals) >= 200))) && autoFC047771_at <= gv_c_S01_DelayTimeAmount) {
-                Wait(0.5, c_timeGame);
-                autoFC047771_at = autoFC047771_at + 0.5;
-            }
-            if (((gv_gameOver == true) || (gv_spawningPoolButtonClicked == true))) {
-                return true;
-            }
-
-            if ((PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropMinerals) >= 200)) {
-                libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-                libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00204", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-                gv_adjutantMorphPool03 = TransmissionLastSent();
-                if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true) && (UnitGroupCount(UnitGroupFilter("Drone", gv_pLAYER_01_USER, UnitGroupSelected(gv_pLAYER_01_USER), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
-                    libNtve_gf_DisplayScreenImage(1, "Assets\\Textures\\tutorialcommandcardhighlight.dds", c_triggerBlendModeAdd, 503, 348, c_anchorBottomRight, 5, -2);
-                    libNtve_gf_PulseScreenImage(1, 1.75, 100.0, 0.0);
-                    TriggerExecute(gt_UIPulseAudio, true, false);
-                }
-
-                TransmissionWait(TransmissionLastSent(), 0.0);
-                libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-                libNtve_gf_StopPulsingScreenImage(1);
-                libNtve_gf_HideScreenImage(false, 1);
-                TriggerStop(gt_UIPulseAudio);
-                autoB62B43DF_at = 0;
-                while (!(((gv_gameOver == true) || (gv_spawningPoolButtonClicked == true))) && autoB62B43DF_at <= gv_c_S01_DelayTimeAmount) {
-                    Wait(0.5, c_timeGame);
-                    autoB62B43DF_at = autoB62B43DF_at + 0.5;
-                }
-            }
-
-        }
-        else {
-            return true;
-        }
-    }
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolLine03Q_Init () {
-    gt_SpawningPoolLine03Q = TriggerCreate("gt_SpawningPoolLine03Q_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Mutation Started Q
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolMutationStartedQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerQueueEnter();
-    Wait(0.5, c_timeGame);
-    if ((gv_spawningPoolMutationLine1 == c_invalidTransmissionId)) {
-        libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
-        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00050", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-        gv_spawningPoolMutationLine1 = TransmissionLastSent();
-        gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-        TransmissionWait(TransmissionLastSent(), 0.0);
-        libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
-    }
-
-    TriggerQueueExit();
-    Wait(3.0, c_timeGame);
-    TriggerQueueEnter();
-    libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
-    if ((gv_spawningPoolMutationLine2 == c_invalidTransmissionId)) {
-        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00100", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-        gv_spawningPoolMutationLine2 = TransmissionLastSent();
-        gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-        TransmissionWait(TransmissionLastSent(), 0.0);
-    }
-
-    if ((gv_spawningPoolMutationLine3 == c_invalidTransmissionId)) {
-        libSwaC_gf_SendTransmissionCampaign(gv_vALERIAN, "zMission_Lab01|Line00101", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-        TriggerEnable(TriggerGetCurrent(), false);
-        gv_spawningPoolMutationLine3 = TransmissionLastSent();
-        gv_s01_TransmissionCurrent02 = TransmissionLastSent();
-        TransmissionWait(TransmissionLastSent(), 0.0);
-    }
-
-    libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolMutationStartedQ_Init () {
-    gt_SpawningPoolMutationStartedQ = TriggerCreate("gt_SpawningPoolMutationStartedQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Spawning Pool Cancelled Line Q
-//--------------------------------------------------------------------------------------------------
-bool gt_SpawningPoolCancelledLineQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    if ((gv_hatcheryCanceledCheck == true) && (gv_overlordCanceled == true)) {
-        libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-        libSwaC_gf_SendTransmissionCampaign(gv_vALERIAN, "zMission_Lab01|Line00132", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-        gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-        TransmissionWait(TransmissionLastSent(), 0.0);
-        libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    }
-    else {
-        if (((gv_hatcheryCanceledCheck == true) || (gv_overlordCanceled == true))) {
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-            libSwaC_gf_SendTransmissionCampaign(gv_vALERIAN, "zMission_Lab01|Line00134", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-            gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-            TransmissionWait(TransmissionLastSent(), 0.0);
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-        }
-        else {
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-            libSwaC_gf_SendTransmissionCampaign(gv_vALERIAN, "zMission_Lab01|Line00123", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-            gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-            TransmissionWait(TransmissionLastSent(), 0.0);
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-        }
-    }
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SpawningPoolCancelledLineQ_Init () {
-    gt_SpawningPoolCancelledLineQ = TriggerCreate("gt_SpawningPoolCancelledLineQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Teach Q
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingTeachQ_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    bool lv_noHatcheryReticule;
-    text lv_newSelectLarvaTooltip;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-    lv_newSelectLarvaTooltip = StringExternal("Param/Value/DC7637C1");
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
-        UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("LarvaTrain", 1), true);
-        libSwaC_gf_TurnSelectLarvaButtonHighlightOnOff(true);
-        gf_ChangeButtonTooltip("Larva", "Param/Value/DC7637C1");
-    }
-
-    TriggerExecute(gt_ObjectiveMorphZerglingsCreate, true, true);
-    TriggerQueueExit();
-    if (((libNtve_gf_UnitTypeIsSelected("AP_Larva", gv_pLAYER_01_USER) == true) || (libNtve_gf_UnitTypeIsSelected("AP_Lair", gv_pLAYER_01_USER) == true))) {
-        gv_zerglingHatcherySelected = true;
-    }
-
-    TriggerExecute(gt_ZerglingMorphUIUpdate, true, false);
-    TriggerEnable(gt_ZerglingHatcherySelected, true);
-    TriggerEnable(gt_ZerglingLarvaSelected, true);
-    TriggerEnable(gt_ZerglingSelectLarvaClicked, true);
-    TriggerExecute(gt_HideCompletedObjectives, true, false);
-    TriggerExecute(gt_ZerglingHelpLines, true, false);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingTeachQ_Init () {
-    gt_ZerglingTeachQ = TriggerCreate("gt_ZerglingTeachQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Morph Started
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingMorphStarted_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((libNtve_gf_TriggeringProgressUnitType() == "AP_Zergling"))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    gv_zerglingButtonClicked = true;
-    gv_zerglingHatcherySelected = true;
-    gv_zerglingSelectLarvaButtonPressed = true;
-    gv_zerglingLarvaSelected = true;
-    TransmissionClear(gv_adjutantMorphZerglings);
-    libNtve_gf_KillModel(gv_hatcheryActor);
-    TextTagDestroy(gv_hatcheryText);
-    gv_zerglingCount += 1;
-    TriggerExecute(gt_ZerglingMorphStartedQ, true, false);
-    if ((gv_zerglingCount >= 6)) {
-        gv_zerglingMorphDone = true;
-        gf_RestoreButtonTooltip("Larva");
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingMorphStarted_Init () {
-    gt_ZerglingMorphStarted = TriggerCreate("gt_ZerglingMorphStarted_Func");
-    TriggerAddEventUnitTrainProgress(gt_ZerglingMorphStarted, null, c_unitProgressStageStart);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Morph Started Q
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingMorphStartedQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    Wait(2.0, c_timeGame);
-    TriggerQueueEnter();
-    libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libSwaC_gf_SendTransmissionCampaign(gv_vALERIAN, "zMission_Lab01|Line00176", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    gv_s01_TransmissionCurrent01 = TransmissionLastSent();
-    TransmissionWait(TransmissionLastSent(), 0.0);
-    libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00186", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    gv_s01_TransmissionCurrent02 = TransmissionLastSent();
-    TransmissionWait(TransmissionLastSent(), 0.0);
-    libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingMorphStartedQ_Init () {
-    gt_ZerglingMorphStartedQ = TriggerCreate("gt_ZerglingMorphStartedQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Morph UI Update
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingMorphUIUpdate_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-
-        if (!((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    while (true) {
-        if (((gv_gameOver == true) || (gv_inCinematic == true))) {
-            return true;
-        }
-
-        if ((ObjectiveGetState(gv_objectiveDestroyDominionBase323) == c_objectiveStateCompleted)) {
-            gf_DestroyZerglingHatcheryHelper();
-            UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("LarvaTrain", 1), false);
-            libSwaC_gf_TurnSelectLarvaButtonHighlightOnOff(false);
-            return true;
-        }
-
-        if ((gv_zerglingMorphDone == false)) {
-            UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("LarvaTrain", 1), true);
-            if ((libNtve_gf_UnitTypeIsSelected("Larva", gv_pLAYER_01_USER) == false)) {
-                libSwaC_gf_TurnSelectLarvaButtonHighlightOnOff(true);
-                if ((libNtve_gf_UnitTypeIsSelected("AP_Lair", gv_pLAYER_01_USER) == false)) {
-                    gf_CreateZerglingHatcheryHelper();
-                }
-                else {
-                    gf_DestroyZerglingHatcheryHelper();
-                }
-            }
-            else {
-                libSwaC_gf_TurnSelectLarvaButtonHighlightOnOff(false);
-                gf_DestroyZerglingHatcheryHelper();
-            }
-        }
-        else {
-            gf_DestroyZerglingHatcheryHelper();
-            UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("LarvaTrain", 1), false);
-            libSwaC_gf_TurnSelectLarvaButtonHighlightOnOff(false);
-        }
-        Wait(0.5, c_timeGame);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingMorphUIUpdate_Init () {
-    gt_ZerglingMorphUIUpdate = TriggerCreate("gt_ZerglingMorphUIUpdate_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Hatchery Selected
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingHatcherySelected_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((UnitGetType(EventUnit()) == "AP_Lair"))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TransmissionClear(gv_adjutantSelectHatchery);
-    libNtve_gf_KillModel(gv_hatcheryActor);
-    TextTagDestroy(gv_hatcheryText);
-    gv_zerglingHatcherySelected = true;
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingHatcherySelected_Init () {
-    gt_ZerglingHatcherySelected = TriggerCreate("gt_ZerglingHatcherySelected_Func");
-    TriggerEnable(gt_ZerglingHatcherySelected, false);
-    TriggerAddEventUnitSelected(gt_ZerglingHatcherySelected, null, gv_pLAYER_01_USER, true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Larva Selected
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingLarvaSelected_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((UnitGetType(EventUnit()) == "AP_Larva"))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TransmissionClear(gv_adjutantSelectHatchery);
-    TransmissionClear(gv_adjutantSelectLarvaMorphZerglings);
-    TriggerExecute(gt_HatcheryPlacementRemove, true, false);
-    libNtve_gf_KillModel(gv_hatcheryActor);
-    TextTagDestroy(gv_hatcheryText);
-    gv_zerglingHatcherySelected = true;
-    gv_zerglingLarvaSelected = true;
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingLarvaSelected_Init () {
-    gt_ZerglingLarvaSelected = TriggerCreate("gt_ZerglingLarvaSelected_Func");
-    TriggerEnable(gt_ZerglingLarvaSelected, false);
-    TriggerAddEventUnitSelected(gt_ZerglingLarvaSelected, null, gv_pLAYER_01_USER, true);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Select Larva Clicked
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingSelectLarvaClicked_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TransmissionClear(gv_adjutantSelectHatchery);
-    TransmissionClear(gv_adjutantSelectLarvaMorphZerglings);
-    gv_zerglingSelectLarvaButtonPressed = true;
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingSelectLarvaClicked_Init () {
-    gt_ZerglingSelectLarvaClicked = TriggerCreate("gt_ZerglingSelectLarvaClicked_Func");
-    TriggerEnable(gt_ZerglingSelectLarvaClicked, false);
-    TriggerAddEventButtonPressed(gt_ZerglingSelectLarvaClicked, gv_pLAYER_01_USER, "Larva");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Help Lines
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingHelpLines_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerExecute(gt_ZerglingHatcheryHelpSelectQ, true, true);
-    TriggerExecute(gt_ZerglingLine01Q, true, true);
-    TriggerExecute(gt_ZerglingLine02Q, true, true);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingHelpLines_Init () {
-    gt_ZerglingHelpLines = TriggerCreate("gt_ZerglingHelpLines_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Hatchery Help Select Q
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingHatcheryHelpSelectQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    fixed autoC5CDD029_at;
-    fixed autoA3213FA1_at;
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    autoC5CDD029_at = 0;
-    while (!(((gv_gameOver == true) || (gv_zerglingHatcherySelected == true))) && autoC5CDD029_at <= gv_c_S01_InitialDelayTimeAmount) {
-        Wait(0.5, c_timeGame);
-        autoC5CDD029_at = autoC5CDD029_at + 0.5;
-    }
-    while (true) {
-        if ((gv_gameOver == false) && (gv_zerglingHatcherySelected == false)) {
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00136", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-            gv_adjutantSelectHatchery = TransmissionLastSent();
-            TransmissionWait(gv_adjutantSelectHatchery, 0.0);
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-            autoA3213FA1_at = 0;
-            while (!(((gv_gameOver == true) || (gv_zerglingHatcherySelected == true))) && autoA3213FA1_at <= gv_c_S01_DelayTimeAmount) {
-                Wait(0.5, c_timeGame);
-                autoA3213FA1_at = autoA3213FA1_at + 0.5;
-            }
-        }
-        else {
-            return true;
-        }
-    }
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingHatcheryHelpSelectQ_Init () {
-    gt_ZerglingHatcheryHelpSelectQ = TriggerCreate("gt_ZerglingHatcheryHelpSelectQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Line 01 Q
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingLine01Q_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    fixed auto6C8A9651_at;
-    fixed auto3F78896A_at;
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    auto6C8A9651_at = 0;
-    while (!(((gv_gameOver == true) || (gv_zerglingLarvaSelected == true))) && auto6C8A9651_at <= gv_c_S01_InitialDelayTimeAmount) {
-        Wait(0.5, c_timeGame);
-        auto6C8A9651_at = auto6C8A9651_at + 0.5;
-    }
-    while (true) {
-        if ((gv_gameOver == false) && (gv_zerglingLarvaSelected == false)) {
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00017", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-            gv_adjutantSelectLarvaMorphZerglings = TransmissionLastSent();
-            if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true) && (UnitGroupCount(UnitGroupFilter("Hatchery", gv_pLAYER_01_USER, UnitGroupSelected(gv_pLAYER_01_USER), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
-                libNtve_gf_DisplayScreenImage(1, "Assets\\Textures\\tutorialcommandcardhighlight.dds", c_triggerBlendModeAdd, 503, 348, c_anchorBottomRight, 5, -2);
-                libNtve_gf_PulseScreenImage(1, 1.75, 100.0, 0.0);
-                TriggerExecute(gt_UIPulseAudio, true, false);
-            }
-
-            TransmissionWait(TransmissionLastSent(), 0.0);
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-            libNtve_gf_StopPulsingScreenImage(1);
-            libNtve_gf_HideScreenImage(false, 1);
-            TriggerStop(gt_UIPulseAudio);
-            auto3F78896A_at = 0;
-            while (!(((gv_gameOver == true) || (gv_zerglingLarvaSelected == true))) && auto3F78896A_at <= gv_c_S01_DelayTimeAmount) {
-                Wait(0.5, c_timeGame);
-                auto3F78896A_at = auto3F78896A_at + 0.5;
-            }
-        }
-        else {
-            return true;
-        }
-    }
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingLine01Q_Init () {
-    gt_ZerglingLine01Q = TriggerCreate("gt_ZerglingLine01Q_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Line 02 Q
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingLine02Q_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    fixed autoEA3380E5_at;
-    fixed autoE5F97B3C_at;
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    autoEA3380E5_at = 0;
-    while (!(((gv_gameOver == true) || (gv_zerglingButtonClicked == true))) && autoEA3380E5_at <= gv_c_S01_InitialDelayTimeAmount) {
-        Wait(0.5, c_timeGame);
-        autoEA3380E5_at = autoEA3380E5_at + 0.5;
-    }
-    while (true) {
-        if ((gv_gameOver == false) && (gv_zerglingButtonClicked == false)) {
-            while (!(((gv_gameOver == true) || (libNtve_gf_UnitTypeIsSelected("Larva", gv_pLAYER_01_USER) == true)))) {
-                Wait(1.0, c_timeGame);
-            }
-            if (((gv_gameOver == true) || (gv_zerglingButtonClicked == true))) {
-                return true;
-            }
-
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Lab01|Line00202", c_transmissionDurationAdd, 0.0, false, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-            gv_adjutantMorphZerglings = TransmissionLastSent();
-            if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true) && (UnitGroupCount(UnitGroupFilter("Larva", gv_pLAYER_01_USER, UnitGroupSelected(gv_pLAYER_01_USER), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)) {
-                libNtve_gf_DisplayScreenImage(1, "Assets\\Textures\\tutorialcommandcardhighlight.dds", c_triggerBlendModeAdd, 503, 348, c_anchorBottomRight, 5, -2);
-                libNtve_gf_PulseScreenImage(1, 1.75, 100.0, 0.0);
-                TriggerExecute(gt_UIPulseAudio, true, false);
-            }
-
-            TransmissionWait(TransmissionLastSent(), 0.0);
-            libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-            libNtve_gf_StopPulsingScreenImage(1);
-            libNtve_gf_HideScreenImage(false, 1);
-            TriggerStop(gt_UIPulseAudio);
-            autoE5F97B3C_at = 0;
-            while (!(((gv_gameOver == true) || (gv_zerglingButtonClicked == true))) && autoE5F97B3C_at <= gv_c_S01_DelayTimeAmount) {
-                Wait(0.5, c_timeGame);
-                autoE5F97B3C_at = autoE5F97B3C_at + 0.5;
-            }
-        }
-        else {
-            return true;
-        }
-    }
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingLine02Q_Init () {
-    gt_ZerglingLine02Q = TriggerCreate("gt_ZerglingLine02Q_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Zergling Cancelled
-//--------------------------------------------------------------------------------------------------
-bool gt_ZerglingCancelled_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((gv_stage2DebugUsed == false))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    gv_zerglingCount -= 2;
-    if ((gv_zerglingCount <= 5)) {
-        gv_zerglingMorphDone = false;
-        if ((libHots_gf_DifficultyValueSwarmBoolean(true, true, false) == true)) {
-            gf_ChangeButtonTooltip("Larva", "Param/Value/DC7637C1");
-        }
-
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ZerglingCancelled_Init () {
-    gt_ZerglingCancelled = TriggerCreate("gt_ZerglingCancelled_Func");
-    TriggerAddEventUnitAbility(gt_ZerglingCancelled, null, AbilityCommand("AP_LarvaTrain", 1), c_unitAbilStageCancel, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7516,7 +5822,7 @@ bool gt_EradicatorKilled_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerEnable(gt_NoZergLeftRoom6, false);
     TriggerExecute(gt_VictoryWarbotDestroyedCompleted, true, false);
     return true;
@@ -7813,7 +6119,7 @@ bool gt_ZerglingRescueRoom01_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_ZERGLING_GROUP);
     SoundtrackStop(PlayerGroupAll(), c_soundtrackCategoryMusic, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZLab01MusicEventA", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     gv_savedZerglingCount += 1;
@@ -7955,7 +6261,7 @@ bool gt_ZerglingRescueRoom04_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_ZERGLING_GROUP);
     SoundtrackStop(PlayerGroupAll(), c_soundtrackCategoryMusic, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZLab01MusicEventB", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     gv_savedZerglingCount += 1;
@@ -8103,7 +6409,7 @@ bool gt_ZerglingRescueRoom05_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_ZERGLING_GROUP);
     SoundtrackStop(PlayerGroupAll(), c_soundtrackCategoryMusic, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZLab01MusicEventC", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     gv_savedZerglingCount += 1;
@@ -8525,7 +6831,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase3233) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveKillWarbot) == c_objectiveStateCompleted)) {
     }
 
     TriggerExecute(gt_AchievementTimedRunNH, true, false);
@@ -8863,8 +7169,10 @@ bool gt_ObjectiveSelectDroneCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective10");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab01Objective10", "", 0);
-    gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
+    gv_objectiveSelectDrone = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveSelectDrone, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveSelectDrone, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSelectDrone, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8893,7 +7201,7 @@ bool gt_ObjectiveSelectDroneComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSelectDroneCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSelectDrone);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8921,12 +7229,13 @@ bool gt_ObjectiveMutateHatcheryCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
     libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyDominionBase, "ZLab01Objective01", "", 0);
+    gv_objectiveMutateHatchery = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveMutateHatchery, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveMutateHatchery, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveMutateHatchery, gv_LOCATION_ID_HATCHERY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveMutateHatchery, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    TriggerQueueExit();
     return true;
 }
 
@@ -8953,9 +7262,9 @@ bool gt_ObjectiveMutateHatcheryComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_HATCHERY);
     TriggerExecute(gt_ObjectiveMutateHatcheryCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveMutateHatchery);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8984,8 +7293,11 @@ bool gt_ObjectiveHarvestCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective03");
-    gv_objectiveDestroyDominionBase3222 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyDominionBase3222, "ZLab01Objective03", "", 0);
+    gv_objectiveHarvest = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveHarvest, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveHarvest, lib5BD4895D_ge_APObjectiveCategory_Primary, "", libSwaC_gf_MissionObjectiveProgress("ZLab01Objective03"), libSwaC_gf_MissionObjectiveItemCount("ZLab01Objective03"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveHarvest, gv_LOCATION_ID_GATHER_MINERALS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveHarvest, true);
     TriggerEnable(gt_ObjectiveHarvestUpdate, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -9014,29 +7326,18 @@ bool gt_ObjectiveHarvestCompleteQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
-    TriggerQueueEnter();
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_GATHER_MINERALS);
     TriggerEnable(gt_HarvestingStarted, false);
     TriggerExecute(gt_ObjectiveHarvestCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase3222, 300);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3222);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveHarvest, 300);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveHarvest);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    TriggerQueueExit();
     libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/F4D3E535"));
     Wait(2.0, c_timeGame);
-    ObjectiveShow(gv_objectiveDestroyDominionBase3, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3);
-    ObjectiveShow(gv_objectiveDestroyDominionBase2, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase2);
-    ObjectiveShow(gv_objectiveDestroyDominionBase, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase);
-    ObjectiveShow(gv_objectiveDestroyDominionBase323, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase323);
-    ObjectiveShow(gv_objectiveDestroyDominionBase322, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase322);
-    ObjectiveShow(gv_objectiveDestroyDominionBase3222, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3222);
-    TriggerExecute(gt_MidQ, true, false);
+    if ((gv_overlordCompleted == true)) {
+        TriggerExecute(gt_MidQ, true, false);
+    }
+
     return true;
 }
 
@@ -9057,7 +7358,7 @@ bool gt_ObjectiveHarvestUpdate_Func (bool testConds, bool runActions) {
 
     gv_mineralAmount = PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropMineralsCollected);
     if ((gv_mineralAmount < 300)) {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase3222, gv_mineralAmount);
+        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveHarvest, gv_mineralAmount);
     }
 
     if ((gv_mineralAmount >= 75)) {
@@ -9097,12 +7398,13 @@ bool gt_ObjectiveMorphOverlordCreateQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
     libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective04");
-    gv_objectiveDestroyDominionBase322 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyDominionBase322, "ZLab01Objective04", "", 0);
+    gv_objectiveMorphOverlord = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveMorphOverlord, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveMorphOverlord, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveMorphOverlord, gv_LOCATION_ID_OVERLORD);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveMorphOverlord, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    TriggerQueueExit();
     return true;
 }
 
@@ -9129,196 +7431,20 @@ bool gt_ObjectiveMorphOverlordComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_OVERLORD);
     TriggerExecute(gt_ObjectiveMorphOverlordCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase322);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveMorphOverlord);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    if ((gv_mineralAmount >= 300)) {
+        TriggerExecute(gt_MidQ, true, false);
+    }
+
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveMorphOverlordComplete_Init () {
     gt_ObjectiveMorphOverlordComplete = TriggerCreate("gt_ObjectiveMorphOverlordComplete_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Objective Mutate Spawning Pool Create Q
-//--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveMutateSpawningPoolCreateQ_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective05");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab01Objective05", "", 0);
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    TriggerQueueExit();
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ObjectiveMutateSpawningPoolCreateQ_Init () {
-    gt_ObjectiveMutateSpawningPoolCreateQ = TriggerCreate("gt_ObjectiveMutateSpawningPoolCreateQ_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Objective Mutate Spawning Pool Complete
-//--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveMutateSpawningPoolComplete_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveMutateSpawningPoolCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
-    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ObjectiveMutateSpawningPoolComplete_Init () {
-    gt_ObjectiveMutateSpawningPoolComplete = TriggerCreate("gt_ObjectiveMutateSpawningPoolComplete_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Objective Morph Zerglings Create
-//--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveMorphZerglingsCreate_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerEnable(gt_ObjectiveMorphZerglingsUpdate, true);
-    libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective06");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab01Objective06", "", 0);
-    gv_objectiveDestroyDominionBase323 = ObjectiveLastCreated();
-    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ObjectiveMorphZerglingsCreate_Init () {
-    gt_ObjectiveMorphZerglingsCreate = TriggerCreate("gt_ObjectiveMorphZerglingsCreate_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Objective Morph Zerglings Update
-//--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveMorphZerglingsUpdate_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_zerglings;
-
-    // Automatic Variable Declarations
-    // Variable Initialization
-
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((gv_inCinematic == false))) {
-            return false;
-        }
-
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerExecute(gt_ObjectiveMorphZerglingsCreate, true, false);
-    lv_zerglings = UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterStructure) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive);
-    lv_zerglings -= UnitGroupCount(UnitGroup("Larva", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive);
-    lv_zerglings -= UnitGroupCount(UnitGroup("Egg", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive);
-    lv_zerglings -= UnitGroupCount(UnitGroup("EvoEggHydralisk", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive);
-    lv_zerglings -= UnitGroupCount(UnitGroup("EvoEggRoach", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive);
-    lv_zerglings -= UnitGroupCount(UnitGroup("EvoEggSwarmHost", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive);
-    lv_zerglings -= UnitGroupCount(UnitGroup("EvoEggUltralisk", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive);
-    lv_zerglings -= 1;
-    lv_zerglings = MinI(lv_zerglings, 12);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase323, lv_zerglings);
-    if ((lv_zerglings >= 12)) {
-        TriggerEnable(TriggerGetCurrent(), false);
-        TriggerEnable(gt_DroneUsedQ, false);
-        TriggerExecute(gt_ObjectiveMorphZerglingsComplete, true, false);
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ObjectiveMorphZerglingsUpdate_Init () {
-    gt_ObjectiveMorphZerglingsUpdate = TriggerCreate("gt_ObjectiveMorphZerglingsUpdate_Func");
-    TriggerEnable(gt_ObjectiveMorphZerglingsUpdate, false);
-    TriggerAddEventTimePeriodic(gt_ObjectiveMorphZerglingsUpdate, 0.5, c_timeGame);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Objective Morph Zerglings Complete
-//--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveMorphZerglingsComplete_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveMorphZerglingsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase323);
-    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    Wait(2.0, c_timeGame);
-    TriggerExecute(gt_MidQ, true, false);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_ObjectiveMorphZerglingsComplete_Init () {
-    gt_ObjectiveMorphZerglingsComplete = TriggerCreate("gt_ObjectiveMorphZerglingsComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -9340,8 +7466,11 @@ bool gt_ObjectiveGasTurretsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective11");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab01Objective11", "", gv_objective_GasTurretKILLS);
-    gv_objectiveDestroyDominionBase32 = ObjectiveLastCreated();
+    gv_objectiveGasTurrets = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveGasTurrets, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveGasTurrets, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objective_GasTurretKILLS, libSwaC_gf_MissionObjectiveItemCount("ZLab01Objective11"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveGasTurrets, gv_LOCATION_ID_GAS_TURRETS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveGasTurrets, true);
     if ((UnitIsAlive(UnitFromId(255)) == true) && (UnitGetPropertyFixed(UnitFromId(255), c_unitPropLifePercent, c_unitPropCurrent) < 100.0)) {
         gf_CreateHelperonUnit(StringExternal("Param/Value/258A45C9"), UnitFromId(255), libSwaC_ge_CampaginReticleType_TerranEnemy, libSwaC_ge_CampaginReticleSize_Small, 0.0);
         libHots_gf_StoreTextTagForUnit(UnitFromId(255), 1, TextTagLastCreated());
@@ -9373,12 +7502,7 @@ void gt_ObjectiveGasTurretsCreate_Init () {
 // Trigger: Objective Gas Turrets Update
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveGasTurretsUpdate_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_zerglings;
-
     // Automatic Variable Declarations
-    // Variable Initialization
-
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -9401,7 +7525,7 @@ bool gt_ObjectiveGasTurretsUpdate_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_ObjectiveGasTurretsCreate, true, false);
     gv_objective_GasTurretKILLS += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase32, gv_objective_GasTurretKILLS);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveGasTurrets, gv_objective_GasTurretKILLS);
     TriggerExecute(gt_ObjectiveGasTurretsComplete, true, false);
     return true;
 }
@@ -9444,9 +7568,9 @@ bool gt_ObjectiveGasTurretsComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_GAS_TURRETS);
     TriggerExecute(gt_ObjectiveGasTurretsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase32);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveGasTurrets);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9475,8 +7599,11 @@ bool gt_ObjectiveDestroyEradicatorCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective08");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab01Objective08", "", 0);
-    gv_objectiveDestroyDominionBase3233 = ObjectiveLastCreated();
+    gv_objectiveKillWarbot = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveKillWarbot, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillWarbot, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillWarbot, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillWarbot, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9517,7 +7644,7 @@ bool gt_ObjectiveDestroyEradicatorComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyEradicatorCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3233);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillWarbot);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9532,7 +7659,13 @@ void gt_ObjectiveDestroyEradicatorComplete_Init () {
 // Trigger: Objective Save Zerglings Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveSaveZerglingsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -9547,8 +7680,13 @@ bool gt_ObjectiveSaveZerglingsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab01Objective09");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab01Objective09", "", gv_savedZerglingCount);
-    gv_objectiveDestroyDominionBase3232 = ObjectiveLastCreated();
+    gv_objectiveSaveZerglings = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveSaveZerglings, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveSaveZerglings, lv_category, "", gv_savedZerglingCount, libSwaC_gf_MissionObjectiveItemCount("ZLab01Objective09"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSaveZerglings, gv_LOCATION_ID_SOUTH_ZERGLING_GROUP);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSaveZerglings, gv_LOCATION_ID_EAST_ZERGLING_GROUP);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSaveZerglings, gv_LOCATION_ID_WEST_ZERGLING_GROUP);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSaveZerglings, true);
     TriggerEnable(gt_ObjectiveSaveZerglingsUpdate, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_ObjectiveSaveZerglingsCreatePings, true, false);
@@ -9579,7 +7717,7 @@ bool gt_ObjectiveSaveZerglingsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSaveZerglingsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3232);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSaveZerglings);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9612,7 +7750,7 @@ bool gt_ObjectiveSaveZerglingsUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveSaveZerglingsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase3232, gv_savedZerglingCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSaveZerglings, gv_savedZerglingCount);
     if ((gv_savedZerglingCount == 3)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveSaveZerglingsComplete, true, false);
@@ -10116,6 +8254,10 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSelectDrone, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveMutateHatchery, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveMorphOverlord, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveHarvest, false);
     TriggerQueueEnter();
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
         TriggerExecute(gt_MidSetup, true, true);
@@ -10407,12 +8549,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     SoundStop(gv_midAlertSound, true);
     SoundStop(gv_midBotSound, true);
     SoundStop(gv_midEradicatorSound, true);
-    ObjectiveShow(gv_objectiveDestroyDominionBase, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase);
-    ObjectiveShow(gv_objectiveDestroyDominionBase2, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase2);
-    ObjectiveShow(gv_objectiveDestroyDominionBase323, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase323);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveMutateHatchery, false);
     if ((gv_cinematicCompleted == false)) {
         autoAFF90CAD_ae = gv_numberOfZerglings;
         autoAFF90CAD_var = 1;
@@ -11215,32 +9352,6 @@ void InitTriggers () {
     gt_OverlordCancelled_Init();
     gt_OverlordCancelledLineQ_Init();
     gt_OverlordLimitQ_Init();
-    gt_SpawningPoolTeachtoMutate_Init();
-    gt_SpawningPoolLeftClick_Init();
-    gt_SpawningPoolLeftClickEnd_Init();
-    gt_SpawningPoolStartTransmissionQ_Init();
-    gt_SpawningPoolMutationUIUpdate_Init();
-    gt_SpawningPoolDroneSelected_Init();
-    gt_SpawningPoolBasicMutationClicked_Init();
-    gt_SpawningPoolButtonClicked_Init();
-    gt_SpawningPoolHelpLines_Init();
-    gt_SpawningPoolLine01Q_Init();
-    gt_SpawningPoolLine02Q_Init();
-    gt_SpawningPoolLine03Q_Init();
-    gt_SpawningPoolMutationStartedQ_Init();
-    gt_SpawningPoolCancelledLineQ_Init();
-    gt_ZerglingTeachQ_Init();
-    gt_ZerglingMorphStarted_Init();
-    gt_ZerglingMorphStartedQ_Init();
-    gt_ZerglingMorphUIUpdate_Init();
-    gt_ZerglingHatcherySelected_Init();
-    gt_ZerglingLarvaSelected_Init();
-    gt_ZerglingSelectLarvaClicked_Init();
-    gt_ZerglingHelpLines_Init();
-    gt_ZerglingHatcheryHelpSelectQ_Init();
-    gt_ZerglingLine01Q_Init();
-    gt_ZerglingLine02Q_Init();
-    gt_ZerglingCancelled_Init();
     gt_OverlordTriestoLeave_Init();
     gt_ValerianAttackQ_Init();
     gt_StartGameStage02Q_Init();
@@ -11314,11 +9425,6 @@ void InitTriggers () {
     gt_ObjectiveHarvestUpdate_Init();
     gt_ObjectiveMorphOverlordCreateQ_Init();
     gt_ObjectiveMorphOverlordComplete_Init();
-    gt_ObjectiveMutateSpawningPoolCreateQ_Init();
-    gt_ObjectiveMutateSpawningPoolComplete_Init();
-    gt_ObjectiveMorphZerglingsCreate_Init();
-    gt_ObjectiveMorphZerglingsUpdate_Init();
-    gt_ObjectiveMorphZerglingsComplete_Init();
     gt_ObjectiveGasTurretsCreate_Init();
     gt_ObjectiveGasTurretsUpdate_Init();
     gt_ObjectiveGasTurretsComplete_Init();
