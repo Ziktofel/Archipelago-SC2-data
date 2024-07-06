@@ -29,6 +29,14 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_CLOSE_COOLANT_TOWER = 1;
+const int gv_LOCATION_ID_NORTHWEST_COOLANT_TOWER = 2;
+const int gv_LOCATION_ID_SOUTHEAST_COOLANT_TOWER = 3;
+const int gv_LOCATION_ID_SOUTHWEST_COOLANT_TOWER = 4;
+const int gv_LOCATION_ID_LEVIATHAN = 5;
+const int gv_LOCATION_ID_EAST_HATCHERY = 6;
+const int gv_LOCATION_ID_NORTH_HATCHERY = 7;
+const int gv_LOCATION_ID_MID_HATCHERY = 8;
 const int gv_pLAYER_P01_USER = 1;
 const int gv_pLAYER_P02_COOLANT_TOWERS = 2;
 const int gv_pLAYER_P03_ZERG_BR = 3;
@@ -593,7 +601,13 @@ void gf_AddUpgradeLevelforZergPlayerGroup (string lp_upgrade) {
 // Trigger: Objective Destroy Hatcheries Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyHatcheriesCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -608,9 +622,13 @@ bool gt_ObjectiveDestroyHatcheriesCreateQ_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/DF10FD2C"), StringExternal("Param/Value/F7A0C2B9"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (3 - gv_hatcheriesDestroyed), 0);
+    ObjectiveCreate(StringExternal("Param/Value/DF10FD2C"), StringExternal("Param/Value/F7A0C2B9"), c_objectiveStateHidden, false);
     gv_objectiveDestroyHatcheries = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyHatcheries, lv_category, "", gv_hatcheriesDestroyed, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHatcheries, gv_LOCATION_ID_EAST_HATCHERY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHatcheries, gv_LOCATION_ID_NORTH_HATCHERY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHatcheries, gv_LOCATION_ID_MID_HATCHERY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyHatcheries, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -672,7 +690,7 @@ bool gt_ObjectiveDestroyHatcheriesUpdate_Func (bool testConds, bool runActions) 
 
     TriggerExecute(gt_ObjectiveDestroyHatcheriesCreateQ, true, false);
     gv_hatcheriesDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyHatcheries, (3 - gv_hatcheriesDestroyed));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyHatcheries, gv_hatcheriesDestroyed);
     if ((gv_hatcheriesDestroyed == 3)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveDestroyHatcheriesComplete, true, false);
@@ -696,7 +714,7 @@ bool gt_EastHatchery_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_HATCHERY);
     TriggerExecute(gt_ObjectiveDestroyHatcheriesUpdate, true, false);
     return true;
 }
@@ -717,7 +735,7 @@ bool gt_NorthHatchery_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_HATCHERY);
     TriggerExecute(gt_ObjectiveDestroyHatcheriesUpdate, true, false);
     return true;
 }
@@ -738,7 +756,7 @@ bool gt_MidHatchery_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MID_HATCHERY);
     TriggerExecute(gt_ObjectiveDestroyHatcheriesUpdate, true, false);
     return true;
 }
@@ -898,7 +916,7 @@ bool gt_CloseTower_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_COOLANT_TOWER);
     return true;
 }
 
@@ -925,7 +943,7 @@ bool gt_NorthwestTower_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_COOLANT_TOWER);
     return true;
 }
 
@@ -952,7 +970,7 @@ bool gt_SoutheastTower_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_COOLANT_TOWER);
     return true;
 }
 
@@ -979,7 +997,7 @@ bool gt_SouthwestTower_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_COOLANT_TOWER);
     return true;
 }
 
@@ -5388,7 +5406,7 @@ bool gt_VictoryDestroySpacePlatformsCompleted_Func (bool testConds, bool runActi
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     TriggerExecute(gt_ObjectiveDestroyCoolantTowersComplete, true, false);
     libCamp_gf_RunMissionVictorySequence(gt_VictoryQ);
@@ -5580,9 +5598,15 @@ bool gt_ObjectiveDestroyCoolantTowersCreateQ_Func (bool testConds, bool runActio
     TriggerEnable(TriggerGetCurrent(), false);
     gv_objectiveDestroyCoolantTowersTotal = 4;
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/FDB17885"), StringExternal("Param/Value/06F1D37B"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (4 - gv_objectiveDestroyCoolantTowerProgress), 0);
+    ObjectiveCreate(StringExternal("Param/Value/FDB17885"), StringExternal("Param/Value/06F1D37B"), c_objectiveStateHidden, true);
     gv_objectiveDestroyCoolantTowers = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyCoolantTowers, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objectiveDestroyCoolantTowerProgress, 4, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyCoolantTowers, gv_LOCATION_ID_CLOSE_COOLANT_TOWER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyCoolantTowers, gv_LOCATION_ID_NORTHWEST_COOLANT_TOWER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyCoolantTowers, gv_LOCATION_ID_SOUTHEAST_COOLANT_TOWER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyCoolantTowers, gv_LOCATION_ID_SOUTHWEST_COOLANT_TOWER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyCoolantTowers, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyCoolantTowers, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian02BObjective1, ObjectiveLastCreated(), StringExternal("Param/Value/09462CD7"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeGame);
     TriggerQueueExit();
@@ -5616,7 +5640,7 @@ bool gt_ObjectiveDestroyCoolantTowersUpdate_Func (bool testConds, bool runAction
     }
 
     gv_objectiveDestroyCoolantTowerProgress += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyCoolantTowers, (4 - gv_objectiveDestroyCoolantTowerProgress));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyCoolantTowers, gv_objectiveDestroyCoolantTowerProgress);
     if ((gv_objectiveDestroyCoolantTowerProgress == 1)) {
         TriggerExecute(gt_PlatformLinesFirstTowerQ, true, false);
     }
@@ -5689,7 +5713,13 @@ void gt_ObjectiveDestroyCoolantTowersFailed_Init () {
 // Trigger: Objective Kill Leviathan Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveKillLeviathanCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5704,9 +5734,11 @@ bool gt_ObjectiveKillLeviathanCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate((StringExternal("Param/Value/739C328F")), StringExternal("Param/Value/0BCA1AE6"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "check", 1, 0);
+    ObjectiveCreate((StringExternal("Param/Value/739C328F")), StringExternal("Param/Value/0BCA1AE6"), c_objectiveStateHidden, false);
     gv_objectiveKillLeviathan = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillLeviathan, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillLeviathan, gv_LOCATION_ID_LEVIATHAN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillLeviathan, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TValerian02BObjective2, ObjectiveLastCreated(), StringExternal("Param/Value/B8769560"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeGame);
     TriggerQueueExit();
@@ -5736,7 +5768,7 @@ bool gt_ObjectiveKillLeviathanComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LEVIATHAN);
     TriggerExecute(gt_ObjectiveKillLeviathanCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillLeviathan);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
