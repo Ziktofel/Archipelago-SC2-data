@@ -38,6 +38,13 @@ const int gv_p06_JUNKERS = 6;
 const int gv_p07_DERELICT_STRUCTURES = 7;
 const int gv_p08_RAYNOR_COMP = 8;
 const int gv_p09_PROTOSS_RELICS = 9;
+const int gv_LOCATION_ID_MIRA_HAN = 1;
+const int gv_LOCATION_ID_NORTH_RELIC = 2;
+const int gv_LOCATION_ID_MID_RELIC = 3;
+const int gv_LOCATION_ID_SOUTHWEST_RELIC = 4;
+const int gv_LOCATION_ID_NORTH_COMMAND_CENTER = 5;
+const int gv_LOCATION_ID_SOUTH_COMMAND_CENTER = 6;
+const int gv_LOCATION_ID_WEST_COMMAND_CENTER = 7;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -238,6 +245,7 @@ trigger gt_ObjectiveDestroyOrlanComplete;
 trigger gt_ObjectiveDestroyOrlanFailedQ;
 trigger gt_ObjectiveFindContrabandCreateQ;
 trigger gt_ObjectiveFindContrabandUpdate;
+trigger gt_ObjectiveFindContrabandRemove;
 trigger gt_ObjectiveFindContrabandComplete;
 trigger gt_ObjectiveFindContrabandFailedQ;
 trigger gt_BriefingQ;
@@ -1501,7 +1509,7 @@ bool gt_PlayerBuysContract_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MIRA_HAN);
     gv_miraHanContractBought = true;
     UISetRestartLoadingScreen(ConversationDataStateText("Maps|THorner02", "Loading Screen Restart 2"));
     TriggerEnable(gt_OrlanMineralCount, false);
@@ -4538,7 +4546,7 @@ bool gt_VictoryDestroyOrlanCompleted_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     PingDestroy(gv_orlansFortressPing);
     libNtve_gf_ChangeUnitDamage(UnitFromId(90), libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
@@ -4790,10 +4798,12 @@ bool gt_ObjectiveBuyContractCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/AE5A2B97"), StringExternal("Param/Value/EADB19A4"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "Minerals", gv_mERC_CONTRACT_PRICE, 0);
-    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/AE5A2B97"), StringExternal("Param/Value/EADB19A4"), c_objectiveStateHidden, true);
     gv_primaryObjectiveBuyContract = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_primaryObjectiveBuyContract, lib5BD4895D_ge_APObjectiveCategory_Primary, "Minerals", gv_mERC_CONTRACT_PRICE, 0, false);
+    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(gv_primaryObjectiveBuyContract);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveBuyContract, gv_LOCATION_ID_MIRA_HAN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_primaryObjectiveBuyContract, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner02Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/024F788C"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_CreateContractWindow, true, false);
@@ -4885,9 +4895,11 @@ bool gt_ObjectiveDestroyOrlanCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/9FFE53DF"), StringExternal("Param/Value/149F8BF7"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/9FFE53DF"), StringExternal("Param/Value/149F8BF7"), c_objectiveStateHidden, true);
     gv_primaryObjectiveDestroyOrlan = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_primaryObjectiveDestroyOrlan, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_primaryObjectiveDestroyOrlan, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_primaryObjectiveDestroyOrlan, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner02Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/088E0A54"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -4963,7 +4975,13 @@ void gt_ObjectiveDestroyOrlanFailedQ_Init () {
 // Trigger: Objective Find Contraband Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindContrabandCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4978,9 +4996,13 @@ bool gt_ObjectiveFindContrabandCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/04CB28C8"), StringExternal("Param/Value/BBBD9501"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (gv_contrabandRelicsTotal - gv_contrabandRelicsFound), 0);
+    ObjectiveCreate(StringExternal("Param/Value/04CB28C8"), StringExternal("Param/Value/BBBD9501"), c_objectiveStateHidden, false);
     gv_bonusObjectiveFindContraband = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_bonusObjectiveFindContraband, lv_category, "", gv_contrabandRelicsFound, gv_contrabandRelicsTotal, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveFindContraband, gv_LOCATION_ID_NORTH_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveFindContraband, gv_LOCATION_ID_MID_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveFindContraband, gv_LOCATION_ID_SOUTHWEST_RELIC);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_bonusObjectiveFindContraband, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner02Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/46EFAF90"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5010,6 +5032,10 @@ bool gt_ObjectiveFindContrabandUpdate_Func (bool testConds, bool runActions) {
         if (!((UnitGetType(EventUnit()) == "ProtossRelic"))) {
             return false;
         }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -5022,7 +5048,7 @@ bool gt_ObjectiveFindContrabandUpdate_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/D16B38BA"), null, UnitGetPosition(EventUnit()));
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectFindProtossRelicContraband, EventUnit(), gv_p01_USER);
     UnitKill(EventUnit());
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_bonusObjectiveFindContraband, (gv_contrabandRelicsTotal - gv_contrabandRelicsFound));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_bonusObjectiveFindContraband, gv_contrabandRelicsFound);
     if ((gv_contrabandRelicsFound == gv_contrabandRelicsTotal)) {
         TriggerExecute(gt_ObjectiveFindContrabandComplete, true, false);
     }
@@ -5034,6 +5060,37 @@ bool gt_ObjectiveFindContrabandUpdate_Func (bool testConds, bool runActions) {
 void gt_ObjectiveFindContrabandUpdate_Init () {
     gt_ObjectiveFindContrabandUpdate = TriggerCreate("gt_ObjectiveFindContrabandUpdate_Func");
     TriggerAddEventUnitAbility(gt_ObjectiveFindContrabandUpdate, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Contraband Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindContrabandRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_MID_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTHWEST_RELIC] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(1503));
+    UnitRemove(UnitFromId(1502));
+    UnitRemove(UnitFromId(860));
+    TriggerEnable(gt_ObjectiveFindContrabandCreateQ, false);
+    TriggerEnable(gt_ObjectiveFindContrabandUpdate, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindContrabandRemove_Init () {
+    gt_ObjectiveFindContrabandRemove = TriggerCreate("gt_ObjectiveFindContrabandRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveFindContrabandRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5968,7 +6025,13 @@ void gt_VictoryScene_Init () {
 // Trigger: Objective Destroy Orlan Command Centers Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyOrlanCommandCentersCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5983,9 +6046,13 @@ bool gt_ObjectiveDestroyOrlanCommandCentersCreateQ_Func (bool testConds, bool ru
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/D6F921D4"), StringExternal("Param/Value/2FBEBEEB"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (3 - gv_orlanCommandCentersDestroyed), 0);
+    ObjectiveCreate(StringExternal("Param/Value/D6F921D4"), StringExternal("Param/Value/2FBEBEEB"), c_objectiveStateHidden, false);
     gv_objectiveDestroyOrlanCommandCenters = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyOrlanCommandCenters, lv_category, "", gv_orlanCommandCentersDestroyed, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyOrlanCommandCenters, gv_LOCATION_ID_NORTH_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyOrlanCommandCenters, gv_LOCATION_ID_SOUTH_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyOrlanCommandCenters, gv_LOCATION_ID_WEST_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyOrlanCommandCenters, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -6014,7 +6081,7 @@ bool gt_ObjectiveDestroyOrlanCommandCentersUpdate_Func (bool testConds, bool run
     }
 
     TriggerExecute(gt_ObjectiveDestroyOrlanCommandCentersCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyOrlanCommandCenters, (3 - gv_orlanCommandCentersDestroyed));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyOrlanCommandCenters, gv_orlanCommandCentersDestroyed);
     if ((gv_orlanCommandCentersDestroyed == 3)) {
         TriggerExecute(gt_ObjectiveDestroyOrlanCommandCentersComplete, true, false);
     }
@@ -6098,7 +6165,7 @@ bool gt_NorthCC_Func (bool testConds, bool runActions) {
     }
 
     gv_orlanCommandCentersDestroyed = (gv_orlanCommandCentersDestroyed + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_COMMAND_CENTER);
     TriggerExecute(gt_ObjectiveDestroyOrlanCommandCentersUpdate, true, false);
     return true;
 }
@@ -6120,7 +6187,7 @@ bool gt_SouthCC_Func (bool testConds, bool runActions) {
     }
 
     gv_orlanCommandCentersDestroyed = (gv_orlanCommandCentersDestroyed + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_COMMAND_CENTER);
     TriggerExecute(gt_ObjectiveDestroyOrlanCommandCentersUpdate, true, false);
     return true;
 }
@@ -6142,7 +6209,7 @@ bool gt_WestCC_Func (bool testConds, bool runActions) {
     }
 
     gv_orlanCommandCentersDestroyed = (gv_orlanCommandCentersDestroyed + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_COMMAND_CENTER);
     TriggerExecute(gt_ObjectiveDestroyOrlanCommandCentersUpdate, true, false);
     return true;
 }
@@ -6310,7 +6377,7 @@ bool gt_NorthRelic_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_RELIC);
     return true;
 }
 
@@ -6345,7 +6412,7 @@ bool gt_MidRelic_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MID_RELIC);
     return true;
 }
 
@@ -6380,7 +6447,7 @@ bool gt_SouthwestRelic_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_RELIC);
     return true;
 }
 
@@ -6525,6 +6592,7 @@ void InitTriggers () {
     gt_ObjectiveDestroyOrlanFailedQ_Init();
     gt_ObjectiveFindContrabandCreateQ_Init();
     gt_ObjectiveFindContrabandUpdate_Init();
+    gt_ObjectiveFindContrabandRemove_Init();
     gt_ObjectiveFindContrabandComplete_Init();
     gt_ObjectiveFindContrabandFailedQ_Init();
     gt_BriefingQ_Init();

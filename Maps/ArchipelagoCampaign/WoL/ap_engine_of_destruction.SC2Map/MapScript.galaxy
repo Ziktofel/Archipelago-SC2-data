@@ -29,6 +29,15 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_ODIN = 1;
+const int gv_LOCATION_ID_LOKI = 2;
+const int gv_LOCATION_ID_LAB_DEVOURER = 3;
+const int gv_LOCATION_ID_NORTH_LAB_DEVOURER = 4;
+const int gv_LOCATION_ID_SOUTHEAST_LAB_DEVOURER = 5;
+const int gv_LOCATION_ID_WEST_BASE = 6;
+const int gv_LOCATION_ID_NORTHWEST_BASE = 7;
+const int gv_LOCATION_ID_NORTHEAST_BASE = 8;
+const int gv_LOCATION_ID_SOUTHEAST_BASE = 9;
 const int gv_p01_USER = 1;
 const int gv_p02_TYCHUS = 2;
 const int gv_p03_DOMINION_WAREHOUSE = 3;
@@ -238,7 +247,8 @@ trigger gt_ObjectiveDestroytheLokiCreateHidden;
 trigger gt_ObjectiveDestroytheLokiComplete;
 trigger gt_ObjectiveDestroytheLokiFailed;
 trigger gt_ObjectiveDevourerSamplesCreateQ;
-trigger gt_ObjectiveDevourerSampleUpdate;
+trigger gt_ObjectiveDevourerSamplesUpdate;
+trigger gt_ObjectiveDevourerSamplesRemove;
 trigger gt_ObjectiveCerebrateSamplesComplete;
 trigger gt_RemoveDevourerTissueSample;
 trigger gt_BriefingQ;
@@ -447,7 +457,7 @@ bool gt_LabDevourer_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LAB_DEVOURER);
     return true;
 }
 
@@ -474,7 +484,7 @@ bool gt_NorthDevourer_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_LAB_DEVOURER);
     return true;
 }
 
@@ -501,7 +511,7 @@ bool gt_SoutheastDevourer_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_LAB_DEVOURER);
     return true;
 }
 
@@ -1047,8 +1057,6 @@ bool gt_StartGameWarehouse_Func (bool testConds, bool runActions) {
     }
 
     Wait(1.0, c_timeReal);
-    TriggerExecute(gt_ObjectiveDestroytheLokiCreateHidden, true, false);
-    Wait(1.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDevourerSamplesCreateQ, true, false);
     return true;
 }
@@ -1433,7 +1441,7 @@ bool gt_VictoryWarehouseDudesKilled_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ODIN);
     TriggerEnable(gt_DefeatEscortingUnitsDead, false);
     UnitKill(UnitFromId(1132));
     UnitSetPropertyFixed(UnitFromId(4), c_unitPropLifePercent, 100.0);
@@ -1485,15 +1493,12 @@ bool gt_StartGameEscort_Func (bool testConds, bool runActions) {
     gv_odinPing = PingLastCreated();
     Wait(3.0, c_timeReal);
     AISetUnitForceMover(gv_odin, true);
-    ObjectiveSetState(gv_objectiveStealTheOdin, c_objectiveStateHidden);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveStealTheOdin);
-    ObjectiveSetState(gv_objectiveTychusMustSurvive, c_objectiveStateHidden);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveTychusMustSurvive);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveStealTheOdin, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveTychusMustSurvive, false);
     Wait(0.25, c_timeReal);
     TriggerExecute(gt_ObjectiveDestroyDominionBasesCreateQ, true, true);
     Wait(1.0, c_timeGame);
-    ObjectiveShow(gv_objectiveDestroytheLoki, PlayerGroupAll(), true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroytheLoki, "check", 1, 0);
+    TriggerExecute(gt_ObjectiveDestroytheLokiCreateHidden, true, false);
     Wait(29.0, c_timeGame);
     TriggerExecute(gt_BattlecruiserSpawnAttackOdin, true, false);
     Wait(30.0, c_timeGame);
@@ -2133,7 +2138,7 @@ bool gt_LokiDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LOKI);
     TriggerExecute(gt_ObjectiveDestroytheLokiComplete, true, false);
     if ((libNtve_gf_DifficultyValueInt(0, 1, 1, 1) == 1)) {
         AchievementAward(gv_p01_USER, "THorner03_2");
@@ -2409,7 +2414,7 @@ bool gt_P04BaseDestroyed_Func (bool testConds, bool runActions) {
     if ((UnitGroupCount(UnitGroup(null, gv_p04_DOMINION_INFANTRY_A, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
         gv_baseDestroyedP04 = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_BASE);
         TriggerExecute(gt_ObjectiveDestroyDominionBasesUpdate, true, false);
     }
 
@@ -2657,7 +2662,7 @@ bool gt_P08BaseDestroyed_Func (bool testConds, bool runActions) {
     if ((UnitGroupCount(UnitGroup(null, gv_p08_DOMINION_INFANTRY_B, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
         gv_baseDestroyedP08 = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_BASE);
         TriggerExecute(gt_ObjectiveDestroyDominionBasesUpdate, true, false);
     }
 
@@ -2923,7 +2928,7 @@ bool gt_P05BaseDestroyed_Func (bool testConds, bool runActions) {
     if ((UnitGroupCount(UnitGroup(null, gv_p05_DOMINION_FACTORY, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
         gv_baseDestroyedP05 = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_BASE);
         TriggerExecute(gt_ObjectiveDestroyDominionBasesUpdate, true, false);
     }
 
@@ -3172,7 +3177,7 @@ bool gt_P06BaseDestroyed_Func (bool testConds, bool runActions) {
     if ((UnitGroupCount(UnitGroup(null, gv_p06_DOMINION_STARPORT_A, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
         gv_baseDestroyedP06 = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_BASE);
         TriggerExecute(gt_ObjectiveDestroyDominionBasesUpdate, true, false);
     }
 
@@ -4707,7 +4712,7 @@ bool gt_VictoryDestroyAllBasesComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     libNtve_gf_MakeUnitInvulnerable(UnitFromId(2), true);
     Wait(5.0, c_timeGame);
@@ -4942,16 +4947,19 @@ bool gt_ObjectiveStealtheOdinCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/85BC6DAF"), StringExternal("Param/Value/4DF1D7BC"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/85BC6DAF"), StringExternal("Param/Value/4DF1D7BC"), c_objectiveStateHidden, true);
     gv_objectiveStealTheOdin = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveStealTheOdin, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveStealTheOdin, gv_LOCATION_ID_ODIN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveStealTheOdin, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/67435239"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/83B223A5"), StringExternal("Param/Value/11837275"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/83B223A5"), StringExternal("Param/Value/11837275"), c_objectiveStateHidden, true);
     gv_objectiveTychusMustSurvive = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveTychusMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveTychusMustSurvive, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/A2EBB206"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5033,13 +5041,20 @@ bool gt_ObjectiveDestroyDominionBasesCreateQ_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/B6A1D7EC"), StringExternal("Param/Value/35A07756"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", 0, gv_objectiveDestroyDominionBasesQuota);
+    ObjectiveCreate(StringExternal("Param/Value/B6A1D7EC"), StringExternal("Param/Value/35A07756"), c_objectiveStateHidden, true);
     gv_objectiveDestroyDominionBases = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyDominionBases, lib5BD4895D_ge_APObjectiveCategory_Primary, "", 0, gv_objectiveDestroyDominionBasesQuota, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBases, gv_LOCATION_ID_WEST_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBases, gv_LOCATION_ID_NORTHWEST_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBases, gv_LOCATION_ID_NORTHEAST_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBases, gv_LOCATION_ID_SOUTHEAST_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBases, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionBases, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/1AAF573D"));
-    ObjectiveCreate(StringExternal("Param/Value/9A3A5393"), StringExternal("Param/Value/4F1324DA"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/9A3A5393"), StringExternal("Param/Value/4F1324DA"), c_objectiveStateHidden, true);
     gv_objectiveOdinMustSurvive = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveOdinMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveOdinMustSurvive, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective4, ObjectiveLastCreated(), StringExternal("Param/Value/FD0C270E"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5112,7 +5127,13 @@ void gt_ObjectiveDestroyDominionBasesUpdate_Init () {
 // Trigger: Objective Destroy the Loki Create Hidden
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroytheLokiCreateHidden_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5127,8 +5148,11 @@ bool gt_ObjectiveDestroytheLokiCreateHidden_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/932ED8C2"), StringExternal("Param/Value/16ADA481"), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/932ED8C2"), StringExternal("Param/Value/16ADA481"), c_objectiveStateHidden, false);
     gv_objectiveDestroytheLoki = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroytheLoki, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroytheLoki, gv_LOCATION_ID_LOKI);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroytheLoki, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective5, ObjectiveLastCreated(), StringExternal("Param/Value/94E1BA17"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5194,7 +5218,13 @@ void gt_ObjectiveDestroytheLokiFailed_Init () {
 // Trigger: Objective Devourer Samples Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDevourerSamplesCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5209,9 +5239,13 @@ bool gt_ObjectiveDevourerSamplesCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/65CF8966"), StringExternal("Param/Value/9337876A"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", gv_devourerSamplesFound, gv_devourerSamplesTotal);
+    ObjectiveCreate(StringExternal("Param/Value/65CF8966"), StringExternal("Param/Value/9337876A"), c_objectiveStateHidden, false);
     gv_objectiveDevourerSamples = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDevourerSamples, lv_category, "", gv_devourerSamplesFound, gv_devourerSamplesTotal, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDevourerSamples, gv_LOCATION_ID_LAB_DEVOURER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDevourerSamples, gv_LOCATION_ID_NORTH_LAB_DEVOURER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDevourerSamples, gv_LOCATION_ID_SOUTHEAST_LAB_DEVOURER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDevourerSamples, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_THorner03Objective6, ObjectiveLastCreated(), StringExternal("Param/Value/2504059C"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
@@ -5224,13 +5258,17 @@ void gt_ObjectiveDevourerSamplesCreateQ_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Devourer Sample Update
+// Trigger: Objective Devourer Samples Update
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDevourerSampleUpdate_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDevourerSamplesUpdate_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
         if (!((UnitGetType(EventUnit()) == "DevourerTissueSampleTube"))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
     }
@@ -5255,9 +5293,38 @@ bool gt_ObjectiveDevourerSampleUpdate_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDevourerSampleUpdate_Init () {
-    gt_ObjectiveDevourerSampleUpdate = TriggerCreate("gt_ObjectiveDevourerSampleUpdate_Func");
-    TriggerAddEventUnitAbility(gt_ObjectiveDevourerSampleUpdate, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+void gt_ObjectiveDevourerSamplesUpdate_Init () {
+    gt_ObjectiveDevourerSamplesUpdate = TriggerCreate("gt_ObjectiveDevourerSamplesUpdate_Func");
+    TriggerAddEventUnitAbility(gt_ObjectiveDevourerSamplesUpdate, null, AbilityCommand("Pickup", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Devourer Samples Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDevourerSamplesRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_LAB_DEVOURER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_LAB_DEVOURER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTHEAST_LAB_DEVOURER] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveDevourerSamplesCreateQ, false);
+    TriggerEnable(gt_ObjectiveDevourerSamplesUpdate, false);
+    TriggerEnable(gt_ObjectiveCerebrateSamplesComplete, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDevourerSamplesRemove_Init () {
+    gt_ObjectiveDevourerSamplesRemove = TriggerCreate("gt_ObjectiveDevourerSamplesRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDevourerSamplesRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6340,7 +6407,8 @@ void InitTriggers () {
     gt_ObjectiveDestroytheLokiComplete_Init();
     gt_ObjectiveDestroytheLokiFailed_Init();
     gt_ObjectiveDevourerSamplesCreateQ_Init();
-    gt_ObjectiveDevourerSampleUpdate_Init();
+    gt_ObjectiveDevourerSamplesUpdate_Init();
+    gt_ObjectiveDevourerSamplesRemove_Init();
     gt_ObjectiveCerebrateSamplesComplete_Init();
     gt_RemoveDevourerTissueSample_Init();
     gt_BriefingQ_Init();
