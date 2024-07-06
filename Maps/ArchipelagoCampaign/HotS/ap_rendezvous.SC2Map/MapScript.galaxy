@@ -40,6 +40,10 @@ const int gv_pLAYER_03_DOMINION_MAIN = 3;
 const int gv_pLAYER_04_DOMINION_RIGHT = 4;
 const int gv_pLAYER_05_INFESTED = 5;
 const int gv_pLAYER_07_DOMINION_LEFT = 7;
+const int gv_LOCATION_ID_RIGHT_QUEEN = 1;
+const int gv_LOCATION_ID_CENTER_QUEEN = 2;
+const int gv_LOCATION_ID_LEFT_QUEEN = 3;
+const int gv_LOCATION_ID_HOLD_OUT_FINISHED = 4;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -4511,7 +4515,7 @@ bool gt_QueenRescueRight_Func (bool testConds, bool runActions) {
     gv_rescue_RevealerRight = null;
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZLab03_BonusObjective02", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     TriggerExecute(gt_TransmissionQueenRescueUpdateQ, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_RIGHT_QUEEN);
     Wait(2.0, c_timeGame);
     libSwaC_gf_PingMinimapCampaign(PlayerGroupAll(), UnitGetPosition(UnitFromId(146)), 2.0, Color(100.00, 100.00, 0.00));
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/059AB504"), null, UnitGetPosition(UnitFromId(146)));
@@ -4780,7 +4784,7 @@ bool gt_QueenRescueLeft_Func (bool testConds, bool runActions) {
     gv_rescue_RevealerLeft = null;
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZLab03_BonusObjective02", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     TriggerExecute(gt_TransmissionQueenRescueUpdateQ, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LEFT_QUEEN);
     Wait(2.0, c_timeGame);
     libSwaC_gf_PingMinimapCampaign(PlayerGroupAll(), UnitGetPosition(UnitFromId(52)), 2.0, Color(100.00, 100.00, 0.00));
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/72D1F867"), null, UnitGetPosition(UnitFromId(52)));
@@ -5049,7 +5053,7 @@ bool gt_QueenRescueCenter_Func (bool testConds, bool runActions) {
     gv_rescue_RevealerCenter = null;
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZLab03_BonusObjective03", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     TriggerExecute(gt_TransmissionQueenRescueUpdateQ, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CENTER_QUEEN);
     Wait(2.0, c_timeGame);
     libSwaC_gf_PingMinimapCampaign(PlayerGroupAll(), UnitGetPosition(UnitFromId(781)), 2.0, Color(100.00, 100.00, 0.00));
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/DEB3CBBE"), null, UnitGetPosition(UnitFromId(781)));
@@ -5636,7 +5640,7 @@ bool gt_HoldOutTimerFinished_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_HOLD_OUT_FINISHED);
     TriggerEnable(gt_HoldOutFinishedEarly, false);
     TimerWindowDestroy(gv_holdOut_Window);
     TriggerExecute(gt_ObjectiveHoldOutComplete, true, true);
@@ -7776,7 +7780,7 @@ bool gt_VictoryCannonDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     CameraPan(gv_pLAYER_01_USER, PointWithOffsetPolar(UnitGetPosition(gv_pulseCannonUnit), 2.0, 225.0), 2.0, -1, 10.0, false);
     PingDestroy(gv_pulseCannonPing);
     TriggerExecute(gt_CannonExplosionScene, true, false);
@@ -7981,7 +7985,10 @@ bool gt_ObjectiveHoldOutCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab03Objective2");
     gv_objectiveHoldOut = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab03Objective2", "", 0);
+    ObjectiveShow(gv_objectiveHoldOut, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveHoldOut, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveHoldOut, gv_LOCATION_ID_HOLD_OUT_FINISHED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveHoldOut, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8075,7 +8082,10 @@ bool gt_ObjectiveDestroyPulseCannonCreate_Func (bool testConds, bool runActions)
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab03Objective3");
     gv_objectiveDestroyPulseCannon = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab03Objective3", "", 0);
+    ObjectiveShow(gv_objectiveDestroyPulseCannon, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyPulseCannon, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPulseCannon, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyPulseCannon, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     libSwaC_gf_CreateObjectivePing(true, UnitGetPosition(gv_pulseCannonUnit), StringExternal("Param/Value/8121FADF"));
     gv_pulseCannonPing = PingLastCreated();
@@ -8153,7 +8163,13 @@ void gt_ObjectiveDestroyPulseCannonFailed_Init () {
 // Trigger: Objective - Rescue Trapped Queens Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRescueTrappedQueensCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -8168,8 +8184,13 @@ bool gt_ObjectiveRescueTrappedQueensCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZLab03Objective4");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZLab03Objective4", "", 0);
     gv_objectiveRescueQueens = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveRescueQueens, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveRescueQueens, lv_category, "", gv_rescue_QueensRescued, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueQueens, gv_LOCATION_ID_RIGHT_QUEEN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueQueens, gv_LOCATION_ID_CENTER_QUEEN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueQueens, gv_LOCATION_ID_LEFT_QUEEN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRescueQueens, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
