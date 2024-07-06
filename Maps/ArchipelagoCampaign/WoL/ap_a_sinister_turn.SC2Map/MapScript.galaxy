@@ -29,6 +29,15 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_ROBOTICS_FACILITY = 1;
+const int gv_LOCATION_ID_DARK_SHRINE = 2;
+const int gv_LOCATION_ID_TEMPLAR_ARCHIVES = 3;
+const int gv_LOCATION_ID_NORTHEAST_BASE = 4;
+const int gv_LOCATION_ID_SOUTHWEST_BASE = 5;
+const int gv_LOCATION_ID_MAAR = 6;
+const int gv_LOCATION_ID_NORTHWEST_PRESERVER = 7;
+const int gv_LOCATION_ID_SOUTHWEST_PRESERVER = 8;
+const int gv_LOCATION_ID_EAST_PRESERVER = 9;
 const int gv_p1_USER = 1;
 const int gv_p2_PROTOSS_STALKER = 2;
 const int gv_p3_PROTOSS_ENEMY = 3;
@@ -42,8 +51,9 @@ const int gv_p10_HYBRID_MANIFESTATIONS = 10;
 //--------------------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------------------
-int gv_objectiveDestroySupportBases;
-int gv_supportBasesDestroyed;
+int gv_objectiveDestroyNortheast;
+int gv_objectiveDestroySouthwest;
+int gv_objectiveDefeatMaar;
 bool gv_gameOver;
 bool gv_inCinematic;
 unit gv_superWarpGate_Neutral;
@@ -166,7 +176,9 @@ unitgroup gv_victoryHiddenUnitGroup;
 unit gv_zeratul;
 
 void InitGlobals () {
-    gv_objectiveDestroySupportBases = c_invalidObjectiveId;
+    gv_objectiveDestroyNortheast = c_invalidObjectiveId;
+    gv_objectiveDestroySouthwest = c_invalidObjectiveId;
+    gv_objectiveDefeatMaar = c_invalidObjectiveId;
     gv_libraryHybrid = DoodadFromId(83);
     gv_prisonGroup = UnitGroupEmpty();
     gv_achievementHardTimer = TimerCreate();
@@ -221,11 +233,14 @@ unitgroup gf_EnemiesWithinRange (unit lp_unit, fixed lp_range, unitfilter lp_fil
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
-trigger gt_ObjectiveDestroySupportBasesCreateQ;
-trigger gt_ObjectiveDestroySupportBasesComplete;
-trigger gt_ObjectiveDestroySupportBasesUpdate;
+trigger gt_ObjectiveDestroyNortheastCreateQ;
+trigger gt_ObjectiveDestroyNortheastComplete;
+trigger gt_ObjectiveDestroySouthwestCreateQ;
+trigger gt_ObjectiveDestroySouthwestComplete;
 trigger gt_NortheastNexus;
 trigger gt_SouthwestNexus;
+trigger gt_ObjectiveDefeatMaarCreateQ;
+trigger gt_ObjectiveDefeatMaarComplete;
 trigger gt_Maardiesforfirsttime;
 trigger gt_MaargetsMindContolled;
 trigger gt_onDifficultyCasual;
@@ -490,10 +505,16 @@ unitgroup gf_EnemiesWithinRange (unit lp_unit, fixed lp_range, unitfilter lp_fil
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Support Bases Create Q
+// Trigger: Objective Destroy Northeast Create Q
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroySupportBasesCreateQ_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyNortheastCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -508,23 +529,25 @@ bool gt_ObjectiveDestroySupportBasesCreateQ_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/ACA4539D"), StringExternal("Param/Value/3F1C3961"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (2 - gv_supportBasesDestroyed), 0);
-    gv_objectiveDestroySupportBases = ObjectiveLastCreated();
+    ObjectiveCreate(StringExternal("Param/Value/ACA4539D"), StringExternal("Param/Value/3F1C3961"), c_objectiveStateHidden, false);
+    gv_objectiveDestroyNortheast = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyNortheast, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyNortheast, gv_LOCATION_ID_NORTHEAST_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyNortheast, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroySupportBasesCreateQ_Init () {
-    gt_ObjectiveDestroySupportBasesCreateQ = TriggerCreate("gt_ObjectiveDestroySupportBasesCreateQ_Func");
+void gt_ObjectiveDestroyNortheastCreateQ_Init () {
+    gt_ObjectiveDestroyNortheastCreateQ = TriggerCreate("gt_ObjectiveDestroyNortheastCreateQ_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Support Bases Complete
+// Trigger: Objective Destroy Northeast Complete
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroySupportBasesComplete_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyNortheastComplete_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -539,27 +562,29 @@ bool gt_ObjectiveDestroySupportBasesComplete_Func (bool testConds, bool runActio
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveDestroySupportBasesCreateQ, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroySupportBases);
+    TriggerExecute(gt_ObjectiveDestroyNortheastCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyNortheast);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroySupportBasesComplete_Init () {
-    gt_ObjectiveDestroySupportBasesComplete = TriggerCreate("gt_ObjectiveDestroySupportBasesComplete_Func");
+void gt_ObjectiveDestroyNortheastComplete_Init () {
+    gt_ObjectiveDestroyNortheastComplete = TriggerCreate("gt_ObjectiveDestroyNortheastComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Support Bases Update
+// Trigger: Objective Destroy Southwest Create Q
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroySupportBasesUpdate_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroySouthwestCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
     // Conditions
     if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
@@ -570,20 +595,49 @@ bool gt_ObjectiveDestroySupportBasesUpdate_Func (bool testConds, bool runActions
         return true;
     }
 
-    TriggerExecute(gt_ObjectiveDestroySupportBasesCreateQ, true, false);
-    gv_supportBasesDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroySupportBases, (2 - gv_supportBasesDestroyed));
-    if ((gv_supportBasesDestroyed == 2)) {
-        TriggerEnable(TriggerGetCurrent(), false);
-        TriggerExecute(gt_ObjectiveDestroySupportBasesComplete, true, false);
-    }
-
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/D1BECFB0"), StringExternal("Param/Value/FA4823DA"), c_objectiveStateHidden, false);
+    gv_objectiveDestroySouthwest = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroySouthwest, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroySouthwest, gv_LOCATION_ID_SOUTHWEST_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroySouthwest, true);
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroySupportBasesUpdate_Init () {
-    gt_ObjectiveDestroySupportBasesUpdate = TriggerCreate("gt_ObjectiveDestroySupportBasesUpdate_Func");
+void gt_ObjectiveDestroySouthwestCreateQ_Init () {
+    gt_ObjectiveDestroySouthwestCreateQ = TriggerCreate("gt_ObjectiveDestroySouthwestCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Southwest Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroySouthwestComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroySouthwestCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroySouthwest);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroySouthwestComplete_Init () {
+    gt_ObjectiveDestroySouthwestComplete = TriggerCreate("gt_ObjectiveDestroySouthwestComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -596,8 +650,9 @@ bool gt_NortheastNexus_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
-    TriggerExecute(gt_ObjectiveDestroySupportBasesUpdate, true, false);
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_BASE);
+    TriggerExecute(gt_ObjectiveDestroyNortheastComplete, true, false);
     return true;
 }
 
@@ -617,8 +672,9 @@ bool gt_SouthwestNexus_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
-    TriggerExecute(gt_ObjectiveDestroySupportBasesUpdate, true, false);
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_BASE);
+    TriggerExecute(gt_ObjectiveDestroySouthwestComplete, true, false);
     return true;
 }
 
@@ -626,6 +682,74 @@ bool gt_SouthwestNexus_Func (bool testConds, bool runActions) {
 void gt_SouthwestNexus_Init () {
     gt_SouthwestNexus = TriggerCreate("gt_SouthwestNexus_Func");
     TriggerAddEventUnitDied(gt_SouthwestNexus, UnitRefFromUnit(UnitFromId(165)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective DefeatMaar Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDefeatMaarCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerQueueEnter();
+    ObjectiveCreate(StringExternal("Param/Value/BB1448D3"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveDefeatMaar = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDefeatMaar, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDefeatMaar, gv_LOCATION_ID_MAAR);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDefeatMaar, true);
+    Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
+    TriggerQueueExit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDefeatMaarCreateQ_Init () {
+    gt_ObjectiveDefeatMaarCreateQ = TriggerCreate("gt_ObjectiveDefeatMaarCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective DefeatMaar Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDefeatMaarComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDefeatMaarCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDefeatMaar);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDefeatMaarComplete_Init () {
+    gt_ObjectiveDefeatMaarComplete = TriggerCreate("gt_ObjectiveDefeatMaarComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -646,7 +770,8 @@ bool gt_Maardiesforfirsttime_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MAAR);
+    TriggerExecute(gt_ObjectiveDefeatMaarComplete, true, false);
     return true;
 }
 
@@ -3378,7 +3503,7 @@ bool gt_TemplarArchivesPowered_Func (bool testConds, bool runActions) {
 
     if ((PowerLevel(gv_p1_USER, UnitGetPosition(UnitFromId(43)), "PowerSource") > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_TEMPLAR_ARCHIVES);
         UnitSetState(UnitFromId(43), c_unitStateTargetable, true);
         gv_pylonPlayerCreatedHighTemplar = EventUnitProgressUnit();
         libNtve_gf_RescueUnit(UnitFromId(43), gv_p1_USER, true);
@@ -3421,7 +3546,7 @@ bool gt_RoboticsFacilityPowered_Func (bool testConds, bool runActions) {
 
     if ((PowerLevel(gv_p1_USER, UnitGetPosition(UnitFromId(563)), "PowerSource") > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ROBOTICS_FACILITY);
         UnitSetState(UnitFromId(563), c_unitStateTargetable, true);
         gv_pylonPlayerCreatedRobotics = EventUnitProgressUnit();
         libNtve_gf_RescueUnit(UnitFromId(563), gv_p1_USER, true);
@@ -3464,7 +3589,7 @@ bool gt_DarkShrinePowered_Func (bool testConds, bool runActions) {
 
     if ((PowerLevel(gv_p1_USER, UnitGetPosition(UnitFromId(179)), "PowerSource") > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DARK_SHRINE);
         UnitSetState(UnitFromId(179), c_unitStateTargetable, true);
         gv_pylonPlayerCreatedDT = EventUnitProgressUnit();
         libNtve_gf_RescueUnit(UnitFromId(179), gv_p1_USER, true);
@@ -4569,7 +4694,9 @@ bool gt_StalkerBecomesEnemyNearBase_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libNtve_gf_SetAlliance(gv_p1_USER, gv_p2_PROTOSS_STALKER, libNtve_ge_AllianceSetting_Enemy);
-    TriggerExecute(gt_ObjectiveDestroySupportBasesCreateQ, true, false);
+    TriggerExecute(gt_ObjectiveDestroyNortheastCreateQ, true, false);
+    Wait(3.0, c_timeGame);
+    TriggerExecute(gt_ObjectiveDestroySouthwestCreateQ, true, false);
     return true;
 }
 
@@ -5690,7 +5817,7 @@ bool gt_VictoryPrisonObjectiveComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     TriggerEnable(gt_HybridPingandSound, false);
     auto6BC92896_g = UnitGroup(null, gv_p3_PROTOSS_ENEMY, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
@@ -5886,9 +6013,10 @@ bool gt_ObjectivePowerBaseCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/0529E638"), StringExternal("Param/Value/A20EA9E8"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_obejctivePowerBaseUpdate, gv_obejctivePowerBaseTotal);
+    ObjectiveCreate(StringExternal("Param/Value/0529E638"), StringExternal("Param/Value/A20EA9E8"), c_objectiveStateHidden, true);
     gv_objectivePowerBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectivePowerBase, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_obejctivePowerBaseUpdate, gv_obejctivePowerBaseTotal, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectivePowerBase, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TZeratul02Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/F78FFBD4"));
     TriggerExecute(gt_PylonPlaceStartQ, true, false);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -5989,9 +6117,14 @@ bool gt_ObjectiveDestroyPrisonsCreateQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    ObjectiveCreate(StringExternal("Param/Value/3EB10506"), StringExternal("Param/Value/BF6654F6"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "", gv_objectivesAllPrisonsDestroyedUpdate, gv_obejctivePrisonsTotal);
+    ObjectiveCreate(StringExternal("Param/Value/3EB10506"), StringExternal("Param/Value/BF6654F6"), c_objectiveStateHidden, true);
     gv_objectiveDestroyPrisons = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyPrisons, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objectivesAllPrisonsDestroyedUpdate, gv_obejctivePrisonsTotal, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPrisons, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPrisons, gv_LOCATION_ID_NORTHWEST_PRESERVER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPrisons, gv_LOCATION_ID_SOUTHWEST_PRESERVER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPrisons, gv_LOCATION_ID_EAST_PRESERVER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyPrisons, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TZeratul02Objective2, ObjectiveLastCreated(), StringExternal("Param/Value/FC23C1AF"));
     TriggerExecute(gt_ObjectiveDestroyPrisonsCreateQ, true, false);
     Wait(3.0, c_timeReal);
@@ -6120,7 +6253,7 @@ bool gt_Prison01Destroyed_Func (bool testConds, bool runActions) {
     UnitSetState(gv_archTemplar01, c_unitStateTargetable, false);
     libNtve_gf_MakeUnitInvulnerable(gv_archTemplar01, true);
     PingDestroy(gv_pingPrison01);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_PRESERVER);
     UnitSetScale(gv_archTemplar01, 120.0, 120.0, 120.0);
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectDestroythePreserverPrisons, gv_archTemplar01, gv_p1_USER);
     return true;
@@ -6156,7 +6289,7 @@ bool gt_Prison02Destroyed_Func (bool testConds, bool runActions) {
     UnitSetState(gv_archTemplar02, c_unitStateTargetable, false);
     libNtve_gf_MakeUnitInvulnerable(gv_archTemplar02, true);
     PingDestroy(gv_pingPrison02);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_PRESERVER);
     UnitSetScale(gv_archTemplar02, 120.0, 120.0, 120.0);
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectDestroythePreserverPrisons, gv_archTemplar02, gv_p1_USER);
     return true;
@@ -6192,7 +6325,7 @@ bool gt_Prison03Destroyed_Func (bool testConds, bool runActions) {
     UnitSetState(gv_archTemplar03, c_unitStateTargetable, false);
     libNtve_gf_MakeUnitInvulnerable(gv_archTemplar03, true);
     PingDestroy(gv_pingPrison03);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_PRESERVER);
     UnitSetScale(gv_archTemplar03, 120.0, 120.0, 120.0);
     libCamp_gf_DisplayResearchPointsGiventoPlayer(libCamp_ge_StoryResearchObject_ResearchObjectDestroythePreserverPrisons, gv_archTemplar03, gv_p1_USER);
     return true;
@@ -6208,7 +6341,13 @@ void gt_Prison03Destroyed_Init () {
 // Trigger: Objective Power Secondary Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectivePowerSecondaryCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6223,9 +6362,13 @@ bool gt_ObjectivePowerSecondaryCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/693D0B04"), StringExternal("Param/Value/F974BE83"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(ObjectiveLastCreated(), "checks", (gv_obejctivePrisonsTotal - gv_obejctivePowerSecondaryBaseUpdate), 0);
+    ObjectiveCreate(StringExternal("Param/Value/693D0B04"), StringExternal("Param/Value/F974BE83"), c_objectiveStateHidden, false);
     gv_objectivePowerSecondaryBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectivePowerSecondaryBase, lv_category, "", gv_obejctivePowerSecondaryBaseUpdate, gv_obejctivePowerSecondaryBaseTotal, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePowerSecondaryBase, gv_LOCATION_ID_ROBOTICS_FACILITY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePowerSecondaryBase, gv_LOCATION_ID_DARK_SHRINE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePowerSecondaryBase, gv_LOCATION_ID_TEMPLAR_ARCHIVES);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectivePowerSecondaryBase, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TZeratul02Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/79D9949C"));
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_ObjectivePings, true, false);
@@ -6348,7 +6491,7 @@ bool gt_ObjectivePowerupSecondaryUpdate_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_ObjectivePowerSecondaryCreateQ, true, false);
     gv_obejctivePowerSecondaryBaseUpdate += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectivePowerSecondaryBase, (gv_obejctivePrisonsTotal - gv_obejctivePowerSecondaryBaseUpdate));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectivePowerSecondaryBase, gv_obejctivePowerSecondaryBaseUpdate);
     if ((gv_obejctivePowerSecondaryBaseUpdate == gv_obejctivePowerSecondaryBaseTotal)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectivePowerSecondaryComplete, true, false);
@@ -7288,6 +7431,7 @@ bool gt_MidPrisonCleanup_Func (bool testConds, bool runActions) {
     UnitIssueOrder(gv_libraryAtBridge04, Order(AbilityCommand("LibraryDown", 0)), c_orderQueueReplace);
     UnitIssueOrder(gv_libraryAtBridge05, Order(AbilityCommand("LibraryDown", 0)), c_orderQueueReplace);
     libNtve_gf_CreateUnitsAtPoint2(1, "Maar", 0, gv_p8_PRISON_STRUCTURE, PointFromId(181));
+    TriggerExecute(gt_ObjectiveDefeatMaarCreateQ, true, false);
     gv_hybridNeutral = UnitLastCreated();
     UnitIssueOrder(gv_hybridNeutral, Order(AbilityCommand("move", 2)), c_orderQueueReplace);
     UnitSetState(gv_hybridNeutral, c_unitStateInvulnerable, true);
@@ -7615,11 +7759,14 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
-    gt_ObjectiveDestroySupportBasesCreateQ_Init();
-    gt_ObjectiveDestroySupportBasesComplete_Init();
-    gt_ObjectiveDestroySupportBasesUpdate_Init();
+    gt_ObjectiveDestroyNortheastCreateQ_Init();
+    gt_ObjectiveDestroyNortheastComplete_Init();
+    gt_ObjectiveDestroySouthwestCreateQ_Init();
+    gt_ObjectiveDestroySouthwestComplete_Init();
     gt_NortheastNexus_Init();
     gt_SouthwestNexus_Init();
+    gt_ObjectiveDefeatMaarCreateQ_Init();
+    gt_ObjectiveDefeatMaarComplete_Init();
     gt_Maardiesforfirsttime_Init();
     gt_MaargetsMindContolled_Init();
     gt_onDifficultyCasual_Init();
