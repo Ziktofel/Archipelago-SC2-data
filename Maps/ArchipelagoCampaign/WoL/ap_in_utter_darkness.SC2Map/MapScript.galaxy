@@ -29,6 +29,12 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_PROTOSS_ARCHIVE = 1;
+const int gv_LOCATION_ID_KILLS = 2;
+const int gv_LOCATION_ID_URUN = 3;
+const int gv_LOCATION_ID_MOHANDAR = 4;
+const int gv_LOCATION_ID_SELENDIS = 5;
+const int gv_LOCATION_ID_ARTANIS = 6;
 const int gv_p01_PLAYER = 1;
 const int gv_p02_ALLIED_PROTOSS = 2;
 const int gv_p04_ZERG_NW = 4;
@@ -230,6 +236,7 @@ trigger gt_ObjectiveProtectArchiveCreateQ;
 trigger gt_ObjectiveProtectArchiveUpdate;
 trigger gt_ObjectiveProtectArchiveComplete;
 trigger gt_ObjectiveProtectArchiveFailed;
+trigger gt_ObjectiveProtectArchiveDisable;
 trigger gt_BriefingQ;
 trigger gt_BriefingScene00;
 trigger gt_BriefingScene01;
@@ -1248,7 +1255,7 @@ bool gt_NewTech01PhoenixQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p01_PLAYER, StringExternal("Param/Value/8403F3B6"), null, UnitGetPosition(UnitFromId(639)));
     // Transmission - SoundLink("TZeratul04Urun00002", -1)
     libCamp_gf_SendTransmissionCampaign(gv_heroPhoenix, SoundLink("TZeratul04Urun00002", 0), c_transmissionDurationAdd, 1.0, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_URUN);
     if ((UnitIsAlive(gv_zeratul) == true)) {
         // Transmission - SoundLink("TZeratul04Zeratul00003", -1)
         libCamp_gf_SendTransmissionCampaign(gv_zeratul, SoundLink("TZeratul04Zeratul00003", 0), c_transmissionDurationAdd, 1.0, true);
@@ -1309,7 +1316,7 @@ bool gt_NewTech02VoidRayQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p01_PLAYER, StringExternal("Param/Value/5DAFE246"), null, UnitGetPosition(UnitFromId(639)));
     // Transmission - SoundLink("TZeratul04Mohandar00004", -1)
     libCamp_gf_SendTransmissionCampaign(gv_heroVoidRay, SoundLink("TZeratul04Mohandar00004", 0), c_transmissionDurationAdd, 1.0, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MOHANDAR);
     if ((UnitIsAlive(gv_zeratul) == true)) {
         // Transmission - SoundLink("TZeratul04Zeratul00005", -1)
         libCamp_gf_SendTransmissionCampaign(gv_zeratul, SoundLink("TZeratul04Zeratul00005", 0), c_transmissionDurationAdd, 1.0, true);
@@ -1371,7 +1378,7 @@ bool gt_NewTech03CarriersQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p01_PLAYER, StringExternal("Param/Value/7D557C0A"), null, UnitGetPosition(UnitFromId(639)));
     // Transmission - SoundLink("TZeratul04Selendis00006", -1)
     libCamp_gf_SendTransmissionCampaign(gv_heroCarrier, SoundLink("TZeratul04Selendis00006", 0), c_transmissionDurationAdd, 1.0, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SELENDIS);
     if ((UnitIsAlive(gv_zeratul) == true)) {
         // Transmission - SoundLink("TZeratul04Zeratul00007", -1)
         libCamp_gf_SendTransmissionCampaign(gv_zeratul, SoundLink("TZeratul04Zeratul00007", 0), c_transmissionDurationAdd, 1.0, true);
@@ -1440,7 +1447,7 @@ bool gt_NewTech04MothershipQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p01_PLAYER, StringExternal("Param/Value/718CB62A"), null, UnitGetPosition(UnitFromId(639)));
     // Transmission - SoundLink("TZeratul04Artanis00009", -1)
     libCamp_gf_SendTransmissionCampaign(gv_heroMothership, SoundLink("TZeratul04Artanis00009", 0), c_transmissionDurationAdd, 1.0, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ARTANIS);
     gv_mothershipHeroBorn = true;
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     ActorSend(ActorFromDoodad(DoodadFromId(482)), "AnimGroupRemove Work");
@@ -4802,6 +4809,10 @@ bool gt_TransmissionTemplarsStoreKnowledgeQ_Func (bool testConds, bool runAction
         if (!((gv_inCinematic == false))) {
             return false;
         }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -5277,13 +5288,13 @@ bool gt_VictoryDefeatforPlayer_Func (bool testConds, bool runActions) {
     UnitGroupRemoveUnitGroup(lv_unitGroup, UnitGroup("AP_ZerglingRespawnControllerUnit", gv_p01_PLAYER, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     if (((UnitGroupCount(lv_unitGroup, c_unitCountAlive) == 0) || (gv_pretendPlayerIsDead == true))) {
         TriggerEnable(TriggerGetCurrent(), false);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
         gv_gameOver = true;
         lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSurviveUntilYouDie);
         Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
         if ((gv_killCount >= gv_sTAGE_01_KILL_QUOTA)) {
-            if ((lib5BD4895D_gf_AP_Core_isLocationSent(6) == false)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+            if ((lib5BD4895D_gf_AP_Core_isLocationSent(gv_LOCATION_ID_ARTANIS) == false)) {
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ARTANIS);
             }
 
             libCamp_gf_RunMissionVictorySequence(gt_VictoryQ);
@@ -5465,13 +5476,21 @@ bool gt_ObjectiveSurviveCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(TextReplaceWord(StringExternal("Param/Value/127508A0"), StringExternal("Param/Value/65D79CE4"), IntToText(gv_sTAGE_01_KILL_QUOTA), c_stringReplaceAll, c_stringCase), StringExternal("Param/Value/1F2F72F6"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(TextReplaceWord(StringExternal("Param/Value/127508A0"), StringExternal("Param/Value/65D79CE4"), IntToText(gv_sTAGE_01_KILL_QUOTA), c_stringReplaceAll, c_stringCase), StringExternal("Param/Value/1F2F72F6"), c_objectiveStateHidden, true);
     gv_objectiveKillPrimary = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillPrimary, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillPrimary, gv_LOCATION_ID_KILLS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillPrimary, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TZeratul04Objective1, ObjectiveLastCreated(), StringExternal("Param/Value/09C0A593"));
-    ObjectiveCreate(StringExternal("Param/Value/D6B7F35F"), StringExternal("Param/Value/97923284"), c_objectiveStateActive, true);
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(ObjectiveLastCreated());
+    ObjectiveCreate(StringExternal("Param/Value/D6B7F35F"), StringExternal("Param/Value/97923284"), c_objectiveStateHidden, true);
     gv_objectiveSurviveUntilYouDie = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveSurviveUntilYouDie, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSurviveUntilYouDie, gv_LOCATION_ID_URUN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSurviveUntilYouDie, gv_LOCATION_ID_MOHANDAR);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSurviveUntilYouDie, gv_LOCATION_ID_SELENDIS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSurviveUntilYouDie, gv_LOCATION_ID_ARTANIS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSurviveUntilYouDie, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSurviveUntilYouDie, true);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -5500,7 +5519,7 @@ bool gt_ObjectiveSurvivePrimaryComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILLS);
     TriggerExecute(gt_ObjectiveSurviveCreateQ, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillPrimary);
     Wait(libCamp_gv_campaignObjectiveDelay, c_timeReal);
@@ -5516,7 +5535,13 @@ void gt_ObjectiveSurvivePrimaryComplete_Init () {
 // Trigger: Objective Protect Archive Create Q
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveProtectArchiveCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5531,9 +5556,11 @@ bool gt_ObjectiveProtectArchiveCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/4DA1EAE9"), StringExternal("Param/Value/6FBB3F20"), c_objectiveStateActive, false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithTimer(ObjectiveLastCreated(), gv_protectArchiveTimer);
+    ObjectiveCreate(StringExternal("Param/Value/4DA1EAE9"), StringExternal("Param/Value/6FBB3F20"), c_objectiveStateHidden, false);
     gv_objectiveProtectArchive = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer(gv_objectiveProtectArchive, lv_category, gv_protectArchiveTimer, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveProtectArchive, gv_LOCATION_ID_PROTOSS_ARCHIVE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveProtectArchive, true);
     libCamp_gf_RegisterMissionObjective(libCamp_ge_MissionObjective_TZeratul04Objective3, ObjectiveLastCreated(), StringExternal("Param/Value/691FF230"));
     Wait(4.0, c_timeReal);
     TriggerEnable(gt_ObjectiveProtectArchiveUpdate, true);
@@ -5613,7 +5640,7 @@ bool gt_ObjectiveProtectArchiveComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_PROTOSS_ARCHIVE);
     if ((UnitIsAlive(UnitFromId(716)) == true)) {
         gv_statArchiveResearchPoints = libCamp_gf_StoryResearchObjectReward(libCamp_ge_StoryResearchObject_ResearchObjectProtecttheArchive, libCamp_ge_StoryResearchCategory_ResearchCategoryProtoss);
         libNtve_gf_MakeUnitInvulnerable(UnitFromId(716), true);
@@ -5678,6 +5705,41 @@ bool gt_ObjectiveProtectArchiveFailed_Func (bool testConds, bool runActions) {
 void gt_ObjectiveProtectArchiveFailed_Init () {
     gt_ObjectiveProtectArchiveFailed = TriggerCreate("gt_ObjectiveProtectArchiveFailed_Func");
     TriggerAddEventUnitDied(gt_ObjectiveProtectArchiveFailed, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Protect Archive Disable
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveProtectArchiveDisable_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_PROTOSS_ARCHIVE] == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveProtectArchiveCreateQ, false);
+    TriggerEnable(gt_TransmissionTemplarsStoreKnowledgeQ, false);
+    TriggerEnable(gt_ObjectiveProtectArchiveFailed, false);
+    TriggerEnable(gt_ObjectiveProtectArchiveUpdate, false);
+    if ((UnitIsAlive(UnitFromId(716)) == true)) {
+        libNtve_gf_MakeUnitInvulnerable(UnitFromId(716), true);
+        libNtve_gf_PlayAnimation(libNtve_gf_MainActorofUnit(UnitFromId(716)), c_animNameDefault, "Stand Work Start", c_animFlagPlayForever | c_animFlagNonLooping, c_animTimeDefault);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveProtectArchiveDisable_Init () {
+    gt_ObjectiveProtectArchiveDisable = TriggerCreate("gt_ObjectiveProtectArchiveDisable_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveProtectArchiveDisable, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7205,6 +7267,7 @@ void InitTriggers () {
     gt_ObjectiveProtectArchiveUpdate_Init();
     gt_ObjectiveProtectArchiveComplete_Init();
     gt_ObjectiveProtectArchiveFailed_Init();
+    gt_ObjectiveProtectArchiveDisable_Init();
     gt_BriefingQ_Init();
     gt_BriefingScene00_Init();
     gt_BriefingScene01_Init();
