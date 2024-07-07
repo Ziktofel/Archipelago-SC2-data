@@ -40,6 +40,13 @@ const int gv_pLAYER_04_WARFIELDExpansion = 4;
 const int gv_pLAYER_05_WARFIELDCitadel = 5;
 const int gv_pLAYER_06_WARFIELDBoneyard = 6;
 const int gv_pLAYER_09_ZAGARA = 9;
+const int gv_LOCATION_ID_EAST_SCIENCE_LAB = 1;
+const int gv_LOCATION_ID_NORTH_SCIENCE_LAB = 2;
+const int gv_LOCATION_ID_GET_NUKED = 3;
+const int gv_LOCATION_ID_ENTRANCE_GATE = 4;
+const int gv_LOCATION_ID_CITADEL_GATE = 5;
+const int gv_LOCATION_ID_SOUTH_EXPANSION = 6;
+const int gv_LOCATION_ID_RICH_MINERAL_EXPANSION = 7;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -98,6 +105,8 @@ unitgroup gv_frontLineUnits;
 bool gv_victoryCinematicCompleted;
 unitgroup gv_victoryHiddenUnitGroup;
 sound gv_victorySound;
+int gv_objective_Bonus_ClearExpansions;
+int gv_expansionsCleared;
 
 void InitGlobals () {
     int init_i;
@@ -127,6 +136,7 @@ void InitGlobals () {
     gv_midCinePlayerUnits = UnitGroupEmpty();
     gv_frontLineUnits = UnitGroupEmpty();
     gv_victoryHiddenUnitGroup = UnitGroupEmpty();
+    gv_objective_Bonus_ClearExpansions = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -247,6 +257,7 @@ trigger gt_ObjectiveDestroyTacOpsCreate;
 trigger gt_ObjectiveDestroyTacOpsComplete;
 trigger gt_ObjectiveDestroyScienceFacilitiesCreate;
 trigger gt_ObjectiveDestroyScienceFacilitiesComplete;
+trigger gt_ObjectiveDestroyScienceFacilitiesDeactivate;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -273,12 +284,14 @@ trigger gt_VictoryCinematic;
 trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryZerg;
+trigger gt_ObjectiveClearExpansionsCreate;
+trigger gt_ObjectiveClearExpansionsUpdate;
+trigger gt_ObjectiveClearExpansionsComplete;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
 trigger gt_ArchInit;
-trigger gt_SetMineralCount;
 trigger gt_ScienceFacilityDestroyedEast;
 trigger gt_ScienceFacilityDestroyedNorth;
 trigger gt_EntranceGateDestroyed;
@@ -1920,7 +1933,7 @@ bool gt_TimedAttackTimerExpires_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_GET_NUKED);
     TriggerEnable(gt_AllUnitsDestroyedProgresstoStage2, false);
     PingDestroy(gv_timedAttackPing[1]);
     PingDestroy(gv_timedAttackPing[2]);
@@ -2847,7 +2860,8 @@ bool gt_ExpansionClearedDropDrones_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_RICH_MINERAL_EXPANSION);
+    TriggerExecute(gt_ObjectiveClearExpansionsUpdate, true, false);
     if ((gv_timedAttackActive == false)) {
         TimerPause(gv_nukeDropTimer, true);
         TriggerExecute(gt_TransmissionExpansionSecuredQ, true, true);
@@ -5044,7 +5058,7 @@ bool gt_VictoryDestroyTacOpsCenter_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     Wait(2.0, c_timeGame);
     UnitKill(UnitFromId(224));
@@ -5220,7 +5234,11 @@ bool gt_ObjectiveDestroyStuffCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar03Objective3");
     gv_objective_Primary_DestroyStuff = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar03Objective3", "", 0);
+    ObjectiveShow(gv_objective_Primary_DestroyStuff, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Primary_DestroyStuff, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Primary_DestroyStuff, gv_LOCATION_ID_GET_NUKED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Primary_DestroyStuff, gv_LOCATION_ID_ENTRANCE_GATE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Primary_DestroyStuff, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5279,7 +5297,11 @@ bool gt_ObjectiveDestroyTacOpsCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar03Objective1");
     gv_objective_Primary_TacOps = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar03Objective1", "", 0);
+    ObjectiveShow(gv_objective_Primary_TacOps, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Primary_TacOps, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Primary_TacOps, gv_LOCATION_ID_CITADEL_GATE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Primary_TacOps, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Primary_TacOps, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5322,7 +5344,13 @@ void gt_ObjectiveDestroyTacOpsComplete_Init () {
 // Trigger: Objective Destroy Science Facilities Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyScienceFacilitiesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5338,7 +5366,11 @@ bool gt_ObjectiveDestroyScienceFacilitiesCreate_Func (bool testConds, bool runAc
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar03Objective4");
     gv_objective_Bonus_DestroySciFac = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar03Objective4", "", gv_scienceFacilitiesDestroyed);
+    ObjectiveShow(gv_objective_Bonus_DestroySciFac, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_Bonus_DestroySciFac, lv_category, "", gv_scienceFacilitiesDestroyed, libSwaC_gf_MissionObjectiveItemCount("ZChar03Objective4"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Bonus_DestroySciFac, gv_LOCATION_ID_EAST_SCIENCE_LAB);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Bonus_DestroySciFac, gv_LOCATION_ID_NORTH_SCIENCE_LAB);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Bonus_DestroySciFac, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5375,6 +5407,36 @@ bool gt_ObjectiveDestroyScienceFacilitiesComplete_Func (bool testConds, bool run
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyScienceFacilitiesComplete_Init () {
     gt_ObjectiveDestroyScienceFacilitiesComplete = TriggerCreate("gt_ObjectiveDestroyScienceFacilitiesComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Science Facilities Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyScienceFacilitiesDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_SCIENCE_LAB] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_SCIENCE_LAB] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_IntroScienceFacilitiesObjectiveQ, false);
+    TriggerEnable(gt_ScienceFacilityDestroyed, false);
+    TriggerEnable(gt_TransmissionScienceFacilitiesIntro, false);
+    TriggerEnable(gt_TransmissionScienceFacilityDestroyedQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyScienceFacilitiesDeactivate_Init () {
+    gt_ObjectiveDestroyScienceFacilitiesDeactivate = TriggerCreate("gt_ObjectiveDestroyScienceFacilitiesDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDestroyScienceFacilitiesDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6933,6 +6995,98 @@ void gt_VictoryZerg_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Expansions Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearExpansionsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/5254AA30"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_Bonus_ClearExpansions = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_Bonus_ClearExpansions, lv_category, "", gv_expansionsCleared, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Bonus_ClearExpansions, gv_LOCATION_ID_SOUTH_EXPANSION);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Bonus_ClearExpansions, gv_LOCATION_ID_RICH_MINERAL_EXPANSION);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Bonus_ClearExpansions, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearExpansionsCreate_Init () {
+    gt_ObjectiveClearExpansionsCreate = TriggerCreate("gt_ObjectiveClearExpansionsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Expansions Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearExpansionsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    gv_expansionsCleared += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_Bonus_ClearExpansions, gv_expansionsCleared);
+    if ((gv_expansionsCleared >= 2)) {
+        TriggerExecute(gt_ObjectiveClearExpansionsComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearExpansionsUpdate_Init () {
+    gt_ObjectiveClearExpansionsUpdate = TriggerCreate("gt_ObjectiveClearExpansionsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Expansions Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearExpansionsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveClearExpansionsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Bonus_ClearExpansions);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearExpansionsComplete_Init () {
+    gt_ObjectiveClearExpansionsComplete = TriggerCreate("gt_ObjectiveClearExpansionsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -7106,27 +7260,6 @@ void gt_ArchInit_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Set Mineral Count
-//--------------------------------------------------------------------------------------------------
-bool gt_SetMineralCount_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((libNtve_gf_DifficultyValueInt(0, 0, 1, 1) == 1)) {
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SetMineralCount_Init () {
-    gt_SetMineralCount = TriggerCreate("gt_SetMineralCount_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
 // Trigger: Science Facility Destroyed East
 //--------------------------------------------------------------------------------------------------
 bool gt_ScienceFacilityDestroyedEast_Func (bool testConds, bool runActions) {
@@ -7151,7 +7284,8 @@ bool gt_ScienceFacilityDestroyedEast_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_SCIENCE_LAB);
     return true;
 }
 
@@ -7186,7 +7320,8 @@ bool gt_ScienceFacilityDestroyedNorth_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_SCIENCE_LAB);
     return true;
 }
 
@@ -7221,7 +7356,9 @@ bool gt_EntranceGateDestroyed_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ENTRANCE_GATE);
+    TriggerExecute(gt_ObjectiveClearExpansionsCreate, true, false);
     return true;
 }
 
@@ -7258,7 +7395,7 @@ bool gt_CitadelGateDestroyed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerEnable(gt_CitadelGateBreached, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CITADEL_GATE);
     return true;
 }
 
@@ -7299,7 +7436,7 @@ bool gt_CitadelGateBreached_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerEnable(gt_CitadelGateDestroyed, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CITADEL_GATE);
     return true;
 }
 
@@ -7334,7 +7471,9 @@ bool gt_SouthExpansionDestroyed_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_EXPANSION);
+    TriggerExecute(gt_ObjectiveClearExpansionsUpdate, true, false);
     return true;
 }
 
@@ -7445,6 +7584,7 @@ void InitTriggers () {
     gt_ObjectiveDestroyTacOpsComplete_Init();
     gt_ObjectiveDestroyScienceFacilitiesCreate_Init();
     gt_ObjectiveDestroyScienceFacilitiesComplete_Init();
+    gt_ObjectiveDestroyScienceFacilitiesDeactivate_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
@@ -7471,12 +7611,14 @@ void InitTriggers () {
     gt_VictoryCinematicEnd_Init();
     gt_VictoryCleanup_Init();
     gt_VictoryZerg_Init();
+    gt_ObjectiveClearExpansionsCreate_Init();
+    gt_ObjectiveClearExpansionsUpdate_Init();
+    gt_ObjectiveClearExpansionsComplete_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
     gt_ArchInit_Init();
-    gt_SetMineralCount_Init();
     gt_ScienceFacilityDestroyedEast_Init();
     gt_ScienceFacilityDestroyedNorth_Init();
     gt_EntranceGateDestroyed_Init();

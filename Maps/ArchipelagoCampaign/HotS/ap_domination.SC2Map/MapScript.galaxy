@@ -37,6 +37,15 @@ const int gv_pLAYER_02_ZERG2 = 3;
 const int gv_pLAYER_02_ZERG22 = 4;
 const int gv_pLAYER_02_ZERG222 = 5;
 const int gv_pLAYER_02_ZERG2222 = 6;
+const int gv_LOCATION_ID_CENTER_INFESTED_COMMAND_CENTER = 1;
+const int gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER = 2;
+const int gv_LOCATION_ID_REPEL_ZAGARA = 3;
+const int gv_LOCATION_ID_CLOSE_BANELING_NEST = 4;
+const int gv_LOCATION_ID_SOUTH_BANELING_NEST = 5;
+const int gv_LOCATION_ID_SOUTHWEST_BANELING_NEST = 6;
+const int gv_LOCATION_ID_SOUTHEAST_BANELING_NEST = 7;
+const int gv_LOCATION_ID_NORTH_BANELING_NEST = 8;
+const int gv_LOCATION_ID_NORTHEAST_BANELING_NEST = 9;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -107,11 +116,11 @@ unitgroup gv_feralBanelingGroup;
 int gv_numberOfZerglingActors;
 actor[11] gv_zerglingActors;
 bool gv__50EggAttackSent;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase2;
-int gv_objectiveDestroyDominionBase3;
-int gv_objectiveDestroyDominionBase42;
-int gv_objectiveDestroyDominionBase43;
+int gv_objectiveCollectEggs;
+int gv_objectiveZagaraEggs;
+int gv_objectiveDestroyZagara;
+int gv_objectiveDestroyInfestedCC;
+int gv_objectiveFindBanelingNests;
 int gv_banelingKills;
 int gv_banelingNestsBeforeVictoryLap;
 bool gv_banelingNestsBeforeVictoryLapSet;
@@ -133,6 +142,7 @@ bool gv_victoryCinematicCompleted;
 unit gv_victoryKerrigan;
 unit gv_victoryZagara;
 unitgroup gv_victoryZerg;
+int gv_objectiveRepelZagara;
 bool gv_aPFirstZagara;
 
 void InitGlobals () {
@@ -157,11 +167,11 @@ void InitGlobals () {
     gv_zagaraBossPing = c_invalidPingId;
     gv_zagaraFirstDeath = c_invalidTransmissionId;
     gv_feralBanelingGroup = UnitGroupEmpty();
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase42 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase43 = c_invalidObjectiveId;
+    gv_objectiveCollectEggs = c_invalidObjectiveId;
+    gv_objectiveZagaraEggs = c_invalidObjectiveId;
+    gv_objectiveDestroyZagara = c_invalidObjectiveId;
+    gv_objectiveDestroyInfestedCC = c_invalidObjectiveId;
+    gv_objectiveFindBanelingNests = c_invalidObjectiveId;
     gv_destroyZagarasBaseTimer = TimerCreate();
     gv_introHiddenUnitGroup = UnitGroupEmpty();
     gv_introHiddenUnitGroup2 = UnitGroupEmpty();
@@ -169,6 +179,7 @@ void InitGlobals () {
     gv_midHiddenUnits = UnitGroupEmpty();
     gv_midEggHatchDelay = 1.8;
     gv_victoryZerg = UnitGroupEmpty();
+    gv_objectiveRepelZagara = c_invalidObjectiveId;
     gv_aPFirstZagara = true;
 }
 
@@ -274,6 +285,7 @@ trigger gt_ObjectiveDestroyZagaraCreate;
 trigger gt_ObjectiveDestroyZagaraComplete;
 trigger gt_ObjectiveDestroyInfestedCCCreate;
 trigger gt_ObjectiveDestroyInfestedCCUpdate;
+trigger gt_ObjectiveDestroyInfestedCCDeactivate;
 trigger gt_ObjectiveDestroyInfestedCCComplete;
 trigger gt_ObjectiveFindBanelingNestsCreate;
 trigger gt_ObjectiveFindBanelingNestsUpdate;
@@ -312,6 +324,8 @@ trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryZerglings;
 trigger gt_VictoryZergHold;
+trigger gt_ObjectiveRepelZagaraCreate;
+trigger gt_ObjectiveRepelZagaraComplete;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -2428,22 +2442,22 @@ bool gt_BanelingEggPickup_Func (bool testConds, bool runActions) {
             TriggerExecute(gt_ObjectiveFindBanelingNestsUpdate, true, false);
             autoFF5F2503_val = auto6171D946_var;
             if (autoFF5F2503_val == UnitFromId(683)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_BANELING_NEST);
             }
             else if (autoFF5F2503_val == UnitFromId(766)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_BANELING_NEST);
             }
             else if (autoFF5F2503_val == UnitFromId(1810)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_BANELING_NEST);
             }
             else if (autoFF5F2503_val == UnitFromId(720)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_BANELING_NEST);
             }
             else if (autoFF5F2503_val == UnitFromId(607)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_BANELING_NEST);
             }
             else if (autoFF5F2503_val == UnitFromId(765)) {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_BANELING_NEST);
             }
             else {
             }
@@ -2939,6 +2953,7 @@ bool gt_FirstAttackZagaraEntersBase_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveRepelZagaraCreate, true, false);
     AIAttackWaveSetTargetEscort(gv_pLAYER_02_ZERG, libNtve_gf_ConvertUnitToUnitGroup(gv_zagara), 0);
     AIAttackWaveSetGatherPoint(gv_pLAYER_02_ZERG, UnitGetPosition(gv_zagara));
     AISetUnitScriptControlled(gv_zagara, false);
@@ -3536,7 +3551,8 @@ bool gt_ZagaraFirstDefeat_Func (bool testConds, bool runActions) {
     }
 
     gv_aPFirstZagara = false;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_REPEL_ZAGARA);
+    TriggerExecute(gt_ObjectiveRepelZagaraComplete, true, false);
     return true;
 }
 
@@ -4515,24 +4531,34 @@ bool gt_ObjectiveInit_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar01Objective1");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar01Objective1", "", gv_eggsCollected);
+    gv_objectiveCollectEggs = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveCollectEggs, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveCollectEggs, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_eggsCollected, libSwaC_gf_MissionObjectiveItemCount("ZChar01Objective1"), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveCollectEggs, true);
     libSwaC_gf_CreateObjectiveCampaign("ZChar01Objective2");
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    ObjectiveShow(ObjectiveLastCreated(), PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar01Objective2", "", gv_eggsLostToZagara);
+    gv_objectiveZagaraEggs = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveZagaraEggs, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveZagaraEggs, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_eggsLostToZagara, libSwaC_gf_MissionObjectiveItemCount("ZChar01Objective2"), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar01Objective3");
-    gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
-    ObjectiveShow(ObjectiveLastCreated(), PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar01Objective3", "", 0);
+    gv_objectiveDestroyZagara = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyZagara, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyZagara, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyZagara, lib5BD4895D_gv_aP_Core_locationVictory);
     libSwaC_gf_CreateObjectiveCampaign("ZChar01Objective5");
-    gv_objectiveDestroyDominionBase42 = ObjectiveLastCreated();
-    ObjectiveShow(ObjectiveLastCreated(), PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar01Objective5", "", 0);
-    ObjectiveCreate(StringExternal("Param/Value/A1AC8C33"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveDestroyDominionBase43 = ObjectiveLastCreated();
-    ObjectiveShow(ObjectiveLastCreated(), PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroyDominionBase43, "", gv_banelingEggsCollected, 6);
+    gv_objectiveDestroyInfestedCC = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyInfestedCC, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyInfestedCC, lib5BD4895D_ge_APObjectiveCategory_Secondary, "", gv_infestedCCsDestroyed, libSwaC_gf_MissionObjectiveItemCount("ZChar01Objective5"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestedCC, gv_LOCATION_ID_CENTER_INFESTED_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyInfestedCC, gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER);
+    ObjectiveCreate(StringExternal("Param/Value/A1AC8C33"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveFindBanelingNests = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFindBanelingNests, lib5BD4895D_ge_APObjectiveCategory_Secondary, "", gv_banelingEggsCollected, 6, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindBanelingNests, gv_LOCATION_ID_CLOSE_BANELING_NEST);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindBanelingNests, gv_LOCATION_ID_SOUTH_BANELING_NEST);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindBanelingNests, gv_LOCATION_ID_SOUTHWEST_BANELING_NEST);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindBanelingNests, gv_LOCATION_ID_SOUTHEAST_BANELING_NEST);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindBanelingNests, gv_LOCATION_ID_NORTH_BANELING_NEST);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindBanelingNests, gv_LOCATION_ID_NORTHEAST_BANELING_NEST);
     return true;
 }
 
@@ -4580,7 +4606,7 @@ bool gt_ObjectiveCollectEggsUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveCollectEggsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, gv_eggsCollected);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveCollectEggs, gv_eggsCollected);
     return true;
 }
 
@@ -4608,7 +4634,7 @@ bool gt_ObjectiveCollectEggsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveCollectEggsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveCollectEggs);
     return true;
 }
 
@@ -4636,8 +4662,7 @@ bool gt_ObjectiveZagaraEggsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveInit, true, false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase2, PlayerGroupAll(), true);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveZagaraEggs, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4658,7 +4683,7 @@ bool gt_ObjectiveZagaraEggsUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveZagaraEggsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase2, gv_eggsLostToZagara);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveZagaraEggs, gv_eggsLostToZagara);
     return true;
 }
 
@@ -4686,7 +4711,7 @@ bool gt_ObjectiveZagaraEggsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveZagaraEggsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveZagaraEggs);
     return true;
 }
 
@@ -4714,7 +4739,7 @@ bool gt_ObjectiveZagaraEggsFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveZagaraEggsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveZagaraEggs);
     return true;
 }
 
@@ -4742,8 +4767,7 @@ bool gt_ObjectiveDestroyZagaraCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveInit, true, false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase3, PlayerGroupAll(), true);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyZagara, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4772,7 +4796,7 @@ bool gt_ObjectiveDestroyZagaraComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyZagaraCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZagara);
     return true;
 }
 
@@ -4800,8 +4824,7 @@ bool gt_ObjectiveDestroyInfestedCCCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveInit, true, false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase42, PlayerGroupAll(), true);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase42);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyInfestedCC, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4822,13 +4845,43 @@ bool gt_ObjectiveDestroyInfestedCCUpdate_Func (bool testConds, bool runActions) 
     }
 
     TriggerExecute(gt_ObjectiveDestroyInfestedCCCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase42, gv_infestedCCsDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyInfestedCC, gv_infestedCCsDestroyed);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyInfestedCCUpdate_Init () {
     gt_ObjectiveDestroyInfestedCCUpdate = TriggerCreate("gt_ObjectiveDestroyInfestedCCUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Destroy Infested CC - Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyInfestedCCDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_CENTER_INFESTED_COMMAND_CENTER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_PlayerApproachingInfestedCommandCenters, false);
+    TriggerEnable(gt_DestroyInfestedCommandCentersQ, false);
+    TriggerEnable(gt_InfestedCommandCenterDestroyed, false);
+    TriggerEnable(gt_InfestedCCsDestroyedQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyInfestedCCDeactivate_Init () {
+    gt_ObjectiveDestroyInfestedCCDeactivate = TriggerCreate("gt_ObjectiveDestroyInfestedCCDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDestroyInfestedCCDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4850,7 +4903,7 @@ bool gt_ObjectiveDestroyInfestedCCComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyInfestedCCCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase42);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyInfestedCC);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4879,8 +4932,7 @@ bool gt_ObjectiveFindBanelingNestsCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveInit, true, false);
-    ObjectiveShow(gv_objectiveDestroyDominionBase43, PlayerGroupAll(), true);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase43);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindBanelingNests, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4901,7 +4953,7 @@ bool gt_ObjectiveFindBanelingNestsUpdate_Func (bool testConds, bool runActions) 
     }
 
     TriggerExecute(gt_ObjectiveFindBanelingNestsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase43, gv_banelingEggsCollected);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveFindBanelingNests, gv_banelingEggsCollected);
     return true;
 }
 
@@ -4929,7 +4981,7 @@ bool gt_ObjectiveFindBanelingNestsComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindBanelingNestsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase43);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFindBanelingNests);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5049,7 +5101,7 @@ bool gt_VictoryZagarasBaseDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
@@ -5108,7 +5160,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyDominionBase2) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyDominionBase3) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveCollectEggs) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveZagaraEggs) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyZagara) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZChar01_1", gv_pLAYER_01_USER);
     }
 
@@ -6455,6 +6507,73 @@ void gt_VictoryZergHold_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Repel Zagara - Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRepelZagaraCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/48E24130"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveRepelZagara = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveRepelZagara, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRepelZagara, gv_LOCATION_ID_REPEL_ZAGARA);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRepelZagara, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRepelZagaraCreate_Init () {
+    gt_ObjectiveRepelZagaraCreate = TriggerCreate("gt_ObjectiveRepelZagaraCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Repel Zagara - Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRepelZagaraComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveRepelZagaraCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRepelZagara);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRepelZagaraComplete_Init () {
+    gt_ObjectiveRepelZagaraComplete = TriggerCreate("gt_ObjectiveRepelZagaraComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -6677,7 +6796,7 @@ bool gt_InfestedCommandCenterDestroyedCenter_Func (bool testConds, bool runActio
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CENTER_INFESTED_COMMAND_CENTER);
     return true;
 }
 
@@ -6712,7 +6831,7 @@ bool gt_InfestedCommandCenterDestroyedNorth_Func (bool testConds, bool runAction
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER);
     return true;
 }
 
@@ -6813,6 +6932,7 @@ void InitTriggers () {
     gt_ObjectiveDestroyZagaraComplete_Init();
     gt_ObjectiveDestroyInfestedCCCreate_Init();
     gt_ObjectiveDestroyInfestedCCUpdate_Init();
+    gt_ObjectiveDestroyInfestedCCDeactivate_Init();
     gt_ObjectiveDestroyInfestedCCComplete_Init();
     gt_ObjectiveFindBanelingNestsCreate_Init();
     gt_ObjectiveFindBanelingNestsUpdate_Init();
@@ -6851,6 +6971,8 @@ void InitTriggers () {
     gt_VictoryCleanup_Init();
     gt_VictoryZerglings_Init();
     gt_VictoryZergHold_Init();
+    gt_ObjectiveRepelZagaraCreate_Init();
+    gt_ObjectiveRepelZagaraComplete_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();

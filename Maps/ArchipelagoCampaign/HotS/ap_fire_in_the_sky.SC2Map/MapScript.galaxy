@@ -46,6 +46,15 @@ const int gv_gorgonsDestroyedQuota = 7;
 const int gv_scourgeNestsGoal = 7;
 const int gv_objectiveZergBiomassGoal = 3;
 const int gv_zergToFind = 5;
+const int gv_LOCATION_ID_WEST_BIOMASS = 1;
+const int gv_LOCATION_ID_NORTH_BIOMASS = 2;
+const int gv_LOCATION_ID_SOUTH_BIOMASS = 3;
+const int gv_LOCATION_ID_DESTROY_3_GORGONS = 4;
+const int gv_LOCATION_ID_CLOSE_ZERG_RESCUE = 5;
+const int gv_LOCATION_ID_SOUTH_ZERG_RESCUE = 6;
+const int gv_LOCATION_ID_NORTH_ZERG_RESCUE = 7;
+const int gv_LOCATION_ID_WEST_QUEEN_RESCUE = 8;
+const int gv_LOCATION_ID_EAST_QUEEN_RESCUE = 9;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -254,6 +263,7 @@ trigger gt_ObjectiveActivateScourgeNestComplete;
 trigger gt_ObjectiveFindZergBiomassCreate;
 trigger gt_ObjectiveFindZergBiomassUpdate;
 trigger gt_ObjectiveFindZergBiomassComplete;
+trigger gt_ObjectiveFindZergBiomassRemove;
 trigger gt_ObjectiveFindZergCreate;
 trigger gt_ObjectiveFindZergUpdate;
 trigger gt_ObjectiveFindZergComplete;
@@ -2604,7 +2614,7 @@ bool gt_ZergRescueTop_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zergFound = (gv_zergFound + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_ZERG_RESCUE);
     TriggerExecute(gt_ObjectiveFindZergUpdate, true, false);
     VisRevealArea(gv_pLAYER_01_USER, RegionFromId(11), 0.0, true);
     while (!(((UnitIsAlive(UnitFromId(168)) == false) || (UnitGetOwner(UnitFromId(168)) == 1)) && ((UnitIsAlive(UnitFromId(245)) == false) || (UnitGetOwner(UnitFromId(245)) == 1)) && ((UnitIsAlive(UnitFromId(292)) == false) || (UnitGetOwner(UnitFromId(292)) == 1)))) {
@@ -2669,7 +2679,7 @@ bool gt_ZergRescueCenter_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zergFound = (gv_zergFound + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_ZERG_RESCUE);
     TriggerExecute(gt_ObjectiveFindZergUpdate, true, false);
     VisRevealArea(gv_pLAYER_01_USER, RegionFromId(1), 8.0, true);
     UnitIssueOrder(UnitFromId(392), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(166)), c_orderQueueReplace);
@@ -2735,7 +2745,7 @@ bool gt_ZergRescueBottom_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zergFound = (gv_zergFound + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_ZERG_RESCUE);
     TriggerExecute(gt_ObjectiveFindZergUpdate, true, false);
     while (!(((UnitIsAlive(UnitFromId(50)) == false) || (UnitGetOwner(UnitFromId(50)) == 1)) && ((UnitIsAlive(UnitFromId(51)) == false) || (UnitGetOwner(UnitFromId(51)) == 1)))) {
         Wait(1.0, c_timeGame);
@@ -2791,7 +2801,7 @@ bool gt_QueenRescue01_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zergFound = (gv_zergFound + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_QUEEN_RESCUE);
     TriggerExecute(gt_ObjectiveFindZergUpdate, true, false);
     libNtve_gf_CreateUnitsAtPoint2(1, "AP_QueenBurrowed", 0, gv_pLAYER_01_USER, PointFromId(612));
     gv_rescuedQueen = UnitLastCreated();
@@ -2840,7 +2850,7 @@ bool gt_QueenRescue02_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zergFound = (gv_zergFound + 1);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_QUEEN_RESCUE);
     TriggerExecute(gt_ObjectiveFindZergUpdate, true, false);
     libNtve_gf_CreateUnitsAtPoint2(1, "AP_QueenBurrowed", 0, gv_pLAYER_01_USER, PointFromId(430));
     gv_rescuedQueen = UnitLastCreated();
@@ -3792,7 +3802,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     gv_gameOver = true;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDestroyGorgonsComplete, true, false);
     TriggerExecute(gt_ObjectiveActivateScourgeNestComplete, true, true);
@@ -4207,7 +4217,11 @@ bool gt_ObjectiveDestroyGorgonsCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar02Objective03");
     gv_objectiveDestroyGorgons = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar02Objective03", "", gv_gorgonsDestroyed);
+    ObjectiveShow(gv_objectiveDestroyGorgons, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyGorgons, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_gorgonsDestroyed, libSwaC_gf_MissionObjectiveItemCount("ZChar02Objective03"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyGorgons, gv_LOCATION_ID_DESTROY_3_GORGONS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyGorgons, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyGorgons, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4234,7 +4248,7 @@ bool gt_ObjectiveDestroyGorgonsUpdate_Func (bool testConds, bool runActions) {
     }
 
     if ((gv_gorgonsDestroyed == 3)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DESTROY_3_GORGONS);
     }
 
     return true;
@@ -4302,7 +4316,9 @@ bool gt_ObjectiveActivateScourgeNestCreate_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar02Objective2");
     gv_objectiveActivateScourgeNests = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar02Objective2", "", gv_scourgeNestsActivatedCount);
+    ObjectiveShow(gv_objectiveActivateScourgeNests, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveActivateScourgeNests, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_scourgeNestsActivatedCount, libSwaC_gf_MissionObjectiveItemCount("ZChar02Objective2"), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveActivateScourgeNests, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4378,11 +4394,11 @@ void gt_ObjectiveActivateScourgeNestComplete_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindZergBiomassCreate_Func (bool testConds, bool runActions) {
     // Variable Declarations
-    int lv_i;
+    int lv_category;
 
     // Automatic Variable Declarations
     // Variable Initialization
-    lv_i = 1;
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
 
     // Conditions
     if (testConds) {
@@ -4399,7 +4415,12 @@ bool gt_ObjectiveFindZergBiomassCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZChar02Objective02");
     gv_objectiveFindZergBiomass = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZChar02Objective02", "", gv_objectiveZergBiomassFound);
+    ObjectiveShow(gv_objectiveFindZergBiomass, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFindZergBiomass, lv_category, "", gv_objectiveZergBiomassFound, libSwaC_gf_MissionObjectiveItemCount("ZChar02Objective02"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZergBiomass, gv_LOCATION_ID_WEST_BIOMASS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZergBiomass, gv_LOCATION_ID_NORTH_BIOMASS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZergBiomass, gv_LOCATION_ID_SOUTH_BIOMASS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindZergBiomass, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4421,6 +4442,10 @@ bool gt_ObjectiveFindZergBiomassUpdate_Func (bool testConds, bool runActions) {
         }
 
         if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
 
@@ -4498,10 +4523,50 @@ void gt_ObjectiveFindZergBiomassComplete_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Zerg Biomass Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindZergBiomassRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_WEST_BIOMASS] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_BIOMASS] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_BIOMASS] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(1831));
+    UnitRemove(UnitFromId(1824));
+    UnitRemove(UnitFromId(1832));
+    TriggerEnable(gt_ObjectiveFindZergBiomassCreate, false);
+    TriggerEnable(gt_ObjectiveFindZergBiomassUpdate, false);
+    TriggerEnable(gt_ObjectiveFindZergBiomassWest, false);
+    TriggerEnable(gt_ObjectiveFindZergBiomassNorth, false);
+    TriggerEnable(gt_ObjectiveFindZergBiomassSouth, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindZergBiomassRemove_Init () {
+    gt_ObjectiveFindZergBiomassRemove = TriggerCreate("gt_ObjectiveFindZergBiomassRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveFindZergBiomassRemove, 2.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Find Zerg Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindZergCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4515,9 +4580,15 @@ bool gt_ObjectiveFindZergCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/0C182B22"), StringToText(""), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/0C182B22"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveFindZerg = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveFindZerg, "", gv_zergFound, gv_zergToFind);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFindZerg, lv_category, "", gv_zergFound, gv_zergToFind, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZerg, gv_LOCATION_ID_CLOSE_ZERG_RESCUE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZerg, gv_LOCATION_ID_SOUTH_ZERG_RESCUE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZerg, gv_LOCATION_ID_NORTH_ZERG_RESCUE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZerg, gv_LOCATION_ID_WEST_QUEEN_RESCUE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindZerg, gv_LOCATION_ID_EAST_QUEEN_RESCUE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindZerg, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6183,7 +6254,7 @@ bool gt_ObjectiveFindZergBiomassWest_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_BIOMASS);
     return true;
 }
 
@@ -6219,7 +6290,7 @@ bool gt_ObjectiveFindZergBiomassNorth_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_BIOMASS);
     return true;
 }
 
@@ -6255,7 +6326,7 @@ bool gt_ObjectiveFindZergBiomassSouth_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_BIOMASS);
     return true;
 }
 
@@ -6351,6 +6422,7 @@ void InitTriggers () {
     gt_ObjectiveFindZergBiomassCreate_Init();
     gt_ObjectiveFindZergBiomassUpdate_Init();
     gt_ObjectiveFindZergBiomassComplete_Init();
+    gt_ObjectiveFindZergBiomassRemove_Init();
     gt_ObjectiveFindZergCreate_Init();
     gt_ObjectiveFindZergUpdate_Init();
     gt_ObjectiveFindZergComplete_Init();
