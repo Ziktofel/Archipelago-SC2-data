@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Catalog>
     <CActorGlobalConfig id="SYSTEM_ActorConfig">
+        <!-- Override -->
         <DeathCustomPriorityList value="Taldarim"/>
+        <DeathCustomPriorityList value="Purifier"/>
     </CActorGlobalConfig>
     <const id="$AP_LurkerSpineSiteOps" value="{AP_LurkerSOpAoEVariancer SOpShadow SOpForwardCasterPoint SOp2DRotation AP_LurkerSOpShadowSpine SOpRotVariancerUp15}"/>
     <CActorUnit default="1" id="GenericUnitStandard">
@@ -5259,6 +5261,7 @@
         <On Terms="Abil.AP_CarrierHangar.Launch" Send="Create"/>
         <On Terms="Abil.AP_CarrierAiurHanger.Launch" Send="Create"/>
         <On Terms="Abil.AP_CarrierTaldarimHanger.Launch" Send="Create"/>
+        <On Terms="Abil.AP_CarrierPurifierHanger.Launch" Send="Create"/>
         <!--        <On Terms="Abil.AP_CarrierHangarVoid.Launch" Send="Create"/>-->
         <Sound value="Carrier_InterceptorLaunch"/>
     </CActorSound>
@@ -11712,8 +11715,11 @@
     <CActorUnit id="AP_Interceptor" parent="GenericUnitStandard" unitName="AP_Interceptor">
         <Model value="Interceptor"/>
         <On Terms="UnitBirth.AP_InterceptorTaldarim" Send="Create"/>
+        <On Terms="UnitBirth.AP_InterceptorPurifier" Send="Create"/>
         <On Terms="ActorCreation; ValidateUnit AP_IsInterceptorTaldarim" Send="ModelSwap Interceptor_Taldarim_Collection"/>
         <On Terms="UnitDeathCustomize; ValidateUnit AP_IsInterceptorTaldarim" Send="DeathCustomize Taldarim"/>
+        <On Terms="ActorCreation; ValidateUnit AP_IsInterceptorPurifier" Send="ModelSwap Interceptor_Purifier_Collection"/>
+        <On Terms="UnitDeathCustomize; ValidateUnit AP_IsInterceptorPurifier" Send="DeathCustomize Purifier"/>
         <On Terms="Upgrade.AP_DarkProtoss.Add" Send="ModelSwap DarkInterceptor"/>
         <On Terms="UnitBirth; ValidateUnit AP_NoDarkProtoss" Send="ModelSwap DarkInterceptor"/>
         <On Terms="UnitDeathCustomize; ValidateUnit AP_NoDarkProtoss" Send="DeathCustomize DarkProtoss"/>
@@ -11746,7 +11752,8 @@
         <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
         <DeathCustoms ModelLink="DarkInterceptorDeath" Name="DarkProtoss"/>
         <DeathCustoms ModelLink="Interceptor_Taldarim_Collection_Death" Name="Taldarim"/>
-        <Hallucination ModelLink="HallucinationDeath" SoundLink="Sentry_HallucinationDeathSmall" Name="Hallucination"/>
+        <DeathCustoms ModelLink="Interceptor_Purifier_Collection_Death" Name="Purifier"/>
+        <DeathCustoms ModelLink="HallucinationDeath" SoundLink="Sentry_HallucinationDeathSmall" Name="Hallucination"/>
         <DeathCustoms>
             <ModelLink value="DeathVoidShadowSmall"/>
             <SoundLink value="ShadowUnit_Small_DeathFX"/>
@@ -20512,6 +20519,17 @@
         <On Terms="AbilTrain.AP_StargateTrainRedirect.Start; AbilTrainProduced AP_TempestPurifier" Send="StatusSet WarpingIn 14"/>
         <On Terms="BehaviorLevel.PowerUserQueue.Stop; Level 0; IsStatus WarpingIn 14" Send="Create AP_TempestPurifierWarpInStargate"/>
         <On Terms="BehaviorLevel.PowerUserQueue.Start; Level 0" Target="AP_CarrierTaldarimWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Start; AbilTrainProduced AP_CarrierPurifier; !ValidateUnit HasNoPower" Send="Create AP_CarrierPurifierWarpInStargate"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Start; AbilTrainProduced AP_CarrierPurifier; !ValidateUnit HasNoPower" Send="Create AP_CarrierPurifierWarpInStargate"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Start; AbilTrainProduced AP_CarrierPurifier" Send="StatusSet WarpingIn 16"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Start; AbilTrainProduced AP_CarrierTaldarim" Send="StatusSet WarpingIn 16"/>
+        <On Terms="BehaviorLevel.PowerUserQueue.Stop; Level 0; IsStatus WarpingIn 16" Send="Create AP_CarrierPurifierWarpInStargate"/>
+        <On Terms="BehaviorLevel.PowerUserQueue.Start; Level 0" Target="AP_CarrierPurifierWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Cancel" Target="AP_CarrierPurifierWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Cancel" Target="AP_CarrierPurifierWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Finish" Target="AP_CarrierPurifierWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Finish" Target="AP_CarrierPurifierWarpInStargate" Send="Destroy"/>
+        <On Terms="BehaviorLevel.PowerUserQueue.Start; Level 0" Target="AP_CarrierPurifierWarpInStargate" Send="Destroy"/>
         <On Terms="AbilTrain.AP_StargateTrain.Cancel" Target="AP_TempestPurifierWarpInStargate" Send="Destroy"/>
         <On Terms="AbilTrain.AP_StargateTrainRedirect.Cancel" Target="AP_TempestPurifierWarpInStargate" Send="Destroy"/>
         <On Terms="AbilTrain.AP_StargateTrain.Finish" Target="AP_TempestPurifierWarpInStargate" Send="Destroy"/>
@@ -20651,6 +20669,13 @@
         <On Terms="Behavior.AP_SOASuperChrono.Off" Send="AnimSetTimeScale BSD 1.000000"/>
     </CActorModel>
     <CActorModel id="AP_CarrierTaldarimWarpInStargate" parent="ModelAddition">
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <On Terms="UnitDeathCustomize" Send="Destroy"/>
+        <On Terms="ActorCreation; ValidateUnit AP_IsChronoSurged" Send="AnimSetTimeScale BSD 0.200000"/>
+        <On Terms="Behavior.AP_SOASuperChrono.On" Send="AnimSetTimeScale BSD 0.200000"/>
+        <On Terms="Behavior.AP_SOASuperChrono.Off" Send="AnimSetTimeScale BSD 1.000000"/>
+    </CActorModel>
+    <CActorModel id="AP_CarrierPurifierWarpInStargate" parent="ModelAddition">
         <HostSiteOps Ops="SOpAttachCenter"/>
         <On Terms="UnitDeathCustomize" Send="Destroy"/>
         <On Terms="ActorCreation; ValidateUnit AP_IsChronoSurged" Send="AnimSetTimeScale BSD 0.200000"/>
@@ -32956,4 +32981,142 @@
     <CActorSplat id="AP_PrimalIgniterBurrowedSplat" parent="BurrowedSplat" unitName="AP_PrimalIgniter">
         <On index="2" Terms="UnitBirth.AP_PrimalIgniterBurrowed" Send="Create"/>
     </CActorSplat>
+    <CActorUnit id="AP_CarrierPurifier" parent="GenericUnitStandard" unitName="AP_CarrierPurifier">
+        <Aliases value="_UnitHuge"/>
+        <On Terms="ActorCreation" Send="StatusSet WeaponAttacking 0"/>
+        <On Terms="WeaponStart.*.AttackStart" Send="StatusSet WeaponAttacking 1"/>
+        <On Terms="WeaponStop.*.AttackStop" Send="StatusSet WeaponAttacking 0"/>
+        <On Terms="Abil.AP_CarrierPurifierHanger.Launch" Send="AnimPlay Cover Cover 0 0.500000 0.500000 3.000000 AsDuration"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart Cover Cover,Start Cover"/>
+        <On Terms="Effect.CarrierPurifierChargeBeamWeaponCP.Start; ValidateUnit AP_CarrierPurifierChargeBeamPhase1" Send="Create AP_CarrierPurifierLoopSound1"/>
+        <On Terms="Effect.CarrierPurifierChargeBeamWeaponCP.Start; ValidateUnit AP_CarrierPurifierChargeBeamPhase2" Send="Create AP_CarrierPurifierLoopSound2"/>
+        <On Terms="Effect.CarrierPurifierChargeBeamWeaponCP.Start; ValidateUnit AP_CarrierPurifierChargeBeamPhase3" Send="Create AP_CarrierPurifierLoopSound3"/>
+        <On Terms="Effect.CarrierPurifierChargeBeamWeaponCP.Stop" Target="AP_CarrierPurifierLoopSound1" Send="Destroy"/>
+        <On Terms="Effect.CarrierPurifierChargeBeamWeaponCP.Stop" Target="AP_CarrierPurifierLoopSound2" Send="Destroy"/>
+        <On Terms="Effect.CarrierPurifierChargeBeamWeaponCP.Stop" Target="AP_CarrierPurifierLoopSound3" Send="Destroy"/>
+        <On Terms="Behavior.CarrierPurifierChargeBeamPhase2.On" Target="AP_CarrierPurifierLoopSound1" Send="Destroy"/>
+        <On Terms="Behavior.CarrierPurifierChargeBeamPhase2.On; IsStatus WeaponAttacking 1" Send="Create AP_CarrierPurifierLoopSound2"/>
+        <On Terms="Behavior.CarrierPurifierChargeBeamPhase3.On" Target="AP_CarrierPurifierLoopSound2" Send="Destroy"/>
+        <On Terms="Behavior.CarrierPurifierChargeBeamPhase3.On; IsStatus WeaponAttacking 1" Send="Create AP_CarrierPurifierLoopSound3"/>
+        <HostSiteOps Ops="AP_SOpBankerCarrierPurifierCarrier"/>
+        <AnimBlendTime value="0.750000"/>
+        <Baselines index="Walk" BlendIn="1.500000" BlendOut="2.000000"/>
+        <BuildModel value="ProtossUnitBirth"/>
+        <PlacementModel value="Carrier_Purifier_Collection"/>
+        <DeathArray index="Normal" ModelLink="Carrier_Purifier_Collection_Death" SoundLink="SS_CarrierBoss_Explode"/>
+        <PortraitModel value="Carrier_Purifier_Collection_Portrait"/>
+        <Model value="Carrier_Purifier_Collection"/>
+        <BarOffset value="60"/>
+        <BarWidth value="156"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-collection-Purifier-carrier.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-unit-collection-purifier-carrier.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-protoss-airarmorlevel0.dds"/>
+        <NameOffset value="110"/>
+        <SoundArray index="Ready" value="AP_Clolarion_Ready"/>
+        <SoundArray index="Help" value="AP_Clolarion_Help"/>
+        <SoundArray index="What" value="AP_Clolarion_What"/>
+        <SoundArray index="Yes" value="AP_Clolarion_Yes"/>
+        <SoundArray index="Attack" value="AP_Clolarion_Attack"/>
+        <SoundArray index="Pissed" value="AP_Clolarion_Pissed"/>
+        <UnitIcon value="Assets\Textures\btn-unit-collection-purifier-carrier.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-collection-Purifier-carrier.dds"/>
+        </Wireframe>
+        <WireframeShield>
+            <Image value="assets\textures\wireframe-collection-purifier-carrier-shield01.dds"/>
+            <Image value="assets\textures\wireframe-collection-purifier-carrier-shield02.dds"/>
+            <Image value="assets\textures\wireframe-collection-purifier-carrier-shield03.dds"/>
+        </WireframeShield>
+    </CActorUnit>
+    <CActorSiteOpBankerUnit id="AP_SOpBankerCarrierPurifierCarrier" parent="SOpBankerUnit">
+        <RollMax value="30.000000"/>
+        <RollInActivationAngle value="5.000000"/>
+        <RollInArc value="200.000000"/>
+        <RollOutDuration value="1.400000"/>
+    </CActorSiteOpBankerUnit>
+    <!-- Copy of Void ray charge beam for campaign for Clolarion-->
+    <CActorBeamSimple id="AP_CarrierPurifierChargeBeamAttackBeam" parent="BeamSimpleAnimationStyleContinuous">
+        <Supporter Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <Host Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <On Terms="ActorCreation" Target="::Host" Send="Signal CarrierPurifierChargeAttackBeamModel"/>
+        <On Terms="ActorCreation; ValidateEffect AP_CarrierPurifierChargeBeamCounterPhase1" Send="AnimPlay Attack Attack,02 PlayForever"/>
+        <On Terms="ActorCreation; ValidateEffect AP_CarrierPurifierChargeBeamCounterCheckPhase2Ready" Send="AnimPlay Attack Attack,04 PlayForever"/>
+        <On Terms="ActorCreation; ValidateEffect AP_CarrierPurifierChargeBeamCounterCheckPhase3Ready" Send="AnimPlay Attack Attack,06 PlayForever"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamPhase2AB.Start" Send="AnimPlay Attack Attack,04 PlayForever"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamPhase3AB.Start" Send="AnimPlay Attack Attack,06 PlayForever"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamRangePhase2AB.Start" Send="AnimPlay Attack Attack,04 PlayForever"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamRangePhase3AB.Start" Send="AnimPlay Attack Attack,06 PlayForever"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamWeaponCP.Stop; At Effect" Send="TimerSet 0.125000 DelayDestroy"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="RefSetFromRequest ::actor.CasterUnit _Unit Caster Find"/>
+        <On Terms="ActorCreation" Target="::actor.CasterUnit" Send="Signal CampaignBeamCreated"/>
+        <Aliases value="_CarrierPurifierChargeAttackBeam"/>
+        <Model value="AP_CarrierPurifierAttackBeam"/>
+    </CActorBeamSimple>
+    <CActorAction id="AP_CarrierPurifierChargeBeamAttack" parent="GenericAttackBase">
+        <LaunchAttachQuery Methods="Weapon 1"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeNoVizEnhance SOpForwardLaunchGuide"/>
+        <ActionFlags index="AlignedImpactsAndDamages" value="1"/>
+        <ActionFlags index="LaunchForceSite" value="1"/>
+        <Lifetime value="-1.000000"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamWeaponCP.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamDamage.Start; FromEffectTreeDescendant" Send="ActionDamage"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamWeaponCP.Stop" Send="Destroy"/>
+    </CActorAction>
+    <CActorSound id="AP_CarrierPurifierSoundStart" parent="SoundOneShot">
+        <Sound value="AP_CarrierPurifier_WeaponStart"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamWeaponCP.Start" Send="Create"/>
+        <Layers Sound="AP_CarrierPurifier_Weapon_Fire">
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorSound id="AP_CarrierPurifierSoundEnd" parent="SoundOneShot">
+        <Sound value="AP_CarrierPurifier_WeaponEnd"/>
+        <On Terms="Effect.AP_CarrierPurifierChargeBeamWeaponCP.Stop" Send="Create"/>
+        <Layers Sound="AP_CarrierPurifier_Weapon_End">
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorSound id="AP_CarrierPurifierLoopSound1" parent="SoundContinuous">
+        <Inherits index="Visibility" value="0"/>
+        <Sound value="AP_CarrierPurifier_WeaponLoop1"/>
+        <Host Subject="_Selectable"/>
+        <Layers Sound="AP_CarrierPurifier_Weapon_ChargeStart">
+            <Chance value="0"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorSound id="AP_CarrierPurifierLoopSound2" parent="SoundContinuous">
+        <Inherits index="Visibility" value="0"/>
+        <Sound value="AP_CarrierPurifier_WeaponLoop2"/>
+        <Host Subject="_Selectable"/>
+        <Layers Sound="AP_CarrierPurifier_Weapon_Loop_Start">
+            <Chance value="0"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorSound id="AP_CarrierPurifierLoopSound3" parent="SoundContinuous">
+        <Inherits index="Visibility" value="0"/>
+        <Sound value="AP_CarrierPurifier_WeaponLoop3"/>
+        <Host Subject="_Selectable"/>
+        <Layers Sound="AP_CarrierPurifier_Weapon_Loop_Start">
+            <Chance value="0"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
 </Catalog>
