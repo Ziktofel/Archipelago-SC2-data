@@ -41,6 +41,15 @@ const int gv_p04_DOMINION_GREEN = 4;
 const int gv_pLAYER_02_DOMINION2 = 7;
 const int gv_pLAYER_02_DOMINION2222 = 9;
 const fixed gv_hybridSpawnDelay = 4.0;
+const int gv_LOCATION_ID_NORTH_BRUTALISK = 1;
+const int gv_LOCATION_ID_SOUTH_BRUTALISK = 2;
+const int gv_LOCATION_ID_KILL_1_HYBRID = 3;
+const int gv_LOCATION_ID_KILL_2_HYBRID = 4;
+const int gv_LOCATION_ID_KILL_3_HYBRID = 5;
+const int gv_LOCATION_ID_KILL_4_HYBRID = 6;
+const int gv_LOCATION_ID_KILL_5_HYBRID = 7;
+const int gv_LOCATION_ID_KILL_6_HYBRID = 8;
+const int gv_LOCATION_ID_KILL_7_HYBRID = 9;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -82,8 +91,8 @@ int gv_achievementHybridReleasedCounter;
 int gv_statKerriganKills;
 int gv_statMaxArmy;
 int gv_statZergKilledByHybrid;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase2;
+int gv_objectiveDestroyHybrid;
+int gv_objectivePreventOverwhelming;
 int gv_objectiveDestroyHybridCount;
 int gv_objectiveDestroyHybridQuota;
 int gv_objectiveRescueBrutalisks;
@@ -120,8 +129,8 @@ void InitGlobals () {
     }
     gv_psionicAssaultTimerWindow = c_timerWindowNone;
     gv_psionicAssaultFailureWarningTransmission = c_invalidTransmissionId;
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
+    gv_objectiveDestroyHybrid = c_invalidObjectiveId;
+    gv_objectivePreventOverwhelming = c_invalidObjectiveId;
     gv_objectiveRescueBrutalisks = c_invalidObjectiveId;
     gv_objectiveRescueBrutalisksQuota = 2;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
@@ -2044,7 +2053,7 @@ bool gt_RescueBrutaliskTop_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_BRUTALISK);
     UnitKill(UnitFromId(409));
     PingDestroy(libHots_gf_PingStoredForUnit(UnitFromId(409), 1));
     Wait(0.5, c_timeGame);
@@ -2107,7 +2116,7 @@ bool gt_RescueBrutaliskBottom_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_BRUTALISK);
     UnitKill(UnitFromId(437));
     PingDestroy(libHots_gf_PingStoredForUnit(UnitFromId(437), 1));
     Wait(0.5, c_timeGame);
@@ -2589,28 +2598,28 @@ bool gt_HybridKilled_Func (bool testConds, bool runActions) {
     gv_aPHybridCount += 1;
     autoAE6B9387_val = gv_aPHybridCount;
     if (autoAE6B9387_val == 1) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_1_HYBRID);
     }
     else if (autoAE6B9387_val == 2) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_2_HYBRID);
     }
     else if (autoAE6B9387_val == 3) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_3_HYBRID);
     }
     else if (autoAE6B9387_val == 4) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_4_HYBRID);
     }
     else if (autoAE6B9387_val == 5) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_5_HYBRID);
     }
     else if (autoAE6B9387_val == 6) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_6_HYBRID);
     }
     else if (autoAE6B9387_val == 7) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_7_HYBRID);
     }
     else if (autoAE6B9387_val == 8) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     }
     else {
     }
@@ -4922,13 +4931,24 @@ bool gt_ObjectiveDestroyAllHybridCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid02Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid02Objective01", "Remain", (gv_objectiveDestroyHybridQuota - gv_objectiveDestroyHybridCount));
-    lib5BD4895D_gf_AP_Core_setObjectiveCounterMax(ObjectiveLastCreated(), 0);
+    gv_objectiveDestroyHybrid = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyHybrid, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyHybrid, lib5BD4895D_ge_APObjectiveCategory_Primary, "Remain", (gv_objectiveDestroyHybridQuota - gv_objectiveDestroyHybridCount), 0, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, gv_LOCATION_ID_KILL_1_HYBRID);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, gv_LOCATION_ID_KILL_2_HYBRID);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, gv_LOCATION_ID_KILL_3_HYBRID);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, gv_LOCATION_ID_KILL_4_HYBRID);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, gv_LOCATION_ID_KILL_5_HYBRID);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, gv_LOCATION_ID_KILL_6_HYBRID);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, gv_LOCATION_ID_KILL_7_HYBRID);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyHybrid, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyHybrid, true);
     Wait(1.0, c_timeReal);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid02Objective03");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid02Objective03", "", 0);
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
+    gv_objectivePreventOverwhelming = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectivePreventOverwhelming, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectivePreventOverwhelming, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectivePreventOverwhelming, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4960,7 +4980,7 @@ bool gt_ObjectiveDestroyAllHybridUpdate_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDestroyAllHybridCreate, true, false);
     SoundPlay(SoundLink("Alert_UniObjectiveUpdate", 0), PlayerGroupAll(), 100.0, 0.0);
     gv_objectiveDestroyHybridCount += 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, (gv_objectiveDestroyHybridQuota - gv_objectiveDestroyHybridCount));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyHybrid, (gv_objectiveDestroyHybridQuota - gv_objectiveDestroyHybridCount));
     auto47408EB3_val = gv_objectiveDestroyHybridCount;
     if (auto47408EB3_val == 1) {
         Wait(2.0, c_timeReal);
@@ -5025,9 +5045,9 @@ bool gt_ObjectiveDestroyAllHybridComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyAllHybridCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyHybrid);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectivePreventOverwhelming);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5056,8 +5076,8 @@ bool gt_ObjectiveDestroyAllHybridFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyAllHybridCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectivePreventOverwhelming);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyHybrid);
     return true;
 }
 
@@ -5070,7 +5090,13 @@ void gt_ObjectiveDestroyAllHybridFailed_Init () {
 // Trigger: Objective Rescue Brutalisk Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveKillProtossCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -5090,7 +5116,11 @@ bool gt_ObjectiveKillProtossCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid02Objective02");
     gv_objectiveRescueBrutalisks = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid02Objective02", "", gv_objectiveRescueBrutalisksCount);
+    ObjectiveShow(gv_objectiveRescueBrutalisks, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveRescueBrutalisks, lib5BD4895D_ge_APObjectiveCategory_Secondary, "", gv_objectiveRescueBrutalisksCount, gv_objectiveRescueBrutalisksQuota, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueBrutalisks, gv_LOCATION_ID_NORTH_BRUTALISK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueBrutalisks, gv_LOCATION_ID_SOUTH_BRUTALISK);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRescueBrutalisks, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
