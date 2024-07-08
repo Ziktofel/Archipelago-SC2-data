@@ -44,6 +44,11 @@ const int gv_pLAYER_05_DOMINION_GREEN = 5;
 const int gv_pLAYER_06_DOMINION_ORANGE = 6;
 const string gv_powerLinkType = "PsiDisintegratorPowerLink";
 const fixed gv_psifieldupdatefrequency = 0.5;
+const int gv_LOCATION_ID_FIRST_POWER_LINK = 1;
+const int gv_LOCATION_ID_SECOND_POWER_LINK = 2;
+const int gv_LOCATION_ID_THIRD_POWER_LINK = 3;
+const int gv_LOCATION_ID_EXPANSION_COMMAND_CENTER = 4;
+const int gv_LOCATION_ID_MAIN_PATH_COMMAND_CENTER = 5;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -109,7 +114,8 @@ int gv_largestZergForce;
 int gv_victoryStatPsiFieldKills;
 bool gv_achievementLastPowerLinkAlive;
 int gv_numberOfPowerLinksDestroyed;
-int gv_objectiveDestroyPowerLink;
+int gv_objectiveDestroyPowerLinks;
+int gv_powerLinksDestroyed;
 int gv_objectiveDestroyPsiDestroyer;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicTempUnits;
@@ -137,6 +143,8 @@ sound gv_midFieldRaiseSound;
 bool gv_midFade;
 unit gv_victoryKerrigan;
 sound gv_victoryZergSound;
+int gv_objectiveDestroyCommandCenters;
+int gv_commandCentersDestroyed;
 
 void InitGlobals () {
     gv_dominionPlayerGroup = PlayerGroupEmpty();
@@ -158,13 +166,14 @@ void InitGlobals () {
     gv_fieldPowerTimerWindow = c_timerWindowNone;
     gv_dehakasGroup = UnitGroupEmpty();
     gv_dominionEngageTimer = TimerCreate();
-    gv_objectiveDestroyPowerLink = c_invalidObjectiveId;
+    gv_objectiveDestroyPowerLinks = c_invalidObjectiveId;
     gv_objectiveDestroyPsiDestroyer = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_cinematicPrimalUnits = UnitGroupEmpty();
     gv_playerBase = UnitGroupEmpty();
     gv_midMinions = UnitGroupEmpty();
+    gv_objectiveDestroyCommandCenters = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -288,9 +297,11 @@ trigger gt_StructureDestroyedBefore2ndField;
 trigger gt_VictoryStatPsiFieldKills;
 trigger gt_LargestZergForce;
 trigger gt__10thAnniversaryAchievementThirdPowerLinkdestroyedbefore18minutes;
-trigger gt_ObjectiveDestroyPowerLinkCreate;
-trigger gt_ObjectiveDestroyPowerLinkComplete;
-trigger gt_ObjectiveDestroyPowerLinkFailed;
+trigger gt_ObjectiveDestroyPowerLinksCreate;
+trigger gt_ObjectiveDestroyPowerLinksFirst;
+trigger gt_ObjectiveDestroyPowerLinksUpdate;
+trigger gt_ObjectiveDestroyPowerLinksComplete;
+trigger gt_ObjectiveDestroyPowerLinksFailed;
 trigger gt_ObjectiveDestroyPsiDestroyerCreate;
 trigger gt_ObjectiveDestroyPsiDestroyerComplete;
 trigger gt_ObjectiveDestroyPsiDestroyerFailed;
@@ -334,6 +345,9 @@ trigger gt_VictoryCinematic;
 trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryZerg;
+trigger gt_ObjectiveDestroyCommandCentersCreate;
+trigger gt_ObjectiveDestroyCommandCentersUpdate;
+trigger gt_ObjectiveDestroyCommandCentersComplete;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -1719,7 +1733,8 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     libNtve_gf_ShareVisionofUnit(gv_introMarine03, true, gv_pLAYER_01_USER);
     Wait(3.0, c_timeReal);
     TriggerQueueEnter();
-    TriggerExecute(gt_ObjectiveDestroyPowerLinkCreate, true, true);
+    TriggerExecute(gt_ObjectiveDestroyPsiDestroyerCreate, true, true);
+    TriggerExecute(gt_ObjectiveDestroyPowerLinksCreate, true, true);
     TriggerExecute(gt_CreatePingforFirstPowerLink, true, false);
     TriggerQueueExit();
     Wait(3.0, c_timeReal);
@@ -1767,7 +1782,8 @@ bool gt_MidGameStartQ_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_StartAI, true, false);
     Wait(3.0, c_timeReal);
     TriggerQueueEnter();
-    TriggerExecute(gt_ObjectiveDestroyPsiDestroyerCreate, true, true);
+    TriggerExecute(gt_ObjectiveDestroyCommandCentersCreate, true, false);
+    TriggerEnable(gt_DefeatBaseDestroyed, true);
     TriggerQueueExit();
     Wait(3.0, c_timeReal);
     TriggerExecute(gt_TransmissionPresstheAttackQ, true, false);
@@ -1825,7 +1841,7 @@ bool gt_TransmissionStrangeCreatureQ_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyPowerLink) == c_objectiveStateActive))) {
+        if (!((ObjectiveGetState(gv_objectiveDestroyPowerLinks) == c_objectiveStateActive))) {
             return false;
         }
     }
@@ -3214,9 +3230,10 @@ bool gt_PowerLinkDestroyedQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    TriggerExecute(gt_ObjectiveDestroyPowerLinksUpdate, true, false);
     auto0A29AD4D_val = EventUnit();
     if (auto0A29AD4D_val == UnitFromId(5)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_POWER_LINK);
         gv_psifieldradiustarget = (libNtve_gf_WidthOfRegion(RegionFromId(14)) * 0.5);
         gv_psifieldgrowthpersec = gf_FieldExpandRatetoPoint((libNtve_gf_WidthOfRegion(RegionFromId(15)) / 2.0), gv_fieldExpansionTime01, PointFromId(1039));
         lv_psifieldtimer = gv_fieldPowerUpTime01;
@@ -3226,7 +3243,7 @@ bool gt_PowerLinkDestroyedQ_Func (bool testConds, bool runActions) {
         gf_DisplayFieldPowerLeaderboard();
     }
     else if (auto0A29AD4D_val == UnitFromId(47)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_POWER_LINK);
         gv_psifieldradiustarget = (libNtve_gf_WidthOfRegion(RegionFromId(14)) * 0.5);
         gv_psifieldgrowthpersec = gf_FieldExpandRatetoPoint((libNtve_gf_WidthOfRegion(RegionFromId(15)) / 2.0), gv_fieldExpansionTime02, PointFromId(1039));
         lv_psifieldtimer = gv_fieldPowerUpTime02;
@@ -3237,7 +3254,7 @@ bool gt_PowerLinkDestroyedQ_Func (bool testConds, bool runActions) {
         gf_DisplayFieldPowerLeaderboard();
     }
     else if (auto0A29AD4D_val == UnitFromId(32)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_POWER_LINK);
         gf_DestroyFieldPowerLeaderboard(true);
         gv_psifieldgrowthpersec = 0.0;
         gv_psifieldshrinkpersec = 20.0;
@@ -4775,10 +4792,6 @@ bool gt_DefeatBaseDestroyed_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyPsiDestroyer) == c_objectiveStateActive))) {
-            return false;
-        }
-
         if (!((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, 0, (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) == 0))) {
             return false;
         }
@@ -4803,6 +4816,7 @@ bool gt_DefeatBaseDestroyed_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_DefeatBaseDestroyed_Init () {
     gt_DefeatBaseDestroyed = TriggerCreate("gt_DefeatBaseDestroyed_Func");
+    TriggerEnable(gt_DefeatBaseDestroyed, false);
     TriggerAddEventTimePeriodic(gt_DefeatBaseDestroyed, 1.0, c_timeGame);
 }
 
@@ -5231,10 +5245,16 @@ void gt__10thAnniversaryAchievementThirdPowerLinkdestroyedbefore18minutes_Init (
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Power Link Create
+// Trigger: Objective Destroy Power Links Create
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroyPowerLinkCreate_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyPowerLinksCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5249,21 +5269,85 @@ bool gt_ObjectiveDestroyPowerLinkCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal02Objective03");
-    gv_objectiveDestroyPowerLink = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZKorhal02Objective03", "", 0);
+    gv_objectiveDestroyPowerLinks = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyPowerLinks, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyPowerLinks, lv_category, "", gv_powerLinksDestroyed, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPowerLinks, gv_LOCATION_ID_FIRST_POWER_LINK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPowerLinks, gv_LOCATION_ID_SECOND_POWER_LINK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPowerLinks, gv_LOCATION_ID_THIRD_POWER_LINK);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyPowerLinks, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroyPowerLinkCreate_Init () {
-    gt_ObjectiveDestroyPowerLinkCreate = TriggerCreate("gt_ObjectiveDestroyPowerLinkCreate_Func");
+void gt_ObjectiveDestroyPowerLinksCreate_Init () {
+    gt_ObjectiveDestroyPowerLinksCreate = TriggerCreate("gt_ObjectiveDestroyPowerLinksCreate_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Power Link Complete
+// Trigger: Objective Destroy Power Links First
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroyPowerLinkComplete_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyPowerLinksFirst_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    PingDestroy(gv_ping_PowerLink);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/863C06C1"));
+    TriggerExecute(gt_MidQ, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyPowerLinksFirst_Init () {
+    gt_ObjectiveDestroyPowerLinksFirst = TriggerCreate("gt_ObjectiveDestroyPowerLinksFirst_Func");
+    TriggerAddEventUnitDied(gt_ObjectiveDestroyPowerLinksFirst, UnitRefFromUnit(UnitFromId(5)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Power Links Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyPowerLinksUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    gv_powerLinksDestroyed += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyPowerLinks, gv_powerLinksDestroyed);
+    if ((gv_powerLinksDestroyed >= 3)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveDestroyPowerLinksComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyPowerLinksUpdate_Init () {
+    gt_ObjectiveDestroyPowerLinksUpdate = TriggerCreate("gt_ObjectiveDestroyPowerLinksUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Power Links Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyPowerLinksComplete_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -5282,27 +5366,20 @@ bool gt_ObjectiveDestroyPowerLinkComplete_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveDestroyPowerLinkCreate, true, false);
-    PingDestroy(gv_ping_PowerLink);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyPowerLink);
-    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
-    libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/02B2C57A"));
-    TriggerExecute(gt_MidQ, true, false);
-    ObjectiveShow(gv_objectiveDestroyPowerLink, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyPowerLink);
+    TriggerExecute(gt_ObjectiveDestroyPowerLinksCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyPowerLinks);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroyPowerLinkComplete_Init () {
-    gt_ObjectiveDestroyPowerLinkComplete = TriggerCreate("gt_ObjectiveDestroyPowerLinkComplete_Func");
-    TriggerAddEventUnitDied(gt_ObjectiveDestroyPowerLinkComplete, UnitRefFromUnit(UnitFromId(5)));
+void gt_ObjectiveDestroyPowerLinksComplete_Init () {
+    gt_ObjectiveDestroyPowerLinksComplete = TriggerCreate("gt_ObjectiveDestroyPowerLinksComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Objective Destroy Power Link Failed
+// Trigger: Objective Destroy Power Links Failed
 //--------------------------------------------------------------------------------------------------
-bool gt_ObjectiveDestroyPowerLinkFailed_Func (bool testConds, bool runActions) {
+bool gt_ObjectiveDestroyPowerLinksFailed_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
@@ -5317,14 +5394,14 @@ bool gt_ObjectiveDestroyPowerLinkFailed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveDestroyPowerLinkCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyPowerLink);
+    TriggerExecute(gt_ObjectiveDestroyPowerLinksCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyPowerLinks);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_ObjectiveDestroyPowerLinkFailed_Init () {
-    gt_ObjectiveDestroyPowerLinkFailed = TriggerCreate("gt_ObjectiveDestroyPowerLinkFailed_Func");
+void gt_ObjectiveDestroyPowerLinksFailed_Init () {
+    gt_ObjectiveDestroyPowerLinksFailed = TriggerCreate("gt_ObjectiveDestroyPowerLinksFailed_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5347,7 +5424,10 @@ bool gt_ObjectiveDestroyPsiDestroyerCreate_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal02Objective01");
     gv_objectiveDestroyPsiDestroyer = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZKorhal02Objective01", "", 0);
+    ObjectiveShow(gv_objectiveDestroyPsiDestroyer, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyPsiDestroyer, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPsiDestroyer, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyPsiDestroyer, true);
     libSwaC_gf_CreateObjectivePing(true, UnitGetPosition(gv_psiDestroyer), StringExternal("Param/Value/2502CF55"));
     PingSetUnit(PingLastCreated(), gv_psiDestroyer);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
@@ -5377,19 +5457,20 @@ bool gt_ObjectiveDestroyPsiDestroyerComplete_Func (bool testConds, bool runActio
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     if ((UnitIsAlive(UnitFromId(5)) == true)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_POWER_LINK);
     }
 
     if ((UnitIsAlive(UnitFromId(47)) == true)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_POWER_LINK);
     }
 
     if ((UnitIsAlive(UnitFromId(32)) == true)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_POWER_LINK);
     }
 
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyPowerLinks);
     TriggerExecute(gt_ObjectiveDestroyPsiDestroyerCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyPsiDestroyer);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
@@ -7574,6 +7655,99 @@ void gt_VictoryZerg_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Command Centers Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyCommandCentersCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/76008E0C"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveDestroyCommandCenters = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyCommandCenters, lv_category, "", gv_commandCentersDestroyed, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyCommandCenters, gv_LOCATION_ID_EXPANSION_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyCommandCenters, gv_LOCATION_ID_MAIN_PATH_COMMAND_CENTER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyCommandCenters, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyCommandCentersCreate_Init () {
+    gt_ObjectiveDestroyCommandCentersCreate = TriggerCreate("gt_ObjectiveDestroyCommandCentersCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Command Centers Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyCommandCentersUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    gv_commandCentersDestroyed += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyCommandCenters, gv_commandCentersDestroyed);
+    if ((gv_commandCentersDestroyed >= 2)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveDestroyCommandCentersComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyCommandCentersUpdate_Init () {
+    gt_ObjectiveDestroyCommandCentersUpdate = TriggerCreate("gt_ObjectiveDestroyCommandCentersUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Command Centers Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyCommandCentersComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyCommandCentersCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyCommandCenters);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyCommandCentersComplete_Init () {
+    gt_ObjectiveDestroyCommandCentersComplete = TriggerCreate("gt_ObjectiveDestroyCommandCentersComplete_Func");
+    TriggerAddEventUnitDied(gt_ObjectiveDestroyCommandCentersComplete, UnitRefFromVariable("gv_psiDestroyer"));
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -7785,7 +7959,8 @@ bool gt_ExpansionCommandCenter_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EXPANSION_COMMAND_CENTER);
+    TriggerExecute(gt_ObjectiveDestroyCommandCentersUpdate, true, false);
     return true;
 }
 
@@ -7813,7 +7988,8 @@ bool gt_MainPathCommandCenter_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MAIN_PATH_COMMAND_CENTER);
+    TriggerExecute(gt_ObjectiveDestroyCommandCentersUpdate, true, false);
     return true;
 }
 
@@ -7923,9 +8099,11 @@ void InitTriggers () {
     gt_VictoryStatPsiFieldKills_Init();
     gt_LargestZergForce_Init();
     gt__10thAnniversaryAchievementThirdPowerLinkdestroyedbefore18minutes_Init();
-    gt_ObjectiveDestroyPowerLinkCreate_Init();
-    gt_ObjectiveDestroyPowerLinkComplete_Init();
-    gt_ObjectiveDestroyPowerLinkFailed_Init();
+    gt_ObjectiveDestroyPowerLinksCreate_Init();
+    gt_ObjectiveDestroyPowerLinksFirst_Init();
+    gt_ObjectiveDestroyPowerLinksUpdate_Init();
+    gt_ObjectiveDestroyPowerLinksComplete_Init();
+    gt_ObjectiveDestroyPowerLinksFailed_Init();
     gt_ObjectiveDestroyPsiDestroyerCreate_Init();
     gt_ObjectiveDestroyPsiDestroyerComplete_Init();
     gt_ObjectiveDestroyPsiDestroyerFailed_Init();
@@ -7969,6 +8147,9 @@ void InitTriggers () {
     gt_VictoryCinematicEnd_Init();
     gt_VictoryCleanup_Init();
     gt_VictoryZerg_Init();
+    gt_ObjectiveDestroyCommandCentersCreate_Init();
+    gt_ObjectiveDestroyCommandCentersUpdate_Init();
+    gt_ObjectiveDestroyCommandCentersComplete_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
