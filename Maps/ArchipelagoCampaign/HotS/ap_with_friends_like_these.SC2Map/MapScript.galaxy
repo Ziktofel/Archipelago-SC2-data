@@ -40,6 +40,10 @@ const int gv_pLAYER_07_MIRA_BASE2 = 7;
 const fixed gv_hyperionFighterTargetRadius = 10.0;
 const int gv_c_HyperionLevel_Max = 4;
 const fixed gv_hyperionHPThreshold = 0.3;
+const int gv_LOCATION_ID_PIRATE_CAPITAL_SHIP = 1;
+const int gv_LOCATION_ID_FIRST_MINERAL_PATCH = 2;
+const int gv_LOCATION_ID_SECOND_MINERAL_PATCH = 3;
+const int gv_LOCATION_ID_THIRD_MINERAL_PATCH = 4;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -123,12 +127,12 @@ fixed gv_totalDamageTaken;
 int gv_yamatoKills;
 int gv_tacFightersLost;
 timer gv_timedRunTimer;
-int gv_objectiveDestroyDominionBase3;
+int gv_objectiveSetupSpaceStation;
 int gv_setupSpaceStationPing;
-int gv_objectiveDestroyDominionBase;
+int gv_objectiveDestroyMercenarySpaceStation;
 int gv_mercenaryBasePing;
 actor gv_mercenaryBaseBriefingModel;
-int gv_objectiveDestroyDominionBase2;
+int gv_objectiveHyperionMustSurvive;
 int gv_objectiveMineralFields;
 int gv_objectiveMineralFieldsCount;
 unitgroup[4] gv_objectiveMineralFieldsGroup;
@@ -173,11 +177,11 @@ void InitGlobals () {
     gv_battlecruisersInCombat = UnitGroupEmpty();
     gv_hyperionDamagedBattlecruiserGroup = UnitGroupEmpty();
     gv_timedRunTimer = TimerCreate();
-    gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
+    gv_objectiveSetupSpaceStation = c_invalidObjectiveId;
     gv_setupSpaceStationPing = c_invalidPingId;
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
+    gv_objectiveDestroyMercenarySpaceStation = c_invalidObjectiveId;
     gv_mercenaryBasePing = c_invalidPingId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
+    gv_objectiveHyperionMustSurvive = c_invalidObjectiveId;
     gv_objectiveMineralFields = c_invalidObjectiveId;
     for (init_i = 0; init_i <= 3; init_i += 1) {
         gv_objectiveMineralFieldsGroup[init_i] = UnitGroupEmpty();
@@ -4658,7 +4662,7 @@ bool gt_PirateCapitalShipDestroyedQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_PIRATE_CAPITAL_SHIP);
     libNtve_gf_CreateUnitsAtPoint2(1, "SJPickupHealth500", 0, 0, UnitGetPosition(gv_pirateCapitalShip));
     PingDestroy(gv_pirateBossPing);
     TriggerExecute(gt_ObjectivePirateCapitalShipComplete, true, true);
@@ -5474,7 +5478,7 @@ bool gt_VictoryMainObjectiveCompleted_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libSwaC_gf_ShowHideSingularBossBarSwarmCampaign(false);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
@@ -5530,7 +5534,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyDominionBase2) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveDestroyMercenarySpaceStation) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveHyperionMustSurvive) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZSpace01_1", gv_pLAYER_01_USER);
     }
 
@@ -5647,9 +5651,11 @@ bool gt_ObjectiveSetupSpaceStationCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSaveRaynor01Objective05");
-    gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 3);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSaveRaynor01Objective05", "", 0);
+    gv_objectiveSetupSpaceStation = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveSetupSpaceStation, 3);
+    ObjectiveShow(gv_objectiveSetupSpaceStation, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveSetupSpaceStation, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSetupSpaceStation, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5708,7 +5714,7 @@ bool gt_ObjectiveSetupSpaceStationComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSetupSpaceStationCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSetupSpaceStation);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5737,9 +5743,12 @@ bool gt_ObjectiveDestroyMercenarySpaceStationCreate_Func (bool testConds, bool r
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSaveRaynor01Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 2);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSaveRaynor01Objective01", "", 0);
+    gv_objectiveDestroyMercenarySpaceStation = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveDestroyMercenarySpaceStation, 2);
+    ObjectiveShow(gv_objectiveDestroyMercenarySpaceStation, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyMercenarySpaceStation, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyMercenarySpaceStation, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyMercenarySpaceStation, true);
     return true;
 }
 
@@ -5794,7 +5803,7 @@ bool gt_ObjectiveDestroyMercenarySpaceStationComplete_Func (bool testConds, bool
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyMercenarySpaceStationCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyMercenarySpaceStation);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5823,9 +5832,11 @@ bool gt_ObjectiveHyperionMustSurviveCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSaveRaynor01Objective04");
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 1);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSaveRaynor01Objective04", "", 0);
+    gv_objectiveHyperionMustSurvive = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveHyperionMustSurvive, 1);
+    ObjectiveShow(gv_objectiveHyperionMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveHyperionMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveHyperionMustSurvive, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5854,7 +5865,7 @@ bool gt_ObjectiveHyperionMustSurviveComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveHyperionMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveHyperionMustSurvive);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5883,7 +5894,7 @@ bool gt_ObjectiveHyperionMustSurviveFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveHyperionMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveHyperionMustSurvive);
     return true;
 }
 
@@ -5896,7 +5907,13 @@ void gt_ObjectiveHyperionMustSurviveFailed_Init () {
 // Trigger: Objective Mineral Fields Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveMineralFieldsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5912,7 +5929,12 @@ bool gt_ObjectiveMineralFieldsCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSaveRaynor01Objective03");
     gv_objectiveMineralFields = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSaveRaynor01Objective03", "", gv_objectiveMineralFieldsCount);
+    ObjectiveShow(gv_objectiveMineralFields, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveMineralFields, lv_category, "", gv_objectiveMineralFieldsCount, libSwaC_gf_MissionObjectiveItemCount("ZSaveRaynor01Objective03"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveMineralFields, gv_LOCATION_ID_FIRST_MINERAL_PATCH);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveMineralFields, gv_LOCATION_ID_SECOND_MINERAL_PATCH);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveMineralFields, gv_LOCATION_ID_THIRD_MINERAL_PATCH);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveMineralFields, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6070,7 +6092,13 @@ void gt_TransmissionMineralFieldCompleteQ_Init () {
 // Trigger: Objective Pirate Capital Ship Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectivePirateCapitalShipCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6086,7 +6114,10 @@ bool gt_ObjectivePirateCapitalShipCreate_Func (bool testConds, bool runActions) 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSaveRaynor01Objective02");
     gv_objectivePirateCapitalShip = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSaveRaynor01Objective02", "", 0);
+    ObjectiveShow(gv_objectivePirateCapitalShip, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectivePirateCapitalShip, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePirateCapitalShip, gv_LOCATION_ID_PIRATE_CAPITAL_SHIP);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectivePirateCapitalShip, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6857,8 +6888,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
 
     }
 
-    ObjectiveShow(gv_objectiveDestroyDominionBase3, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSetupSpaceStation, false);
     if ((gv_cinematicCompleted == true)) {
         lv_fadeDuration = 1.5;
     }
@@ -7295,13 +7325,13 @@ bool gt_MineralPickupChecks_Func (bool testConds, bool runActions) {
     }
     autoA56FB6C6_val = lv_minedOutMineralGroup;
     if (autoA56FB6C6_val == 1) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_MINERAL_PATCH);
     }
     else if (autoA56FB6C6_val == 2) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_MINERAL_PATCH);
     }
     else if (autoA56FB6C6_val == 3) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_MINERAL_PATCH);
     }
     else {
     }
