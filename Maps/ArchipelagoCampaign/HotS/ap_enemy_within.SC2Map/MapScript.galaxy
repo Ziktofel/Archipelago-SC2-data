@@ -37,6 +37,12 @@ const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_ZERG = 2;
 const int gv_pLAYER_02_ZERG2 = 3;
 const int gv_pLAYER_02_ZERG22 = 4;
+const int gv_LOCATION_ID_INFEST_GIANT_URSADON = 1;
+const int gv_LOCATION_ID_FIRST_NIADRA_EVOLUTION = 2;
+const int gv_LOCATION_ID_SECOND_NIADRA_EVOLUTION = 3;
+const int gv_LOCATION_ID_THIRD_NIADRA_EVOLUTION = 4;
+const int gv_LOCATION_ID_WARP_DRIVE = 5;
+const int gv_LOCATION_ID_STASIS_QUADRANT = 6;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -86,15 +92,15 @@ int gv_zerglingKills;
 int gv_roachKills;
 int gv_hydraliskKills;
 int gv_ursadonKills;
-int gv_objectiveDestroyDominionBase22;
-int gv_objectiveDestroyDominionBase222;
-int gv_objectiveDestroyDominionBase2;
-int gv_objectiveDestroyDominionBase23;
-int gv_objectiveDestroyDominionBase232;
-int gv_objectiveDestroyDominionBase322;
-int gv_objectiveDestroyDominionBase3222;
-int gv_objectiveDestroyDominionBase32222;
-int gv_objectiveDestroyDominionBase323;
+int gv_objectiveKillProtoss;
+int gv_objectiveSwarmQueenSurvival;
+int gv_objectiveGainBiomass;
+int gv_objectiveFindSafePlace;
+int gv_objectiveGrow;
+int gv_objectiveDestroyWarpDrive;
+int gv_objectiveEscapeWarpDrive;
+int gv_objectiveDestroyEscapePods;
+int gv_objectiveInfestGiantUrsadon;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicTempUnits;
 bool gv_cinematicCompleted;
@@ -112,6 +118,8 @@ sound gv_midStasisSound;
 bool gv_midMusicCompleted;
 bool gv_victoryCinematicCompleted;
 sound gv_victoryZergSound;
+int gv_objectiveGrowMore;
+int gv_additionalGrows;
 
 void InitGlobals () {
     int init_i;
@@ -147,18 +155,19 @@ void InitGlobals () {
     for (init_i = 0; init_i <= 10; init_i += 1) {
         gv_escapePodDlgBorder[init_i] = c_invalidDialogControlId;
     }
-    gv_objectiveDestroyDominionBase22 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase222 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase23 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase232 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase322 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase3222 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase32222 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase323 = c_invalidObjectiveId;
+    gv_objectiveKillProtoss = c_invalidObjectiveId;
+    gv_objectiveSwarmQueenSurvival = c_invalidObjectiveId;
+    gv_objectiveGainBiomass = c_invalidObjectiveId;
+    gv_objectiveFindSafePlace = c_invalidObjectiveId;
+    gv_objectiveGrow = c_invalidObjectiveId;
+    gv_objectiveDestroyWarpDrive = c_invalidObjectiveId;
+    gv_objectiveEscapeWarpDrive = c_invalidObjectiveId;
+    gv_objectiveDestroyEscapePods = c_invalidObjectiveId;
+    gv_objectiveInfestGiantUrsadon = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_midHiddenUnitGroup = UnitGroupEmpty();
+    gv_objectiveGrowMore = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -388,6 +397,8 @@ trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryZergBridge1;
 trigger gt_VictoryZergBridge2;
+trigger gt_ObjectiveGrowMoreCreate;
+trigger gt_ObjectiveGrowMoreComplete;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -1448,14 +1459,13 @@ bool gt_UpdateProtossRemainingObjective_Func (bool testConds, bool runActions) {
         gv_numberOfProtossRemaining = 0;
     }
 
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveKillProtoss, gv_numberOfProtossRemaining);
     if ((gv_escapePodPeopleRemaining == 0)) {
         TriggerExecute(gt_ObjectiveDestroyEscapePodsComplete, true, false);
     }
-    else {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase22, gv_numberOfProtossRemaining);
-    }
+
     if ((gv_numberOfProtossRemaining <= 0)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
         TriggerExecute(gt_VictoryMainObjectivesCompleted, true, false);
     }
 
@@ -1653,7 +1663,7 @@ bool gt_SwarmQueenusesParasiticInvasion_Func (bool testConds, bool runActions) {
         gf_KillLargeHoldingPen(EventUnitTargetPoint());
         UnitSetOwner(EventUnitTargetUnit(), gv_pLAYER_01_USER, true);
         UnitSelect(EventUnitTargetUnit(), gv_pLAYER_01_USER, true);
-        if ((ObjectiveGetState(gv_objectiveDestroyDominionBase323) == c_objectiveStateActive)) {
+        if ((ObjectiveGetState(gv_objectiveInfestGiantUrsadon) == c_objectiveStateActive)) {
             PingDestroy(gv_giantUrsadonPing);
             libSwaC_gf_DisplayMissionObjectiveRewardFloatingText(UnitGetPosition(EventUnitTargetUnit()), "ZExpedition03Objective010", gv_pLAYER_01_USER);
             TriggerEnable(gt_GiantUrsadonDiesFailBonusObjective, false);
@@ -1795,7 +1805,7 @@ bool gt_MorphtoSwarmQueenComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_NIADRA_EVOLUTION);
     if ((libABFE498B_gv_aP_Triggers_Option_grantStoryTech == true)) {
         libABFE498B_gf_AP_Triggers_Zerg_unlockZergling(gv_pLAYER_01_USER);
     }
@@ -1839,6 +1849,8 @@ bool gt_MorphtoSwarmQueenComplete_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDestroytheProtossCreateQ, true, false);
     TriggerExecute(gt_ObjectiveSwarmQueenSurvivalCreateQ, true, false);
     TriggerExecute(gt_TransmissionP1SwarmQueenMorphCompleteQ, true, true);
+    Wait(3.0, c_timeGame);
+    TriggerExecute(gt_ObjectiveGrowMoreCreate, true, false);
     libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/2BE39A32"));
     return true;
 }
@@ -1983,7 +1995,9 @@ bool gt_MorphtoLargeSwarmQueenComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_NIADRA_EVOLUTION);
+    gv_additionalGrows = 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveGrowMore, gv_additionalGrows);
     if ((libABFE498B_gv_aP_Triggers_Option_grantStoryTech == true)) {
         libABFE498B_gf_AP_Triggers_Zerg_unlockRoach(gv_pLAYER_01_USER);
     }
@@ -2157,7 +2171,10 @@ bool gt_MorphtoHugeSwarmQueenComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_NIADRA_EVOLUTION);
+    gv_additionalGrows = 2;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveGrowMore, gv_additionalGrows);
+    TriggerExecute(gt_ObjectiveGrowMoreComplete, true, false);
     if ((libABFE498B_gv_aP_Triggers_Option_grantStoryTech == true)) {
         libABFE498B_gf_AP_Triggers_Zerg_unlockHydralisk(gv_pLAYER_01_USER);
     }
@@ -2807,7 +2824,7 @@ bool gt_FirstLyoteisConsumed_Func (bool testConds, bool runActions) {
     CameraSetData(PlayerGroupSingle(gv_pLAYER_01_USER), "LarvaCamera");
     gf_ConsumeCritter(UnitFromId(16));
     Wait(1.5, c_timeGame);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase2, PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropCustom));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveGainBiomass, PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropCustom));
     return true;
 }
 
@@ -3659,7 +3676,7 @@ bool gt_UrsadonisConsumedResetCamera_Func (bool testConds, bool runActions) {
     UnitRemove(UnitFromId(294));
     gf_ConsumeCritter(gv_tHE_ONE_URSADON);
     Wait(1.5, c_timeGame);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase2, PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropCustom));
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveGainBiomass, PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropCustom));
     if ((PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropCustom) == 100)) {
         TriggerExecute(gt_ObjectiveGainBiomassComplete, true, false);
     }
@@ -4706,8 +4723,7 @@ bool gt_EnteredWarpDriveQuadrant_Func (bool testConds, bool runActions) {
     gv_warpDrivePing = PingLastCreated();
     VisRevealerCreate(gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(UnitFromId(239)), 4.0));
     gv_beaconRevealer = VisRevealerLastCreated();
-    ObjectiveSetState(gv_objectiveDestroyDominionBase322, c_objectiveStateActive);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase322);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyWarpDrive, true);
     TriggerExecute(gt_TransmissionP3EnteredWarpDriveQuadQ, true, false);
     return true;
 }
@@ -5176,7 +5192,7 @@ bool gt_WarpDriveDestroyedStartCountdownQ_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WARP_DRIVE);
     VisRevealerDestroy(gv_beaconRevealer);
     TriggerExecute(gt_WarpDriveExplosions, true, false);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZExpedition03MusicEvent02_WarpDriveBreach", c_soundtrackCueAny, c_soundtrackIndexAny, false);
@@ -5236,8 +5252,7 @@ bool gt_WarpDriveDestroyedStartCountdownQ_Func (bool testConds, bool runActions)
     }
 
     TriggerExecute(gt_StalkerAttackAfterWarpDriveDestroyed, true, false);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase3222, c_objectiveStateActive);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3222);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveEscapeWarpDrive, true);
     TriggerQueueEnter();
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategoryMusic, 100.0, 1.0);
@@ -5537,7 +5552,7 @@ bool gt_EscapedWarpDriveTransition_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_STASIS_QUADRANT);
     TriggerEnable(gt_EvacuateTimerEndsDestroyWarpDriveQuadrant, false);
     UnitKill(UnitFromId(275));
     PingDestroy(gv_escapeExplosionPing);
@@ -7531,7 +7546,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase22) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyDominionBase32222) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveKillProtoss) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyEscapePods) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZKaldir03_1", gv_pLAYER_01_USER);
     }
 
@@ -7666,10 +7681,12 @@ bool gt_ObjectiveDestroytheProtossCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective01");
-    gv_objectiveDestroyDominionBase22 = ObjectiveLastCreated();
-    ObjectiveSetPriority(gv_objectiveDestroyDominionBase22, 1);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective01", "", 0);
-    lib5BD4895D_gf_AP_Core_enableObjectiveCounter(ObjectiveLastCreated(), "remaining", 100, 0);
+    gv_objectiveKillProtoss = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveKillProtoss, 1);
+    ObjectiveShow(gv_objectiveKillProtoss, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveKillProtoss, lib5BD4895D_ge_APObjectiveCategory_Primary, "remaining", gv_numberOfProtossRemaining, 0, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillProtoss, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillProtoss, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7727,7 +7744,7 @@ bool gt_ObjectiveDestroytheProtossComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroytheProtossCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillProtoss);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7756,7 +7773,7 @@ bool gt_ObjectiveDestroytheProtossFailed_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroytheProtossCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase22);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillProtoss);
     return true;
 }
 
@@ -7784,9 +7801,11 @@ bool gt_ObjectiveSwarmQueenSurvivalCreate_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective02");
-    gv_objectiveDestroyDominionBase222 = ObjectiveLastCreated();
-    ObjectiveSetPriority(gv_objectiveDestroyDominionBase222, 0);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective02", "", 0);
+    gv_objectiveSwarmQueenSurvival = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveSwarmQueenSurvival, 0);
+    ObjectiveShow(gv_objectiveSwarmQueenSurvival, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveSwarmQueenSurvival, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSwarmQueenSurvival, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7844,7 +7863,7 @@ bool gt_ObjectiveSwarmQueenSurvivalComplete_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSwarmQueenSurvivalCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase222);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSwarmQueenSurvival);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7873,11 +7892,11 @@ bool gt_ObjectiveSwarmQueenSurvivalFailed_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSwarmQueenSurvivalCreate, true, false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase3222) == c_objectiveStateActive)) {
+    if ((ObjectiveGetState(gv_objectiveEscapeWarpDrive) == c_objectiveStateActive)) {
         TriggerExecute(gt_ObjectiveEscapeFailed, true, false);
     }
 
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase222);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveSwarmQueenSurvival);
     return true;
 }
 
@@ -7905,8 +7924,10 @@ bool gt_ObjectiveGainBiomassCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective03");
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective03", "", PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropCustom));
+    gv_objectiveGainBiomass = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveGainBiomass, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveGainBiomass, lib5BD4895D_ge_APObjectiveCategory_Primary, "", PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropCustom), libSwaC_gf_MissionObjectiveItemCount("ZExpedition03Objective03"), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveGainBiomass, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7935,7 +7956,7 @@ bool gt_ObjectiveGainBiomassComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveGainBiomassCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveGainBiomass);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7964,8 +7985,7 @@ bool gt_ObjectiveGainBiomassCompleteHideQ_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZExpedition03Objective03", libSwaC_ge_MissionObjectiveState_Undiscovered);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveGainBiomass, false);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -7995,7 +8015,7 @@ bool gt_ObjectiveGainBiomassFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveGainBiomassCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveGainBiomass);
     return true;
 }
 
@@ -8022,7 +8042,11 @@ bool gt_ObjectiveFindSafePlaceCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    gv_objectiveDestroyDominionBase23 = ObjectiveLastCreated();
+    libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective09");
+    gv_objectiveFindSafePlace = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveFindSafePlace, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveFindSafePlace, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindSafePlace, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8051,7 +8075,7 @@ bool gt_ObjectiveFindSafePlaceComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindSafePlaceCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase23);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFindSafePlace);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8080,7 +8104,7 @@ bool gt_ObjectiveFindSafePlaceCompleteHideQ_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZExpedition03Objective09", libSwaC_ge_MissionObjectiveState_Undiscovered);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindSafePlace, false);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -8110,7 +8134,7 @@ bool gt_ObjectiveFindSafePlaceFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindSafePlaceCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase23);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveFindSafePlace);
     return true;
 }
 
@@ -8138,8 +8162,11 @@ bool gt_ObjectiveGrowCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective08");
-    gv_objectiveDestroyDominionBase232 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective08", "", 0);
+    gv_objectiveGrow = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveGrow, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveGrow, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveGrow, gv_LOCATION_ID_FIRST_NIADRA_EVOLUTION);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveGrow, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8168,7 +8195,7 @@ bool gt_ObjectiveGrowComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveGrowCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase232);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveGrow);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8197,8 +8224,7 @@ bool gt_ObjectiveGrowCompleteHideQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZExpedition03Objective08", libSwaC_ge_MissionObjectiveState_Undiscovered);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase232);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveGrow, false);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     TriggerQueueExit();
     return true;
@@ -8228,7 +8254,7 @@ bool gt_ObjectiveGrowFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveGrowCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase232);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveGrow);
     return true;
 }
 
@@ -8256,9 +8282,10 @@ bool gt_ObjectiveDestroyWarpDriveCreateHidden_Func (bool testConds, bool runActi
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective05");
-    gv_objectiveDestroyDominionBase322 = ObjectiveLastCreated();
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZExpedition03Objective05", libSwaC_ge_MissionObjectiveState_Undiscovered);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective05", "", 0);
+    gv_objectiveDestroyWarpDrive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyWarpDrive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyWarpDrive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyWarpDrive, gv_LOCATION_ID_WARP_DRIVE);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8287,7 +8314,7 @@ bool gt_ObjectiveDestroyWarpDriveComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyWarpDriveCreateHidden, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase322);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyWarpDrive);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8316,7 +8343,7 @@ bool gt_ObjectiveDestroyWarpDriveFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyWarpDriveCreateHidden, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase322);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyWarpDrive);
     return true;
 }
 
@@ -8344,9 +8371,10 @@ bool gt_ObjectiveEscapeCreateHidden_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective06");
-    gv_objectiveDestroyDominionBase3222 = ObjectiveLastCreated();
-    libSwaC_gf_ZS_SetMissionObjectiveState("ZExpedition03Objective06", libSwaC_ge_MissionObjectiveState_Undiscovered);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective06", "", 0);
+    gv_objectiveEscapeWarpDrive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveEscapeWarpDrive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveEscapeWarpDrive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveEscapeWarpDrive, gv_LOCATION_ID_STASIS_QUADRANT);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8375,7 +8403,7 @@ bool gt_ObjectiveEscapeComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEscapeCreateHidden, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3222);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveEscapeWarpDrive);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8404,7 +8432,7 @@ bool gt_ObjectiveEscapeFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEscapeCreateHidden, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase3222);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveEscapeWarpDrive);
     return true;
 }
 
@@ -8432,8 +8460,10 @@ bool gt_ObjectiveDestroyEscapePodsCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective07");
-    gv_objectiveDestroyDominionBase32222 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective07", "", 0);
+    gv_objectiveDestroyEscapePods = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyEscapePods, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyEscapePods, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyEscapePods, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8491,7 +8521,7 @@ bool gt_ObjectiveDestroyEscapePodsComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyEscapePodsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase32222);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyEscapePods);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8520,7 +8550,7 @@ bool gt_ObjectiveDestroyEscapePodsFailed_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyEscapePodsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase32222);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyEscapePods);
     return true;
 }
 
@@ -8533,7 +8563,13 @@ void gt_ObjectiveDestroyEscapePodsFailed_Init () {
 // Trigger: Objective Infest Giant Ursadon Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveInfestGiantUrsadonCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -8548,8 +8584,11 @@ bool gt_ObjectiveInfestGiantUrsadonCreate_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition03Objective010");
-    gv_objectiveDestroyDominionBase323 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition03Objective010", "", 0);
+    gv_objectiveInfestGiantUrsadon = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveInfestGiantUrsadon, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveInfestGiantUrsadon, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestGiantUrsadon, gv_LOCATION_ID_INFEST_GIANT_URSADON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveInfestGiantUrsadon, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8607,7 +8646,7 @@ bool gt_ObjectiveInfestGiantUrsadonComplete_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveInfestGiantUrsadonCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase323);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveInfestGiantUrsadon);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8636,7 +8675,7 @@ bool gt_ObjectiveInfestGiantUrsadonFailed_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveInfestGiantUrsadonCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase323);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveInfestGiantUrsadon);
     return true;
 }
 
@@ -9261,10 +9300,8 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
 
     SoundStop(gv_midExplosionSound, true);
     SoundStop(gv_midStasisSound, true);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase322, c_objectiveStateHidden);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase322);
-    ObjectiveSetState(gv_objectiveDestroyDominionBase3222, c_objectiveStateHidden);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3222);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyWarpDrive, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveEscapeWarpDrive, false);
     UnitKill(UnitFromId(273));
     libNtve_gf_ShowHideUnit(UnitFromId(559), true);
     UnitKill(UnitFromId(559));
@@ -9836,6 +9873,74 @@ void gt_VictoryZergBridge2_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective GrowMore Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveGrowMoreCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/0F4B4616"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveGrowMore = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveGrowMore, lv_category, "", gv_additionalGrows, 2, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveGrowMore, gv_LOCATION_ID_SECOND_NIADRA_EVOLUTION);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveGrowMore, gv_LOCATION_ID_THIRD_NIADRA_EVOLUTION);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveGrowMore, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveGrowMoreCreate_Init () {
+    gt_ObjectiveGrowMoreCreate = TriggerCreate("gt_ObjectiveGrowMoreCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective GrowMore Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveGrowMoreComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveGrowMoreCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveGrowMore);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveGrowMoreComplete_Init () {
+    gt_ObjectiveGrowMoreComplete = TriggerCreate("gt_ObjectiveGrowMoreComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -10034,7 +10139,7 @@ bool gt_InfestUrsadon_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_INFEST_GIANT_URSADON);
     return true;
 }
 
@@ -10286,6 +10391,8 @@ void InitTriggers () {
     gt_VictoryCleanup_Init();
     gt_VictoryZergBridge1_Init();
     gt_VictoryZergBridge2_Init();
+    gt_ObjectiveGrowMoreCreate_Init();
+    gt_ObjectiveGrowMoreComplete_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();

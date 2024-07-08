@@ -44,6 +44,14 @@ const int gv_pLAYER_05_PROTOSS = 5;
 const int gv_pLAYER_06_PROTOSS = 6;
 const int gv_pLAYER_09_ESSENCE = 9;
 const int gv_pLAYER_10_URSADON = 10;
+const int gv_LOCATION_ID_FIRST_URSADON_MATRIARCH = 1;
+const int gv_LOCATION_ID_NORTH_URSADON_MATRIARCH = 2;
+const int gv_LOCATION_ID_WEST_URSADON_MATRIARCH = 3;
+const int gv_LOCATION_ID_LOST_BROOD = 4;
+const int gv_LOCATION_ID_NORTHEAST_PSILINK_SPIRE = 5;
+const int gv_LOCATION_ID_NORTHWEST_PSILINK_SPIRE = 6;
+const int gv_LOCATION_ID_SOUTHWEST_PSILINK_SPIRE = 7;
+const int gv_LOCATION_ID_NAFASH = 8;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -97,19 +105,19 @@ int gv_unfrozenStructureDestroyed;
 timer gv_speedRunTimer;
 timer gv_completionistTimer;
 int gv_largestZergForce;
-int gv_objectiveDestroyDominionBase3;
+int gv_objectiveCollectUrsadonEssence;
 int gv_ursadonEssence_Collected;
 int gv_ursadonEssence_Needed;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase22;
+int gv_objectiveRecoverLostBrood;
+int gv_objectiveDestroyPsiLinkSpires;
 int gv_psiLinkSpiresDestroyed;
-int gv_objectiveRescueBrood;
+int gv_objectiveKillUrsadonMatriarchs;
 int gv_matriarchsKilled;
 int gv_ursadonMatriarchPingWest;
 int gv_ursadonMatriarchPingNorth;
 bool gv_aPNorthMatriarch;
 bool gv_aPSouthMatriarch;
-int gv_objectiveDestroyDominionBase2;
+int gv_objectiveFindNafashCorpse;
 bool gv_cinematicCompleted;
 unitgroup gv_cinematicTempUnits;
 unitgroup gv_cinematicHiddenUnits;
@@ -141,14 +149,14 @@ void InitGlobals () {
     gv_firstZealotAttackGroup = UnitGroupEmpty();
     gv_speedRunTimer = TimerCreate();
     gv_completionistTimer = TimerCreate();
-    gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
+    gv_objectiveCollectUrsadonEssence = c_invalidObjectiveId;
     gv_ursadonEssence_Needed = 1;
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase22 = c_invalidObjectiveId;
-    gv_objectiveRescueBrood = c_invalidObjectiveId;
+    gv_objectiveRecoverLostBrood = c_invalidObjectiveId;
+    gv_objectiveDestroyPsiLinkSpires = c_invalidObjectiveId;
+    gv_objectiveKillUrsadonMatriarchs = c_invalidObjectiveId;
     gv_ursadonMatriarchPingWest = c_invalidPingId;
     gv_ursadonMatriarchPingNorth = c_invalidPingId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
+    gv_objectiveFindNafashCorpse = c_invalidObjectiveId;
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_victoryHiddenUnitGroup = UnitGroupEmpty();
@@ -1993,7 +2001,7 @@ bool gt_StartGameStage2Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LOST_BROOD);
     if ((libHots_gf_DifficultyValueInt2(1, 1, 0) == 1)) {
     }
 
@@ -3714,7 +3722,7 @@ bool gt_FlashFreezeEndingRandomQ_Func (bool testConds, bool runActions) {
     lv_randomLine = RandomInt(1, 4);
     TriggerQueueEnter();
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
-    if ((gv_flashFreezeRetreatLineDelivered == false) && ((ObjectiveGetState(gv_objectiveDestroyDominionBase3) == c_objectiveStateCompleted) || (ObjectiveGetState(gv_objectiveDestroyDominionBase3) == c_objectiveStateHidden))) {
+    if ((gv_flashFreezeRetreatLineDelivered == false) && ((ObjectiveGetState(gv_objectiveCollectUrsadonEssence) == c_objectiveStateCompleted) || (ObjectiveGetState(gv_objectiveCollectUrsadonEssence) == c_objectiveStateHidden))) {
         lv_deliverRetreatLine = gf_FlashFreezeRetreat();
     }
 
@@ -4226,7 +4234,7 @@ bool gt_PsiLinkSpireDestroyed_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDestroyPsiLinkSpiresUpdate, true, false);
     TriggerExecute(gt_CreatePingPsiLinkSpire0203, true, false);
     if ((EventUnit() == UnitFromId(7))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_PSILINK_SPIRE);
         PingDestroy(gv_pingSpire01);
         gv_pingSpire01 = c_invalidPingId;
         UnitRemove(UnitFromId(1226));
@@ -4235,7 +4243,7 @@ bool gt_PsiLinkSpireDestroyed_Func (bool testConds, bool runActions) {
     }
 
     if ((EventUnit() == UnitFromId(5))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_PSILINK_SPIRE);
         PingDestroy(gv_pingSpire02);
         gv_pingSpire02 = c_invalidPingId;
         UnitRemove(UnitFromId(1227));
@@ -4244,7 +4252,7 @@ bool gt_PsiLinkSpireDestroyed_Func (bool testConds, bool runActions) {
     }
 
     if ((EventUnit() == UnitFromId(6))) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_PSILINK_SPIRE);
         PingDestroy(gv_pingSpire03);
         gv_pingSpire03 = c_invalidPingId;
         UnitRemove(UnitFromId(1228));
@@ -4933,7 +4941,7 @@ bool gt_TransmissionKerriganFindsDeadQueenQ_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NAFASH);
     TriggerExecute(gt_ObjectiveFindNafashCorpseComplete, true, false);
     TriggerQueueEnter();
     libSwaC_gf_PingMinimapCampaign(PlayerGroupAll(), UnitGetPosition(UnitFromId(18)), 2.0, Color(100.00, 100.00, 0.00));
@@ -6339,11 +6347,11 @@ bool gt_AchievementCompletionistRunH_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase22) == c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDestroyPsiLinkSpires) == c_objectiveStateCompleted))) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveRescueBrood) == c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveKillUrsadonMatriarchs) == c_objectiveStateCompleted))) {
             return false;
         }
 
@@ -6522,7 +6530,7 @@ bool gt_VictoryPsiLinkSpiresDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
@@ -6578,7 +6586,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     UnitPauseAll(true);
     AITimePause(true);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase22) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveDestroyPsiLinkSpires) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZKaldir01_1", gv_pLAYER_01_USER);
     }
 
@@ -6722,8 +6730,11 @@ bool gt_ObjectiveCollectUrsadonEssenceCreate_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition01Objective2");
-    gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition01Objective2", "", gv_ursadonEssence_Collected);
+    gv_objectiveCollectUrsadonEssence = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveCollectUrsadonEssence, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveCollectUrsadonEssence, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveCollectUrsadonEssence, gv_LOCATION_ID_FIRST_URSADON_MATRIARCH);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveCollectUrsadonEssence, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6752,7 +6763,7 @@ bool gt_ObjectiveCollectUrsadonEssenceComplete_Func (bool testConds, bool runAct
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveCollectUrsadonEssenceCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveCollectUrsadonEssence);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6781,7 +6792,7 @@ bool gt_ObjectiveCollectUrsadonEssenceFailed_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveCollectUrsadonEssenceCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveCollectUrsadonEssence);
     return true;
 }
 
@@ -6809,8 +6820,11 @@ bool gt_ObjectiveRecoverLostBroodCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition01Objective1");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition01Objective1", "", 0);
+    gv_objectiveRecoverLostBrood = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveRecoverLostBrood, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveRecoverLostBrood, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRecoverLostBrood, gv_LOCATION_ID_LOST_BROOD);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRecoverLostBrood, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6839,7 +6853,7 @@ bool gt_ObjectiveRecoverLostBroodComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRecoverLostBroodCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRecoverLostBrood);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6868,7 +6882,7 @@ bool gt_ObjectiveRecoverLostBroodFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRecoverLostBroodCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRecoverLostBrood);
     return true;
 }
 
@@ -6896,8 +6910,14 @@ bool gt_ObjectiveDestroyPsiLinkSpiresCreate_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition01Objective04");
-    gv_objectiveDestroyDominionBase22 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition01Objective04", "", gv_psiLinkSpiresDestroyed);
+    gv_objectiveDestroyPsiLinkSpires = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyPsiLinkSpires, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyPsiLinkSpires, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_psiLinkSpiresDestroyed, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPsiLinkSpires, gv_LOCATION_ID_NORTHEAST_PSILINK_SPIRE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPsiLinkSpires, gv_LOCATION_ID_NORTHWEST_PSILINK_SPIRE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPsiLinkSpires, gv_LOCATION_ID_SOUTHWEST_PSILINK_SPIRE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPsiLinkSpires, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyPsiLinkSpires, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6925,7 +6945,7 @@ bool gt_ObjectiveDestroyPsiLinkSpiresUpdate_Func (bool testConds, bool runAction
     }
 
     TriggerExecute(gt_ObjectiveDestroyPsiLinkSpiresCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase22, gv_psiLinkSpiresDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyPsiLinkSpires, gv_psiLinkSpiresDestroyed);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6954,8 +6974,8 @@ bool gt_ObjectiveDestroyPsiLinkSpiresComplete_Func (bool testConds, bool runActi
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyPsiLinkSpiresCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase22, gv_psiLinkSpiresDestroyed);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyPsiLinkSpires, gv_psiLinkSpiresDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyPsiLinkSpires);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6984,7 +7004,7 @@ bool gt_ObjectiveDestroyPsiLinkSpiresFailed_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyPsiLinkSpiresCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase22);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyPsiLinkSpires);
     return true;
 }
 
@@ -6997,7 +7017,13 @@ void gt_ObjectiveDestroyPsiLinkSpiresFailed_Init () {
 // Trigger: Objective Ursadon Matriarchs Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveUrsadonMatriarchsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -7012,8 +7038,12 @@ bool gt_ObjectiveUrsadonMatriarchsCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition01Objective05");
-    gv_objectiveRescueBrood = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition01Objective05", "", gv_matriarchsKilled);
+    gv_objectiveKillUrsadonMatriarchs = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveKillUrsadonMatriarchs, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveKillUrsadonMatriarchs, lv_category, "", gv_matriarchsKilled, 2, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillUrsadonMatriarchs, gv_LOCATION_ID_NORTH_URSADON_MATRIARCH);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillUrsadonMatriarchs, gv_LOCATION_ID_WEST_URSADON_MATRIARCH);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillUrsadonMatriarchs, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7048,7 +7078,7 @@ bool gt_ObjectiveUrsadonMatriarchsUpdate_Func (bool testConds, bool runActions) 
         if ((gv_aPSouthMatriarch == false)) {
             gv_aPSouthMatriarch = true;
             PingDestroy(gv_ursadonMatriarchPingWest);
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_URSADON_MATRIARCH);
         }
 
     }
@@ -7056,7 +7086,7 @@ bool gt_ObjectiveUrsadonMatriarchsUpdate_Func (bool testConds, bool runActions) 
         if ((gv_aPNorthMatriarch == false)) {
             gv_aPNorthMatriarch = true;
             PingDestroy(gv_ursadonMatriarchPingNorth);
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_URSADON_MATRIARCH);
         }
 
     }
@@ -7065,7 +7095,7 @@ bool gt_ObjectiveUrsadonMatriarchsUpdate_Func (bool testConds, bool runActions) 
     TriggerExecute(gt_MatriarchKilledUpgradeZergQ, true, false);
     TriggerExecute(gt_ObjectiveUrsadonMatriarchsCreate, true, false);
     libSwaC_gf_DisplayMissionObjectiveRewardFloatingText(UnitGetPosition(EventUnit()), "ZExpedition01Objective05", gv_pLAYER_01_USER);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueBrood, gv_matriarchsKilled);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveKillUrsadonMatriarchs, gv_matriarchsKilled);
     TriggerExecute(gt_ObjectiveUrsadonMatriarchsComplete, true, false);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -7107,8 +7137,8 @@ bool gt_ObjectiveUrsadonMatriarchsComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveUrsadonMatriarchsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueBrood, gv_matriarchsKilled);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueBrood);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveKillUrsadonMatriarchs, gv_matriarchsKilled);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillUrsadonMatriarchs);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7137,7 +7167,7 @@ bool gt_ObjectiveUrsadonMatriarchsFailedQ_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveUrsadonMatriarchsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueBrood);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillUrsadonMatriarchs);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7151,7 +7181,13 @@ void gt_ObjectiveUrsadonMatriarchsFailedQ_Init () {
 // Trigger: Objective Find Nafash Corpse Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindNafashCorpseCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -7165,9 +7201,11 @@ bool gt_ObjectiveFindNafashCorpseCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/C5DC69B4"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveDestroyDominionBase2);
+    ObjectiveCreate(StringExternal("Param/Value/C5DC69B4"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveFindNafashCorpse = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveFindNafashCorpse, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindNafashCorpse, gv_LOCATION_ID_NAFASH);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindNafashCorpse, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7196,7 +7234,7 @@ bool gt_ObjectiveFindNafashCorpseComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindNafashCorpseCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFindNafashCorpse);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7225,7 +7263,7 @@ bool gt_ObjectiveFindNafashCorpseFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindNafashCorpseCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveFindNafashCorpse);
     return true;
 }
 
@@ -7957,10 +7995,8 @@ bool gt_MidRecoverBroodCleanup_Func (bool testConds, bool runActions) {
     UnitSetPropertyFixed(gv_kerrigan, c_unitPropEnergyPercent, 100.0);
     UIAlertClear(gv_pLAYER_01_USER);
     PingDestroy(gv_pingZergBase);
-    ObjectiveShow(gv_objectiveDestroyDominionBase3, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3);
-    ObjectiveShow(gv_objectiveDestroyDominionBase, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveCollectUrsadonEssence, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRecoverLostBrood, false);
     TriggerEnable(gt_DefeatBaseDead, true);
     TriggerEnable(gt_DefeatKerriganDead, false);
     if ((gv_cinematicCompleted == true)) {
@@ -8637,7 +8673,7 @@ bool gt_UrsadonMatriarchFirst_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_URSADON_MATRIARCH);
     return true;
 }
 

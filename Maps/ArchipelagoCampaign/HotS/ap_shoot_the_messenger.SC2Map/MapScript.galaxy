@@ -49,6 +49,15 @@ const fixed gv_warningDistance = 25.0;
 const int gv_stasisChamberPingIndex = 0;
 const string gv_launchFacilityType = "ProtossDockingBayUnit";
 const int gv_objectiveFindFrozenZergTotal = 4;
+const int gv_LOCATION_ID_EAST_STATIS_CHAMBER = 1;
+const int gv_LOCATION_ID_CENTER_STATIS_CHAMBER = 2;
+const int gv_LOCATION_ID_WEST_STATIS_CHAMBER = 3;
+const int gv_LOCATION_ID_DESTROY_4_SHUTTLES = 4;
+const int gv_LOCATION_ID_FROZEN_EXPANSION = 5;
+const int gv_LOCATION_ID_SOUTHWEST_FROZEN_ZERG = 6;
+const int gv_LOCATION_ID_SOUTHEAST_FROZEN_ZERG = 7;
+const int gv_LOCATION_ID_WEST_FROZEN_ZERG = 8;
+const int gv_LOCATION_ID_EAST_FROZEN_ZERG = 9;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -104,7 +113,7 @@ int gv_nexusDestroyedCount;
 int gv_feralZergUnfrozen;
 int gv_feralZergFrozenTotal;
 int gv_dockingBaysDestroyed;
-int gv_objectiveDestroyDominionBase;
+int gv_objectiveDestroyAllProtossShuttles;
 int gv_shuttleWavesRemaining;
 int gv_objectiveNoShuttleCanEscape;
 int gv_objectiveBonusDestroyStasisChamber;
@@ -145,7 +154,7 @@ void InitGlobals () {
         gv_stasisChamberPingArray[init_i] = c_invalidPingId;
     }
     gv_noShuttleHasSlowedDown = true;
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
+    gv_objectiveDestroyAllProtossShuttles = c_invalidObjectiveId;
     gv_shuttleWavesRemaining = 8;
     gv_objectiveNoShuttleCanEscape = c_invalidObjectiveId;
     gv_objectiveBonusDestroyStasisChamber = c_invalidObjectiveId;
@@ -271,6 +280,7 @@ trigger gt_ObjectiveNoShuttleCanEscapeComplete;
 trigger gt_ObjectiveNoShuttleCanEscapeFailed;
 trigger gt_ObjectiveDestroyStasisChamberCreate;
 trigger gt_ObjectiveDestroyStasisChamberUpdate;
+trigger gt_ObjectiveDestroyStatisChamberDeactivate;
 trigger gt_ObjectiveDestroyStasisChamberComplete;
 trigger gt_ObjectiveFindFrozenZergCreate;
 trigger gt_ObjectiveFindFrozenZergUpdate;
@@ -3213,7 +3223,7 @@ bool gt_RescueFrozenZergExpansion_Func (bool testConds, bool runActions) {
     libSwaC_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(UnitFromId(1)), 2.0, Color(0.00, 100.00, 0.00));
     UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/66AC2FE8"), null, UnitFromId(1));
     TriggerExecute(gt_TransmissionFrozenBaseRescuedQ, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FROZEN_EXPANSION);
     TriggerExecute(gt_ObjectiveFindFrozenZergBaseComplete, true, false);
     auto5E51DAD4_g = UnitGroup(null, gv_pLAYER_07_FROZENZERG, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto5E51DAD4_u = UnitGroupCount(auto5E51DAD4_g, c_unitCountAll);
@@ -4407,7 +4417,7 @@ bool gt_VictoryDockingBaysDestroyed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     if ((gv_shuttleWavesRemaining > 4)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DESTROY_4_SHUTTLES);
     }
 
     libSwaC_gf_UpdateMissionObjectiveText("ZExpedition02Objective2", 0, false, StringExternal("Param/Value/DCC58208"));
@@ -4439,7 +4449,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZExpedition02MusicCutscene_MissionVictoryStinger", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     if ((UnitIsAlive(gv_kerrigan) == true)) {
@@ -4476,7 +4486,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveNoShuttleCanEscape) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveDestroyAllProtossShuttles) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveNoShuttleCanEscape) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZKaldir02_1", gv_pLAYER_01_USER);
     }
 
@@ -4765,8 +4775,12 @@ bool gt_ObjectiveDestroyAllProtossShuttlesCreate_Func (bool testConds, bool runA
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition02Objective2");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition02Objective2", gf_Objective_LabelText(), gv_shuttleWavesRemaining);
+    gv_objectiveDestroyAllProtossShuttles = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyAllProtossShuttles, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyAllProtossShuttles, lib5BD4895D_ge_APObjectiveCategory_Primary, gf_Objective_LabelText(), gv_shuttleWavesRemaining, 0, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyAllProtossShuttles, gv_LOCATION_ID_DESTROY_4_SHUTTLES);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyAllProtossShuttles, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyAllProtossShuttles, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4808,14 +4822,14 @@ bool gt_ObjectiveDestroyAllProtossShuttlesUpdate_Func (bool testConds, bool runA
 
     TriggerExecute(gt_ObjectiveDestroyAllProtossShuttlesCreate, true, false);
     gv_shuttleWavesRemaining -= 1;
-    lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase, gf_Objective_LabelText());
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, gv_shuttleWavesRemaining);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyAllProtossShuttles, gf_Objective_LabelText());
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyAllProtossShuttles, gv_shuttleWavesRemaining);
     if ((gv_shuttleWavesRemaining <= 0)) {
         TriggerExecute(gt_VictorySequence, true, false);
     }
 
     if ((gv_shuttleWavesRemaining == 4)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DESTROY_4_SHUTTLES);
     }
 
     return true;
@@ -4846,7 +4860,7 @@ bool gt_ObjectiveDestroyAllProtossShuttlesComplete_Func (bool testConds, bool ru
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyAllProtossShuttlesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyAllProtossShuttles);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4875,7 +4889,7 @@ bool gt_ObjectiveDestroyAllProtossShuttlesFailed_Func (bool testConds, bool runA
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyAllProtossShuttlesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyAllProtossShuttles);
     return true;
 }
 
@@ -4904,7 +4918,9 @@ bool gt_ObjectiveNoShuttleCanEscapeCreate_Func (bool testConds, bool runActions)
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition02Objective3");
     gv_objectiveNoShuttleCanEscape = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition02Objective3", "", 0);
+    ObjectiveShow(gv_objectiveNoShuttleCanEscape, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveNoShuttleCanEscape, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveNoShuttleCanEscape, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4933,7 +4949,7 @@ bool gt_ObjectiveNoShuttleCanEscapeComplete_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveNoShuttleCanEscapeCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyAllProtossShuttles);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4977,7 +4993,13 @@ void gt_ObjectiveNoShuttleCanEscapeFailed_Init () {
 // Trigger: Objective Destroy Stasis Chamber Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyStasisChamberCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4993,7 +5015,12 @@ bool gt_ObjectiveDestroyStasisChamberCreate_Func (bool testConds, bool runAction
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZExpedition02Objective1");
     gv_objectiveBonusDestroyStasisChamber = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZExpedition02Objective1", "", 0);
+    ObjectiveShow(gv_objectiveBonusDestroyStasisChamber, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveBonusDestroyStasisChamber, lv_category, "", gv_stasisChamberDestroyed, libSwaC_gf_MissionObjectiveItemCount("ZExpedition02Objective1"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveBonusDestroyStasisChamber, gv_LOCATION_ID_EAST_STATIS_CHAMBER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveBonusDestroyStasisChamber, gv_LOCATION_ID_CENTER_STATIS_CHAMBER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveBonusDestroyStasisChamber, gv_LOCATION_ID_WEST_STATIS_CHAMBER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveBonusDestroyStasisChamber, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5031,6 +5058,39 @@ void gt_ObjectiveDestroyStasisChamberUpdate_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Statis Chamber Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyStatisChamberDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_STATIS_CHAMBER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_CENTER_STATIS_CHAMBER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_WEST_STATIS_CHAMBER] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveDestroyStasisChamberCreate, false);
+    TriggerEnable(gt_ObjectiveDestroyStasisChamberUpdate, false);
+    TriggerEnable(gt_TransmissionStasisChamberIntroQ, false);
+    TriggerEnable(gt_TransmissionStasisChamberDestroyedQ, false);
+    TriggerEnable(gt_StasisChamberDestroyed, false);
+    TriggerEnable(gt_ShowBonusObjectiveProximity, false);
+    TriggerEnable(gt_BonusObjectiveIntroQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyStatisChamberDeactivate_Init () {
+    gt_ObjectiveDestroyStatisChamberDeactivate = TriggerCreate("gt_ObjectiveDestroyStatisChamberDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDestroyStatisChamberDeactivate, 2.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Destroy Stasis Chamber Complete
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyStasisChamberComplete_Func (bool testConds, bool runActions) {
@@ -5063,7 +5123,13 @@ void gt_ObjectiveDestroyStasisChamberComplete_Init () {
 // Trigger: Objective Find Frozen Zerg Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindFrozenZergCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5077,9 +5143,14 @@ bool gt_ObjectiveFindFrozenZergCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/2AB0D04A"), StringToText(""), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/2AB0D04A"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveFindFrozenZerg = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveFindFrozenZerg, "", gv_objectiveFindFrozenZergFound, gv_objectiveFindFrozenZergTotal);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFindFrozenZerg, lv_category, "", gv_objectiveFindFrozenZergFound, gv_objectiveFindFrozenZergTotal, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindFrozenZerg, gv_LOCATION_ID_EAST_FROZEN_ZERG);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindFrozenZerg, gv_LOCATION_ID_WEST_FROZEN_ZERG);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindFrozenZerg, gv_LOCATION_ID_SOUTHEAST_FROZEN_ZERG);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindFrozenZerg, gv_LOCATION_ID_SOUTHWEST_FROZEN_ZERG);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindFrozenZerg, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5154,7 +5225,13 @@ void gt_ObjectiveFindFrozenZergComplete_Init () {
 // Trigger: Objective Find Frozen Zerg Base Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindFrozenZergBaseCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5168,9 +5245,11 @@ bool gt_ObjectiveFindFrozenZergBaseCreate_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/43CE71A7"), StringToText(""), c_objectiveStateActive, false);
+    ObjectiveCreate(StringExternal("Param/Value/43CE71A7"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveFindFrozenZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveFindFrozenZergBase);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveFindFrozenZergBase, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindFrozenZergBase, gv_LOCATION_ID_FROZEN_EXPANSION);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindFrozenZergBase, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6077,7 +6156,7 @@ bool gt_StasisChamberDestroyedEast_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_STATIS_CHAMBER);
     return true;
 }
 
@@ -6108,7 +6187,7 @@ bool gt_StasisChamberDestroyedCenter_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CENTER_STATIS_CHAMBER);
     return true;
 }
 
@@ -6139,7 +6218,7 @@ bool gt_StasisChamberDestroyedWest_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_STATIS_CHAMBER);
     return true;
 }
 
@@ -6179,7 +6258,7 @@ bool gt_SouthwestFrozenZerg_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_FROZEN_ZERG);
     TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
     return true;
 }
@@ -6220,7 +6299,7 @@ bool gt_WestFrozenZerg_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_FROZEN_ZERG);
     TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
     return true;
 }
@@ -6261,7 +6340,7 @@ bool gt_SoutheastFrozenZerg_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_FROZEN_ZERG);
     TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
     return true;
 }
@@ -6302,7 +6381,7 @@ bool gt_EastFrozenZerg_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_FROZEN_ZERG);
     TriggerExecute(gt_ObjectiveFindFrozenZergUpdate, true, false);
     return true;
 }
@@ -6410,6 +6489,7 @@ void InitTriggers () {
     gt_ObjectiveNoShuttleCanEscapeFailed_Init();
     gt_ObjectiveDestroyStasisChamberCreate_Init();
     gt_ObjectiveDestroyStasisChamberUpdate_Init();
+    gt_ObjectiveDestroyStatisChamberDeactivate_Init();
     gt_ObjectiveDestroyStasisChamberComplete_Init();
     gt_ObjectiveFindFrozenZergCreate_Init();
     gt_ObjectiveFindFrozenZergUpdate_Init();
