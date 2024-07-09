@@ -43,6 +43,18 @@ const int gv_pLAYER_02_DOMINION43 = 5;
 const int gv_pLAYER_02_DOMINION42 = 6;
 const int gv_pLAYER_02_DOMINION422 = 7;
 const int gv_pLAYER_02_DOMINION423 = 8;
+const int gv_LOCATION_ID_EAST_GATE = 1;
+const int gv_LOCATION_ID_NORTHWEST_GATE = 2;
+const int gv_LOCATION_ID_NORTH_GATE = 3;
+const int gv_LOCATION_ID_1_BILE_LAUNCHER_DEPLOYED = 4;
+const int gv_LOCATION_ID_2_BILE_LAUNCHERS_DEPLOYED = 5;
+const int gv_LOCATION_ID_3_BILE_LAUNCHERS_DEPLOYED = 6;
+const int gv_LOCATION_ID_4_BILE_LAUNCHERS_DEPLOYED = 7;
+const int gv_LOCATION_ID_5_BILE_LAUNCHERS_DEPLOYED = 8;
+const int gv_LOCATION_ID_SONS_OF_KORHAL = 9;
+const int gv_LOCATION_ID_NIGHT_WOLVES = 10;
+const int gv_LOCATION_ID_WEST_EXPANSION = 11;
+const int gv_LOCATION_ID_MID_EXPANSION = 12;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -106,10 +118,10 @@ unitgroup gv_killTeam02;
 int gv_killTeam01Ping;
 int gv_killTeam02Ping;
 int gv_bileLauncherDeaths;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase22;
-int gv_objectiveDestroyDominionBase2;
-int gv_objectiveDestroyDominionBase222;
+int gv_objectiveDeployBileLaunchers;
+int gv_objectiveBileLauncherLoss;
+int gv_objectiveDestroyDominionBases;
+int gv_objectiveDestroyGates;
 int gv_gatesDestroyed;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
@@ -135,6 +147,10 @@ region[6] gv_victoryZergRegions;
 unitgroup[6] gv_victoryZergGroups;
 sound gv_victoryZergSound;
 sound gv_victoryPodSound;
+int gv_objectiveClearExpansions;
+int gv_expansionsCleared;
+int gv_objectiveKillTeams;
+int gv_killTeamsDefeated;
 
 void InitGlobals () {
     int init_i;
@@ -174,10 +190,10 @@ void InitGlobals () {
     gv_killTeam02 = UnitGroupEmpty();
     gv_killTeam01Ping = c_invalidPingId;
     gv_killTeam02Ping = c_invalidPingId;
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase22 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase222 = c_invalidObjectiveId;
+    gv_objectiveDeployBileLaunchers = c_invalidObjectiveId;
+    gv_objectiveBileLauncherLoss = c_invalidObjectiveId;
+    gv_objectiveDestroyDominionBases = c_invalidObjectiveId;
+    gv_objectiveDestroyGates = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -185,6 +201,8 @@ void InitGlobals () {
     for (init_i = 0; init_i <= 5; init_i += 1) {
         gv_victoryZergGroups[init_i] = UnitGroupEmpty();
     }
+    gv_objectiveClearExpansions = c_invalidObjectiveId;
+    gv_objectiveKillTeams = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -303,6 +321,7 @@ trigger gt_ObjectiveDestroyDominionBaseFailed;
 trigger gt_ObjectiveDestroyGatesCreate;
 trigger gt_ObjectiveDestroyGatesUpdate;
 trigger gt_ObjectiveDestroyGatesComplete;
+trigger gt_ObjectiveDestroyGatesRemove;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -334,9 +353,16 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveClearExpansionsCreate;
+trigger gt_ObjectiveClearExpansionsUpdate;
+trigger gt_ObjectiveClearExpansionsComplete;
+trigger gt_WestExpanionClearCredit;
+trigger gt_MidExpanionClearCredit;
+trigger gt_ObjectiveKillTeamsCreate;
+trigger gt_ObjectiveKillTeamsUpdate;
+trigger gt_ObjectiveKillTeamsComplete;
 trigger gt_RaiseHiddenMutas;
 trigger gt_ArchInit;
-trigger gt_SetMineralCount;
 
 //--------------------------------------------------------------------------------------------------
 // Custom AI Functions
@@ -1518,6 +1544,7 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     Wait(3.0, c_timeReal);
     TriggerQueueEnter();
     TriggerExecute(gt_ObjectiveDeployBileLauncherCreate, true, true);
+    TriggerExecute(gt_ObjectiveClearExpansionsCreate, true, false);
     TriggerQueueExit();
     Wait(3.0, c_timeGame);
     TriggerExecute(gt_TipMissionHelpQ, true, false);
@@ -1631,7 +1658,7 @@ bool gt_Gate01DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_GATE);
     TriggerEnable(gt_RemoveInvadersAtGate01, true);
     gv_gatesDestroyed += 1;
     if ((gv_achievementLauncherCount < 5)) {
@@ -1705,7 +1732,7 @@ bool gt_Gate02DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_GATE);
     TriggerEnable(gt_RemoveInvadersAtGate02, true);
     gv_gatesDestroyed += 1;
     if ((gv_achievementLauncherCount < 5)) {
@@ -1785,7 +1812,7 @@ bool gt_Gate03DestroyedZergInvadeCity_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_GATE);
     TriggerEnable(gt_RemoveInvadersAtGate03, true);
     gv_gatesDestroyed += 1;
     if ((gv_achievementLauncherCount < 5)) {
@@ -2079,7 +2106,7 @@ bool gt_StartNextLandingTimer_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -2137,7 +2164,7 @@ bool gt_BileLauncherLandings_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -2187,7 +2214,7 @@ bool gt_LandingsOrdered_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -2269,7 +2296,7 @@ bool gt_LandingsRepeat_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -2328,7 +2355,7 @@ bool gt_ShowNextLanding_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -2394,7 +2421,6 @@ bool gt_Expansion1Cleared_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
     AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION2, RegionFromId(6), false);
     PingDestroy(gv_enemyTerritoryPing[1]);
     return true;
@@ -2433,7 +2459,6 @@ bool gt_Expansion2Cleared_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(12);
     AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION3, RegionFromId(13), false);
     PingDestroy(gv_enemyTerritoryPing[2]);
     return true;
@@ -2941,7 +2966,7 @@ bool gt_UpdateBileLaunchersOwned_Func (bool testConds, bool runActions) {
             gv_bileLaunchersOwned += 1;
             if ((gv_bileLauncherRewards[auto9EB44190_var].lv_checkSent == false)) {
                 gv_bileLauncherRewards[auto9EB44190_var].lv_checkSent = true;
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_bileLauncherRewards[auto9EB44190_var].lv_location);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_bileLauncherRewards[auto9EB44190_var].lv_location);
             }
 
         }
@@ -3079,7 +3104,7 @@ bool gt_CreateLandingTimerWindow_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -3503,7 +3528,7 @@ bool gt_TransmissionBileLauncherLandingQ_Func (bool testConds, bool runActions) 
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -4417,6 +4442,7 @@ bool gt_SendKillTeam01_Func (bool testConds, bool runActions) {
         AIAttackWaveSend(gv_pLAYER_02_DOMINION, 0, false);
     }
 
+    TriggerExecute(gt_ObjectiveKillTeamsCreate, true, false);
     TriggerExecute(gt_KillTeam01Ping, true, false);
     TriggerExecute(gt_TransmissionKillTeam01Q, true, false);
     return true;
@@ -4517,7 +4543,9 @@ bool gt_KillTeam01Ping_Func (bool testConds, bool runActions) {
 
         if ((libNtve_gf_UnitGroupIsDead(gv_killTeam01) == true)) {
             PingDestroy(gv_killTeam01Ping);
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SONS_OF_KORHAL);
+            gv_killTeamsDefeated += 1;
+            TriggerExecute(gt_ObjectiveKillTeamsUpdate, true, false);
             return true;
         }
         else {
@@ -4570,7 +4598,9 @@ bool gt_KillTeam02Ping_Func (bool testConds, bool runActions) {
 
         if ((libNtve_gf_UnitGroupIsDead(gv_killTeam02) == true)) {
             PingDestroy(gv_killTeam02Ping);
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NIGHT_WOLVES);
+            gv_killTeamsDefeated += 1;
+            TriggerExecute(gt_ObjectiveKillTeamsUpdate, true, false);
             return true;
         }
         else {
@@ -4617,12 +4647,12 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     gv_gameOver = true;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     lv_bileLauncher = 1;
     for ( ; ( (auto2AE7C6DA_ai >= 0 && lv_bileLauncher <= auto2AE7C6DA_ae) || (auto2AE7C6DA_ai < 0 && lv_bileLauncher >= auto2AE7C6DA_ae) ) ; lv_bileLauncher += auto2AE7C6DA_ai ) {
         lv_location = gv_bileLauncherRewards[lv_bileLauncher].lv_location;
         if ((lib5BD4895D_gf_AP_Core_isLocationSent(lv_location) == false)) {
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(lv_location);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lv_location);
         }
 
     }
@@ -4847,8 +4877,15 @@ bool gt_ObjectiveDeployBileLauncherCreate_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal01Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZKorhal01Objective01", "", gv_bileLaunchersOwned);
+    gv_objectiveDeployBileLaunchers = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDeployBileLaunchers, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDeployBileLaunchers, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_bileLaunchersOwned, libSwaC_gf_MissionObjectiveItemCount("ZKorhal01Objective01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDeployBileLaunchers, gv_LOCATION_ID_1_BILE_LAUNCHER_DEPLOYED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDeployBileLaunchers, gv_LOCATION_ID_2_BILE_LAUNCHERS_DEPLOYED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDeployBileLaunchers, gv_LOCATION_ID_3_BILE_LAUNCHERS_DEPLOYED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDeployBileLaunchers, gv_LOCATION_ID_4_BILE_LAUNCHERS_DEPLOYED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDeployBileLaunchers, gv_LOCATION_ID_5_BILE_LAUNCHERS_DEPLOYED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDeployBileLaunchers, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4877,7 +4914,7 @@ bool gt_ObjectiveDeployBileLauncherComplete_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDeployBileLauncherCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDeployBileLaunchers);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4894,7 +4931,7 @@ bool gt_ObjectiveDeployBileLauncherUpdate_Func (bool testConds, bool runActions)
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase) == c_objectiveStateActive))) {
+        if (!((ObjectiveGetState(gv_objectiveDeployBileLaunchers) == c_objectiveStateActive))) {
             return false;
         }
     }
@@ -4905,7 +4942,7 @@ bool gt_ObjectiveDeployBileLauncherUpdate_Func (bool testConds, bool runActions)
     }
 
     TriggerExecute(gt_ObjectiveDeployBileLauncherCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, gv_bileLaunchersOwned);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDeployBileLaunchers, gv_bileLaunchersOwned);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4934,7 +4971,7 @@ bool gt_ObjectiveDeployBileLauncherFailed_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDeployBileLauncherCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDeployBileLaunchers);
     return true;
 }
 
@@ -4962,9 +4999,10 @@ bool gt_ObjectiveBileLauncherLossCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal01Objective02");
-    gv_objectiveDestroyDominionBase22 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZKorhal01Objective02", "Lost", gv_bileLauncherDeaths);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounterMax(ObjectiveLastCreated(), 0);
+    gv_objectiveBileLauncherLoss = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveBileLauncherLoss, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveBileLauncherLoss, lib5BD4895D_ge_APObjectiveCategory_Primary, "Lost", gv_bileLauncherDeaths, 0, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveBileLauncherLoss, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4993,7 +5031,7 @@ bool gt_ObjectiveBileLauncherLossComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveBileLauncherLossCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveBileLauncherLoss);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5010,7 +5048,7 @@ bool gt_ObjectiveBileLauncherLossUpdate_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!((ObjectiveGetState(gv_objectiveDestroyDominionBase22) == c_objectiveStateActive))) {
+        if (!((ObjectiveGetState(gv_objectiveBileLauncherLoss) == c_objectiveStateActive))) {
             return false;
         }
     }
@@ -5021,7 +5059,7 @@ bool gt_ObjectiveBileLauncherLossUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveBileLauncherLossCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase22, gv_bileLauncherDeaths);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveBileLauncherLoss, gv_bileLauncherDeaths);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5050,7 +5088,7 @@ bool gt_ObjectiveBileLauncherLossFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveBileLauncherLossCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase22);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveBileLauncherLoss);
     return true;
 }
 
@@ -5078,8 +5116,11 @@ bool gt_ObjectiveDestroyDominionBaseCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal01Objective04");
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZKorhal01Objective04", "", gv_dominionBasesDestroyed);
+    gv_objectiveDestroyDominionBases = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyDominionBases, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyDominionBases, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_dominionBasesDestroyed, libSwaC_gf_MissionObjectiveItemCount("ZKorhal01Objective04"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBases, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionBases, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5108,7 +5149,7 @@ bool gt_ObjectiveDestroyDominionBaseComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyDominionBaseCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBases);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5129,7 +5170,7 @@ bool gt_ObjectiveDestroyDominionBaseUpdate_Func (bool testConds, bool runActions
     }
 
     TriggerExecute(gt_ObjectiveDestroyDominionBaseCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase2, gv_dominionBasesDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBases, gv_dominionBasesDestroyed);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5158,7 +5199,7 @@ bool gt_ObjectiveDestroyDominionBaseFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyDominionBaseCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBases);
     return true;
 }
 
@@ -5171,7 +5212,13 @@ void gt_ObjectiveDestroyDominionBaseFailed_Init () {
 // Trigger: Objective Destroy Gates Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyGatesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5186,8 +5233,13 @@ bool gt_ObjectiveDestroyGatesCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZKorhal01Objective03");
-    gv_objectiveDestroyDominionBase222 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZKorhal01Objective03", "", gv_gatesDestroyed);
+    gv_objectiveDestroyGates = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyGates, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyGates, lv_category, "", gv_gatesDestroyed, libSwaC_gf_MissionObjectiveItemCount("ZKorhal01Objective03"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyGates, gv_LOCATION_ID_EAST_GATE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyGates, gv_LOCATION_ID_NORTHWEST_GATE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyGates, gv_LOCATION_ID_NORTH_GATE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyGates, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5219,7 +5271,7 @@ bool gt_ObjectiveDestroyGatesUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveDestroyGatesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase222, gv_gatesDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyGates, gv_gatesDestroyed);
     if ((gv_gatesDestroyed == 3)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveDestroyGatesComplete, true, false);
@@ -5253,7 +5305,7 @@ bool gt_ObjectiveDestroyGatesComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyGatesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase222);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyGates);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5261,6 +5313,35 @@ bool gt_ObjectiveDestroyGatesComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyGatesComplete_Init () {
     gt_ObjectiveDestroyGatesComplete = TriggerCreate("gt_ObjectiveDestroyGatesComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Gates Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyGatesRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_GATE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTHWEST_GATE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_GATE] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveDestroyGatesCreate, false);
+    TriggerEnable(gt_ObjectiveDestroyGatesUpdate, false);
+    TriggerEnable(gt_TransmissionDestroyGatesIntroQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyGatesRemove_Init () {
+    gt_ObjectiveDestroyGatesRemove = TriggerCreate("gt_ObjectiveDestroyGatesRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDestroyGatesRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6763,6 +6844,292 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Expansions Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearExpansionsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/CA73E4A5"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveClearExpansions = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveClearExpansions, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveClearExpansions, lv_category, "", gv_expansionsCleared, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearExpansions, gv_LOCATION_ID_WEST_EXPANSION);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearExpansions, gv_LOCATION_ID_MID_EXPANSION);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClearExpansions, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearExpansionsCreate_Init () {
+    gt_ObjectiveClearExpansionsCreate = TriggerCreate("gt_ObjectiveClearExpansionsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Expansions Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearExpansionsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveClearExpansionsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveClearExpansions, gv_expansionsCleared);
+    if ((gv_expansionsCleared >= 2)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveClearExpansionsComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearExpansionsUpdate_Init () {
+    gt_ObjectiveClearExpansionsUpdate = TriggerCreate("gt_ObjectiveClearExpansionsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Clear Expansions Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveClearExpansionsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveClearExpansionsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClearExpansions);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveClearExpansionsComplete_Init () {
+    gt_ObjectiveClearExpansionsComplete = TriggerCreate("gt_ObjectiveClearExpansionsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: West Expanion Clear Credit
+//--------------------------------------------------------------------------------------------------
+bool gt_WestExpanionClearCredit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGroupCount(UnitGroupAlliance(gv_pLAYER_01_USER, c_unitAllianceEnemy, RegionFromId(6), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_EXPANSION);
+    gv_expansionsCleared += 1;
+    TriggerExecute(gt_ObjectiveClearExpansionsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_WestExpanionClearCredit_Init () {
+    gt_WestExpanionClearCredit = TriggerCreate("gt_WestExpanionClearCredit_Func");
+    TriggerAddEventTimePeriodic(gt_WestExpanionClearCredit, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mid Expanion Clear Credit
+//--------------------------------------------------------------------------------------------------
+bool gt_MidExpanionClearCredit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGroupCount(UnitGroupAlliance(gv_pLAYER_01_USER, c_unitAllianceEnemy, RegionFromId(13), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MID_EXPANSION);
+    gv_expansionsCleared += 1;
+    TriggerExecute(gt_ObjectiveClearExpansionsUpdate, true, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MidExpanionClearCredit_Init () {
+    gt_MidExpanionClearCredit = TriggerCreate("gt_MidExpanionClearCredit_Func");
+    TriggerAddEventTimePeriodic(gt_MidExpanionClearCredit, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Teams Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillTeamsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/AC34EF7D"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveKillTeams = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveKillTeams, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveKillTeams, lv_category, "", gv_killTeamsDefeated, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillTeams, gv_LOCATION_ID_SONS_OF_KORHAL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillTeams, gv_LOCATION_ID_NIGHT_WOLVES);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillTeams, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillTeamsCreate_Init () {
+    gt_ObjectiveKillTeamsCreate = TriggerCreate("gt_ObjectiveKillTeamsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Teams Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillTeamsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveKillTeamsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveKillTeams, gv_killTeamsDefeated);
+    if ((gv_killTeamsDefeated >= 2)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveKillTeamsComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillTeamsUpdate_Init () {
+    gt_ObjectiveKillTeamsUpdate = TriggerCreate("gt_ObjectiveKillTeamsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Teams Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillTeamsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveKillTeamsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillTeams);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillTeamsComplete_Init () {
+    gt_ObjectiveKillTeamsComplete = TriggerCreate("gt_ObjectiveKillTeamsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Raise Hidden Mutas
 //--------------------------------------------------------------------------------------------------
 bool gt_RaiseHiddenMutas_Func (bool testConds, bool runActions) {
@@ -6835,27 +7202,6 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 void gt_ArchInit_Init () {
     gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
     TriggerAddEventMapInit(gt_ArchInit);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Set Mineral Count
-//--------------------------------------------------------------------------------------------------
-bool gt_SetMineralCount_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((libNtve_gf_DifficultyValueInt(0, 0, 1, 1) == 1)) {
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SetMineralCount_Init () {
-    gt_SetMineralCount = TriggerCreate("gt_SetMineralCount_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6956,6 +7302,7 @@ void InitTriggers () {
     gt_ObjectiveDestroyGatesCreate_Init();
     gt_ObjectiveDestroyGatesUpdate_Init();
     gt_ObjectiveDestroyGatesComplete_Init();
+    gt_ObjectiveDestroyGatesRemove_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
@@ -6987,9 +7334,16 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveClearExpansionsCreate_Init();
+    gt_ObjectiveClearExpansionsUpdate_Init();
+    gt_ObjectiveClearExpansionsComplete_Init();
+    gt_WestExpanionClearCredit_Init();
+    gt_MidExpanionClearCredit_Init();
+    gt_ObjectiveKillTeamsCreate_Init();
+    gt_ObjectiveKillTeamsUpdate_Init();
+    gt_ObjectiveKillTeamsComplete_Init();
     gt_RaiseHiddenMutas_Init();
     gt_ArchInit_Init();
-    gt_SetMineralCount_Init();
 }
 
 //--------------------------------------------------------------------------------------------------
