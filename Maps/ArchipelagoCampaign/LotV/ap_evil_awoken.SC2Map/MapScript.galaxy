@@ -29,6 +29,11 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_TEMPLE_INVESTIGATED = 1;
+const int gv_LOCATION_ID_VOID_CATALYST = 2;
+const int gv_LOCATION_ID_FIRST_PARTICLE_CANNON = 3;
+const int gv_LOCATION_ID_SECOND_PARTICLE_CANNON = 4;
+const int gv_LOCATION_ID_THIRD_PARTICLE_CANNON = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TALDARIM = 2;
 const int gv_pLAYER_03_AMON = 3;
@@ -3646,7 +3651,7 @@ bool gt_S1ZeratulReachesFirstBeacon_Func (bool testConds, bool runActions) {
     UnitIssueOrder(gv_zeratul, OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(47))), c_orderQueueReplace);
     UnitIssueOrder(gv_zeratul, OrderTargetingPoint(AbilityCommand("move", 4), PointWithOffsetPolar(RegionGetCenter(RegionFromId(47)), 1.0, 0.0)), c_orderQueueAddToEnd);
     UnitIssueOrder(gv_zeratul, Order(AbilityCommand("move", 2)), c_orderQueueAddToEnd);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_TEMPLE_INVESTIGATED);
     Wait(2.0, c_timeGame);
     TriggerExecute(gt_ObjectiveInvestigateTempleComplete, true, false);
     Wait(2.0, c_timeGame);
@@ -5063,7 +5068,7 @@ bool gt_S2VoidCatalystDiesQ_Func (bool testConds, bool runActions) {
     PingDestroy(gv_s2_VoidCatalystPing);
     TriggerExecute(gt_ObjectiveInvestigateTempleComplete, true, false);
     TriggerExecute(gt_ObjectiveDestroyCatalystComplete, true, true);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_VOID_CATALYST);
     TriggerQueueEnter();
     if ((gv_gameOver == true)) {
         return true;
@@ -7717,7 +7722,7 @@ bool gt_BOParticleCannon01DestroyedQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_PARTICLE_CANNON);
     gv_particleCannonsDestroyed += 1;
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsUpdate, true, false);
     if ((gv_particleCannonsDestroyed == 3)) {
@@ -7788,7 +7793,7 @@ bool gt_BOParticleCannon02DestroyedQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_particleCannonsDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_PARTICLE_CANNON);
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsUpdate, true, false);
     if ((gv_particleCannonsDestroyed == 3)) {
         TriggerExecute(gt_ObjectiveDestroyParticleCannonsComplete, true, false);
@@ -7858,7 +7863,7 @@ bool gt_BOParticleCannon03DestroyedQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_particleCannonsDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_PARTICLE_CANNON);
     TriggerExecute(gt_ObjectiveDestroyParticleCannonsUpdate, true, false);
     if ((gv_particleCannonsDestroyed == 3)) {
         TriggerExecute(gt_ObjectiveDestroyParticleCannonsComplete, true, false);
@@ -8339,7 +8344,7 @@ bool gt_VictoryEscapeComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     UnitKill(UnitFromId(1651));
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
@@ -8524,8 +8529,11 @@ bool gt_ObjectiveInvestigateTempleCreate_Func (bool testConds, bool runActions) 
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary01");
     gv_objective_InvestigateTemple = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 4);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary01", "", 0);
+    ObjectiveSetPriority(gv_objective_InvestigateTemple, 4);
+    ObjectiveShow(gv_objective_InvestigateTemple, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_InvestigateTemple, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_InvestigateTemple, gv_LOCATION_ID_TEMPLE_INVESTIGATED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_InvestigateTemple, true);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8584,8 +8592,11 @@ bool gt_ObjectiveDestroyCatalystCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary02");
     gv_objective_DestroyCatalyst = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 3);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary02", "", 0);
+    ObjectiveSetPriority(gv_objective_DestroyCatalyst, 3);
+    ObjectiveShow(gv_objective_DestroyCatalyst, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_DestroyCatalyst, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyCatalyst, gv_LOCATION_ID_VOID_CATALYST);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DestroyCatalyst, true);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8644,8 +8655,11 @@ bool gt_ObjectiveEscapeCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary04");
     gv_objective_Escape = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 0);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary04", "", 0);
+    ObjectiveSetPriority(gv_objective_Escape, 0);
+    ObjectiveShow(gv_objective_Escape, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Escape, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Escape, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Escape, true);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8733,7 +8747,9 @@ bool gt_ObjectiveZeratulMustSurviveCreate_Func (bool testConds, bool runActions)
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Primary05");
     gv_objective_ZeratulMustSurvive = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Primary05", "", 0);
+    ObjectiveShow(gv_objective_ZeratulMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_ZeratulMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ZeratulMustSurvive, true);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8805,7 +8821,13 @@ void gt_ObjectiveZeratulMustSurviveFailed_Init () {
 // Trigger: Objective - Destroy Particle Cannons Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyParticleCannonsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -8821,7 +8843,13 @@ bool gt_ObjectiveDestroyParticleCannonsCreate_Func (bool testConds, bool runActi
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue03Bonus01");
     gv_objectiveDestroyParticleCannons = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue03Bonus01", "", gv_particleCannonsDestroyed);
+    ObjectiveSetName(gv_objectiveDestroyParticleCannons, libA3DDD02B_gf_MissionObjectiveName("PPrologue03Bonus01"));
+    ObjectiveShow(gv_objectiveDestroyParticleCannons, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyParticleCannons, lv_category, "", gv_particleCannonsDestroyed, libA3DDD02B_gf_MissionObjectiveItemCount("PPrologue03Bonus01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyParticleCannons, gv_LOCATION_ID_FIRST_PARTICLE_CANNON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyParticleCannons, gv_LOCATION_ID_SECOND_PARTICLE_CANNON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyParticleCannons, gv_LOCATION_ID_THIRD_PARTICLE_CANNON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyParticleCannons, true);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9784,12 +9812,9 @@ bool gt_MidVoidCatalystDestroyedSetup_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_S2Cleanup, true, false);
     gv_currentSection = 3;
     RegionPlayableMapSet(RegionFromId(127));
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary01", libA3DDD02B_ge_MissionObjectiveState_Undiscovered);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objective_InvestigateTemple);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Primary02", libA3DDD02B_ge_MissionObjectiveState_Undiscovered);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objective_DestroyCatalyst);
-    libA3DDD02B_gf_SetObjectiveStateCampaign("PPrologue03Bonus01", libA3DDD02B_ge_MissionObjectiveState_Undiscovered);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyParticleCannons);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_InvestigateTemple, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DestroyCatalyst, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyParticleCannons, false);
     libNtve_gf_SetAlliance(gv_pLAYER_01_USER, gv_pLAYER_02_TALDARIM, libNtve_ge_AllianceSetting_Neutral);
     Wait(0.0625, c_timeGame);
     gv_cinematicTempUnits = UnitGroupEmpty();

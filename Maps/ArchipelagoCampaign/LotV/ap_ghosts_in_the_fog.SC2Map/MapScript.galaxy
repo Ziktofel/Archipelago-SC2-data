@@ -32,6 +32,9 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_SOUTH_ROCK_FORMATION = 1;
+const int gv_LOCATION_ID_WEST_ROCK_FORMATION = 2;
+const int gv_LOCATION_ID_EAST_ROCK_FORMATION = 3;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TALDARIM = 2;
 const int gv_pLAYER_03_TALDARIM = 3;
@@ -2149,7 +2152,7 @@ bool gt_BonusObjectiveProgressTracker_Func (bool testConds, bool runActions) {
                 AISetUnitScriptControlled(auto915B626E_var, false);
             }
             gv_bonusObjectiveActivated[lv_bonusIndex] = true;
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(lv_bonusIndex);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lv_bonusIndex);
             PingDestroy(gv_bonusObjectivePing[lv_bonusIndex]);
             TriggerExecute(gt_BonusObjectiveRockFormationsUpdate, true, false);
             gf_UnlockVespeneBreach(gv_bonusObjectiveVespeneLeak[lv_bonusIndex]);
@@ -2773,7 +2776,7 @@ bool gt_VictoryBreachtheTempleEntranceCompleted_Func (bool testConds, bool runAc
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
@@ -3151,7 +3154,10 @@ bool gt_ObjectiveBreachtheTempleEntranceCreate_Func (bool testConds, bool runAct
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue02Primary01");
     gv_objectiveBreachTempleEntrance = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue02Primary01", "", 0);
+    ObjectiveShow(gv_objectiveBreachTempleEntrance, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveBreachTempleEntrance, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveBreachTempleEntrance, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveBreachTempleEntrance, true);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "InvisibleTargetDummy", c_unitCreateIgnorePlacement, 0, PointFromId(379));
     gv_objectiveDummyHelper = UnitLastCreated();
@@ -3229,7 +3235,13 @@ void gt_ObjectiveBreachtheTempleEntranceFailed_Init () {
 // Trigger: Bonus Objective Rock Formations Create
 //--------------------------------------------------------------------------------------------------
 bool gt_BonusObjectiveRockFormationsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -3245,7 +3257,13 @@ bool gt_BonusObjectiveRockFormationsCreate_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue02Bonus01");
     gv_bonusObjectiveRockFormations = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPrologue02Bonus01", "", gv_bonusObjectivesObtained);
+    ObjectiveSetName(gv_bonusObjectiveRockFormations, libA3DDD02B_gf_MissionObjectiveName("PPrologue02Bonus01"));
+    ObjectiveShow(gv_bonusObjectiveRockFormations, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_bonusObjectiveRockFormations, lv_category, "", gv_bonusObjectivesObtained, libA3DDD02B_gf_MissionObjectiveItemCount("PPrologue02Bonus01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveRockFormations, gv_LOCATION_ID_SOUTH_ROCK_FORMATION);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveRockFormations, gv_LOCATION_ID_WEST_ROCK_FORMATION);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_bonusObjectiveRockFormations, gv_LOCATION_ID_EAST_ROCK_FORMATION);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_bonusObjectiveRockFormations, true);
     Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
