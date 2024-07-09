@@ -37,6 +37,10 @@ const int gv_p03_DOMINION = 3;
 const int gv_p03_ZERG_ALLY = 4;
 const int gv_p05_PRISONERS = 5;
 const int gv_p03_KERRIGAN_AI = 6;
+const int gv_LOCATION_ID_FIRST_SECRET_DOCUMENTS = 1;
+const int gv_LOCATION_ID_SECOND_SECRET_DOCUMENTS = 2;
+const int gv_LOCATION_ID_POWER_COUPLING = 3;
+const int gv_LOCATION_ID_DOOR_BLASTED = 4;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -85,10 +89,10 @@ timer gv_achievementPrisonDeckTimedRunTimer;
 timer gv_achievementMasteryTimedRun;
 fixed gv_kerriganLowestLife;
 int gv_numberOfReinforcements;
-int gv_objectiveDestroyDominionBase2;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase3;
-int gv_objectiveDestroyDominionBase5;
+int gv_objective_KerriganMustSurvive;
+int gv_objective_RescueJim;
+int gv_objective_ProtectTheQueen;
+int gv_objective_BonusSecretDocuments;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -141,10 +145,10 @@ void InitGlobals () {
     gv_achievementPrisonDeckTimedRunTimer = TimerCreate();
     gv_achievementMasteryTimedRun = TimerCreate();
     gv_kerriganLowestLife = 5000.0;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase5 = c_invalidObjectiveId;
+    gv_objective_KerriganMustSurvive = c_invalidObjectiveId;
+    gv_objective_RescueJim = c_invalidObjectiveId;
+    gv_objective_ProtectTheQueen = c_invalidObjectiveId;
+    gv_objective_BonusSecretDocuments = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -325,6 +329,7 @@ trigger gt_ObjectiveFindSecretDocumentsCreate;
 trigger gt_ObjectiveFindSecretDocumentsUpdate;
 trigger gt_ObjectiveFindSecretDocumentsComplete;
 trigger gt_ObjectiveFindSecretDocumentsFailed;
+trigger gt_ObjectiveFindSecretDocumentsRemove;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1632,7 +1637,7 @@ bool gt__1StartGameArea1Q_Func (bool testConds, bool runActions) {
     UnitControlGroupAddUnit(gv_p01_USER, 1, gv_kerrigan);
     Wait(2.0, c_timeReal);
     TriggerQueueEnter();
-    TriggerExecute(gt_ObjectiveRescueJimCreate, true, false);
+    TriggerExecute(gt_ObjectiveRescueJimCreate, true, true);
     TriggerExecute(gt_ObjectiveKerriganMustSurviveCreate, true, true);
     gf_CreateRescueJimPing(PointFromId(1307));
     TriggerQueueExit();
@@ -3524,7 +3529,7 @@ bool gt__1LockedDoorDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DOOR_BLASTED);
     auto94C049BF_g = UnitGroup("PathingBlocker4x4Diagonal", 0, RegionFromId(79), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto94C049BF_u = UnitGroupCount(auto94C049BF_g, c_unitCountAll);
     for (;; auto94C049BF_u -= 1) {
@@ -4798,7 +4803,7 @@ bool gt__1ElevatorVictory_Func (bool testConds, bool runActions) {
     PingDestroy(gv__1ObjectiveRescueJimPing);
     gv__1ObjectiveRescueJimPing = c_invalidPingId;
     libSwaC_gf_ShowHideSingularBossBarSwarmCampaign(false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_POWER_COUPLING);
     Wait(2.0, c_timeGame);
     TimerPause(gv_achievementPrisonDeckTimedRunTimer, true);
     libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/181751DD"));
@@ -6760,7 +6765,7 @@ bool gt_VictoryJimRescued_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
@@ -7137,9 +7142,11 @@ bool gt_ObjectiveKerriganMustSurviveCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSpace02Objective02");
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), -1);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSpace02Objective02", "", 0);
+    gv_objective_KerriganMustSurvive = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_KerriganMustSurvive, 1);
+    ObjectiveShow(gv_objective_KerriganMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_KerriganMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_KerriganMustSurvive, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7168,7 +7175,7 @@ bool gt_ObjectiveKerriganMustSurviveComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKerriganMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_KerriganMustSurvive);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7197,7 +7204,7 @@ bool gt_ObjectiveKerriganMustSurviveFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKerriganMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_KerriganMustSurvive);
     return true;
 }
 
@@ -7225,8 +7232,14 @@ bool gt_ObjectiveRescueJimCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSpace02Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSpace02Objective01", "", 0);
+    gv_objective_RescueJim = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_RescueJim, 2);
+    ObjectiveShow(gv_objective_RescueJim, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_RescueJim, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_RescueJim, gv_LOCATION_ID_POWER_COUPLING);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_RescueJim, gv_LOCATION_ID_DOOR_BLASTED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_RescueJim, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_RescueJim, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7255,7 +7268,7 @@ bool gt_ObjectiveRescueJimComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRescueJimCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_RescueJim);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7288,7 +7301,7 @@ bool gt_ObjectiveRescueJimFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRescueJimCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_RescueJim);
     return true;
 }
 
@@ -7316,8 +7329,10 @@ bool gt_ObjectiveProtecttheQueenCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSpace02Objective05");
-    gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSpace02Objective05", "", 0);
+    gv_objective_ProtectTheQueen = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_ProtectTheQueen, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_ProtectTheQueen, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ProtectTheQueen, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7346,7 +7361,7 @@ bool gt_ObjectiveProtecttheQueenComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveProtecttheQueenCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_ProtectTheQueen);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7379,7 +7394,7 @@ bool gt_ObjectiveProtecttheQueenFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveProtecttheQueenCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_ProtectTheQueen);
     return true;
 }
 
@@ -7392,7 +7407,13 @@ void gt_ObjectiveProtecttheQueenFailed_Init () {
 // Trigger: Objective Find Secret Documents Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindSecretDocumentsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -7407,8 +7428,12 @@ bool gt_ObjectiveFindSecretDocumentsCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZSpace02Objective06");
-    gv_objectiveDestroyDominionBase5 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZSpace02Objective06", "", gv_documentsFound);
+    gv_objective_BonusSecretDocuments = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_BonusSecretDocuments, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_BonusSecretDocuments, lv_category, "", gv_documentsFound, libSwaC_gf_MissionObjectiveItemCount("ZSpace02Objective06"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_BonusSecretDocuments, gv_LOCATION_ID_FIRST_SECRET_DOCUMENTS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_BonusSecretDocuments, gv_LOCATION_ID_SECOND_SECRET_DOCUMENTS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_BonusSecretDocuments, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7439,7 +7464,7 @@ bool gt_ObjectiveFindSecretDocumentsUpdate_Func (bool testConds, bool runActions
     gv_documentsFound += 1;
     SoundPlayAtPoint(SoundLink("UI_ResourcePickup", -1), PlayerGroupAll(), UnitGetPosition(gv_kerrigan), 8.0, 100.0, 0.0);
     libSwaC_gf_DisplayMissionObjectiveRewardFloatingText(UnitGetPosition(gv_kerrigan), "ZSpace02Objective06", gv_p01_USER);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase5, gv_documentsFound);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_BonusSecretDocuments, gv_documentsFound);
     if ((gv_documentsFound >= libSwaC_gf_MissionObjectiveItemCount("ZSpace02Objective06"))) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveFindSecretDocumentsComplete, true, false);
@@ -7473,7 +7498,7 @@ bool gt_ObjectiveFindSecretDocumentsComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindSecretDocumentsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_BonusSecretDocuments);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -7506,13 +7531,45 @@ bool gt_ObjectiveFindSecretDocumentsFailed_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindSecretDocumentsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_BonusSecretDocuments);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveFindSecretDocumentsFailed_Init () {
     gt_ObjectiveFindSecretDocumentsFailed = TriggerCreate("gt_ObjectiveFindSecretDocumentsFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Secret Documents Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindSecretDocumentsRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FIRST_SECRET_DOCUMENTS] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SECOND_SECRET_DOCUMENTS] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(1047));
+    UnitRemove(UnitFromId(1118));
+    TriggerEnable(gt_ObjectiveFindSecretDocumentsCreate, false);
+    TriggerEnable(gt_ObjectiveFindSecretDocumentsUpdate, false);
+    TriggerEnable(gt_SecretDocumentsIntroQ, false);
+    TriggerEnable(gt_SecretDocumentsFoundQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindSecretDocumentsRemove_Init () {
+    gt_ObjectiveFindSecretDocumentsRemove = TriggerCreate("gt_ObjectiveFindSecretDocumentsRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveFindSecretDocumentsRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -8213,8 +8270,7 @@ bool gt_CinematicElevatorTransitionMidCleanup_Func (bool testConds, bool runActi
     libSwaC_gf_ResetHeroAbilityCooldowns(libSwaC_ge_HeroUnit_Kerrigan);
     UnitRemove(UnitFromId(190));
     UnitRemove(UnitFromId(832));
-    ObjectiveSetState(gv_objectiveDestroyDominionBase3, c_objectiveStateHidden);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ProtectTheQueen, false);
     libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergEnemy, libSwaC_ge_CampaginReticleSize_Medium, null, UnitFromId(218), "Ref_Center");
     libHots_gf_StoreActorForUnit(UnitFromId(218), 1, libNtve_gf_ActorLastCreated());
     UnitIssueOrder(UnitFromId(218), OrderTargetingUnit(AbilityCommand("attack", 0), gv__1PrisonDeckCoupling), c_orderQueueReplace);
@@ -9314,7 +9370,7 @@ bool gt_SecretDocumentPickupsFirst_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_SECRET_DOCUMENTS);
     return true;
 }
 
@@ -9351,7 +9407,7 @@ bool gt_SecretDocumentPickupsSecond_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_SECRET_DOCUMENTS);
     return true;
 }
 
@@ -9512,6 +9568,7 @@ void InitTriggers () {
     gt_ObjectiveFindSecretDocumentsUpdate_Init();
     gt_ObjectiveFindSecretDocumentsComplete_Init();
     gt_ObjectiveFindSecretDocumentsFailed_Init();
+    gt_ObjectiveFindSecretDocumentsRemove_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
