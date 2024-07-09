@@ -38,6 +38,17 @@ const int gv_pLAYER_04_DOMINION_CLEANSERS = 4;
 const int gv_pLAYER_05_GARRISON = 5;
 const int gv_pLAYER_06_INFESTED = 6;
 const int gv_virophage_Max = 8;
+const int gv_LOCATION_ID_EAST_SCIENCE_FACILITY = 1;
+const int gv_LOCATION_ID_CENTER_SCIENCE_FACILITY = 2;
+const int gv_LOCATION_ID_WEST_SCIENCE_FACILITY = 3;
+const int gv_LOCATION_ID_FIRST_INTRO_GARRISON = 4;
+const int gv_LOCATION_ID_SECOND_INTRO_GARRISON = 5;
+const int gv_LOCATION_ID_BASE_GARRISON = 6;
+const int gv_LOCATION_ID_EAST_GARRISON = 7;
+const int gv_LOCATION_ID_MID_GARRISON = 8;
+const int gv_LOCATION_ID_NORTH_GARRISON = 9;
+const int gv_LOCATION_ID_CLOSE_SOUTHWEST_GARRISON = 10;
+const int gv_LOCATION_ID_FAR_SOUTHWEST_GARRISON = 11;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -137,14 +148,14 @@ unitgroup gv_achievementDominatedTerranUnits;
 int gv_achievementMaxDomiantedTerran;
 int gv_achievementUnitsKilledWithDominatedTerran;
 int gv_achievementVirophageLostCount;
-int gv_objectiveDestroyDominionBase;
+int gv_objectiveDominionOutpost;
 int gv_objectivePINGDominionOutpost;
 int gv_objectiveInfestGarrisons;
 int gv_infestedGarrisonCount;
 int[4] gv_garrisonPings;
 int gv_objectiveInfestorSurvival;
-int gv_objectiveOpenTheLab;
-int gv_objectiveSpreadCreep;
+int gv_objectiveOpentheLab;
+int gv_objective_SpreadCreep;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicTempUnits;
 bool gv_cinematicCompleted;
@@ -164,6 +175,7 @@ bool gv_midMusicCompleted;
 unitgroup gv_victoryZerg1;
 unitgroup gv_victoryZerg2;
 unit gv_victoryKerrigan;
+int gv_objectiveInfestAllGarrisons;
 
 void InitGlobals () {
     int init_i;
@@ -201,15 +213,15 @@ void InitGlobals () {
     }
     gv_transFirebatRolling = c_invalidTransmissionId;
     gv_achievementDominatedTerranUnits = UnitGroupEmpty();
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
+    gv_objectiveDominionOutpost = c_invalidObjectiveId;
     gv_objectivePINGDominionOutpost = c_invalidPingId;
     gv_objectiveInfestGarrisons = c_invalidObjectiveId;
     for (init_i = 0; init_i <= 3; init_i += 1) {
         gv_garrisonPings[init_i] = c_invalidPingId;
     }
     gv_objectiveInfestorSurvival = c_invalidObjectiveId;
-    gv_objectiveOpenTheLab = c_invalidObjectiveId;
-    gv_objectiveSpreadCreep = c_invalidObjectiveId;
+    gv_objectiveOpentheLab = c_invalidObjectiveId;
+    gv_objective_SpreadCreep = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_introDropGroup = UnitGroupEmpty();
@@ -218,6 +230,7 @@ void InitGlobals () {
     gv_midInfestedTerrans = UnitGroupEmpty();
     gv_victoryZerg1 = UnitGroupEmpty();
     gv_victoryZerg2 = UnitGroupEmpty();
+    gv_objectiveInfestAllGarrisons = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -357,6 +370,7 @@ trigger gt_ObjectiveOpentheLabCreate;
 trigger gt_ObjectiveOpentheLabComplete;
 trigger gt_ObjectiveSpreadCreepCreate;
 trigger gt_ObjectiveSpreadCreepComplete;
+trigger gt_ObjectiveSpreadCreepDisable;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -379,6 +393,9 @@ trigger gt_VictoryCinematic;
 trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryZerg;
+trigger gt_ObjectiveInfestAllGarrisonsCreate;
+trigger gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn;
+trigger gt_ObjectiveInfestAllGarrisonsComplete;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -1511,6 +1528,7 @@ bool gt_StartGameStage02_Func (bool testConds, bool runActions) {
     TriggerQueueEnter();
     TriggerExecute(gt_CreateLabEntrancePing, true, false);
     TriggerExecute(gt_ObjectiveOpentheLabCreate, true, true);
+    TriggerExecute(gt_ObjectiveInfestAllGarrisonsCreate, true, false);
     TriggerQueueExit();
     Wait(4.0, c_timeGame);
     TriggerExecute(gt_CleanserAttackWaves, true, false);
@@ -2138,7 +2156,7 @@ bool gt_BuildVirophages_Func (bool testConds, bool runActions) {
         if ((UnitGroupCount(UnitGroup("AP_Infestor", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_virophageRecord[auto91E56966_var].lv_beacon), 1.25), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0) && ((gv_virophageRecord[auto91E56966_var].lv_virophage == null) || (UnitIsAlive(gv_virophageRecord[auto91E56966_var].lv_virophage) == false))) {
             if ((gv_virophageRecord[auto91E56966_var].lv_checkSent == false)) {
                 gv_virophageRecord[auto91E56966_var].lv_checkSent = true;
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_virophageRecord[auto91E56966_var].lv_location);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_virophageRecord[auto91E56966_var].lv_location);
             }
 
             libNtve_gf_CreateUnitsWithDefaultFacing(1, "Virophage", c_unitCreateConstruct | c_unitCreateIgnorePlacement, gv_pLAYER_06_INFESTED, gv_virophageRecord[auto91E56966_var].lv_virophagePosition);
@@ -2202,6 +2220,7 @@ bool gt_InfestGarrisons_Func (bool testConds, bool runActions) {
     }
 
     gv_virophage_Count += 1;
+    TriggerExecute(gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn, true, false);
     UnitGroupAdd(gv_virophagesFinished, EventUnitProgressUnit());
     auto88D8013B_ae = gv_virophageMaxIndex;
     auto88D8013B_var = 1;
@@ -2866,6 +2885,7 @@ bool gt_VirophageDestroyed_Func (bool testConds, bool runActions) {
     gv_achievementVirophageLostCount += 1;
     if ((UnitGroupHasUnit(gv_virophagesFinished, EventUnit()) == true)) {
         gv_virophage_Count -= 1;
+        TriggerExecute(gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn, true, false);
         TriggerExecute(gt_ObjectiveInfestGarrisonsUpdatePhageLost, true, false);
     }
 
@@ -3634,21 +3654,21 @@ bool gt_BonusObjectiveCreepTumorPlaced_Func (bool testConds, bool runActions) {
                 auto6377AF60_val = lv_i;
                 if (auto6377AF60_val == 1) {
                     if ((gv_aPSent1 == false)) {
-                        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+                        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_SCIENCE_FACILITY);
                         gv_aPSent1 = true;
                     }
 
                 }
                 else if (auto6377AF60_val == 2) {
                     if ((gv_aPSent2 == false)) {
-                        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+                        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CENTER_SCIENCE_FACILITY);
                         gv_aPSent2 = true;
                     }
 
                 }
                 else if (auto6377AF60_val == 3) {
                     if ((gv_aPSent3 == false)) {
-                        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+                        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_SCIENCE_FACILITY);
                         gv_aPSent3 = true;
                     }
 
@@ -3700,7 +3720,7 @@ bool gt_BonusObjectiveSpreadCreepUpdate_Func (bool testConds, bool runActions) {
         TriggerExecute(gt_ObjectiveSpreadCreepComplete, true, true);
     }
     else {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSpreadCreep, gv_objective_CreepTumorsPlaced);
+        lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_SpreadCreep, gv_objective_CreepTumorsPlaced);
     }
     TriggerExecute(gt_TransmissionBonusObjectiveUpdateQ, true, false);
     return true;
@@ -3725,6 +3745,10 @@ bool gt_TransmissionBonusObjectiveUpdateQ_Func (bool testConds, bool runActions)
         }
 
         if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
     }
@@ -3855,6 +3879,7 @@ bool gt_CreepTumorTargetCursorEnter_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_CreepTumorTargetCursorEnter_Init () {
     gt_CreepTumorTargetCursorEnter = TriggerCreate("gt_CreepTumorTargetCursorEnter_Func");
+    TriggerAddEventTargetModeUpdate(gt_CreepTumorTargetCursorEnter, gv_pLAYER_01_USER, AbilityCommand("AP_CreepTumorBuild", 0), c_targetModeStateOn);
     TriggerAddEventTargetModeUpdate(gt_CreepTumorTargetCursorEnter, gv_pLAYER_01_USER, AbilityCommand("CreepTumorBuild", 0), c_targetModeStateOn);
     TriggerAddEventTargetModeUpdate(gt_CreepTumorTargetCursorEnter, gv_pLAYER_01_USER, AbilityCommand("QueenBuild", 0), c_targetModeStateOn);
 }
@@ -3901,6 +3926,7 @@ bool gt_CreepTumorTargetCursorLeave_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_CreepTumorTargetCursorLeave_Init () {
     gt_CreepTumorTargetCursorLeave = TriggerCreate("gt_CreepTumorTargetCursorLeave_Func");
+    TriggerAddEventTargetModeUpdate(gt_CreepTumorTargetCursorLeave, gv_pLAYER_01_USER, AbilityCommand("AP_CreepTumorBuild", 0), c_targetModeStateOff);
     TriggerAddEventTargetModeUpdate(gt_CreepTumorTargetCursorLeave, gv_pLAYER_01_USER, AbilityCommand("CreepTumorBuild", 0), c_targetModeStateOff);
     TriggerAddEventTargetModeUpdate(gt_CreepTumorTargetCursorLeave, gv_pLAYER_01_USER, AbilityCommand("QueenBuild", 0), c_targetModeStateOff);
 }
@@ -5421,7 +5447,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     gv_gameOver = true;
     UnitSetState(gv_kerrigan, c_unitStateInvulnerable, true);
     Wait(2.0, c_timeReal);
@@ -5455,7 +5481,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveOpenTheLab) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveOpentheLab) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZHybrid01_1", gv_pLAYER_01_USER);
     }
 
@@ -5804,8 +5830,10 @@ bool gt_ObjectiveDominionOutpostCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid01Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid01Objective01", "", 0);
+    gv_objectiveDominionOutpost = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDominionOutpost, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDominionOutpost, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDominionOutpost, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     libSwaC_gf_CreateObjectivePing(true, PointFromId(424), StringExternal("Param/Value/6C4EB229"));
     gv_objectivePINGDominionOutpost = PingLastCreated();
@@ -5848,7 +5876,7 @@ bool gt_ObjectiveDominionOutpostComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDominionOutpostCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDominionOutpost);
     PingDestroy(gv_objectivePINGDominionOutpost);
     if ((TriggerIsEnabled(gt_ObjectiveInfestGarrisonsComplete) == false)) {
         TriggerEnable(gt_DefeatSneakAttackInfestorsDead, false);
@@ -5891,7 +5919,7 @@ bool gt_ObjectiveDominionOutpostFail_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDominionOutpostCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDominionOutpost);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5929,7 +5957,12 @@ bool gt_ObjectiveInfestGarrisonsCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid01Objective04");
     gv_objectiveInfestGarrisons = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid01Objective04", "", gv_infestedGarrisonCount);
+    ObjectiveShow(gv_objectiveInfestGarrisons, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveInfestGarrisons, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_infestedGarrisonCount, libSwaC_gf_MissionObjectiveItemCount("ZHybrid01Objective04"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestGarrisons, gv_LOCATION_ID_FIRST_INTRO_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestGarrisons, gv_LOCATION_ID_SECOND_INTRO_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestGarrisons, gv_LOCATION_ID_BASE_GARRISON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveInfestGarrisons, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     lv_i = 1;
     for ( ; ( (auto67AABA21_ai >= 0 && lv_i <= auto67AABA21_ae) || (auto67AABA21_ai < 0 && lv_i >= auto67AABA21_ae) ) ; lv_i += auto67AABA21_ai ) {
@@ -6154,7 +6187,9 @@ bool gt_ObjectiveInfestorSurvivalCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid01Objective05");
     gv_objectiveInfestorSurvival = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid01Objective05", "", 0);
+    ObjectiveShow(gv_objectiveInfestorSurvival, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveInfestorSurvival, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveInfestorSurvival, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6248,8 +6283,11 @@ bool gt_ObjectiveOpentheLabCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid01Objective02");
-    gv_objectiveOpenTheLab = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid01Objective02", "", 0);
+    gv_objectiveOpentheLab = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveOpentheLab, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveOpentheLab, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveOpentheLab, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveOpentheLab, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6278,7 +6316,7 @@ bool gt_ObjectiveOpentheLabComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveOpentheLabCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveOpenTheLab);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveOpentheLab);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6293,10 +6331,11 @@ void gt_ObjectiveOpentheLabComplete_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveSpreadCreepCreate_Func (bool testConds, bool runActions) {
     // Variable Declarations
-    int lv_i;
+    int lv_category;
 
     // Automatic Variable Declarations
     // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
 
     // Conditions
     if (testConds) {
@@ -6320,8 +6359,13 @@ bool gt_ObjectiveSpreadCreepCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid01Objective03");
-    gv_objectiveSpreadCreep = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid01Objective03", "", gv_objective_CreepTumorsPlaced);
+    gv_objective_SpreadCreep = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_SpreadCreep, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_SpreadCreep, lib5BD4895D_ge_APObjectiveCategory_Secondary, "", gv_objective_CreepTumorsPlaced, libSwaC_gf_MissionObjectiveItemCount("ZHybrid01Objective03"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SpreadCreep, gv_LOCATION_ID_EAST_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SpreadCreep, gv_LOCATION_ID_CENTER_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SpreadCreep, gv_LOCATION_ID_WEST_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_SpreadCreep, true);
     return true;
 }
 
@@ -6349,8 +6393,8 @@ bool gt_ObjectiveSpreadCreepComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSpreadCreepCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSpreadCreep, 3);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSpreadCreep);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_SpreadCreep, 3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_SpreadCreep);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6358,6 +6402,38 @@ bool gt_ObjectiveSpreadCreepComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveSpreadCreepComplete_Init () {
     gt_ObjectiveSpreadCreepComplete = TriggerCreate("gt_ObjectiveSpreadCreepComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Spread Creep Disable
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpreadCreepDisable_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_SCIENCE_FACILITY] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_CENTER_SCIENCE_FACILITY] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_WEST_SCIENCE_FACILITY] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveSpreadCreepCreate, false);
+    TriggerEnable(gt_BonusObjectiveActivatedQ, false);
+    TriggerEnable(gt_CreepTumorTargetCursorEnter, false);
+    TriggerEnable(gt_CreepTumorTargetCursorLeave, false);
+    TriggerEnable(gt_TransmissionBonusObjectiveUpdateQ, false);
+    TriggerEnable(gt_BonusObjectiveCreepTumorDies, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpreadCreepDisable_Init () {
+    gt_ObjectiveSpreadCreepDisable = TriggerCreate("gt_ObjectiveSpreadCreepDisable_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveSpreadCreepDisable, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7112,12 +7188,9 @@ bool gt_MidSetup_Func (bool testConds, bool runActions) {
     libSwaC_gf_EnableDisableZerglingRespawn(false);
     TriggerEnable(gt_TeachFungalGrowth, false);
     TriggerEnable(gt_TeachParasiticDomination, false);
-    ObjectiveShow(gv_objectiveInfestGarrisons, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveInfestGarrisons);
-    ObjectiveShow(gv_objectiveDestroyDominionBase, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase);
-    ObjectiveShow(gv_objectiveInfestorSurvival, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveInfestorSurvival);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveInfestGarrisons, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDominionOutpost, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveInfestorSurvival, false);
     AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION_BULLIES, RegionFromId(13), false);
     auto615FE1BF_g = UnitGroup(null, gv_pLAYER_02_DOMINION_BULLIES, RegionFromId(22), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto615FE1BF_u = UnitGroupCount(auto615FE1BF_g, c_unitCountAll);
@@ -7864,6 +7937,114 @@ void gt_VictoryZerg_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Infest All Garrisons Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveInfestAllGarrisonsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/48FFA1A3"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveInfestAllGarrisons = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveInfestAllGarrisons, lv_category, "", gv_virophage_Count, gv_virophage_Max, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestAllGarrisons, gv_LOCATION_ID_EAST_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestAllGarrisons, gv_LOCATION_ID_MID_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestAllGarrisons, gv_LOCATION_ID_NORTH_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestAllGarrisons, gv_LOCATION_ID_CLOSE_SOUTHWEST_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveInfestAllGarrisons, gv_LOCATION_ID_FAR_SOUTHWEST_GARRISON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveInfestAllGarrisons, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveInfestAllGarrisonsCreate_Init () {
+    gt_ObjectiveInfestAllGarrisonsCreate = TriggerCreate("gt_ObjectiveInfestAllGarrisonsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Infest All Garrisons Update (Phage Born)
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveInfestAllGarrisons, gv_virophage_Count);
+    if ((gv_virophage_Count >= gv_virophage_Max)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveInfestAllGarrisonsComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn_Init () {
+    gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn = TriggerCreate("gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Infest All Garrisons Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveInfestAllGarrisonsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveInfestAllGarrisons);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveInfestAllGarrisonsComplete_Init () {
+    gt_ObjectiveInfestAllGarrisonsComplete = TriggerCreate("gt_ObjectiveInfestAllGarrisonsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -8179,6 +8360,7 @@ void InitTriggers () {
     gt_ObjectiveOpentheLabComplete_Init();
     gt_ObjectiveSpreadCreepCreate_Init();
     gt_ObjectiveSpreadCreepComplete_Init();
+    gt_ObjectiveSpreadCreepDisable_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
@@ -8201,6 +8383,9 @@ void InitTriggers () {
     gt_VictoryCinematicEnd_Init();
     gt_VictoryCleanup_Init();
     gt_VictoryZerg_Init();
+    gt_ObjectiveInfestAllGarrisonsCreate_Init();
+    gt_ObjectiveInfestAllGarrisonsUpdatePhageBorn_Init();
+    gt_ObjectiveInfestAllGarrisonsComplete_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();

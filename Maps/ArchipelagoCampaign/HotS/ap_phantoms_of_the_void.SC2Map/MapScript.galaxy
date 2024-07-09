@@ -40,6 +40,15 @@ const int gv_pLAYER_02_DOMINION22 = 4;
 const int gv_pLAYER_02_DOMINION222 = 5;
 const int gv_pLAYER_02_DOMINION2222 = 6;
 const int gv_pLAYER_02_DOMINION22222 = 7;
+const int gv_LOCATION_ID_NORTHWEST_CRYSTAL = 1;
+const int gv_LOCATION_ID_NORTHEAST_CRYSTAL = 2;
+const int gv_LOCATION_ID_SOUTH_CRYSTAL = 3;
+const int gv_LOCATION_ID_BASE_ESTABLISHED = 4;
+const int gv_LOCATION_ID_CLOSE_TEMPLE = 5;
+const int gv_LOCATION_ID_MID_TEMPLE = 6;
+const int gv_LOCATION_ID_SOUTHEAST_TEMPLE = 7;
+const int gv_LOCATION_ID_NORTHEAST_TEMPLE = 8;
+const int gv_LOCATION_ID_NORTHWEST_TEMPLE = 9;
 const int gv_tEMPLE_LOCATION_OFFSET = 5;
 const int gv_tEMPLE_COUNT = 5;
 
@@ -281,6 +290,7 @@ trigger gt_ObjectiveKerriganMustSurviveComplete;
 trigger gt_ObjectiveKerriganMustSurviveFailed;
 trigger gt_ObjectiveCrystalsCreate;
 trigger gt_ObjectiveCrystalsComplete;
+trigger gt_ObjectiveCrystalsDisable;
 trigger gt_HybridAI;
 trigger gt_StartAI;
 trigger gt_StartUpgradesNormal;
@@ -1133,7 +1143,7 @@ bool gt_StartGameTugofWarQ_Func (bool testConds, bool runActions) {
         libNtve_gf_ShowHideUnit(autoF11BB31C_var, true);
     }
     UnitSetState(gv_kerrigan, c_unitStateSelectable, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_BASE_ESTABLISHED);
     ObjectiveSetDescription(gv_objectiveDestroyDominionBase2, libSwaC_gf_MissionObjectiveDescription("ZHybrid03Objective02"));
     lib5BD4895D_gf_AP_Core_updateObjectiveDescription(gv_objectiveDestroyDominionBase2);
     TriggerExecute(gt_NullZone10Q, true, false);
@@ -2199,7 +2209,7 @@ bool gt_TempleChanneling_Func (bool testConds, bool runActions) {
     UnitRemove(lv_dummyUnit);
     if ((UnitIsAlive(gv_stukov) == true)) {
         gv_templesDeactivated += 1;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lv_location);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lv_location);
         gv_templeSent[(lv_location - gv_tEMPLE_LOCATION_OFFSET)] = true;
         ActorSend(lv_templeDoodadActor, "Signal PowerDown");
         if ((lv_templePoint == PointFromId(849))) {
@@ -2214,7 +2224,7 @@ bool gt_TempleChanneling_Func (bool testConds, bool runActions) {
         if ((gv_templesDeactivated >= 5)) {
             if ((gv_victorySent == false)) {
                 gv_victorySent = true;
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
             }
 
             gv_templesDeactivated = 5;
@@ -3218,6 +3228,10 @@ bool gt_AllCrystalsDestroyedQ_Func (bool testConds, bool runActions) {
         if (!((gv_inCinematic == false))) {
             return false;
         }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -3420,14 +3434,14 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     UnitSetState(gv_stukov, c_unitStateInvulnerable, true);
     if ((gv_victorySent == false)) {
         gv_victorySent = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     }
 
     lv_index = 0;
     for ( ; ( (auto50314A0A_ai >= 0 && lv_index <= auto50314A0A_ae) || (auto50314A0A_ai < 0 && lv_index >= auto50314A0A_ae) ) ; lv_index += auto50314A0A_ai ) {
         if ((gv_templeSent[lv_index] == false)) {
             gv_templeSent[lv_index] = true;
-            lib5BD4895D_gf_AP_Core_sendLocationLocal((lv_index + gv_tEMPLE_LOCATION_OFFSET));
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective((lv_index + gv_tEMPLE_LOCATION_OFFSET));
         }
 
     }
@@ -3783,8 +3797,11 @@ bool gt_ObjectiveDestroyProtossCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid03Objective04");
     gv_objectiveDestroyDominionBase4 = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 1);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid03Objective04", "", 0);
+    ObjectiveSetPriority(gv_objectiveDestroyDominionBase4, 1);
+    ObjectiveShow(gv_objectiveDestroyDominionBase4, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyDominionBase4, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase4, gv_LOCATION_ID_BASE_ESTABLISHED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionBase4, true);
     return true;
 }
 
@@ -3842,9 +3859,16 @@ bool gt_ObjectiveDeactivateTemplesCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid03Objective01");
-    ObjectiveSetPriority(ObjectiveLastCreated(), 2);
     gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid03Objective01", "", 0);
+    ObjectiveSetPriority(gv_objectiveDestroyDominionBase, 2);
+    ObjectiveShow(gv_objectiveDestroyDominionBase, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyDominionBase, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_templesDeactivated, libSwaC_gf_MissionObjectiveItemCount("ZHybrid03Objective01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase, gv_LOCATION_ID_CLOSE_TEMPLE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase, gv_LOCATION_ID_MID_TEMPLE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase, gv_LOCATION_ID_SOUTHEAST_TEMPLE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase, gv_LOCATION_ID_NORTHEAST_TEMPLE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase, gv_LOCATION_ID_NORTHWEST_TEMPLE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionBase, true);
     return true;
 }
 
@@ -3906,9 +3930,11 @@ bool gt_ObjectiveKerriganMustSurviveCreate_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid03Objective02");
     gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 0);
-    ObjectiveSetDescription(ObjectiveLastCreated(), StringExternal("Param/Value/C010B197"));
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid03Objective02", "", 0);
+    ObjectiveSetPriority(gv_objectiveDestroyDominionBase2, 0);
+    ObjectiveSetDescription(gv_objectiveDestroyDominionBase2, StringExternal("Param/Value/C010B197"));
+    ObjectiveShow(gv_objectiveDestroyDominionBase2, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyDominionBase2, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionBase2, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3988,7 +4014,13 @@ void gt_ObjectiveKerriganMustSurviveFailed_Init () {
 // Trigger: Objective - Crystals - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveCrystalsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4004,7 +4036,12 @@ bool gt_ObjectiveCrystalsCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZHybrid03Objective03");
     gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZHybrid03Objective03", "", gv_crystalsDestroyed);
+    ObjectiveShow(gv_objectiveDestroyDominionBase3, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyDominionBase3, lv_category, "", gv_crystalsDestroyed, libSwaC_gf_MissionObjectiveItemCount("ZHybrid03Objective03"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase3, gv_LOCATION_ID_NORTHWEST_CRYSTAL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase3, gv_LOCATION_ID_NORTHEAST_CRYSTAL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyDominionBase3, gv_LOCATION_ID_SOUTH_CRYSTAL);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionBase3, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4040,6 +4077,36 @@ bool gt_ObjectiveCrystalsComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveCrystalsComplete_Init () {
     gt_ObjectiveCrystalsComplete = TriggerCreate("gt_ObjectiveCrystalsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Crystals - Disable
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveCrystalsDisable_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTHWEST_CRYSTAL] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTHEAST_CRYSTAL] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_CRYSTAL] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveCrystalsCreate, false);
+    TriggerEnable(gt_CrystalDiscoverQ, false);
+    TriggerEnable(gt_CrystalDestroyed, false);
+    TriggerEnable(gt_AllCrystalsDestroyedQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveCrystalsDisable_Init () {
+    gt_ObjectiveCrystalsDisable = TriggerCreate("gt_ObjectiveCrystalsDisable_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveCrystalsDisable, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5517,8 +5584,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     VisRevealerEnable(VisRevealerLastCreated(), true);
     TriggerExecute(gt_StartAI, true, false);
     Wait(0.5, c_timeReal);
-    ObjectiveShow(gv_objectiveDestroyDominionBase4, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyDominionBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyDominionBase4, false);
     UnitClearSelection(gv_pLAYER_01_USER);
     lib15EF4C78_gf_StartingWorkersAutoHarvest(gv_pLAYER_01_USER, RegionFromId(21), RegionFromId(42));
     if ((gv_midHive == null)) {
@@ -6077,7 +6143,7 @@ bool gt_CrystalDestroyedNorthwest_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_CRYSTAL);
     return true;
 }
 
@@ -6108,7 +6174,7 @@ bool gt_CrystalDestroyedNortheast_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_CRYSTAL);
     return true;
 }
 
@@ -6139,7 +6205,7 @@ bool gt_CrystalDestroyedSouth_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_CRYSTAL);
     return true;
 }
 
@@ -6224,6 +6290,7 @@ void InitTriggers () {
     gt_ObjectiveKerriganMustSurviveFailed_Init();
     gt_ObjectiveCrystalsCreate_Init();
     gt_ObjectiveCrystalsComplete_Init();
+    gt_ObjectiveCrystalsDisable_Init();
     gt_HybridAI_Init();
     gt_StartAI_Init();
     gt_StartUpgradesNormal_Init();
