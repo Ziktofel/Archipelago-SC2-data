@@ -40,6 +40,13 @@ const int gv_pLAYER_02_DOMINION22 = 4;
 const int gv_pLAYER_02_DOMINION222 = 5;
 const int gv_pLAYER_02_DOMINION2222 = 6;
 const int gv_sPORE_RAY_MAX_COUNT = 2;
+const int gv_LOCATION_ID_FIRST_RELIC = 1;
+const int gv_LOCATION_ID_SECOND_RELIC = 2;
+const int gv_LOCATION_ID_THIRD_RELIC = 3;
+const int gv_LOCATION_ID_FOURTH_RELIC = 4;
+const int gv_LOCATION_ID_YAGDRA = 5;
+const int gv_LOCATION_ID_KRAITH = 6;
+const int gv_LOCATION_ID_SLIVAN = 7;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -130,10 +137,10 @@ int gv_zurvanBanterTimers;
 timer gv_zurvanTimer;
 fixed gv_kerriganLowestLife;
 timer gv_achievementTimedRunTimer;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase2;
-int gv_objectiveDestroyDominionBase3;
-int gv_objectiveDestroyDominionBase22;
+int gv_objectiveSlayPrimarchs;
+int gv_objectiveSurvive;
+int gv_objectiveSlayZurvan;
+int gv_objectiveRelics;
 unitgroup gv_cinematicTempUnits;
 bool gv_introCinematicCompleted;
 sound gv_cinematicStinger;
@@ -199,10 +206,10 @@ void InitGlobals () {
     gv_zurvanTimer = TimerCreate();
     gv_kerriganLowestLife = 5000.0;
     gv_achievementTimedRunTimer = TimerCreate();
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase22 = c_invalidObjectiveId;
+    gv_objectiveSlayPrimarchs = c_invalidObjectiveId;
+    gv_objectiveSurvive = c_invalidObjectiveId;
+    gv_objectiveSlayZurvan = c_invalidObjectiveId;
+    gv_objectiveRelics = c_invalidObjectiveId;
     gv_cinematicTempUnits = UnitGroupEmpty();
 }
 
@@ -373,6 +380,7 @@ trigger gt_ObjectiveSlayZurvanCreate;
 trigger gt_ObjectiveSlayZurvanComplete;
 trigger gt_ObjectiveXelNagaRelicsCreate;
 trigger gt_ObjectiveXelNagaRelicsComplete;
+trigger gt_ObjectiveXelNagaRelicsRemove;
 trigger gt_TipMissionHelpQ;
 trigger gt_YagdraVictoryShot;
 trigger gt_KraithVictoryShot;
@@ -3129,16 +3137,16 @@ bool gt_XelNagaRelicPickups_Func (bool testConds, bool runActions) {
     gv_relicsFound += 1;
     gv_relicsRemainingInArea -= 1;
     TriggerExecute(gt_ObjectiveXelNagaRelicsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase22, gv_relicsFound);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRelics, gv_relicsFound);
     if ((gv_relicsRemainingInArea == 0)) {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, ")<n/> (None remain in this Area");
+        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, ")<n/> (None remain in this Area");
     }
     else {
         if ((gv_relicsRemainingInArea == 1)) {
-            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
+            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
         }
         else {
-            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, StringReplaceWord(")<n/> (RelicsRemaining Remain in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
+            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, StringReplaceWord(")<n/> (RelicsRemaining Remain in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
         }
     }
     if ((gv_relicsFound >= 4)) {
@@ -4801,7 +4809,7 @@ bool gt_YagdraDies_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_YAGDRA);
     UISetAlertTypeVisible(PlayerGroupAll(), "AttackUnit_Zerg", true);
     UnitRemove(gv_yagdraHelperUnit);
     TriggerEnable(gt_YagdraIdle, false);
@@ -4847,7 +4855,7 @@ bool gt_YagdraDies_Func (bool testConds, bool runActions) {
         }
     }
     TriggerExecute(gt_ObjectiveSlayPrimarchsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, 1);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSlayPrimarchs, 1);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     SoundPlay(SoundLink("UI_ObjectiveDiscoveredStinger", -1), PlayerGroupAll(), 100.0, 0.0);
     TriggerExecute(gt_KraithInitQ, true, false);
@@ -4887,7 +4895,7 @@ bool gt_KraithInitQ_Func (bool testConds, bool runActions) {
     RegionPlayableMapSet(RegionFromId(24));
     gv_relicsRemainingInArea = 1;
     if ((gv_relicsFound >= 1)) {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
+        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
     }
 
     TriggerExecute(gt_KraithReinforcements1, true, false);
@@ -6592,7 +6600,7 @@ bool gt_KraithDies_Func (bool testConds, bool runActions) {
         gv_channelLocation = PointWithOffsetPolar(gv_bossLocation, 4.5, AngleBetweenPoints(gv_bossLocation, RegionGetCenter(RegionFromId(54))));
     }
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KRAITH);
     UISetAlertTypeVisible(PlayerGroupAll(), "AttackUnit_Zerg", true);
     TriggerEnable(gt_KraithIdle, false);
     TriggerEnable(gt_UnitTakesDamage, false);
@@ -6650,7 +6658,7 @@ bool gt_KraithDies_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveSlayPrimarchsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, 2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSlayPrimarchs, 2);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     SoundPlay(SoundLink("UI_ObjectiveDiscoveredStinger", -1), PlayerGroupAll(), 100.0, 0.0);
     TriggerExecute(gt_SlivanInitQ, true, false);
@@ -6703,7 +6711,7 @@ bool gt_SlivanInitQ_Func (bool testConds, bool runActions) {
     VisRevealArea(gv_pLAYER_01_USER, RegionFromId(74), 10.0, false);
     gv_relicsRemainingInArea = 1;
     if ((gv_relicsFound >= 1)) {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
+        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
     }
 
     Wait(1.0, c_timeReal);
@@ -8350,7 +8358,7 @@ bool gt_SlivanDies_Func (bool testConds, bool runActions) {
     gv_bossLocation = UnitGetPosition(EventUnit());
     gv_channelLocation = PointWithOffsetPolar(gv_bossLocation, 4.5, AngleBetweenPoints(gv_bossLocation, UnitGetPosition(gv_kerrigan)));
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SLIVAN);
     UISetAlertTypeVisible(PlayerGroupAll(), "AttackUnit_Zerg", true);
     TriggerEnable(gt_UnitTakesDamage, false);
     TriggerStop(gt_SlivanBossFightController);
@@ -8383,7 +8391,7 @@ bool gt_SlivanDies_Func (bool testConds, bool runActions) {
 
     TriggerExecute(gt_ObjectiveSlayPrimarchsCreate, true, false);
     SoundPlay(SoundLink("UI_ObjectiveDiscoveredStinger", -1), PlayerGroupAll(), 100.0, 0.0);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, 3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSlayPrimarchs, 3);
     TriggerExecute(gt_ObjectiveSlayPrimarchsComplete, true, false);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ZurvanIntroQ, true, false);
@@ -8910,7 +8918,7 @@ bool gt_ZurvanDies_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TimerPause(gv_zurvanTimer, true);
     TimerPause(gv_achievementTimedRunTimer, true);
     gv_bossLocation = libNtve_gf_PointWithZOffset(UnitGetPosition(EventUnit()), 12.0);
@@ -9067,7 +9075,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase2) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyDominionBase3) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveSurvive) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveSlayZurvan) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZZerus03_1", gv_pLAYER_01_USER);
     }
 
@@ -9338,8 +9346,13 @@ bool gt_ObjectiveSlayPrimarchsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus03Objective01", "", 0);
+    gv_objectiveSlayPrimarchs = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveSlayPrimarchs, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveSlayPrimarchs, lib5BD4895D_ge_APObjectiveCategory_Primary, "", 0, libSwaC_gf_MissionObjectiveItemCount("ZZerus03Objective01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSlayPrimarchs, gv_LOCATION_ID_YAGDRA);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSlayPrimarchs, gv_LOCATION_ID_KRAITH);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSlayPrimarchs, gv_LOCATION_ID_SLIVAN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSlayPrimarchs, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9368,7 +9381,7 @@ bool gt_ObjectiveSlayPrimarchsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSlayPrimarchsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSlayPrimarchs);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9397,8 +9410,10 @@ bool gt_ObjectiveSurviveCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective02");
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus03Objective02", "", 0);
+    gv_objectiveSurvive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSurvive, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9427,7 +9442,7 @@ bool gt_ObjectiveSurviveComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSurvive);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9456,7 +9471,7 @@ bool gt_ObjectiveSurviveFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveSurvive);
     return true;
 }
 
@@ -9484,8 +9499,11 @@ bool gt_ObjectiveSlayZurvanCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective04");
-    gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus03Objective04", "", 0);
+    gv_objectiveSlayZurvan = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveSlayZurvan, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveSlayZurvan, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSlayZurvan, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSlayZurvan, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeGame);
     return true;
 }
@@ -9514,7 +9532,7 @@ bool gt_ObjectiveSlayZurvanComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSlayZurvanCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSlayZurvan);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9528,7 +9546,13 @@ void gt_ObjectiveSlayZurvanComplete_Init () {
 // Trigger: Objective - Xel'Naga Relics - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveXelNagaRelicsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -9543,21 +9567,26 @@ bool gt_ObjectiveXelNagaRelicsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus03Objective03");
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus03Objective03", "", gv_relicsFound);
-    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(ObjectiveLastCreated());
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(ObjectiveLastCreated(), gv_relicsFound);
+    gv_objectiveRelics = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveRelics, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveRelics, lv_category, "", gv_relicsFound, libSwaC_gf_MissionObjectiveItemCount("ZZerus03Objective03"), true);
+    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(gv_objectiveRelics);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRelics, gv_LOCATION_ID_FIRST_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRelics, gv_LOCATION_ID_SECOND_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRelics, gv_LOCATION_ID_THIRD_RELIC);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRelics, gv_LOCATION_ID_FOURTH_RELIC);
     if ((gv_relicsRemainingInArea == 0)) {
-        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, ")<n/> (None remain in this Area");
+        lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, ")<n/> (None remain in this Area");
     }
     else {
         if ((gv_relicsRemainingInArea == 1)) {
-            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
+            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, StringReplaceWord(")<n/> (RelicsRemaining Remains in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
         }
         else {
-            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveDestroyDominionBase22, StringReplaceWord(")<n/> (RelicsRemaining Remain in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
+            lib5BD4895D_gf_AP_Core_setObjectiveCounterSuffix(gv_objectiveRelics, StringReplaceWord(")<n/> (RelicsRemaining Remain in this Area", "RelicsRemaining", IntToString(gv_relicsRemainingInArea), c_stringReplaceAll, c_stringCase));
         }
     }
-    gv_objectiveDestroyDominionBase22 = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRelics, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9586,7 +9615,7 @@ bool gt_ObjectiveXelNagaRelicsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveXelNagaRelicsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase22);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRelics);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9594,6 +9623,43 @@ bool gt_ObjectiveXelNagaRelicsComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveXelNagaRelicsComplete_Init () {
     gt_ObjectiveXelNagaRelicsComplete = TriggerCreate("gt_ObjectiveXelNagaRelicsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Xel'Naga Relics - Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveXelNagaRelicsRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FIRST_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SECOND_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_THIRD_RELIC] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FOURTH_RELIC] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(534));
+    UnitRemove(UnitFromId(1648));
+    UnitRemove(UnitFromId(1280));
+    UnitRemove(UnitFromId(2603));
+    TriggerEnable(gt_XelNagaRelicIntroQ, false);
+    TriggerEnable(gt_XelNagaRelicPickups, false);
+    TriggerEnable(gt_XelNagaRelicPickupsFirst, false);
+    TriggerEnable(gt_XelNagaRelicPickupsSecond, false);
+    TriggerEnable(gt_XelNagaRelicPickupsThird, false);
+    TriggerEnable(gt_XelNagaRelicPickupsFourth, false);
+    TriggerEnable(gt_ObjectiveXelNagaRelicsCreate, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveXelNagaRelicsRemove_Init () {
+    gt_ObjectiveXelNagaRelicsRemove = TriggerCreate("gt_ObjectiveXelNagaRelicsRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveXelNagaRelicsRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -12935,7 +13001,7 @@ bool gt_XelNagaRelicPickupsFirst_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_RELIC);
     return true;
 }
 
@@ -12971,7 +13037,7 @@ bool gt_XelNagaRelicPickupsSecond_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_RELIC);
     return true;
 }
 
@@ -13007,7 +13073,7 @@ bool gt_XelNagaRelicPickupsThird_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_RELIC);
     return true;
 }
 
@@ -13043,7 +13109,7 @@ bool gt_XelNagaRelicPickupsFourth_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FOURTH_RELIC);
     return true;
 }
 
@@ -13188,6 +13254,7 @@ void InitTriggers () {
     gt_ObjectiveSlayZurvanComplete_Init();
     gt_ObjectiveXelNagaRelicsCreate_Init();
     gt_ObjectiveXelNagaRelicsComplete_Init();
+    gt_ObjectiveXelNagaRelicsRemove_Init();
     gt_TipMissionHelpQ_Init();
     gt_YagdraVictoryShot_Init();
     gt_KraithVictoryShot_Init();

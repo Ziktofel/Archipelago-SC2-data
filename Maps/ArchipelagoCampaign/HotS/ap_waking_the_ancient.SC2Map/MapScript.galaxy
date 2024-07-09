@@ -47,6 +47,14 @@ const int gv_score_Quota_Enemy = 7;
 const int gv_sPORE_RAY_MAX_COUNT = 5;
 const int gv_qUILLGORCAMPCOUNT_MAX = 15;
 const fixed gv_c_CORPSE_LIFEMAX = 60.0;
+const int gv_LOCATION_ID_CENTER_ESSENCE_POOL = 1;
+const int gv_LOCATION_ID_EAST_ESSENCE_POOL = 2;
+const int gv_LOCATION_ID_SOUTH_ESSENCE_POOL = 3;
+const int gv_LOCATION_ID_FINISH_FEEDING = 4;
+const int gv_LOCATION_ID_SOUTH_PROXY_PRIMAL_HIVE = 5;
+const int gv_LOCATION_ID_EAST_PROXY_PRIMAL_HIVE = 6;
+const int gv_LOCATION_ID_SOUTH_MAIN_PRIMAL_HIVE = 7;
+const int gv_LOCATION_ID_EAST_MAIN_PRIMAL_HIVE = 8;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -149,12 +157,12 @@ int gv_dronesLostCount;
 int gv_kerriganKills;
 int gv_primalHivesKilled;
 int gv_largestZergForce;
-int gv_objectiveDestroyDominionBase;
-int gv_objectiveDestroyDominionBase2;
-int gv_objectiveDestroyDominionBase3;
-int gv_objectiveDestroyDominionBase4;
-int gv_objectiveDestroyDominionBase5;
-int gv_objectiveDestroyDominionBase6;
+int gv_objective_HarvestMeat;
+int gv_objective_MeatEatenByEnemy;
+int gv_objective_KillBrakk;
+int gv_objective_CollectEssence;
+int gv_essenceCollected;
+int gv_objective_DestroyPrimalHives;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicHiddenUnits2;
 unitgroup gv_cinematicTempUnits;
@@ -229,11 +237,11 @@ void InitGlobals () {
     gv_harvesterLeashingGroup = UnitGroupEmpty();
     gv_brakk_Ping = c_invalidPingId;
     gv_achievementMutaliskForce = UnitGroupEmpty();
-    gv_objectiveDestroyDominionBase = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase3 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase4 = c_invalidObjectiveId;
-    gv_objectiveDestroyDominionBase6 = c_invalidObjectiveId;
+    gv_objective_HarvestMeat = c_invalidObjectiveId;
+    gv_objective_MeatEatenByEnemy = c_invalidObjectiveId;
+    gv_objective_KillBrakk = c_invalidObjectiveId;
+    gv_objective_CollectEssence = c_invalidObjectiveId;
+    gv_objective_DestroyPrimalHives = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicHiddenUnits2 = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -396,6 +404,7 @@ trigger gt_ObjectiveKillBrakkFailed;
 trigger gt_ObjectiveCollectEssenceCreate;
 trigger gt_ObjectiveCollectEssenceUpdate;
 trigger gt_ObjectiveCollectEssenceComplete;
+trigger gt_ObjectiveCollectEssenceRemove;
 trigger gt_ObjectiveDestroyPrimalHivesCreate;
 trigger gt_ObjectiveDestroyPrimalHivesUpdate;
 trigger gt_ObjectiveDestroyPrimalHivesComplete;
@@ -2872,7 +2881,7 @@ bool gt_CorpseEatenPlayer_Func (bool testConds, bool runActions) {
 
     UnitCreateEffectPoint(EventUnit(), "FeedZurvan", PointFromId(2020));
     libNtve_gf_SendActorMessageToUnit(UnitFromId(1062), "Signal Feed");
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_HarvestMeat) == c_objectiveStateCompleted)) {
         return true;
     }
 
@@ -2882,7 +2891,7 @@ bool gt_CorpseEatenPlayer_Func (bool testConds, bool runActions) {
     gv_score_Player += 1;
     TriggerExecute(gt_ObjectiveHarvestMeatUpdate, true, false);
     if ((gv_score_Player >= gv_score_Quota_Player)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FINISH_FEEDING);
         PingDestroy(gv_feedingPointPing);
         TriggerExecute(gt_ObjectiveHarvestMeatComplete, true, true);
         if ((gv_score_Player >= gv_score_Quota_Player) && (gv_aPBrakkKilled == true)) {
@@ -3899,11 +3908,11 @@ bool gt_EssencePoolAbsorbedQ_Func (bool testConds, bool runActions) {
     else {
     }
     SoundPlayAtPoint(SoundLink("FX_Zerus01_DNAPoolShrinkage", -1), PlayerGroupAll(), lv_location, 0.0, 100.0, 0.0);
-    gv_objectiveDestroyDominionBase5 += 1;
+    gv_essenceCollected += 1;
     libSwaC_gf_DisplayMissionObjectiveRewardFloatingText(UnitGetPosition(gv_kerrigan), "ZZerus01Objective03", gv_pLAYER_01_USER);
     Wait(1.0, c_timeReal);
     TriggerExecute(gt_ObjectiveCollectEssenceUpdate, true, false);
-    autoCBA2755F_val = gv_objectiveDestroyDominionBase5;
+    autoCBA2755F_val = gv_essenceCollected;
     if (autoCBA2755F_val == 1) {
         TriggerQueueEnter();
         libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
@@ -6021,7 +6030,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     gv_gameOver = true;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     Wait(2.0, c_timeReal);
     libSwaC_gf_RunMissionVictorySequence(gt_VictoryQ);
     return true;
@@ -6050,7 +6059,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyDominionBase) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyDominionBase2) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyDominionBase3) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_HarvestMeat) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_MeatEatenByEnemy) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objective_KillBrakk) == c_objectiveStateCompleted)) {
         libSwaC_gf_CampaignAwardAchievement("ZZerus01_1", gv_pLAYER_01_USER);
     }
 
@@ -6482,8 +6491,11 @@ bool gt_ObjectiveHarvestMeatCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus01Objective01");
-    gv_objectiveDestroyDominionBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus01Objective01", "", 0);
+    gv_objective_HarvestMeat = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_HarvestMeat, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_HarvestMeat, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_score_Player, libSwaC_gf_MissionObjectiveItemCount("ZZerus01Objective01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_HarvestMeat, gv_LOCATION_ID_FINISH_FEEDING);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_HarvestMeat, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     libSwaC_gf_CreateObjectivePing(true, UnitGetPosition(UnitFromId(1062)), StringExternal("Param/Value/90BE5D7F"));
     gv_feedingPointPing = PingLastCreated();
@@ -6513,7 +6525,7 @@ bool gt_ObjectiveHarvestMeatUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveHarvestMeatCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase, gv_score_Player);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_HarvestMeat, gv_score_Player);
     return true;
 }
 
@@ -6540,8 +6552,8 @@ bool gt_ObjectiveHarvestMeatComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveHarvestMeatCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_HarvestMeat);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_MeatEatenByEnemy);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6570,7 +6582,7 @@ bool gt_ObjectiveHarvestMeatFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveHarvestMeatCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_HarvestMeat);
     return true;
 }
 
@@ -6598,8 +6610,10 @@ bool gt_ObjectiveQuillgorMeatEnemyCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus01Objective02");
-    gv_objectiveDestroyDominionBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus01Objective02", "", 0);
+    gv_objective_MeatEatenByEnemy = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_MeatEatenByEnemy, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_MeatEatenByEnemy, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_score_Enemy, libSwaC_gf_MissionObjectiveItemCount("ZZerus01Objective02"), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_MeatEatenByEnemy, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6627,7 +6641,7 @@ bool gt_ObjectiveQuillgorMeatEnemyUpdate_Func (bool testConds, bool runActions) 
     }
 
     TriggerExecute(gt_ObjectiveQuillgorMeatEnemyCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase2, gv_score_Enemy);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_MeatEatenByEnemy, gv_score_Enemy);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6655,7 +6669,7 @@ bool gt_ObjectiveQuillgorMeatEnemyComplete_Func (bool testConds, bool runActions
     }
 
     TriggerExecute(gt_ObjectiveQuillgorMeatEnemyCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_MeatEatenByEnemy);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6684,7 +6698,7 @@ bool gt_ObjectiveQuillgorMeatEnemyFailed_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveQuillgorMeatEnemyCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_MeatEatenByEnemy);
     return true;
 }
 
@@ -6712,8 +6726,11 @@ bool gt_ObjectiveKillBrakkCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus01Objective012");
-    gv_objectiveDestroyDominionBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus01Objective012", "", 0);
+    gv_objective_KillBrakk = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_KillBrakk, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_KillBrakk, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_KillBrakk, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_KillBrakk, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6741,7 +6758,7 @@ bool gt_ObjectiveKillBrakkComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveKillBrakkCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_KillBrakk);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6770,7 +6787,7 @@ bool gt_ObjectiveKillBrakkFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKillBrakkCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyDominionBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_KillBrakk);
     return true;
 }
 
@@ -6783,7 +6800,13 @@ void gt_ObjectiveKillBrakkFailed_Init () {
 // Trigger: Objective Collect Essence Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveCollectEssenceCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6798,8 +6821,13 @@ bool gt_ObjectiveCollectEssenceCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libSwaC_gf_CreateObjectiveCampaign("ZZerus01Objective03");
-    gv_objectiveDestroyDominionBase4 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "ZZerus01Objective03", "", gv_objectiveDestroyDominionBase5);
+    gv_objective_CollectEssence = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_CollectEssence, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_CollectEssence, lv_category, "", gv_essenceCollected, libSwaC_gf_MissionObjectiveItemCount("ZZerus01Objective03"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_CollectEssence, gv_LOCATION_ID_CENTER_ESSENCE_POOL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_CollectEssence, gv_LOCATION_ID_EAST_ESSENCE_POOL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_CollectEssence, gv_LOCATION_ID_SOUTH_ESSENCE_POOL);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_CollectEssence, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6827,8 +6855,8 @@ bool gt_ObjectiveCollectEssenceUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveCollectEssenceCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase4, gv_objectiveDestroyDominionBase5);
-    if ((gv_objectiveDestroyDominionBase5 == 3)) {
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_CollectEssence, gv_essenceCollected);
+    if ((gv_essenceCollected == 3)) {
         TriggerExecute(gt_ObjectiveCollectEssenceComplete, true, false);
     }
 
@@ -6858,7 +6886,7 @@ bool gt_ObjectiveCollectEssenceComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveCollectEssenceCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_CollectEssence);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6869,10 +6897,54 @@ void gt_ObjectiveCollectEssenceComplete_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Collect Essence Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveCollectEssenceRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_CENTER_ESSENCE_POOL] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_ESSENCE_POOL] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_ESSENCE_POOL] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(154));
+    UnitRemove(UnitFromId(2060));
+    UnitRemove(UnitFromId(1346));
+    TriggerEnable(gt_ObjectiveCollectEssenceCreate, false);
+    TriggerEnable(gt_ObjectiveCollectEssenceUpdate, false);
+    TriggerEnable(gt_EssencePoolAbsorbedCenter, false);
+    TriggerEnable(gt_EssencePoolAbsorbedEast, false);
+    TriggerEnable(gt_EssencePoolAbsorbedSouth, false);
+    TriggerEnable(gt_EssencePoolAbsorbedQ, false);
+    TriggerEnable(gt_EssencePoolApproached, false);
+    TriggerEnable(gt_EssencePoolIntroQ, false);
+    TriggerEnable(gt_EssencePoolPing, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveCollectEssenceRemove_Init () {
+    gt_ObjectiveCollectEssenceRemove = TriggerCreate("gt_ObjectiveCollectEssenceRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveCollectEssenceRemove, 2.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Destroy Primal Hives Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyPrimalHivesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6886,9 +6958,14 @@ bool gt_ObjectiveDestroyPrimalHivesCreate_Func (bool testConds, bool runActions)
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/55CE045C"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveDestroyDominionBase6 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroyDominionBase6, "", gv_primalHivesKilled, 4);
+    ObjectiveCreate(StringExternal("Param/Value/55CE045C"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_DestroyPrimalHives = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_DestroyPrimalHives, lv_category, "", gv_primalHivesKilled, 4, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPrimalHives, gv_LOCATION_ID_EAST_PROXY_PRIMAL_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPrimalHives, gv_LOCATION_ID_EAST_MAIN_PRIMAL_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPrimalHives, gv_LOCATION_ID_SOUTH_PROXY_PRIMAL_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPrimalHives, gv_LOCATION_ID_SOUTH_MAIN_PRIMAL_HIVE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DestroyPrimalHives, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6916,7 +6993,7 @@ bool gt_ObjectiveDestroyPrimalHivesUpdate_Func (bool testConds, bool runActions)
     }
 
     TriggerExecute(gt_ObjectiveDestroyPrimalHivesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyDominionBase6, gv_primalHivesKilled);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DestroyPrimalHives, gv_primalHivesKilled);
     if ((gv_primalHivesKilled == 4)) {
         TriggerExecute(gt_ObjectiveDestroyPrimalHivesComplete, true, false);
     }
@@ -6947,7 +7024,7 @@ bool gt_ObjectiveDestroyPrimalHivesComplete_Func (bool testConds, bool runAction
     }
 
     TriggerExecute(gt_ObjectiveDestroyPrimalHivesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyDominionBase6);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_DestroyPrimalHives);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8186,7 +8263,7 @@ bool gt_EssencePoolAbsorbedCenter_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CENTER_ESSENCE_POOL);
     return true;
 }
 
@@ -8226,7 +8303,7 @@ bool gt_EssencePoolAbsorbedEast_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_ESSENCE_POOL);
     return true;
 }
 
@@ -8266,7 +8343,7 @@ bool gt_EssencePoolAbsorbedSouth_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_ESSENCE_POOL);
     return true;
 }
 
@@ -8301,7 +8378,7 @@ bool gt_SouthProxyHive_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_PROXY_PRIMAL_HIVE);
     return true;
 }
 
@@ -8336,7 +8413,7 @@ bool gt_EastProxyHive_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_PROXY_PRIMAL_HIVE);
     return true;
 }
 
@@ -8371,7 +8448,7 @@ bool gt_SouthMainHive_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_MAIN_PRIMAL_HIVE);
     return true;
 }
 
@@ -8406,7 +8483,7 @@ bool gt_EastMainHive_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_MAIN_PRIMAL_HIVE);
     return true;
 }
 
@@ -8525,6 +8602,7 @@ void InitTriggers () {
     gt_ObjectiveCollectEssenceCreate_Init();
     gt_ObjectiveCollectEssenceUpdate_Init();
     gt_ObjectiveCollectEssenceComplete_Init();
+    gt_ObjectiveCollectEssenceRemove_Init();
     gt_ObjectiveDestroyPrimalHivesCreate_Init();
     gt_ObjectiveDestroyPrimalHivesUpdate_Init();
     gt_ObjectiveDestroyPrimalHivesComplete_Init();
