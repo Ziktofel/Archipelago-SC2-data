@@ -40,6 +40,13 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_CLOSE_SOLARITE_RESERVE = 1;
+const int gv_LOCATION_ID_NORTH_SOLARITE_RESERVE = 2;
+const int gv_LOCATION_ID_EAST_SOLARITE_RESERVE = 3;
+const int gv_LOCATION_ID_WEST_LAUNCH_BAY = 4;
+const int gv_LOCATION_ID_SOUTH_LAUNCH_BAY = 5;
+const int gv_LOCATION_ID_NORTHWEST_LAUNCH_BAY = 6;
+const int gv_LOCATION_ID_EAST_LAUNCH_BAY = 7;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -87,9 +94,9 @@ bool gv_crawlerEncountered;
 int gv_statDarkTemplarWarped;
 int gv_statOrbitalStrikeCount;
 bool gv_achievementNonProbesorDarkTemplarsBuilt;
-int gv_objectiveDestroyZergBase4;
-int gv_objectiveDestroyZergBase3;
-int gv_objectiveRescueStalkers;
+int gv_objective_LaunchBays;
+int gv_objective_WarpConduit;
+int gv_objective_RecoverArchiveCores;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -124,9 +131,9 @@ void InitGlobals () {
     gv_thrasherSpawnTimer = TimerCreate();
     gv_bonusObjectiveRevealTimer = TimerCreate();
     gv_vaultsTotal = 3;
-    gv_objectiveDestroyZergBase4 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objective_LaunchBays = c_invalidObjectiveId;
+    gv_objective_WarpConduit = c_invalidObjectiveId;
+    gv_objective_RecoverArchiveCores = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -256,6 +263,7 @@ trigger gt_ObjectiveWarpConduitFailed;
 trigger gt_ObjectiveArchiveCoresCreate;
 trigger gt_ObjectiveArchiveCoresComplete;
 trigger gt_ObjectiveArchiveCoresUpdate;
+trigger gt_ObjectiveArchiveCoresDeactivate;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -2540,8 +2548,8 @@ bool gt_LaunchBay01Released_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libNtve_gf_KillModel(gv_launchBayReticules[1]);
     TextTagDestroy(gv_launchBayTextTags[1]);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
     gv_objective_LaunchBaysFreed += 1;
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_LAUNCH_BAY);
     TriggerExecute(gt_LaunchBayUpdate, true, false);
     PingDestroy(gv_launchBayPing[1]);
     gv_activeBayIndex = 1;
@@ -2600,7 +2608,7 @@ bool gt_LaunchBay02Released_Func (bool testConds, bool runActions) {
     libNtve_gf_KillModel(gv_launchBayReticules[2]);
     TextTagDestroy(gv_launchBayTextTags[2]);
     gv_objective_LaunchBaysFreed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_LAUNCH_BAY);
     TriggerExecute(gt_LaunchBayUpdate, true, false);
     PingDestroy(gv_launchBayPing[2]);
     gv_activeBayIndex = 2;
@@ -2659,7 +2667,7 @@ bool gt_LaunchBay03Released_Func (bool testConds, bool runActions) {
     libNtve_gf_KillModel(gv_launchBayReticules[3]);
     TextTagDestroy(gv_launchBayTextTags[3]);
     gv_objective_LaunchBaysFreed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_LAUNCH_BAY);
     TriggerExecute(gt_LaunchBayUpdate, true, false);
     PingDestroy(gv_launchBayPing[3]);
     gv_activeBayIndex = 3;
@@ -2718,7 +2726,7 @@ bool gt_LaunchBay04Released_Func (bool testConds, bool runActions) {
     libNtve_gf_KillModel(gv_launchBayReticules[4]);
     TextTagDestroy(gv_launchBayTextTags[4]);
     gv_objective_LaunchBaysFreed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_LAUNCH_BAY);
     TriggerExecute(gt_LaunchBayUpdate, true, false);
     PingDestroy(gv_launchBayPing[4]);
     gv_activeBayIndex = 4;
@@ -3878,7 +3886,7 @@ bool gt_VaultTimedIntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerEnable(gt_VaultDiscoveryIntroQ, false);
     TriggerQueueEnter();
-    if ((ObjectiveGetState(gv_objectiveRescueStalkers) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_RecoverArchiveCores) == c_objectiveStateCompleted)) {
         return true;
     }
 
@@ -3930,7 +3938,7 @@ bool gt_VaultFirstVaultFoundTimedQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    if ((ObjectiveGetState(gv_objectiveRescueStalkers) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_RecoverArchiveCores) == c_objectiveStateCompleted)) {
         return true;
     }
 
@@ -3980,7 +3988,7 @@ bool gt_VaultDiscoveryIntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerEnable(gt_VaultTimedIntroQ, false);
     TriggerQueueEnter();
-    if ((ObjectiveGetState(gv_objectiveRescueStalkers) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_RecoverArchiveCores) == c_objectiveStateCompleted)) {
         return true;
     }
 
@@ -4031,7 +4039,7 @@ bool gt_VaultFirstVaultFoundDiscoveryQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    if ((ObjectiveGetState(gv_objectiveRescueStalkers) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_RecoverArchiveCores) == c_objectiveStateCompleted)) {
         return true;
     }
 
@@ -4085,7 +4093,7 @@ bool gt_Vault01Activated_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     UnitKill(gv_vaultBeacon[1]);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_SOLARITE_RESERVE);
     gv_vaultsFound = (gv_vaultsFound + 1);
     if ((gv_vaultsFound == 1)) {
         TriggerExecute(gt_VaultFirstVaultFoundDiscoveryQ, true, false);
@@ -4151,7 +4159,7 @@ bool gt_Vault02Activated_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     UnitKill(gv_vaultBeacon[2]);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_SOLARITE_RESERVE);
     gv_vaultsFound = (gv_vaultsFound + 1);
     if ((gv_vaultsFound == 1)) {
         TriggerExecute(gt_VaultFirstVaultFoundDiscoveryQ, true, false);
@@ -4217,7 +4225,7 @@ bool gt_Vault03Activated_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     UnitKill(gv_vaultBeacon[3]);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_SOLARITE_RESERVE);
     gv_vaultsFound = (gv_vaultsFound + 1);
     if ((gv_vaultsFound == 1)) {
         TriggerExecute(gt_VaultFirstVaultFoundDiscoveryQ, true, false);
@@ -5130,7 +5138,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     libVCMI_gf_RunMissionVictorySequence(gt_VictoryQ);
@@ -5700,9 +5708,17 @@ bool gt_ObjectiveLaunchBaysCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PShakuras01Primary01");
-    gv_objectiveDestroyZergBase4 = ObjectiveLastCreated();
-    ObjectiveSetPriority(gv_objectiveDestroyZergBase4, 2);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras01Primary01", "", gv_objective_LaunchBaysFreed);
+    gv_objective_LaunchBays = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_LaunchBays, 2);
+    ObjectiveSetName(gv_objective_LaunchBays, libVoiC_gf_MissionObjectiveName("PShakuras01Primary01"));
+    ObjectiveShow(gv_objective_LaunchBays, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_LaunchBays, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objective_LaunchBaysFreed, libVoiC_gf_MissionObjectiveItemCount("PShakuras01Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_LaunchBays, gv_LOCATION_ID_WEST_LAUNCH_BAY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_LaunchBays, gv_LOCATION_ID_SOUTH_LAUNCH_BAY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_LaunchBays, gv_LOCATION_ID_NORTHWEST_LAUNCH_BAY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_LaunchBays, gv_LOCATION_ID_EAST_LAUNCH_BAY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_LaunchBays, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_LaunchBays, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5734,7 +5750,7 @@ bool gt_ObjectiveLaunchBaysComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveLaunchBaysCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_LaunchBays);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5755,7 +5771,7 @@ bool gt_ObjectiveLaunchBaysUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveLaunchBaysCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase4, gv_objective_LaunchBaysFreed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_LaunchBays, gv_objective_LaunchBaysFreed);
     return true;
 }
 
@@ -5783,8 +5799,10 @@ bool gt_ObjectiveWarpConduitCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PShakuras01Primary02");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras01Primary02", "", 0);
+    gv_objective_WarpConduit = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_WarpConduit, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_WarpConduit, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_WarpConduit, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5816,7 +5834,7 @@ bool gt_ObjectiveWarpConduitComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveWarpConduitCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_WarpConduit);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5848,7 +5866,7 @@ bool gt_ObjectiveWarpConduitFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveWarpConduitCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_WarpConduit);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5862,7 +5880,13 @@ void gt_ObjectiveWarpConduitFailed_Init () {
 // Trigger: Objective - Archive Cores - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveArchiveCoresCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5880,8 +5904,14 @@ bool gt_ObjectiveArchiveCoresCreate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PShakuras01Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras01Bonus01", "", gv_vaultsFound);
+    gv_objective_RecoverArchiveCores = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_RecoverArchiveCores, libVoiC_gf_MissionObjectiveName("PShakuras01Bonus01"));
+    ObjectiveShow(gv_objective_RecoverArchiveCores, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_RecoverArchiveCores, lv_category, "", gv_vaultsFound, libVoiC_gf_MissionObjectiveItemCount("PShakuras01Bonus01"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_RecoverArchiveCores, gv_LOCATION_ID_CLOSE_SOLARITE_RESERVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_RecoverArchiveCores, gv_LOCATION_ID_NORTH_SOLARITE_RESERVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_RecoverArchiveCores, gv_LOCATION_ID_EAST_SOLARITE_RESERVE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_RecoverArchiveCores, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5910,7 +5940,7 @@ bool gt_ObjectiveArchiveCoresComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveArchiveCoresCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_RecoverArchiveCores);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5931,7 +5961,7 @@ bool gt_ObjectiveArchiveCoresUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveArchiveCoresCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_vaultsFound);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_RecoverArchiveCores, gv_vaultsFound);
     if ((gv_vaultsFound == gv_vaultsTotal)) {
         TriggerExecute(gt_ObjectiveArchiveCoresComplete, true, true);
         TriggerExecute(gt_TransmissionAllSolariteCollectedQ, true, false);
@@ -5943,6 +5973,44 @@ bool gt_ObjectiveArchiveCoresUpdate_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveArchiveCoresUpdate_Init () {
     gt_ObjectiveArchiveCoresUpdate = TriggerCreate("gt_ObjectiveArchiveCoresUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Archive Cores - Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveArchiveCoresDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_CLOSE_SOLARITE_RESERVE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_SOLARITE_RESERVE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_SOLARITE_RESERVE] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(755));
+    UnitRemove(UnitFromId(756));
+    UnitRemove(UnitFromId(757));
+    TriggerEnable(gt_ObjectiveArchiveCoresCreate, false);
+    TriggerEnable(gt_ObjectiveArchiveCoresUpdate, false);
+    TriggerEnable(gt_VaultTimedIntroQ, false);
+    TriggerEnable(gt_VaultDiscoveryIntroQ, false);
+    TriggerEnable(gt_VaultFirstVaultFoundDiscoveryQ, false);
+    TriggerEnable(gt_VaultFirstVaultFoundTimedQ, false);
+    TriggerEnable(gt_Vault01Activated, false);
+    TriggerEnable(gt_Vault02Activated, false);
+    TriggerEnable(gt_Vault03Activated, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveArchiveCoresDeactivate_Init () {
+    gt_ObjectiveArchiveCoresDeactivate = TriggerCreate("gt_ObjectiveArchiveCoresDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveArchiveCoresDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7024,6 +7092,7 @@ void InitTriggers () {
     gt_ObjectiveArchiveCoresCreate_Init();
     gt_ObjectiveArchiveCoresComplete_Init();
     gt_ObjectiveArchiveCoresUpdate_Init();
+    gt_ObjectiveArchiveCoresDeactivate_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
