@@ -41,6 +41,13 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_FIRST_TERRAZINE_FOG = 1;
+const int gv_LOCATION_ID_SOUTHWEST_GUARDIAN = 2;
+const int gv_LOCATION_ID_WEST_GUARDIAN = 3;
+const int gv_LOCATION_ID_NORTHWEST_GUARDIAN = 4;
+const int gv_LOCATION_ID_NORTHEAST_GUARDIAN = 5;
+const int gv_LOCATION_ID_NORTH_MOTHERSHIP = 6;
+const int gv_LOCATION_ID_SOUTH_MOTHERSHIP = 7;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TAL_NORTH = 2;
 const int gv_pLAYER_03_TAL_EAST = 3;
@@ -97,9 +104,9 @@ int[3] gv_taldarimFleetPing;
 int gv_foggyShrineKills;
 int gv_voidShadesKilled;
 int gv_taldarimKilled;
-int gv_objectiveDestroyZergBase5;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveRescueStalkers;
+int gv_objectiveSurviveFirstNight;
+int gv_objectiveDestroyShrines;
+int gv_objectiveDestroyShips;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -139,9 +146,9 @@ void InitGlobals () {
     for (init_i = 0; init_i <= 2; init_i += 1) {
         gv_taldarimFleetPing[init_i] = c_invalidPingId;
     }
-    gv_objectiveDestroyZergBase5 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objectiveSurviveFirstNight = c_invalidObjectiveId;
+    gv_objectiveDestroyShrines = c_invalidObjectiveId;
+    gv_objectiveDestroyShips = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -240,6 +247,7 @@ trigger gt_ObjectiveDestroyShipsCreate;
 trigger gt_ObjectiveDestroyShipsComplete;
 trigger gt_ObjectiveDestroyShipsUpdate;
 trigger gt_ObjectiveDestroyShipsFailed;
+trigger gt_ObjectiveDestroyShipsDeactivate;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -971,7 +979,7 @@ bool gt_SouthMothership_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_MOTHERSHIP);
     return true;
 }
 
@@ -992,7 +1000,7 @@ bool gt_NorthMothership_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_MOTHERSHIP);
     return true;
 }
 
@@ -2320,8 +2328,7 @@ bool gt_FirstNightSurvived_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSurvivetheFirstNightComplete, true, true);
-    ObjectiveShow(gv_objectiveDestroyZergBase5, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSurviveFirstNight, false);
     TriggerExecute(gt_ObjectiveDestroyShrinesCreate, true, false);
     autoC99DED78_g = UnitGroup("TerrazineTempleNESW", c_playerAny, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     autoC99DED78_u = UnitGroupCount(autoC99DED78_g, c_unitCountAll);
@@ -3197,16 +3204,16 @@ bool gt_ShrineDestroyed_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveDestroyShrinesUpdate, true, false);
     autoC0ACF11A_val = EventPlayerEffectUsedUnit(c_effectUnitCaster);
     if (autoC0ACF11A_val == gv_shrineNorthUnit) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_GUARDIAN);
     }
     else if (autoC0ACF11A_val == gv_shrineSouthUnit) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_GUARDIAN);
     }
     else if (autoC0ACF11A_val == gv_shrineEastUnit) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_GUARDIAN);
     }
     else if (autoC0ACF11A_val == gv_shrineWestUnit) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_GUARDIAN);
     }
     else {
     }
@@ -4362,7 +4369,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDestroyShrinesComplete, true, true);
@@ -4628,8 +4635,11 @@ bool gt_ObjectiveSurvivetheFirstNightCreate_Func (bool testConds, bool runAction
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PTaldarim01Primary01");
-    gv_objectiveDestroyZergBase5 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PTaldarim01Primary01", "", 0);
+    gv_objectiveSurviveFirstNight = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveSurviveFirstNight, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveSurviveFirstNight, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSurviveFirstNight, gv_LOCATION_ID_FIRST_TERRAZINE_FOG);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSurviveFirstNight, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4657,12 +4667,12 @@ bool gt_ObjectiveSurvivetheFirstNightComplete_Func (bool testConds, bool runActi
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_TERRAZINE_FOG);
     while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSurvivetheFirstNightCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSurviveFirstNight);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4694,7 +4704,7 @@ bool gt_ObjectiveSurvivetheFirstNightFailed_Func (bool testConds, bool runAction
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSurvivetheFirstNightCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveSurviveFirstNight);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4723,8 +4733,16 @@ bool gt_ObjectiveDestroyShrinesCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PTaldarim01Primary02");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PTaldarim01Primary02", "", gv_shrinesDestroyed);
+    gv_objectiveDestroyShrines = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveDestroyShrines, libVoiC_gf_MissionObjectiveName("PTaldarim01Primary02"));
+    ObjectiveShow(gv_objectiveDestroyShrines, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyShrines, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_shrinesDestroyed, libVoiC_gf_MissionObjectiveItemCount("PTaldarim01Primary02"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyShrines, gv_LOCATION_ID_SOUTHWEST_GUARDIAN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyShrines, gv_LOCATION_ID_WEST_GUARDIAN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyShrines, gv_LOCATION_ID_NORTHWEST_GUARDIAN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyShrines, gv_LOCATION_ID_NORTHEAST_GUARDIAN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyShrines, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyShrines, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4756,7 +4774,7 @@ bool gt_ObjectiveDestroyShrinesComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyShrinesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyShrines);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4777,7 +4795,7 @@ bool gt_ObjectiveDestroyShrinesUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveDestroyShrinesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_shrinesDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyShrines, gv_shrinesDestroyed);
     return true;
 }
 
@@ -4808,7 +4826,7 @@ bool gt_ObjectiveDestroyShrinesFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyShrinesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyShrines);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4822,7 +4840,13 @@ void gt_ObjectiveDestroyShrinesFailed_Init () {
 // Trigger: Objective Destroy Ships Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyShipsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4840,8 +4864,13 @@ bool gt_ObjectiveDestroyShipsCreate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PTaldarim01Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PTaldarim01Bonus01", "", gv_mothershipsDestroyed);
+    gv_objectiveDestroyShips = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveDestroyShips, libVoiC_gf_MissionObjectiveName("PTaldarim01Bonus01"));
+    ObjectiveShow(gv_objectiveDestroyShips, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyShips, lv_category, "", gv_mothershipsDestroyed, libVoiC_gf_MissionObjectiveItemCount("PTaldarim01Bonus01"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyShips, gv_LOCATION_ID_NORTH_MOTHERSHIP);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyShips, gv_LOCATION_ID_SOUTH_MOTHERSHIP);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyShips, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4870,7 +4899,7 @@ bool gt_ObjectiveDestroyShipsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyShipsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyShips);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4894,7 +4923,7 @@ bool gt_ObjectiveDestroyShipsUpdate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyShipsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_mothershipsDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyShips, gv_mothershipsDestroyed);
     return true;
 }
 
@@ -4925,7 +4954,7 @@ bool gt_ObjectiveDestroyShipsFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyShipsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyShips);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4933,6 +4962,39 @@ bool gt_ObjectiveDestroyShipsFailed_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyShipsFailed_Init () {
     gt_ObjectiveDestroyShipsFailed = TriggerCreate("gt_ObjectiveDestroyShipsFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Ships Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyShipsDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_MOTHERSHIP] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_MOTHERSHIP] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveDestroyShipsCreate, false);
+    TriggerEnable(gt_ObjectiveDestroyShipsUpdate, false);
+    TriggerEnable(gt_MothershipDestroyed, false);
+    TriggerEnable(gt_TransmissionBonusObjectiveIntroQ, false);
+    TriggerEnable(gt_TransmissionBonusObjectiveUpdateQ, false);
+    TriggerEnable(gt_TransmissionBonusObjectiveCompleteQ, false);
+    TriggerEnable(gt_BonusObjectiveIntro, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyShipsDeactivate_Init () {
+    gt_ObjectiveDestroyShipsDeactivate = TriggerCreate("gt_ObjectiveDestroyShipsDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDestroyShipsDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5774,6 +5836,7 @@ void InitTriggers () {
     gt_ObjectiveDestroyShipsComplete_Init();
     gt_ObjectiveDestroyShipsUpdate_Init();
     gt_ObjectiveDestroyShipsFailed_Init();
+    gt_ObjectiveDestroyShipsDeactivate_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();

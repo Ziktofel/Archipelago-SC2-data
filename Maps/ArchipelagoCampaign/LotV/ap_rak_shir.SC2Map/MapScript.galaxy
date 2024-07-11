@@ -40,6 +40,9 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_NORTH_SLAYN_ELEMENTAL = 1;
+const int gv_LOCATION_ID_SOUTHWEST_SLAYN_ELEMENTAL = 2;
+const int gv_LOCATION_ID_EAST_SLAYN_ELEMENTAL = 3;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TALDARIM = 2;
 const int gv_pLAYER_03_TALDARIM = 3;
@@ -104,9 +107,9 @@ int gv_malashEscortsKilled;
 unitgroup gv_malashEscortGroup;
 unitgroup gv_alarakEscortGroup;
 bool gv_alarakPushedBack;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveDestroyZergBase3;
-int gv_objectiveRescueStalkers;
+int gv_objectiveKillMalash;
+int gv_objectiveAlarakMustSurvive;
+int gv_objectiveKillSlaynElementals;
 int gv_objectiveElementalsKilledCount;
 int gv_objectiveElementalsMax;
 unitgroup gv_cinematicHiddenUnits;
@@ -147,9 +150,9 @@ void InitGlobals () {
     gv_lastReplacedWithWarpInGroup = UnitGroupEmpty();
     gv_malashEscortGroup = UnitGroupEmpty();
     gv_alarakEscortGroup = UnitGroupEmpty();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objectiveKillMalash = c_invalidObjectiveId;
+    gv_objectiveAlarakMustSurvive = c_invalidObjectiveId;
+    gv_objectiveKillSlaynElementals = c_invalidObjectiveId;
     gv_objectiveElementalsMax = 3;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
@@ -185,8 +188,6 @@ trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
 trigger gt_ArchInit;
-trigger gt_SouthMothership;
-trigger gt_NorthMothership;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -263,6 +264,7 @@ trigger gt_ObjectiveKillSlaynElementalsCreate;
 trigger gt_ObjectiveKillSlaynElementalsComplete;
 trigger gt_ObjectiveKillSlaynElementalsUpdate;
 trigger gt_ObjectiveKillSlaynElementalsFailed;
+trigger gt_ObjectiveKillSlaynElementalsDeactivate;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1196,46 +1198,6 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 void gt_ArchInit_Init () {
     gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
     TriggerAddEventMapInit(gt_ArchInit);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: SouthMothership
-//--------------------------------------------------------------------------------------------------
-bool gt_SouthMothership_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_SouthMothership_Init () {
-    gt_SouthMothership = TriggerCreate("gt_SouthMothership_Func");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: NorthMothership
-//--------------------------------------------------------------------------------------------------
-bool gt_NorthMothership_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_NorthMothership_Init () {
-    gt_NorthMothership = TriggerCreate("gt_NorthMothership_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2518,32 +2480,35 @@ bool gt_RevealBonusObjectiveQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerEnable(gt_PlayerLeavesBonusObjectiveReveal, false);
     TriggerEnable(gt_BonusObjectiveTimedReveal, false);
-    TriggerEnable(gt_SlaynElemental01KilledQ, true);
-    TriggerEnable(gt_SlaynElemental02KilledQ, true);
-    TriggerEnable(gt_SlaynElemental03KilledQ, true);
     gf_RunSlaynElementalAI(gv_slaynElemental01, RegionFromId(16), 9);
     gf_RunSlaynElementalAI(gv_slaynElemental02, RegionFromId(5), 9);
     gf_RunSlaynElementalAI(gv_slaynElemental03, RegionFromId(33), 9);
-    TriggerQueueEnter();
-    libVCMI_gf_CreateObjectivePing(false, UnitGetPosition(gv_slaynElemental01), StringExternal("Param/Value/84362495"));
-    PingSetUnit(PingLastCreated(), gv_slaynElemental01);
-    libHots_gf_StorePingForUnit(gv_slaynElemental01, 1, PingLastCreated());
-    Wait(0.25, c_timeGame);
-    libVCMI_gf_CreateObjectivePing(false, UnitGetPosition(gv_slaynElemental02), StringExternal("Param/Value/F626910D"));
-    PingSetUnit(PingLastCreated(), gv_slaynElemental02);
-    libHots_gf_StorePingForUnit(gv_slaynElemental02, 1, PingLastCreated());
-    Wait(0.25, c_timeGame);
-    libVCMI_gf_CreateObjectivePing(false, UnitGetPosition(gv_slaynElemental03), StringExternal("Param/Value/580C313D"));
-    PingSetUnit(PingLastCreated(), gv_slaynElemental03);
-    libHots_gf_StorePingForUnit(gv_slaynElemental03, 1, PingLastCreated());
-    TriggerExecute(gt_ObjectiveKillSlaynElementalsCreate, true, false);
-    Wait(2.0, c_timeGame);
-    libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
-    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Taldarim02|Line00129", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Taldarim02|Line00130", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Taldarim02|Line00131", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Game);
-    TriggerQueueExit();
+    if (((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_SLAYN_ELEMENTAL] == true) || (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTHWEST_SLAYN_ELEMENTAL] == true) || (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_SLAYN_ELEMENTAL] == true))) {
+        TriggerEnable(gt_SlaynElemental01KilledQ, true);
+        TriggerEnable(gt_SlaynElemental02KilledQ, true);
+        TriggerEnable(gt_SlaynElemental03KilledQ, true);
+        TriggerQueueEnter();
+        libVCMI_gf_CreateObjectivePing(false, UnitGetPosition(gv_slaynElemental01), StringExternal("Param/Value/84362495"));
+        PingSetUnit(PingLastCreated(), gv_slaynElemental01);
+        libHots_gf_StorePingForUnit(gv_slaynElemental01, 1, PingLastCreated());
+        Wait(0.25, c_timeGame);
+        libVCMI_gf_CreateObjectivePing(false, UnitGetPosition(gv_slaynElemental02), StringExternal("Param/Value/F626910D"));
+        PingSetUnit(PingLastCreated(), gv_slaynElemental02);
+        libHots_gf_StorePingForUnit(gv_slaynElemental02, 1, PingLastCreated());
+        Wait(0.25, c_timeGame);
+        libVCMI_gf_CreateObjectivePing(false, UnitGetPosition(gv_slaynElemental03), StringExternal("Param/Value/580C313D"));
+        PingSetUnit(PingLastCreated(), gv_slaynElemental03);
+        libHots_gf_StorePingForUnit(gv_slaynElemental03, 1, PingLastCreated());
+        TriggerExecute(gt_ObjectiveKillSlaynElementalsCreate, true, false);
+        Wait(2.0, c_timeGame);
+        libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Taldarim02|Line00129", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Taldarim02|Line00130", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Taldarim02|Line00131", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Game);
+        TriggerQueueExit();
+    }
+
     return true;
 }
 
@@ -2650,7 +2615,7 @@ bool gt_SlaynElemental01KilledQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_SLAYN_ELEMENTAL);
     gv_objectiveElementalsKilledCount += 1;
     TriggerExecute(gt_ObjectiveKillSlaynElementalsUpdate, true, false);
     PingDestroy(libHots_gf_PingStoredForUnit(gv_slaynElemental01, 1));
@@ -2734,7 +2699,7 @@ bool gt_SlaynElemental02KilledQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_SLAYN_ELEMENTAL);
     gv_objectiveElementalsKilledCount += 1;
     TriggerExecute(gt_ObjectiveKillSlaynElementalsUpdate, true, false);
     PingDestroy(libHots_gf_PingStoredForUnit(gv_slaynElemental02, 1));
@@ -2818,7 +2783,7 @@ bool gt_SlaynElemental03KilledQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_SLAYN_ELEMENTAL);
     gv_objectiveElementalsKilledCount += 1;
     TriggerExecute(gt_ObjectiveKillSlaynElementalsUpdate, true, false);
     PingDestroy(libHots_gf_PingStoredForUnit(gv_slaynElemental03, 1));
@@ -3861,7 +3826,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TransmissionClearAll();
     Wait(0.0625, c_timeGame);
     TriggerQueueClear(c_triggerQueueRemove);
@@ -4324,8 +4289,11 @@ bool gt_ObjectiveKillMalashCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PTaldarim02Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PTaldarim02Primary01", "", 0);
+    gv_objectiveKillMalash = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveKillMalash, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillMalash, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillMalash, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillMalash, true);
     return true;
 }
 
@@ -4356,7 +4324,7 @@ bool gt_ObjectiveKillMalashComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillMalashCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillMalash);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4388,7 +4356,7 @@ bool gt_ObjectiveKillMalashFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillMalashCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillMalash);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4417,8 +4385,10 @@ bool gt_ObjectiveAlarakMustSurviveCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PTaldarim02Primary02");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PTaldarim02Primary02", "", 0);
+    gv_objectiveAlarakMustSurvive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveAlarakMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveAlarakMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveAlarakMustSurvive, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4450,7 +4420,7 @@ bool gt_ObjectiveAlarakMustSurviveComplete_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveAlarakMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveAlarakMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4482,7 +4452,7 @@ bool gt_ObjectiveAlarakMustSurviveFailed_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveAlarakMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveAlarakMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4496,7 +4466,13 @@ void gt_ObjectiveAlarakMustSurviveFailed_Init () {
 // Trigger: Objective Kill Slayn Elementals Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveKillSlaynElementalsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4514,8 +4490,14 @@ bool gt_ObjectiveKillSlaynElementalsCreate_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PTaldarim02Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PTaldarim02Bonus01", "", gv_objectiveElementalsKilledCount);
+    gv_objectiveKillSlaynElementals = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveKillSlaynElementals, libVoiC_gf_MissionObjectiveName("PTaldarim02Bonus01"));
+    ObjectiveShow(gv_objectiveKillSlaynElementals, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveKillSlaynElementals, lv_category, "", gv_objectiveElementalsKilledCount, libVoiC_gf_MissionObjectiveItemCount("PTaldarim02Bonus01"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillSlaynElementals, gv_LOCATION_ID_NORTH_SLAYN_ELEMENTAL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillSlaynElementals, gv_LOCATION_ID_SOUTHWEST_SLAYN_ELEMENTAL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillSlaynElementals, gv_LOCATION_ID_EAST_SLAYN_ELEMENTAL);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillSlaynElementals, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4544,7 +4526,7 @@ bool gt_ObjectiveKillSlaynElementalsComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKillSlaynElementalsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillSlaynElementals);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4568,7 +4550,7 @@ bool gt_ObjectiveKillSlaynElementalsUpdate_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillSlaynElementalsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_objectiveElementalsKilledCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveKillSlaynElementals, gv_objectiveElementalsKilledCount);
     return true;
 }
 
@@ -4599,7 +4581,7 @@ bool gt_ObjectiveKillSlaynElementalsFailed_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillSlaynElementalsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillSlaynElementals);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4607,6 +4589,34 @@ bool gt_ObjectiveKillSlaynElementalsFailed_Func (bool testConds, bool runActions
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveKillSlaynElementalsFailed_Init () {
     gt_ObjectiveKillSlaynElementalsFailed = TriggerCreate("gt_ObjectiveKillSlaynElementalsFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Slayn Elementals Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillSlaynElementalsDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_SLAYN_ELEMENTAL] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTHWEST_SLAYN_ELEMENTAL] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_SLAYN_ELEMENTAL] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveKillSlaynElementalsCreate, false);
+    TriggerEnable(gt_ObjectiveKillSlaynElementalsUpdate, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillSlaynElementalsDeactivate_Init () {
+    gt_ObjectiveKillSlaynElementalsDeactivate = TriggerCreate("gt_ObjectiveKillSlaynElementalsDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveKillSlaynElementalsDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5514,8 +5524,6 @@ void InitTriggers () {
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
     gt_ArchInit_Init();
-    gt_SouthMothership_Init();
-    gt_NorthMothership_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
@@ -5592,6 +5600,7 @@ void InitTriggers () {
     gt_ObjectiveKillSlaynElementalsComplete_Init();
     gt_ObjectiveKillSlaynElementalsUpdate_Init();
     gt_ObjectiveKillSlaynElementalsFailed_Init();
+    gt_ObjectiveKillSlaynElementalsDeactivate_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
