@@ -40,6 +40,10 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_FABRICATION_MATRIX = 1;
+const int gv_LOCATION_ID_ASSAULT_CLUSTER = 2;
+const int gv_LOCATION_ID_HULL_BREACH = 3;
+const int gv_LOCATION_ID_CORE_CRITICAL = 4;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_ZERG_GREEN = 2;
 const int gv_pLAYER_03_ZERG_RED = 3;
@@ -83,7 +87,7 @@ int gv_armadaUpgradeCounter;
 int gv_alliedNexusesLost;
 int gv_armadaUnitsHitBySOA;
 bool gv_achievement_UsedSpearofAdunAbilities;
-int gv_objectiveDestroyZergBase2;
+int gv_objectiveKeystoneMustSurvive;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -131,7 +135,7 @@ void InitGlobals () {
         gv_disableDialog[init_i] = c_invalidDialogId;
     }
     gv_armadaUnitGroup = UnitGroupEmpty();
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
+    gv_objectiveKeystoneMustSurvive = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -2688,7 +2692,7 @@ bool gt_DisableSpearPower1_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FABRICATION_MATRIX);
     gf_DisableSpearPowerQ(1);
     return true;
 }
@@ -2724,7 +2728,7 @@ bool gt_DisableSpearPower2_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ASSAULT_CLUSTER);
     gf_DisableSpearPowerQ(2);
     return true;
 }
@@ -2760,7 +2764,7 @@ bool gt_DisableSpearPower3_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_HULL_BREACH);
     gf_DisableSpearPowerQ(3);
     return true;
 }
@@ -2796,7 +2800,7 @@ bool gt_DisableSpearPower4_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CORE_CRITICAL);
     gf_DisableSpearPowerQ(4);
     return true;
 }
@@ -6040,7 +6044,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TransmissionClearAll();
     libNtve_gf_ChangeUnitDamage(gv_keystone, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     libNtve_gf_ChangeUnitDamage(gv_nerazimNexus, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
@@ -6398,8 +6402,15 @@ bool gt_ObjectiveKeystoneMustSurviveCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PAiur06Primary01");
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PAiur06Primary01", "", 0);
+    gv_objectiveKeystoneMustSurvive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveKeystoneMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKeystoneMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeystoneMustSurvive, gv_LOCATION_ID_FABRICATION_MATRIX);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeystoneMustSurvive, gv_LOCATION_ID_ASSAULT_CLUSTER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeystoneMustSurvive, gv_LOCATION_ID_HULL_BREACH);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeystoneMustSurvive, gv_LOCATION_ID_CORE_CRITICAL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKeystoneMustSurvive, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKeystoneMustSurvive, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6431,7 +6442,7 @@ bool gt_ObjectiveKeystoneMustSurviveComplete_Func (bool testConds, bool runActio
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKeystoneMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKeystoneMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6463,7 +6474,7 @@ bool gt_ObjectiveKeystoneMustSurviveFailed_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKeystoneMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKeystoneMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     TriggerExecute(gt_DefeatKeystoneDestroyed, true, false);
     return true;
