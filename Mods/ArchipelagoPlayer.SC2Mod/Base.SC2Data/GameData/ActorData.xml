@@ -1008,6 +1008,242 @@
         <SoundArray index="Attack" value="Reaper_Attack"/>
         <SoundArray index="Pissed" value="Reaper_Pissed"/>
     </CActorMissile>
+    <CActorMissile id="AP_CreateCocoonMissileWeapon" parent="GenericAttackMissileNoEvents" unitName="AP_CreateCocoonMissileWeapon">
+        <On Terms="UnitBirth.AP_CreateCocoonMissileWeapon" Send="Create"/>
+        <On Terms="UnitBirth" Send="AnimBracketStart Lifetime {} Walk"/>
+        <On Terms="UnitDeath" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+    </CActorMissile>
+    <CActorUnit id="AP_SIInfestedBunker" parent="TerranBuilding" unitName="AP_SIInfestedBunker">
+        <Aliases value="_UnitHuge"/>
+        <Aliases value="_CreepEngulfable"/>
+        <Macros value="UnloadDropAnim"/>
+        <Macros value="BunkerTransportAnim"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <Macros value="PhysicsDeathsSwarmGround"/>
+        <Macros value="PhysicsDeathsVoidGround"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_SIInfestedBunker" Send="Create"/>
+        <On Terms="AbilMorph.SIInfestedBunkerUproot; ValidateUnit HasCargo" Send="AnimPlay Birth Stand,Work,End 0 -1.000000 -1.000000 0.500000 AsDuration 0.000000 60"/>
+        <On Terms="AbilMorph.SIInfestedBunkerUproot" Send="TimerSet 0.500000 DelayDestroy"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
+        <On Terms="ActorCreation; CreepIntersects" Send="CreepEngulfmentStartTransition"/>
+        <On Terms="AbilMorph.*.Finish; !ValidateUnit HasCargo" Send="AnimGroupRemove Work"/>
+        <On Terms="AbilMorph.*.Finish; ValidateUnit HasCargo" Send="AnimGroupApply Work Work,Start Work,End"/>
+        <On Terms="AbilMorph.*.Finish; ValidateUnit HasCargo" Send="AnimPlay Start Start 0 0.000000"/>
+        <Model value="AP_InfestedBunker_Coop_Structure"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <CreepHeightClass value="Small"/>
+        <BuildModel value="AP_InfestedBunker_Coop_Structure"/>
+        <DeathArray index="Normal" ModelLink="AP_SIInfestedBunkerDeath" SoundLink="AP_SIBuilding_ExplosionMedium"/>
+        <PlacementModel value="AP_InfestedBunker_COOP_Placement"/>
+        <PlacementSound value="AP_SITerran_BuildingPlacement"/>
+        <PortraitActor value="ZergAdjutantPortrait"/>
+        <PortraitModel value="ZergAdjutantPortrait"/>
+        <TerrainSquibs>
+            <MovementDistance value="0.150000,0.150000"/>
+            <IdlePeriod value="0.100000,0.250000"/>
+            <RangeUp value="1.000000"/>
+            <RangeDown value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleLarge"/>
+        </TerrainSquibs>
+        <WalkAnimMoveSpeed value="2"/>
+        <BarOffset value="80"/>
+        <BarWidth value="85"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-zerg-stukov-infestedbunker.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-building-stukov-infestedbunkerform.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-buildingarmor.dds"/>
+        <NameOffset value="70"/>
+        <SoundArray index="Ready" value="AP_SIBunker_Ready"/>
+        <SoundArray index="What" value="AP_SIBunker_What"/>
+        <SoundArray index="Construction" value="AP_SITerran_ConstructionWhat"/>
+        <UnitFlags index="ShowBlobShadow" value="0"/>
+        <UnitIcon value="Assets\Textures\btn-building-stukov-infestedbunkerform.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-zerg-stukov-infestedbunker.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorModel default="1" id="AP_SITerranBuildingBuild" parent="TerranModelConstruction">
+        <CreepHeightClass value="Default"/>
+        <Aliases value="_TerranBuildModel"/>
+        <HostSiteOps Ops="SOpShadow TerranBuildingFacing"/>
+        <On Terms="ActorCreation" Send="Create AP_SITerranConstructionAttached"/>
+    </CActorModel>
+    <CActorModel id="AP_SIInfestedBunkerBuild" parent="AP_SITerranBuildingBuild">
+        <Aliases value="_CreepEngulfable"/>
+        <Model value="BunkerBuild"/>
+        <CreepHeightClass value="Tiny"/>
+    </CActorModel>
+    <CActorUnit id="AP_SIInfestedBunkerBunkerModeMorph" parent="GenericUnitBaseMorphTransition" unitName="TankModeMorphModel">
+        <Aliases value="_CreepEngulfable"/>
+        <On Terms="AbilMorph.*.Start; MorphTo AP_SIInfestedBunker" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphTo AP_SIInfestedBunker" Send="$Birth"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_SIInfestedBunkerUprooted" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create BuildingTerrainFlatten"/>
+        <Model value="AP_InfestedBunker_Coop_Morph"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <CreepHeightClass value="Tiny"/>
+        <DeathArray index="Normal" ModelLink="AP_SIInfestedBunkerBunkerModeMorphDeath" SoundLink="AP_StukovInfestedBunker_Explode"/>
+        <TerrainSquibs>
+            <MovementDistance value="0.150000,0.150000"/>
+            <IdlePeriod value="0.100000,0.250000"/>
+            <RangeUp value="1.000000"/>
+            <RangeDown value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleLarge"/>
+        </TerrainSquibs>
+        <WalkAnimMoveSpeed value="1"/>
+        <BarOffset value="80"/>
+        <BarWidth value="85"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-zerg-stukov-infestedbunker.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-building-stukov-infestedbunkerform.dds"/>
+        <HighlightTooltip value="Unit/Name/AP_SIInfestedBunker"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-buildingarmor.dds"/>
+        <NameOffset value="70"/>
+        <SoundArray index="What" value="AP_SIBunker_What"/>
+        <UnitFlags index="ShowBlobShadow" value="0"/>
+        <UnitIcon value="Assets\Textures\btn-building-stukov-infestedbunkerform.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-zerg-stukov-infestedbunker.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorUnit id="AP_SIInfestedBunkerUprootedMorphModel" parent="GenericUnitBaseMorphTransition" unitName="SiegeModeMorphModel">
+        <On Terms="AbilMorph.*.Start; MorphTo AP_SIInfestedBunkerUprooted" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphTo AP_SIInfestedBunkerUprooted" Send="$Birth"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_SIInfestedBunker" Send="Destroy"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create SiegeTank_Land"/>
+        <On Terms="ActorCreation; CreepEngulfs" Send="CreepEngulfmentStopTransition"/>
+        <On Terms="ActorCreation" Target="_BuildingTerrainFlatten" Send="Destroy"/>
+        <Model value="AP_InfestedBunker_Coop_Birth"/>
+        <CreepHeightClass value="Small"/>
+        <CreepRateGrow value="Grow"/>
+        <CreepRateShrink value="Shrink"/>
+        <DeathArray index="Normal" ModelLink="AP_SIInfestedBunkerUprootedMorphModelDeath" SoundLink="AP_StukovInfestedBunker_Explode"/>
+        <WalkAnimMoveSpeed value="1"/>
+        <BarOffset value="80"/>
+        <BarWidth value="85"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-infestedbunkermorph.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-building-stukov-infestedbunker.dds"/>
+        <HighlightTooltip value="Unit/Name/AP_SIInfestedBunker"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-buildingarmor.dds"/>
+        <NameOffset value="70"/>
+        <SoundArray index="What" value="AP_SIBunker_What"/>
+        <UnitFlags index="ShowBlobShadow" value="0"/>
+        <UnitIcon value="Assets\Textures\btn-building-stukov-infestedbunker.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-infestedbunkermorph.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorAction id="AP_SIInfestedMarineAttack" parent="GenericAttack" effectAttack="AP_SIInfestedMarine">
+        <LaunchAssets Model="AP_SIInfestedMarineAttackLaunch" Sound="AP_InfestedTerran_AttackLaunch"/>
+        <ContainerAssets Model="AP_SIInfestedMarineBunkerAttackLaunch"/>
+        <ImpactMap index="None" Model="AP_SIInfestedMarineAttackImpact" Sound="AP_InfestedMarine_AttackImpact"/>
+        <ShieldFlashType value="Header"/>
+    </CActorAction>
+    <CActorSimple id="AP_SIInfestedMarineBunkerAttackLaunch">
+        <On Terms="Effect.AP_SIInfestedBunkerUprootedRangeDamageSwitch.Start; At Caster; ValidateUnit AP_SIInfestedBunkerCargoHasCargoGTE1" Send="Create"/>
+        <On Terms="ActorCreation; ValidateUnit AP_SIInfestedBunkerCargoHasCargoGTE1" Send="Create AP_SIInfestedMarineBunkerAttackLaunchEffect"/>
+        <On Terms="ActorCreation; ValidateUnit AP_SIInfestedBunkerCargoHasCargoGTE2" Send="TimerSet 0.100000 DelayFire1"/>
+        <On Terms="TimerExpired; TimerName DelayFire1" Send="Create AP_SIInfestedMarineBunkerAttackLaunchEffect"/>
+        <On Terms="ActorCreation; ValidateUnit AP_SIInfestedBunkerCargoHasCargoGTE3" Send="TimerSet 0.200000 DelayFire2"/>
+        <On Terms="TimerExpired; TimerName DelayFire2" Send="Create AP_SIInfestedMarineBunkerAttackLaunchEffect"/>
+        <On Terms="ActorCreation; ValidateUnit AP_SIInfestedBunkerCargoHasCargoGTE4" Send="TimerSet 0.300000 DelayFire3"/>
+        <On Terms="TimerExpired; TimerName DelayFire3" Send="Create AP_SIInfestedMarineBunkerAttackLaunchEffect"/>
+        <On Terms="ActorCreation; ValidateUnit AP_SIInfestedBunkerCargoHasCargoGTE5" Send="TimerSet 0.400000 DelayFire4"/>
+        <On Terms="TimerExpired; TimerName DelayFire4" Send="Create AP_SIInfestedMarineBunkerAttackLaunchEffect"/>
+        <On Terms="ActorCreation; ValidateUnit AP_SIInfestedBunkerCargoHasCargoGTE6" Send="TimerSet 0.500000 DelayFire5"/>
+        <On Terms="TimerExpired; TimerName DelayFire5" Send="Create AP_SIInfestedMarineBunkerAttackLaunchEffect"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.750000 DelayDestroy"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
+    </CActorSimple>
+    <CActorModel id="AP_SIInfestedTrooperMarinePlaguedMunitionsTargetModel" parent="ModelAddition">
+        <Inherits index="CreepEngulfment" value="0"/>
+        <On Terms="Behavior.AP_SIInfestedTrooperMarinePlaguedMunitions.On" Send="Create"/>
+        <On Terms="ActorCreation; ScopeContains _UnitSmall" Send="Destroy"/>
+        <On Terms="ActorCreation; ScopeContains _UnitMedium" Send="Destroy"/>
+        <On Terms="Behavior.AP_SIInfestedTrooperMarinePlaguedMunitions.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="UnitDeath" Send="Destroy"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="0.500000"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_SIInfestedTrooperMarinePlaguedMunitionsTargetModelMedium" parent="ModelAddition">
+        <Inherits index="CreepEngulfment" value="0"/>
+        <On Terms="Behavior.AP_SIInfestedTrooperMarinePlaguedMunitions.On; ScopeContains _UnitMedium" Send="Create"/>
+        <On Terms="Behavior.AP_SIInfestedTrooperMarinePlaguedMunitions.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="UnitDeath" Send="Destroy"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="0.750000"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_SIInfestedTrooperMarinePlaguedMunitionsTargetModelSmall" parent="ModelAddition">
+        <Inherits index="CreepEngulfment" value="0"/>
+        <On Terms="Behavior.AP_SIInfestedTrooperMarinePlaguedMunitions.On; ScopeContains _UnitSmall" Send="Create"/>
+        <On Terms="Behavior.AP_SIInfestedTrooperMarinePlaguedMunitions.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="UnitDeath" Send="Destroy"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="1.000000"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorSound id="AP_SISpawnEggSound" parent="SoundOneShot">
+        <EditorCategories value=""/>
+        <On Terms="UnitBirth.AP_CreateCocoonMissileWeapon" Send="Create"/>
+        <Sound value="AP_ZergInfested_SpawnEggLaunch"/>
+        <Layers Sound="AP_InfestedCocoon_GroundImpact">
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorProgress id="AP_SITerranConstructionAttached">
+        <Supporter Subject="_TerranBuildModel"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Start; Level 0" Send="SetTransferOverrideAnim Birth,A,Stand"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Stop; Level 0" Send="SetTransferOverrideAnim"/>
+        <StageArray AnimProps="Birth,A,Start" BlendTime="0.000000"/>
+        <StageArray AnimProps="Birth,A,Stand"/>
+        <StageArray AnimProps="Birth,B,Start"/>
+        <StageArray AnimProps="Birth,B,Stand"/>
+        <StageArray AnimProps="Birth,C,Start"/>
+        <StageArray AnimProps="Birth,C,Stand"/>
+    </CActorProgress>
+    <CActorSound id="AP_SITerranConstructionSoundLevel0" parent="ProgressSound">
+        <Sound value="AP_SITerran_ConstructionStart"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Start; Level 0" Send="Create"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Stop; Level 0" Send="Destroy"/>
+    </CActorSound>
+    <CActorSound id="AP_SITerranConstructionSoundLevel2" parent="ProgressSound">
+        <Sound value="AP_SITerran_ConstructionStage1"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Start; Level 2" Send="Create"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Stop; Level 2" Send="Destroy"/>
+    </CActorSound>
+    <CActorSound id="AP_SITerranConstructionSoundLevel4" parent="ProgressSound">
+        <Sound value="AP_SITerran_ConstructionStage2"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Start; Level 4" Send="Create"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Stop; Level 4" Send="Destroy"/>
+    </CActorSound>
+    <CActorSound id="AP_SITerranConstructionSoundLevel6" parent="ProgressSound">
+        <Sound value="AP_SITerran_ConstructionEnd"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Start; Level 6" Send="Create"/>
+        <On Terms="ProgressLevel.AP_SITerranConstructionAttached.Stop; Level 6" Send="Destroy"/>
+    </CActorSound>
+    <CActorModel id="AP_SIInfestedMarineBunkerAttackLaunchEffect" parent="ModelAnimationStyleOneShot">
+        <HostSiteOps Ops="AP_SOpAttachRandomWeaponClosest"/>
+        <Model value="AP_SIInfestedMarineBunkerAttackLaunch"/>
+        <Host Subject="_Selectable"/>
+    </CActorModel>
+    <CActorSiteOpAttach id="AP_SOpAttachRandomWeaponClosest">
+        <AttachQuery Methods="AMFilterWeapon AMNodeOccupancyNoSpam AMRandom AMClosestToTarget" Fallback="Weapon"/>
+    </CActorSiteOpAttach>
     <CActorModel id="AP_250mmStrikeCannonsImpact" parent="ModelAnimationStyleOneShot">
         <On Terms="Effect.AP_250mmStrikeCannonsDamage.Start; At Target" Send="Create"/>
         <HostSiteOps Ops="SOpShadow ThorBarrageVariance"/>
@@ -20045,6 +20281,69 @@
     </CActorSound>
     <CActorSound id="AP_Warhound_Land" parent="SoundOneShot">
         <Sound value="AP_Warhound_Land"/>
+    <CActorSound id="AP_Warhound_Land" parent="SoundOneShot"/>
+    <CActorUnit id="AP_SIInfestedBunkerUprooted" parent="GenericUnitStandard" unitName="AP_SIInfestedBunkerUprooted">
+        <Aliases value="_UnitHuge"/>
+        <Macros value="UnloadDropAnim"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <Macros value="PhysicsDeathsSwarmGround"/>
+        <Macros value="PhysicsDeathsVoidGround"/>
+        <Remove Terms="Abil.attack.ReadyStart" Send="AnimGroupApply Ready"/>
+        <Remove Terms="WeaponStart.*.AttackStart" Send="AnimBracketStart Attack Attack"/>
+        <Remove Terms="WeaponStart.*.AttackStart; AnimPlaying Birth" Send="AnimClear Birth"/>
+        <Remove Terms="WeaponStop.*.AttackStop" Send="AnimBracketStop Attack"/>
+        <Remove Terms="Abil.attack.ReadyStop" Send="AnimGroupRemove Ready"/>
+        <On index="69" Terms="AbilMorph.*.Finish; MorphTo AP_SIInfestedBunkerUprooted" Send="Create"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_SIInfestedBunkerUprooted" Send="AnimSetTime ::Baseline"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_SIInfestedBunkerUprooted" Send="Destroy"/>
+        <On Terms="ActorCreation" Target="_BuildingTerrainFlatten" Send="Destroy"/>
+        <On Terms="Behavior.OnCreep.On" Send="SetWalkAnimMoveSpeed 3.5"/>
+        <On Terms="Behavior.OnCreep.Off" Send="SetWalkAnimMoveSpeed 0.75"/>
+        <On Terms="Behavior.OnCreep.On" Send="AnimGroupApply Fast {} {} 0 1.000000"/>
+        <On Terms="Behavior.OnCreep.Off" Send="AnimGroupRemove Fast 0 1.000000"/>
+        <On Terms="ActorCreation; ValidateUnit OnCreep" Send="AnimGroupApply Fast"/>
+        <On Terms="ActorCreation; !ValidateUnit OnCreep" Send="AnimGroupRemove Fast"/>
+        <On Terms="ActorCreation; ValidateUnit OnCreep" Send="SetWalkAnimMoveSpeed 3.5"/>
+        <On Terms="Effect.AP_SIInfestedBunkerUprootedMeleeDamage.Start; At Caster" Send="AnimPlay Attack Attack"/>
+        <On Terms="UnitMovementUpdate.*.Walk" Send="AnimClear Attack"/>
+        <On Terms="Effect.AP_SIInfestedBunkerUprootedGroundFarForcePush.Start; At Caster" Send="TimerSet 0.125000 WalkDelay"/>
+        <On Terms="Effect.AP_SIInfestedBunkerUprootedGroundFarForcePush.Start; At Caster; !AnimPlaying FakeWalk" Send="AnimPlay FakeWalk Walk 0 -1.000000 -1.000000 -1.000000 AsAutomatic 0.000000 60"/>
+        <On Terms="Effect.AP_SIInfestedBunkerUprootedRangedFarForcePush.Start; At Caster" Send="TimerSet 0.125000 WalkDelay"/>
+        <On Terms="Effect.AP_SIInfestedBunkerUprootedRangedFarForcePush.Start; At Caster; !AnimPlaying FakeWalk" Send="AnimPlay FakeWalk Walk 0 -1.000000 -1.000000 -1.000000 AsAutomatic 0.000000 60"/>
+        <On Terms="TimerExpired; TimerName WalkDelay" Send="AnimClear FakeWalk"/>
+        <On Terms="Effect.AP_SIInfestedBunkerUprootedMeleeDamage.Start; At Caster" Send="AnimClear FakeWalk"/>
+        <On Terms="UnitMovementUpdate.*.Walk" Send="AnimClear FakeWalk"/>
+        <Model value="AP_SIInfestedBunker"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <CreepHeightClass value="Small"/>
+        <DeathArray index="Normal" ModelLink="AP_SIInfestedBunkerUprootedDeath" SoundLink="AP_Zerg_ExplosionMedium"/>
+        <PortraitActor value="ZergAdjutantPortrait"/>
+        <PortraitModel value="ZergAdjutantPortrait"/>
+        <TerrainSquibs>
+            <MovementDistance value="0.150000,0.150000"/>
+            <IdlePeriod value="0.100000,0.250000"/>
+            <RangeUp value="1.000000"/>
+            <RangeDown value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleLarge"/>
+        </TerrainSquibs>
+        <WalkAnimMoveSpeed value="0.75"/>
+        <BarOffset value="80"/>
+        <BarWidth value="85"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-infestedbunkermorph.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-building-stukov-infestedbunker.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-buildingarmor.dds"/>
+        <NameOffset value="70"/>
+        <SoundArray index="What" value="AP_InfestedBunker_What"/>
+        <SoundArray index="Yes" value="AP_InfestedBunker_What"/>
+        <UnitFlags index="ShowBlobShadow" value="0"/>
+        <UnitIcon value="Assets\Textures\btn-building-stukov-infestedbunker.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-infestedbunkermorph.dds"/>
+        </Wireframe>
+    </CActorUnit>
     </CActorSound>
     <CActorSound id="Zerg_BuildingMorphStart">
         <!-- Override -->
@@ -20771,11 +21070,11 @@
         <On Terms="Abil.AP_WarpGateTrainRedirect.TargetStart" Send="Create"/>
         <On Terms="Behavior.AP_UnderConstructionOrDeadTracker.On" Send="Create"/>
         <On Terms="Behavior.AP_UnderConstructionOrDeadTracker.Off" Send="Destroy"/>
+        <On Terms="ActorCreation; !ValidateUnit AP_UsesWarpInGlitch" Target="_Unit" Send="$Birth 0 0.000000 0.000000 5.000000 AsDuration"/>
+        <On Terms="ActorCreation; ValidateUnit AP_UsesWarpInGlitch" Target="_Unit" Send="$Birth 0 0.000000 0.000000 16.000000 AsDuration"/>
         <!-- Super Power is a stuff from multiplayer that breaks campaigns -->
         <Remove Terms="ActorCreation; !ValidateUnit SuperPower" Target="_Unit" Send="$Birth 0 0.000000 0.000000 16.000000 AsDuration"/>
         <Remove Terms="ActorCreation; ValidateUnit SuperPower" Target="_Unit" Send="$Birth 0 0.000000 0.000000 5.000000 AsDuration"/>
-        <On Terms="ActorCreation; !ValidateUnit AP_UsesWarpInGlitch" Target="_Unit" Send="$Birth 0 0.000000 0.000000 5.000000 AsDuration"/>
-        <On Terms="ActorCreation; ValidateUnit AP_UsesWarpInGlitch" Target="_Unit" Send="$Birth 0 0.000000 0.000000 16.000000 AsDuration"/>
     </CActorProgress>
     <CActorUnit id="AP_RoboticsBay" parent="ProtossBuildingEx" unitName="AP_RoboticsBay">
         <Aliases value="_UnitHuge"/>
@@ -22718,7 +23017,7 @@
         <Inherits index="Visibility" value="1"/>
         <On Terms="Behavior.AP_SquadSightPersistentBehavior.On" Send="Create"/>
         <On Terms="Behavior.AP_SquadSightPersistentBehavior.Off" Send="AnimBracketStop BSD"/>
-        <On Terms="ActorCreation; ValidateUnit AP_HaveAlarakHavocAbilityRange" Send="SetScale 1.75"/>
+        <On Terms="ActorCreation; ValidateUnit AP_HaveAlarakHavocAbilityRange" Send="SetScale 1.750000"/>
         <Host Subject="_Unit"/>
         <HostSiteOps Ops="SOpBasicScopeFollow" HoldRotation="1"/>
         <ModelFlags index="AllowHitTest" value="0"/>
@@ -26328,8 +26627,8 @@
         <On Terms="ActorCreation" Send="SetVisibility"/>
         <On Terms="AbilTransport.AP_MedivacTransport.TransportLoad; AbilTransport AP_SiegeBreakerSiegedTransportable" Send="SetVisibility 1"/>
         <On Terms="AbilTransport.AP_MedivacTransport.TransportLoad; AbilTransport AP_InfestedSiegeTankSiegedTransportable" Send="SetVisibility 1"/>
-        <On Terms="AbilTransport.AP_MedivacTransport.TransportUnload;AbilTransport AP_SiegeBreakerSiegedTransportable" Send="SetVisibility"/>
-        <On Terms="AbilTransport.AP_MedivacTransport.TransportUnload;AbilTransport AP_InfestedSiegeTankSiegedTransportable" Send="SetVisibility"/>
+        <On Terms="AbilTransport.AP_MedivacTransport.TransportUnload; AbilTransport AP_SiegeBreakerSiegedTransportable" Send="SetVisibility"/>
+        <On Terms="AbilTransport.AP_MedivacTransport.TransportUnload; AbilTransport AP_InfestedSiegeTankSiegedTransportable" Send="SetVisibility"/>
         <On Terms="Signal.*.Dead" Send="Create ThorTransitDeath"/>
         <On Terms="Signal.*.Dead" Send="Destroy"/>
         <On Terms="Upgrade.AP_HoverSiegeTank.Add" Send="ModelSwap AP_Merc_SiegeTank_BlackOps"/>
@@ -26344,7 +26643,7 @@
         <Inherits index="WarpGroup" value="1"/>
     </CActorModel>
     <CActorSiteOpLocalOffset id="AP_SiegeBreakerLoadSOpOffset">
-        <LocalOffset value="0.000000,0.000000,-1.6"/>
+        <LocalOffset value="0.000000,0.000000,-1.600000"/>
     </CActorSiteOpLocalOffset>
     <CActorAction id="AP_SiegeBreakerSiegedAttack" parent="GenericAttack" effectAttack="AP_ArcliteShockCannonBlast">
         <On Terms="Effect.AP_ArcliteShockCannonFriendlyDamage.Start; At Caster" Send="Create"/>
@@ -28466,16 +28765,12 @@
         <On Terms="ActorCreation" Send="Create AP_DevastatorTurretProtectRange"/>
         <On Terms="ActorDestruction" Target="AP_DevastatorTurretProtectRange" Send="Destroy"/>
     </CActorModel>
-    <CActorModel id="AP_DevastatorTurretBuild" parent="TerranBuildingBuildSmall">
-        <Model value="AP_DevastatorTurretBuild"/>
-    </CActorModel>
+    <CActorModel id="AP_DevastatorTurretBuild" parent="TerranBuildingBuildSmall"/>
     <CActorAction id="AP_DevastatorTurretAttack" parent="GenericAttack" effectImpact="AP_DevastatorTurretDamage" effectLaunch="AP_DevastatorTurretLM">
         <LaunchAssets Sound="AP_DevastatorTurret_AttackLaunch"/>
         <ImpactMap index="None" Sound="AP_DevastatorTurret_AttackImpact"/>
     </CActorAction>
-    <CActorMissile id="AP_DevastatorTurretAttackMissile" parent="GenericAttackMissile" unitName="AP_DevastatorTurretMissile">
-        <Model value="AP_DevastatorTurretMissile"/>
-    </CActorMissile>
+    <CActorMissile id="AP_DevastatorTurretAttackMissile" parent="GenericAttackMissile" unitName="AP_DevastatorTurretMissile"/>
     <CActorRange id="AP_DevastatorTurretProtectRange" parent="RangeWeapon" weapon="AP_DevastatorTurretWeapon">
         <On Terms="SelectionLocalUpdate.AP_DevastatorTurret.Start" Send="Create"/>
         <On Terms="SelectionLocalUpdate.AP_DevastatorTurret.Stop" Send="Destroy"/>
@@ -32220,7 +32515,6 @@
         <On index="66" removed="1"/>
         <On index="67" removed="1"/>
         <On index="68" removed="1"/>
-        <On index="69" removed="1"/>
     </CActorSimple>
     <CActorUnit id="AP_Morphling" parent="GenericUnitMorph" unitName="AP_Morphling">
         <ModelFlags index="OutlineEmitter" value="1"/>
@@ -32300,7 +32594,7 @@
         <On Terms="ActorCreation; ValidateUnit AP_HaveK5ImprovedOverlords" Send="SetScale 1.250000"/>
         <On Terms="Abil.AP_OverseerBuild.WorkerStart" Send="Create AP_OverlordGenerateCreepModel"/>
         <On Terms="Abil.AP_OverseerBuild.WorkerStart" Send="Create AP_OverlordGenerateCreepSound"/>
-        <On Terms="Abil.AP_OverseerBuild.WorkerStart" Send="TimerSet 1 CreepTumorAnimClear"/>
+        <On Terms="Abil.AP_OverseerBuild.WorkerStart" Send="TimerSet 1.000000 CreepTumorAnimClear"/>
         <On Terms="TimerExpired; TimerName CreepTumorAnimClear" Target="AP_OverlordGenerateCreepModel" Send="Destroy"/>
         <On Terms="TimerExpired; TimerName CreepTumorAnimClear" Target="AP_OverlordGenerateCreepSound" Send="Destroy"/>
         <Model value="Overseer"/>
@@ -32426,17 +32720,16 @@
         <Wireframe>
             <Image value="Assets\Textures\Wireframe-Zerg-OverseerEgg.dds"/>
         </Wireframe>
-        <SoundArray index="What" value="OverlordEgg_What"/>
-        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-flyercarapace-level0.dds"/>
-        <HostSiteOps Ops="SOpRotVariancerForward30"/>
-        <Aliases value="_UnitLarge"/>
-        <PlacementModel value="OverseerCocoon"/>
         <SoundArray index="Ready" value="OverlordCocoon_Ready"/>
         <SoundArray index="Help" value="OverlordCocoon_Help"/>
         <SoundArray index="What" value="OverlordCocoon_What"/>
         <SoundArray index="Yes" value="OverlordCocoon_Yes"/>
         <SoundArray index="Attack" value="OverlordCocoon_Attack"/>
         <SoundArray index="Pissed" value="OverlordCocoon_Pissed"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-flyercarapace-level0.dds"/>
+        <HostSiteOps Ops="SOpRotVariancerForward30"/>
+        <Aliases value="_UnitLarge"/>
+        <PlacementModel value="OverseerCocoon"/>
         <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
         <StatusColors index="Shields">
             <ColorArray index="0" value="255,0,128,0"/>
@@ -32499,8 +32792,8 @@
         <PlacementModel value="AP_VoidRayPlacement"/>
         <DeathArray index="Normal" ModelLink="AP_VoidRayAiurDeath" SoundLink="VoidRay_Explode"/>
         <AnimBlendTime value="0.500000"/>
-        <On Terms="UnitBirth.AP_VoidRayAiur" Send="SetTintColor {192,192,64 5.000000 Creation}"/>
-        <On Terms="UnitRevive.AP_VoidRayAiur" Send="SetTintColor {192,192,64 5.000000 Creation}"/>
+        <On Terms="UnitBirth.AP_VoidRayAiur" Send="SetTintColor {192,192,64 5.000000}"/>
+        <On Terms="UnitRevive.AP_VoidRayAiur" Send="SetTintColor {192,192,64 5.000000}"/>
         <On Terms="WeaponStart.*.AttackStart" Send="AnimBracketStart Attack Attack Stand,Channel Attack,End"/>
         <On Terms="WeaponStart.*.AttackStart" Send="StatusIncrement WeaponTracker"/>
         <On Terms="WeaponStop.*.AttackStop; ValidateUnit AP_NotQuadAndNotDoubleDamage" Send="AnimBracketStop Attack"/>
@@ -32509,10 +32802,9 @@
         <On Terms="Behavior.AP_VoidRayPhase3.Off; !HasStatus WeaponTracker" Send="AnimBracketStop Attack"/>
         <On Terms="Behavior.Hallucination.On" Send="Create HallucinationBirthSoundLarge"/>
         <On Terms="UnitDeathCustomize; ValidateUnit IsHallucination" Send="DeathCustomize Hallucination"/>
-        <On Terms="Behavior.PowerUserWarpable.On" Send="ClearTintColor 0 Creation"/>
-        <On Terms="Behavior.PowerUserWarpable.Off" Send="SetTintColor {192,192,64 5.000000 Creation}"/>
+        <On Terms="Behavior.PowerUserWarpable.On" Send="ClearTintColor 0.000000 Creation"/>
+        <On Terms="Behavior.PowerUserWarpable.Off" Send="SetTintColor {192,192,64 5.000000}"/>
         <DeathCustoms ModelLink="HallucinationDeath" SoundLink="Sentry_HallucinationDeathLarge" Name="Hallucination"/>
-        <Model value="AP_VoidRayAiur"/>
         <BarWidth value="100"/>
         <BarOffset value="65"/>
         <NameOffset value="60"/>
@@ -32632,6 +32924,7 @@
     <CActorUnit id="AP_VoidRayPurifier" parent="GenericUnitBase" unitName="AP_VoidRayPurifier">
         <Model value="VoidRay_Purifier_Collection"/>
         <Macros value="PhysicsDeathsVoidAir"/>
+        <Macros value="PhysicsDeathsSwarmAir"/>
         <PortraitModel value="VoidRay_Purifier_Collection_Portrait"/>
         <BuildModel value="ProtossUnitBirth"/>
         <PlacementModel value="AP_VoidRayPlacement"/>
@@ -32678,7 +32971,6 @@
         <DeathArray index="Normal" ModelLink="VoidRay_Purifier_Collection_Death" SoundLink="VoidRay_Explode"/>
         <DeathActorModel value="UnitDeathModelWithDeathMotionFlier"/>
         <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
-        <Macros value="PhysicsDeathsSwarmAir"/>
         <DeathCustoms>
             <ActorModel value="VoidRayDeathRagdoll"/>
             <ModelLink value="VoidRay_Purifier_Collection_DeathRagdoll"/>
@@ -32934,13 +33226,9 @@
         <On Terms="UnitDeath" Target="AP_PrimalIgniterMergeEgg" Send="Signal MergeStop"/>
         <On Terms="WeaponStart.AP_PrimalIgniterCone.AttackStart" Send="AnimBracketStart Attack Attack"/>
         <On Terms="WeaponStop.AP_PrimalIgniterCone.AttackStop" Send="AnimBracketStop Attack"/>
-        <!-- <On Terms="Effect.AP_PrimalIgniterAttackDamage.Start; At Caster; ValidateUnit LifeNotFullAndHaveDehakaGeneLifeLeech" Send="Create DehakaGeneLifeLeech"/> -->
-        <Model value="AP_PrimalIgniter"/>
-        <BuildModel value="AP_PrimalIgniter"/>
         <DeathArray index="Normal" ModelLink="RoachUpgrade_Primal_Collection_Death" SoundLink="Roach_Explode" VoiceLink="AP_PrimalIgniter_Death"/>
         <DeathArray index="Disintegrate" ModelLink="RoachDeathAcid" SoundLink="Uni_DeathFXAcid"/>
         <DeathArray index="Fire" ModelLink="RoachDeathFire" SoundLink="Uni_DeathFXFire"/>
-        <PlacementModel value="AP_PrimalIgniter"/>
         <PortraitModel value="Roach_Primal_Collection_Portrait"/>
         <TerrainSquibs>
             <MovementDistance value="0.150000,0.150000"/>
@@ -32959,11 +33247,6 @@
         <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
         <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
         <SoundArray index="Birth" value=""/>
-        <SoundArray index="Ready" value="AP_PrimalIgniter_Ready"/>
-        <SoundArray index="What" value="AP_PrimalIgniter_What"/>
-        <SoundArray index="Yes" value="AP_PrimalIgniter_Yes"/>
-        <SoundArray index="Attack" value="AP_PrimalIgniter_Attack"/>
-        <SoundArray index="Pissed" value="AP_PrimalIgniter_Pissed"/>
         <SoundArray index="Movement" value=""/>
         <StatusColors index="Shields">
             <ColorArray index="0" value="255,0,128,0"/>
@@ -32978,9 +33261,7 @@
         </Wireframe>
         <WireframeShieldColor value="255,0,128,0"/>
     </CActorUnit>
-    <CActorSplat id="AP_PrimalIgniterBurrowedSplat" parent="BurrowedSplat" unitName="AP_PrimalIgniter">
-        <On index="2" Terms="UnitBirth.AP_PrimalIgniterBurrowed" Send="Create"/>
-    </CActorSplat>
+    <CActorSplat id="AP_PrimalIgniterBurrowedSplat" parent="BurrowedSplat" unitName="AP_PrimalIgniter"/>
     <CActorUnit id="AP_CarrierPurifier" parent="GenericUnitStandard" unitName="AP_CarrierPurifier">
         <Aliases value="_UnitHuge"/>
         <On Terms="ActorCreation" Send="StatusSet WeaponAttacking 0"/>
