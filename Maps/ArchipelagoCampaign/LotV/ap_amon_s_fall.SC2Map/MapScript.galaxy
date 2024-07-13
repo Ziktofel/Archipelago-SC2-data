@@ -193,7 +193,7 @@ int gv_unitsDestroyedByKerrigan;
 int gv_unitsLostToTerrainDestruction;
 int gv_tripleTapCounter;
 bool gv_achievementConstructedSpire;
-int gv_objectiveDestroyZergBase;
+int gv_objective_DestroyCrystals;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicTempUnits;
 bool gv_cinematicCompleted;
@@ -265,7 +265,7 @@ void InitGlobals () {
     }
     gv_numberOfWorldCleaverBaseAreas = 9;
     gv_numberOfWorldCleaverFieldAreas = 6;
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
+    gv_objective_DestroyCrystals = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
@@ -5668,7 +5668,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     libVoiC_gf_CampaignAwardAchievement("SC2Epilogue03_1", gv_pLAYER_01_USER);
@@ -5945,8 +5945,12 @@ bool gt_ObjectiveDestroyCrystalsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("SC2Epilogue03Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "SC2Epilogue03Primary01", "", gv_crystalsDestroyed);
+    gv_objective_DestroyCrystals = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_DestroyCrystals, libVoiC_gf_MissionObjectiveName("SC2Epilogue03Primary01"));
+    ObjectiveShow(gv_objective_DestroyCrystals, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_DestroyCrystals, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_crystalsDestroyed, libVoiC_gf_MissionObjectiveItemCount("SC2Epilogue03Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyCrystals, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DestroyCrystals, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5975,7 +5979,7 @@ bool gt_ObjectiveDestroyCrystalsComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyCrystalsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_DestroyCrystals);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5996,7 +6000,7 @@ bool gt_ObjectiveDestroyCrystalsUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveDestroyCrystalsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_crystalsDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DestroyCrystals, gv_crystalsDestroyed);
     return true;
 }
 
