@@ -37,6 +37,11 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_FIRST_HALL_OF_REVELATION = 1;
+const int gv_LOCATION_ID_SECOND_HALL_OF_REVELATION = 2;
+const int gv_LOCATION_ID_FIRST_XELNAGA_DEVICE = 3;
+const int gv_LOCATION_ID_SECOND_XELNAGA_DEVICE = 4;
+const int gv_LOCATION_ID_THIRD_XELNAGA_DEVICE = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION4 = 3;
@@ -130,9 +135,9 @@ int gv_lightningDashDamage;
 int gv_loadedMedivacKillCount;
 int gv_resurgenceActivationCount;
 bool gv__10thAnniversaryAchievementEnemyWarpPrismwarpedinunits;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveDestroyZergBase2;
-int gv_objectiveRescueStalkers;
+int gv_objective_HallsOfRevelation;
+int gv_objective_Survive;
+int gv_objective_XelNagaDevices;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -172,9 +177,9 @@ void InitGlobals () {
     gv_bonusObjectivePing1 = c_invalidPingId;
     gv_bonusObjectivePing2 = c_invalidPingId;
     gv_bonusObjectivePing3 = c_invalidPingId;
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objective_HallsOfRevelation = c_invalidObjectiveId;
+    gv_objective_Survive = c_invalidObjectiveId;
+    gv_objective_XelNagaDevices = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -353,6 +358,7 @@ trigger gt_ObjectiveSurviveFailed;
 trigger gt_ObjectiveXelNagaDevicesCreate;
 trigger gt_ObjectiveXelNagaDevicesComplete;
 trigger gt_ObjectiveXelNagaDevicesUpdate;
+trigger gt_ObjectiveXelNagaDevicesRemove;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1494,7 +1500,7 @@ bool gt_RelicPickup1_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_XELNAGA_DEVICE);
     return true;
 }
 
@@ -1515,7 +1521,7 @@ bool gt_RelicPickup2_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_XELNAGA_DEVICE);
     return true;
 }
 
@@ -1536,7 +1542,7 @@ bool gt_RelicPickup3_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_XELNAGA_DEVICE);
     return true;
 }
 
@@ -3315,7 +3321,7 @@ bool gt_S1HallReached_Func (bool testConds, bool runActions) {
     }
 
     gv_hallsReached = 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_HALL_OF_REVELATION);
     UnitKill(UnitFromId(662));
     TriggerExecute(gt_ObjectiveHallsofRevelationUpdate, true, false);
     Wait(2.0, c_timeReal);
@@ -5446,7 +5452,7 @@ bool gt_S2HallBeaconReached_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     UnitKill(UnitFromId(1326));
     gv_hallsReached = 2;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_HALL_OF_REVELATION);
     TriggerExecute(gt_ObjectiveHallsofRevelationUpdate, true, false);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_MidShrine2Q, true, true);
@@ -7514,7 +7520,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNtve_gf_ChangeUnitDamage(gv_kERRIGAN, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     libNtve_gf_ChangeUnitDamage(gv_aRTANIS, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
@@ -8116,8 +8122,15 @@ bool gt_ObjectiveHallsofRevelationCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PUlnar02Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PUlnar02Primary01", "", gv_hallsReached);
+    gv_objective_HallsOfRevelation = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_HallsOfRevelation, libVoiC_gf_MissionObjectiveName("PUlnar02Primary01"));
+    ObjectiveShow(gv_objective_HallsOfRevelation, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_HallsOfRevelation, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_hallsReached, libVoiC_gf_MissionObjectiveItemCount("PUlnar02Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_HallsOfRevelation, gv_LOCATION_ID_FIRST_HALL_OF_REVELATION);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_HallsOfRevelation, gv_LOCATION_ID_SECOND_HALL_OF_REVELATION);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_HallsOfRevelation, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_HallsOfRevelation, true);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
 
@@ -8148,7 +8161,7 @@ bool gt_ObjectiveHallsofRevelationComplete_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveHallsofRevelationCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_HallsOfRevelation);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8169,7 +8182,7 @@ bool gt_ObjectiveHallsofRevelationUpdate_Func (bool testConds, bool runActions) 
     }
 
     TriggerExecute(gt_ObjectiveHallsofRevelationCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_hallsReached);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_HallsOfRevelation, gv_hallsReached);
     return true;
 }
 
@@ -8200,7 +8213,7 @@ bool gt_ObjectiveHallsofRevelationFailed_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveHallsofRevelationCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_HallsOfRevelation);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8229,8 +8242,10 @@ bool gt_ObjectiveSurviveCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PUlnar02Primary02");
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PUlnar02Primary02", "", 0);
+    gv_objective_Survive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_Survive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Survive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Survive, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8262,7 +8277,7 @@ bool gt_ObjectiveSurviveComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Survive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8294,7 +8309,7 @@ bool gt_ObjectiveSurviveFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Survive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8308,7 +8323,13 @@ void gt_ObjectiveSurviveFailed_Init () {
 // Trigger: Objective - Xel'Naga Devices - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveXelNagaDevicesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -8326,8 +8347,14 @@ bool gt_ObjectiveXelNagaDevicesCreate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PUlnar02Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PUlnar02Bonus01", "", gv_devicesCollected);
+    gv_objective_XelNagaDevices = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_XelNagaDevices, libVoiC_gf_MissionObjectiveName("PUlnar02Bonus01"));
+    ObjectiveShow(gv_objective_XelNagaDevices, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_XelNagaDevices, lv_category, "", gv_devicesCollected, libVoiC_gf_MissionObjectiveItemCount("PUlnar02Bonus01"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_XelNagaDevices, gv_LOCATION_ID_FIRST_XELNAGA_DEVICE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_XelNagaDevices, gv_LOCATION_ID_SECOND_XELNAGA_DEVICE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_XelNagaDevices, gv_LOCATION_ID_THIRD_XELNAGA_DEVICE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_XelNagaDevices, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8356,7 +8383,7 @@ bool gt_ObjectiveXelNagaDevicesComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveXelNagaDevicesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_XelNagaDevices);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -8380,13 +8407,48 @@ bool gt_ObjectiveXelNagaDevicesUpdate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveXelNagaDevicesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_devicesCollected);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_XelNagaDevices, gv_devicesCollected);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveXelNagaDevicesUpdate_Init () {
     gt_ObjectiveXelNagaDevicesUpdate = TriggerCreate("gt_ObjectiveXelNagaDevicesUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Xel'Naga Devices - Remove
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveXelNagaDevicesRemove_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_FIRST_XELNAGA_DEVICE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SECOND_XELNAGA_DEVICE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_THIRD_XELNAGA_DEVICE] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(791));
+    UnitRemove(UnitFromId(312));
+    UnitRemove(UnitFromId(239));
+    TriggerEnable(gt_ObjectiveXelNagaDevicesCreate, false);
+    TriggerEnable(gt_ObjectiveXelNagaDevicesUpdate, false);
+    TriggerEnable(gt_RelicPickupQ, false);
+    TriggerEnable(gt_S1BonusObjectiveDiscoverQ, false);
+    TriggerEnable(gt_S2BonusObjectiveDiscover, false);
+    TriggerEnable(gt_S3BonusObjectiveDiscover, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveXelNagaDevicesRemove_Init () {
+    gt_ObjectiveXelNagaDevicesRemove = TriggerCreate("gt_ObjectiveXelNagaDevicesRemove_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveXelNagaDevicesRemove, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -10371,6 +10433,7 @@ void InitTriggers () {
     gt_ObjectiveXelNagaDevicesCreate_Init();
     gt_ObjectiveXelNagaDevicesComplete_Init();
     gt_ObjectiveXelNagaDevicesUpdate_Init();
+    gt_ObjectiveXelNagaDevicesRemove_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();

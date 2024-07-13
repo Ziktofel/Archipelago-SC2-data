@@ -35,6 +35,12 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_MID_CELESTIAL_LOCK = 1;
+const int gv_LOCATION_ID_WEST_CELESTIAL_LOCK = 2;
+const int gv_LOCATION_ID_SOUTH_CELESTIAL_LOCK = 3;
+const int gv_LOCATION_ID_EAST_CELESTIAL_LOCK = 4;
+const int gv_LOCATION_ID_NORTH_CELESTIAL_LOCK = 5;
+const int gv_LOCATION_ID_TITANIC_WARP_PRISM = 6;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TALDARIM = 2;
 const int gv_pLAYER_03_MOEBIUS = 3;
@@ -102,8 +108,8 @@ timer gv_titanicWarpPrismAchievementTimer;
 int gv_locksRecapturedByEnemy;
 int gv_firstLockIndex;
 bool gv_firstLockRecaptured;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveRescueStalkers;
+int gv_objective_ActivateCelestialLocks;
+int gv_objective_DestroyTitanicWarpPrism;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicTempUnits;
@@ -149,8 +155,8 @@ void InitGlobals () {
     gv_attackWaveUnits_PARAM = UnitGroupEmpty();
     gv_recentlySentAttackWaveCounter = 1;
     gv_titanicWarpPrismAchievementTimer = TimerCreate();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objective_ActivateCelestialLocks = c_invalidObjectiveId;
+    gv_objective_DestroyTitanicWarpPrism = c_invalidObjectiveId;
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -231,6 +237,7 @@ trigger gt_ObjectiveActivateCelestialLocksComplete;
 trigger gt_ObjectiveActivateCelestialLocksUpdate;
 trigger gt_ObjectiveDestroyTitanicWarpPrismCreate;
 trigger gt_ObjectiveDestroyTitanicWarpPrismComplete;
+trigger gt_ObjectiveDestroyTitanicWarpPrismDeactivate;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -379,7 +386,7 @@ void gf_SetCelestialLockState (int lp_index, int lp_state) {
         }
 
         if ((gv_locksSent[lp_index] == false)) {
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(lp_index);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lp_index);
             gv_locksSent[lp_index] = true;
         }
 
@@ -508,7 +515,7 @@ void gf_HandleTitanicWarpPrism (point lp_prismPoint) {
 
     // Implementation
     lv_triggeringUnitPoint = lp_prismPoint;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_TITANIC_WARP_PRISM);
     TriggerEnable(gt_TitanicWapPrismmindcontrolled, false);
     TriggerEnable(gt_TitanicWarpPrismBehaviour, false);
     TriggerStop(gt_TitanicWarpPrismBehaviour);
@@ -3073,7 +3080,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveActivateCelestialLocksComplete, true, true);
@@ -3353,8 +3360,17 @@ bool gt_ObjectiveActivateCelestialLocksCreate_Func (bool testConds, bool runActi
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PUlnar01Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PUlnar01Primary01", "", gv_celestialLocksActivated);
+    gv_objective_ActivateCelestialLocks = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_ActivateCelestialLocks, libVoiC_gf_MissionObjectiveName("PUlnar01Primary01"));
+    ObjectiveShow(gv_objective_ActivateCelestialLocks, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_ActivateCelestialLocks, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_celestialLocksActivated, libVoiC_gf_MissionObjectiveItemCount("PUlnar01Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivateCelestialLocks, gv_LOCATION_ID_MID_CELESTIAL_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivateCelestialLocks, gv_LOCATION_ID_WEST_CELESTIAL_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivateCelestialLocks, gv_LOCATION_ID_SOUTH_CELESTIAL_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivateCelestialLocks, gv_LOCATION_ID_EAST_CELESTIAL_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivateCelestialLocks, gv_LOCATION_ID_NORTH_CELESTIAL_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivateCelestialLocks, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ActivateCelestialLocks, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3386,7 +3402,7 @@ bool gt_ObjectiveActivateCelestialLocksComplete_Func (bool testConds, bool runAc
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveActivateCelestialLocksCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_ActivateCelestialLocks);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3407,7 +3423,7 @@ bool gt_ObjectiveActivateCelestialLocksUpdate_Func (bool testConds, bool runActi
     }
 
     TriggerExecute(gt_ObjectiveActivateCelestialLocksCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_celestialLocksActivated);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_ActivateCelestialLocks, gv_celestialLocksActivated);
     return true;
 }
 
@@ -3420,7 +3436,13 @@ void gt_ObjectiveActivateCelestialLocksUpdate_Init () {
 // Trigger: Objective - Destroy Titanic Warp Prism - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyTitanicWarpPrismCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -3438,8 +3460,12 @@ bool gt_ObjectiveDestroyTitanicWarpPrismCreate_Func (bool testConds, bool runAct
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PUlnar01Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PUlnar01Bonus01", "", 0);
+    gv_objective_DestroyTitanicWarpPrism = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_DestroyTitanicWarpPrism, libVoiC_gf_MissionObjectiveName("PUlnar01Bonus01"));
+    ObjectiveShow(gv_objective_DestroyTitanicWarpPrism, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_DestroyTitanicWarpPrism, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyTitanicWarpPrism, gv_LOCATION_ID_TITANIC_WARP_PRISM);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DestroyTitanicWarpPrism, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3468,7 +3494,7 @@ bool gt_ObjectiveDestroyTitanicWarpPrismComplete_Func (bool testConds, bool runA
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyTitanicWarpPrismCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_DestroyTitanicWarpPrism);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3476,6 +3502,35 @@ bool gt_ObjectiveDestroyTitanicWarpPrismComplete_Func (bool testConds, bool runA
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyTitanicWarpPrismComplete_Init () {
     gt_ObjectiveDestroyTitanicWarpPrismComplete = TriggerCreate("gt_ObjectiveDestroyTitanicWarpPrismComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Destroy Titanic Warp Prism - Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyTitanicWarpPrismDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_TITANIC_WARP_PRISM] == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveDestroyTitanicWarpPrismCreate, false);
+    TriggerEnable(gt_TitanicWarpPrismQ, false);
+    TriggerEnable(gt_TitanicWarpPrismProximityTrigger, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyTitanicWarpPrismDeactivate_Init () {
+    gt_ObjectiveDestroyTitanicWarpPrismDeactivate = TriggerCreate("gt_ObjectiveDestroyTitanicWarpPrismDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDestroyTitanicWarpPrismDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4173,6 +4228,7 @@ void InitTriggers () {
     gt_ObjectiveActivateCelestialLocksUpdate_Init();
     gt_ObjectiveDestroyTitanicWarpPrismCreate_Init();
     gt_ObjectiveDestroyTitanicWarpPrismComplete_Init();
+    gt_ObjectiveDestroyTitanicWarpPrismDeactivate_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
