@@ -17,6 +17,11 @@ jobs:
       - name: Build
         run: |
           ./build_release_package.sh
+      - name: zip
+        run: |
+         pushd target
+         zip -r ../Archipelago-SC2-Data.zip .
+         popd
       - name: Push Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -26,5 +31,15 @@ jobs:
 
           # A file, directory or wildcard pattern that describes what to upload
           # Required.
-          path: target
+          path: rchipelago-SC2-Data.zip
           retention-days: 7
+      - name: Deploy
+        if: ${{ github.ref == 'refs/heads/sc2-next' && github.repository_owner == 'Ziktofel' }}
+        uses: WebFreak001/deploy-nightly@v3.1.0
+        with:
+          # find out this value by opening https://api.github.com/repos/<owner>/<repo>/releases in your browser and copy the full "upload_url" value including the {?name,label} part
+          upload_url: https://uploads.github.com/repos/Ziktofel/Archipelago-SC2-data/releases/165307117/assets{?name,label}
+          release_id: 165307117 # API4
+          asset_path: ./Archipelago-SC2-Data.zip
+          asset_name: Archipelago-SC2-Data.zip
+          asset_content_type: application/zip
