@@ -39,6 +39,11 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_RIFLE = 1;
+const int gv_LOCATION_ID_GRENADES = 2;
+const int gv_LOCATION_ID_AGENT_DELTA = 3;
+const int gv_LOCATION_ID_AGENT_PIERCE = 4;
+const int gv_LOCATION_ID_AGENT_STONE = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -130,16 +135,16 @@ int gv_statSnipeKills;
 int gv_statFlameTurretHits;
 int gv_statCivilianCollisions;
 fixed gv_statNovaDamageFromWarhawk;
-int gv_objectiveDestroyZergBase;
+int gv_objective_Rifle;
 bool gv_objective_RifleComplete;
-int gv_objectiveDestroyZergBase5;
+int gv_objective_Grenades;
 bool gv_objective_GrenadesComplete;
-int gv_objectiveDestroyZergBase2;
+int gv_objective_Escape;
 bool gv_objective_EscapeComplete;
-int gv_objectiveDestroyZergBase4;
+int gv_objective_Spaceport;
 bool gv_objective_SpaceportComplete;
-int gv_objectiveDestroyZergBase3;
-int gv_objectiveRescueStalkers;
+int gv_objective_Survive;
+int gv_objective_Rescue;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -186,12 +191,12 @@ void InitGlobals () {
     gv_vultureDistanceLabel = c_invalidDialogControlId;
     gv_vultureDistanceDialog = c_invalidDialogId;
     gv_anniversaryAchievementMissionTimer = TimerCreate();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase5 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase4 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objective_Rifle = c_invalidObjectiveId;
+    gv_objective_Grenades = c_invalidObjectiveId;
+    gv_objective_Escape = c_invalidObjectiveId;
+    gv_objective_Spaceport = c_invalidObjectiveId;
+    gv_objective_Survive = c_invalidObjectiveId;
+    gv_objective_Rescue = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -2452,8 +2457,8 @@ bool gt_DebugStage2_Func (bool testConds, bool runActions) {
     CameraApplyInfo(gv_pLAYER_01_USER, CameraInfoDefault(), 0.0, -1, 10.0, false);
     CameraPan(gv_pLAYER_01_USER, PointFromId(787), 0.0, -1, 10.0, false);
     UnitIssueOrder(UnitFromId(389), Order(AbilityCommand("MoebiusLabDoorsWideRight", 0)), c_orderQueueReplace);
-    ObjectiveShow(gv_objectiveDestroyZergBase, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyZergBase5, PlayerGroupAll(), false);
+    ObjectiveShow(gv_objective_Rifle, PlayerGroupAll(), false);
+    ObjectiveShow(gv_objective_Grenades, PlayerGroupAll(), false);
     TriggerExecute(gt_ObjectiveEscapeCreate, true, false);
     if ((gv_objective_EscapeComplete == false) && (gv_escapePing == c_invalidPingId)) {
         libNCMI_gf_CreateObjectivePing(true, PointFromId(675), StringExternal("Param/Value/E152CDD4"));
@@ -3134,8 +3139,7 @@ bool gt_CleanupSection1_Func (bool testConds, bool runActions) {
     TextTagDestroy(gv_snipeTextTag);
     UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("NovaWeaponCanisterRifleSnipe", 0), false);
     TriggerExecute(gt_ObjectiveRifleComplete, true, false);
-    ObjectiveShow(gv_objectiveDestroyZergBase, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Rifle, false);
     libNovC_gf_EnableDisableNovaEquipment(true, "EQPGadgetItem1");
     PingDestroy(gv_pulseGrenadePing);
     libNtve_gf_KillModel(gv_pulseGrenadeReticle);
@@ -3143,17 +3147,14 @@ bool gt_CleanupSection1_Func (bool testConds, bool runActions) {
     UISetButtonHighlighted(PlayerGroupAll(), AbilityCommand("NovaGadgetPulseGrenades", 0), false);
     gv_pulseGrenadesTaught = true;
     TriggerExecute(gt_ObjectiveGrenadesComplete, true, false);
-    ObjectiveShow(gv_objectiveDestroyZergBase5, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Grenades, false);
     PingDestroy(gv_escapePing);
     PingDestroy(gv_friendlyGhostPings[1]);
     PingDestroy(gv_friendlyGhostPings[2]);
     PingDestroy(gv_friendlyGhostPings[3]);
     TriggerExecute(gt_ObjectiveEscapeComplete, true, false);
-    ObjectiveShow(gv_objectiveDestroyZergBase2, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveRescueStalkers, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase2);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Escape, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Rescue, false);
     if ((UnitIsAlive(gv_rescuedGhosts[1]) == true) && (gv_rescuedGhosts[1] == UnitFromId(2030))) {
         gv_rescuedUnitsAlive[1] = true;
     }
@@ -4285,7 +4286,7 @@ bool gt_ObtainRifleQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     PingDestroy(gv_riflePing);
     TriggerExecute(gt_ObjectiveRifleComplete, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_RIFLE);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "NovaSilentkill", 0);
     libNovC_gf_EnableDisableNovaEquipment(true, "EQPWeaponItem1");
     TriggerEnable(gt_DeadEndGuardsMaxwellConfirmedDeadQ, false);
@@ -5115,7 +5116,7 @@ bool gt_ObtainGrenadesQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     PingDestroy(gv_pulseGrenadePing);
     TriggerExecute(gt_ObjectiveGrenadesComplete, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_GRENADES);
     libNovC_gf_EnableDisableNovaEquipment(true, "EQPGadgetItem1");
     UnitIssueOrder(UnitFromId(208), Order(AbilityCommand("MoebiusLabDoorsWideLeft", 0)), c_orderQueueReplace);
     UnitIssueOrder(UnitFromId(389), Order(AbilityCommand("MoebiusLabDoorsWideRightLowered", 0)), c_orderQueueReplace);
@@ -5130,10 +5131,8 @@ bool gt_ObtainGrenadesQ_Func (bool testConds, bool runActions) {
     }
 
     if ((gv_objective_EscapeComplete == false) && (gv_currentSection == 1)) {
-        ObjectiveShow(gv_objectiveDestroyZergBase, PlayerGroupAll(), false);
-        ObjectiveShow(gv_objectiveDestroyZergBase5, PlayerGroupAll(), false);
-        lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase);
-        lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase5);
+        lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Rifle, false);
+        lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Grenades, false);
         TriggerExecute(gt_ObjectiveEscapeCreate, true, false);
         libNCMI_gf_PingMinimapCampaign(PlayerGroupAll(), PointFromId(675), 5.0, Color(0.00, 100.00, 0.00));
         libNCMI_gf_CreateObjectivePing(true, PointFromId(675), StringExternal("Param/Value/E368F1AD"));
@@ -6144,7 +6143,7 @@ bool gt_EscapeRescueGhostPings_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveRescueStalkers) == c_objectiveStateActive) && (libNCMI_gf_GameIsOver() == false) && (libNCMI_gf_PlayerInCinematicModeCampaign() == false) && (gv_currentSection == 1)) {
+    if ((ObjectiveGetState(gv_objective_Rescue) == c_objectiveStateActive) && (libNCMI_gf_GameIsOver() == false) && (libNCMI_gf_PlayerInCinematicModeCampaign() == false) && (gv_currentSection == 1)) {
         SoundPlayForPlayer(SoundLink("Ping", 0), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
         if ((gv_friendlyGhostsRescued[1] == false) && (UnitIsAlive(UnitFromId(2030)) == true)) {
             libNCMI_gf_PingMinimapCampaign(PlayerGroupAll(), PointFromId(802), 5.0, Color(100.00, 100.00, 0.00));
@@ -6766,7 +6765,7 @@ bool gt_EscapeDeltaRescueSuccessQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_AGENT_DELTA);
     TriggerQueueEnter();
     Wait(1.0, c_timeReal);
     if ((gv_currentSection == 1) && (UnitIsAlive(gv_rescuedGhosts[1]) == true) && (UnitIsAlive(gv_artanis) == true)) {
@@ -7046,7 +7045,7 @@ bool gt_EscapePierceRescueSuccessQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_AGENT_PIERCE);
     TriggerQueueEnter();
     Wait(1.0, c_timeReal);
     if ((gv_currentSection == 1) && (UnitIsAlive(gv_rescuedGhosts[2]) == true) && (UnitIsAlive(gv_artanis) == true)) {
@@ -7427,7 +7426,7 @@ bool gt_EscapeStoneRescueQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_AGENT_STONE);
     TriggerQueueEnter();
     Wait(1.0, c_timeReal);
     if ((gv_currentSection == 1) && (UnitIsAlive(gv_rescuedGhosts[3]) == true) && (UnitIsAlive(gv_artanis) == true)) {
@@ -8838,7 +8837,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNCMI_gf_GameOver(libNCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveSpaceportComplete, true, true);
@@ -9186,8 +9185,12 @@ bool gt_ObjectiveRifleCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova01Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase, "Nova01Primary01", "", 0);
+    gv_objective_Rifle = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_Rifle, 4);
+    ObjectiveShow(gv_objective_Rifle, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Rifle, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Rifle, gv_LOCATION_ID_RIFLE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Rifle, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9216,7 +9219,7 @@ bool gt_ObjectiveRifleComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRifleCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Rifle);
     gv_objective_RifleComplete = true;
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -9246,8 +9249,12 @@ bool gt_ObjectiveGrenadesCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova01Primary02");
-    gv_objectiveDestroyZergBase5 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase5, "Nova01Primary02", "", 0);
+    gv_objective_Grenades = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_Grenades, 3);
+    ObjectiveShow(gv_objective_Grenades, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Grenades, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Grenades, gv_LOCATION_ID_GRENADES);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Grenades, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9276,7 +9283,7 @@ bool gt_ObjectiveGrenadesComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveGrenadesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Grenades);
     gv_objective_GrenadesComplete = true;
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -9306,8 +9313,12 @@ bool gt_ObjectiveEscapeCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova01Primary03");
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase2, "Nova01Primary03", "", 0);
+    gv_objective_Escape = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_Escape, 2);
+    ObjectiveShow(gv_objective_Escape, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Escape, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Escape, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Escape, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9336,7 +9347,7 @@ bool gt_ObjectiveEscapeComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEscapeCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Escape);
     gv_objective_EscapeComplete = true;
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -9366,8 +9377,11 @@ bool gt_ObjectiveSpaceportCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova01Primary04");
-    gv_objectiveDestroyZergBase4 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase4, "Nova01Primary04", "", 0);
+    gv_objective_Spaceport = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_Spaceport, 1);
+    ObjectiveShow(gv_objective_Spaceport, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Spaceport, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Spaceport, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9396,7 +9410,7 @@ bool gt_ObjectiveSpaceportComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSpaceportCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Spaceport);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9425,8 +9439,10 @@ bool gt_ObjectiveSurviveCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova01Primary05");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase3, "Nova01Primary05", "", 0);
+    gv_objective_Survive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objective_Survive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Survive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Survive, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9455,7 +9471,7 @@ bool gt_ObjectiveSurviveComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Survive);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9484,7 +9500,7 @@ bool gt_ObjectiveSurviveFailed_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Survive);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9498,7 +9514,13 @@ void gt_ObjectiveSurviveFailed_Init () {
 // Trigger: Objective - Rescue Ghosts - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRescueGhostsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -9516,8 +9538,14 @@ bool gt_ObjectiveRescueGhostsCreate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     libCMMI_gf_CreateObjectiveCampaign("Nova01Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveRescueStalkers, "Nova01Bonus01", "", 0);
+    gv_objective_Rescue = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_Rescue, libComC_gf_MissionObjectiveName("Nova01Bonus01"));
+    ObjectiveShow(gv_objective_Rescue, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_Rescue, lv_category, "", gv_ghostsRescuedCount, libComC_gf_MissionObjectiveItemCount("Nova01Bonus01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Rescue, gv_LOCATION_ID_AGENT_DELTA);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Rescue, gv_LOCATION_ID_AGENT_PIERCE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Rescue, gv_LOCATION_ID_AGENT_STONE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Rescue, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9546,7 +9574,7 @@ bool gt_ObjectiveRescueGhostsComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRescueGhostsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Rescue);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9567,7 +9595,7 @@ bool gt_ObjectiveRescueGhostsUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveRescueGhostsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_ghostsRescuedCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_Rescue, gv_ghostsRescuedCount);
     if ((gv_ghostsRescuedCount >= 3)) {
         TriggerExecute(gt_ObjectiveRescueGhostsComplete, true, false);
     }
