@@ -30,6 +30,11 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_NORTHWEST_POWER_CORE = 1;
+const int gv_LOCATION_ID_NORTHEAST_POWER_CORE = 2;
+const int gv_LOCATION_ID_SOUTHEAST_POWER_CORE = 3;
+const int gv_LOCATION_ID_WEST_HYBRID_STASIS_CHAMBER = 4;
+const int gv_LOCATION_ID_SOUTHEAST_HYBRID_STASIS_CHAMBER = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -94,8 +99,8 @@ bool gv_groundUnitsMade;
 bool gv_masteryAchievementFailed;
 int gv_masteryAchievementTracking;
 int gv_anniversaryStatPlayerUnitsLost;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveRescueStalkers;
+int gv_objective_DestroyPowerCores;
+int gv_objective_KillHybrid;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -145,8 +150,8 @@ void InitGlobals () {
     }
     gv_finalCorePoint = UnitGetPosition(UnitFromId(275));
     gv_resourcePickups = UnitGroupEmpty();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objective_DestroyPowerCores = c_invalidObjectiveId;
+    gv_objective_KillHybrid = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -235,6 +240,7 @@ trigger gt_ObjectiveDestroyPowerCoresUpdate;
 trigger gt_ObjectiveKillHybridCreate;
 trigger gt_ObjectiveKillHybridComplete;
 trigger gt_ObjectiveKillHybridUpdate;
+trigger gt_ObjectiveKillHybridDeactivate;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -639,13 +645,13 @@ void gf_CoreDestroyed (unit lp_activeUnit) {
     gv_coresDestroyed += 1;
     auto17881523_val = lp_activeUnit;
     if (auto17881523_val == UnitFromId(109)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_POWER_CORE);
     }
     else if (auto17881523_val == UnitFromId(275)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_POWER_CORE);
     }
     else if (auto17881523_val == UnitFromId(276)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_POWER_CORE);
     }
     else {
     }
@@ -978,7 +984,7 @@ bool gt_WestHybridStatisChamber_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_HYBRID_STASIS_CHAMBER);
     return true;
 }
 
@@ -999,7 +1005,7 @@ bool gt_SoutheastHybridStatisChamber_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_HYBRID_STASIS_CHAMBER);
     return true;
 }
 
@@ -2967,7 +2973,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDestroyPowerCoresComplete, true, true);
@@ -3599,8 +3605,15 @@ bool gt_ObjectiveDestroyPowerCoresCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PMoebius02Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PMoebius02Primary01", "", gv_coresDestroyed);
+    gv_objective_DestroyPowerCores = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_DestroyPowerCores, libVoiC_gf_MissionObjectiveName("PMoebius02Primary01"));
+    ObjectiveShow(gv_objective_DestroyPowerCores, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_DestroyPowerCores, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_coresDestroyed, libVoiC_gf_MissionObjectiveItemCount("PMoebius02Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPowerCores, gv_LOCATION_ID_NORTHWEST_POWER_CORE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPowerCores, gv_LOCATION_ID_NORTHEAST_POWER_CORE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPowerCores, gv_LOCATION_ID_SOUTHEAST_POWER_CORE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_DestroyPowerCores, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_DestroyPowerCores, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3629,7 +3642,7 @@ bool gt_ObjectiveDestroyPowerCoresComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyPowerCoresCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_DestroyPowerCores);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3650,7 +3663,7 @@ bool gt_ObjectiveDestroyPowerCoresUpdate_Func (bool testConds, bool runActions) 
     }
 
     TriggerExecute(gt_ObjectiveDestroyPowerCoresCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_coresDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_DestroyPowerCores, gv_coresDestroyed);
     return true;
 }
 
@@ -3663,7 +3676,13 @@ void gt_ObjectiveDestroyPowerCoresUpdate_Init () {
 // Trigger: Objective - Kill Hybrid - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveKillHybridCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -3678,8 +3697,13 @@ bool gt_ObjectiveKillHybridCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PMoebius02Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PMoebius02Bonus01", "", gv_hybridKilled);
+    gv_objective_KillHybrid = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_KillHybrid, libVoiC_gf_MissionObjectiveName("PMoebius02Bonus01"));
+    ObjectiveShow(gv_objective_KillHybrid, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_KillHybrid, lv_category, "", gv_hybridKilled, libVoiC_gf_MissionObjectiveItemCount("PMoebius02Bonus01"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_KillHybrid, gv_LOCATION_ID_WEST_HYBRID_STASIS_CHAMBER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_KillHybrid, gv_LOCATION_ID_SOUTHEAST_HYBRID_STASIS_CHAMBER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_KillHybrid, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3708,7 +3732,7 @@ bool gt_ObjectiveKillHybridComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKillHybridCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_KillHybrid);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -3729,7 +3753,7 @@ bool gt_ObjectiveKillHybridUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveKillHybridCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_hybridKilled);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_KillHybrid, gv_hybridKilled);
     if ((gv_hybridKilled >= 2)) {
         TriggerExecute(gt_ObjectiveKillHybridComplete, true, false);
     }
@@ -3740,6 +3764,37 @@ bool gt_ObjectiveKillHybridUpdate_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveKillHybridUpdate_Init () {
     gt_ObjectiveKillHybridUpdate = TriggerCreate("gt_ObjectiveKillHybridUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Kill Hybrid - Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillHybridDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_WEST_HYBRID_STASIS_CHAMBER] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTHEAST_HYBRID_STASIS_CHAMBER] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveKillHybridCreate, false);
+    TriggerEnable(gt_ObjectiveKillHybridUpdate, false);
+    TriggerEnable(gt_IntroHybridCellsQ, false);
+    TriggerEnable(gt_HybridProximityTrigger, false);
+    TriggerEnable(gt_HybridStasisCellDestroyedQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillHybridDeactivate_Init () {
+    gt_ObjectiveKillHybridDeactivate = TriggerCreate("gt_ObjectiveKillHybridDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveKillHybridDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4448,6 +4503,7 @@ void InitTriggers () {
     gt_ObjectiveKillHybridCreate_Init();
     gt_ObjectiveKillHybridComplete_Init();
     gt_ObjectiveKillHybridUpdate_Init();
+    gt_ObjectiveKillHybridDeactivate_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();

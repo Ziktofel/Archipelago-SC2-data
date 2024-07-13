@@ -35,6 +35,9 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_MID_SCIENCE_FACILITY = 1;
+const int gv_LOCATION_ID_NORTH_SCIENCE_FACILITY = 2;
+const int gv_LOCATION_ID_SOUTH_SCIENCE_FACILITY = 3;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -128,10 +131,10 @@ bool gv_disruptionAchievementFlagged;
 bool gv_masteryAchievementFlagged;
 int gv_achievementAllyStructuresDestroyed;
 bool gv_achievementImmortalBuilt;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveDestroyZergBase2;
-int gv_objectiveDestroyZergBase3;
-int gv_objectiveRescueStalkers;
+int gv_objectiveRecoverKeystone;
+int gv_objectiveRaynorCCMustSurvive;
+int gv_objectiveValerianCCMustSurvive;
+int gv_objectiveSecureResearchFacilities;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -164,10 +167,10 @@ void InitGlobals () {
     gv_shadowCorpsNorthPlayers = PlayerGroupEmpty();
     gv_shadowCorpsSouthPlayers = PlayerGroupEmpty();
     gv_hybridWaveGroup = UnitGroupEmpty();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objectiveRecoverKeystone = c_invalidObjectiveId;
+    gv_objectiveRaynorCCMustSurvive = c_invalidObjectiveId;
+    gv_objectiveValerianCCMustSurvive = c_invalidObjectiveId;
+    gv_objectiveSecureResearchFacilities = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -855,8 +858,8 @@ bool gt_TransferTerranControlToPlayer_Func (bool testConds, bool runActions) {
     TriggerEnable(gt_MedicSupportCenter, false);
     TriggerEnable(gt_SciVesselSupportNorth, false);
     TriggerEnable(gt_MedivacSupportSouth, false);
-    ObjectiveShow(gv_objectiveDestroyZergBase3, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyZergBase2, PlayerGroupAll(), false);
+    ObjectiveShow(gv_objectiveValerianCCMustSurvive, PlayerGroupAll(), false);
+    ObjectiveShow(gv_objectiveRaynorCCMustSurvive, PlayerGroupAll(), false);
     autoE66180C2_g = UnitGroup(null, gv_pLAYER_02_DOMINION, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     autoE66180C2_u = UnitGroupCount(autoE66180C2_g, c_unitCountAll);
     for (;; autoE66180C2_u -= 1) {
@@ -2644,7 +2647,7 @@ bool gt_BonusUpdateMiddleQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MID_SCIENCE_FACILITY);
     if ((gv_scienceFacilitiesSaved == 1)) {
         TriggerQueueEnter();
         libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
@@ -2694,7 +2697,7 @@ bool gt_BonusUpdateNorthQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_SCIENCE_FACILITY);
     if ((gv_scienceFacilitiesSaved == 1)) {
         TriggerQueueEnter();
         libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
@@ -2744,7 +2747,7 @@ bool gt_BonusUpdateSouthQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_SCIENCE_FACILITY);
     if ((gv_scienceFacilitiesSaved == 1)) {
         TriggerQueueEnter();
         libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
@@ -5040,7 +5043,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     TriggerExecute(gt_ObjectiveRecovertheKeystoneComplete, true, false);
     TriggerExecute(gt_ObjectiveRaynorsCommandCenterMustSurviveComplete, true, false);
@@ -5339,8 +5342,11 @@ bool gt_ObjectiveRecovertheKeystoneCreate_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PKorhal02Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PKorhal02Primary01", "", 0);
+    gv_objectiveRecoverKeystone = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveRecoverKeystone, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveRecoverKeystone, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRecoverKeystone, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRecoverKeystone, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5372,7 +5378,7 @@ bool gt_ObjectiveRecovertheKeystoneComplete_Func (bool testConds, bool runAction
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveRecovertheKeystoneCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRecoverKeystone);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5401,8 +5407,10 @@ bool gt_ObjectiveRaynorsCommandCenterMustSurviveCreate_Func (bool testConds, boo
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PKorhal02Primary02");
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PKorhal02Primary02", "", 0);
+    gv_objectiveRaynorCCMustSurvive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveRaynorCCMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveRaynorCCMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRaynorCCMustSurvive, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5434,7 +5442,7 @@ bool gt_ObjectiveRaynorsCommandCenterMustSurviveComplete_Func (bool testConds, b
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveRaynorsCommandCenterMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRaynorCCMustSurvive);
     return true;
 }
 
@@ -5465,7 +5473,7 @@ bool gt_ObjectiveRaynorsCommandCenterMustSurviveFailed_Func (bool testConds, boo
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveRaynorsCommandCenterMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRaynorCCMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5494,8 +5502,10 @@ bool gt_ObjectiveValeriansCommandCenterMustSurviveCreate_Func (bool testConds, b
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PKorhal02Primary03");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PKorhal02Primary03", "", 0);
+    gv_objectiveValerianCCMustSurvive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveValerianCCMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveValerianCCMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveValerianCCMustSurvive, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5527,7 +5537,7 @@ bool gt_ObjectiveValeriansCommandCenterMustSurviveComplete_Func (bool testConds,
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveValeriansCommandCenterMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveValerianCCMustSurvive);
     return true;
 }
 
@@ -5558,7 +5568,7 @@ bool gt_ObjectiveValeriansCommandCenterMustSurviveFailed_Func (bool testConds, b
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveValeriansCommandCenterMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveValerianCCMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5572,7 +5582,13 @@ void gt_ObjectiveValeriansCommandCenterMustSurviveFailed_Init () {
 // Trigger: Objective Secure Research Facilities Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveSecureResearchFacilitiesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5590,8 +5606,14 @@ bool gt_ObjectiveSecureResearchFacilitiesCreate_Func (bool testConds, bool runAc
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PKorhal02Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PKorhal02Bonus01", "", gv_scienceFacilitiesSaved);
+    gv_objectiveSecureResearchFacilities = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveSecureResearchFacilities, libVoiC_gf_MissionObjectiveName("PKorhal02Bonus01"));
+    ObjectiveShow(gv_objectiveSecureResearchFacilities, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveSecureResearchFacilities, lv_category, "", gv_scienceFacilitiesSaved, libVoiC_gf_MissionObjectiveItemCount("PKorhal02Bonus01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSecureResearchFacilities, gv_LOCATION_ID_MID_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSecureResearchFacilities, gv_LOCATION_ID_NORTH_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSecureResearchFacilities, gv_LOCATION_ID_SOUTH_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSecureResearchFacilities, true);
     return true;
 }
 
@@ -5619,7 +5641,7 @@ bool gt_ObjectiveSecureResearchFacilitiesComplete_Func (bool testConds, bool run
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSecureResearchFacilitiesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSecureResearchFacilities);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5643,7 +5665,7 @@ bool gt_ObjectiveSecureResearchFacilitiesUpdate_Func (bool testConds, bool runAc
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveSecureResearchFacilitiesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_scienceFacilitiesSaved);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSecureResearchFacilities, gv_scienceFacilitiesSaved);
     return true;
 }
 
