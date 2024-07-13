@@ -35,6 +35,13 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_SOUTHWEST_HIVE = 1;
+const int gv_LOCATION_ID_NORTHWEST_HIVE = 2;
+const int gv_LOCATION_ID_NORTHEAST_HIVE = 3;
+const int gv_LOCATION_ID_EAST_HIVE = 4;
+const int gv_LOCATION_ID_WEST_CONDUIT = 5;
+const int gv_LOCATION_ID_MIDDLE_CONDUIT = 6;
+const int gv_LOCATION_ID_NORTHEAST_CONDUIT = 7;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_PROTOSS_S01 = 2;
 const int gv_pLAYER_03_ZERG_BOTTOM = 3;
@@ -928,7 +935,7 @@ bool gt_Hive1_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_HIVE);
     TriggerEnable(TriggerGetCurrent(), false);
     return true;
 }
@@ -949,7 +956,7 @@ bool gt_Hive2_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_HIVE);
     TriggerEnable(TriggerGetCurrent(), false);
     return true;
 }
@@ -970,7 +977,7 @@ bool gt_Hive3_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_HIVE);
     TriggerEnable(TriggerGetCurrent(), false);
     return true;
 }
@@ -991,7 +998,7 @@ bool gt_Hive4_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_HIVE);
     TriggerEnable(TriggerGetCurrent(), false);
     return true;
 }
@@ -2874,7 +2881,7 @@ bool gt_ActivateWarpConduit01Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_CONDUIT);
     PingDestroy(gv_conduit01_Ping);
     libNtve_gf_KillDoodadsInRegion(RegionCircle(UnitGetPosition(gv_conduit01), 7.0), "CreepWeb");
     libVCMI_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/D2A91BD1"));
@@ -3018,7 +3025,7 @@ bool gt_ActivateWarpConduit02Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MIDDLE_CONDUIT);
     PingDestroy(gv_conduit02_Ping);
     libNtve_gf_KillDoodadsInRegion(RegionCircle(UnitGetPosition(gv_conduit02), 7.0), "CreepWeb");
     libVCMI_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/660AAA7D"));
@@ -3172,7 +3179,7 @@ bool gt_ReachWarpConduit03_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_CONDUIT);
     PingDestroy(gv_conduit03_Ping);
     gv_objectiveActivateWarpConduitsCount += 1;
     TriggerExecute(gt_ObjectiveActivateWarpConduitsUpdate, true, false);
@@ -6068,7 +6075,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveKillHybridComplete, true, true);
@@ -6317,7 +6324,13 @@ bool gt_ObjectiveActivateWarpConduitsCreate_Func (bool testConds, bool runAction
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PAiur01Primary01");
     gv_objectiveActivateWarpConduits = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PAiur01Primary01", "", gv_objectiveActivateWarpConduitsCount);
+    ObjectiveSetName(gv_objectiveActivateWarpConduits, libVoiC_gf_MissionObjectiveName("PAiur01Primary01"));
+    ObjectiveShow(gv_objectiveActivateWarpConduits, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveActivateWarpConduits, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objectiveActivateWarpConduitsCount, gv_objectiveActivateWarpConduitsMax, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveActivateWarpConduits, gv_LOCATION_ID_WEST_CONDUIT);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveActivateWarpConduits, gv_LOCATION_ID_MIDDLE_CONDUIT);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveActivateWarpConduits, gv_LOCATION_ID_NORTHEAST_CONDUIT);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveActivateWarpConduits, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6411,7 +6424,10 @@ bool gt_ObjectiveKillHybridCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PAiur01Primary02");
     gv_objectiveKillHybrid = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PAiur01Primary02", "", 0);
+    ObjectiveShow(gv_objectiveKillHybrid, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillHybrid, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillHybrid, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillHybrid, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6457,7 +6473,13 @@ void gt_ObjectiveKillHybridComplete_Init () {
 // Trigger: Objective Destroy Zerg Hive Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyZergHiveCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6473,7 +6495,14 @@ bool gt_ObjectiveDestroyZergHiveCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PAiur01Bonus01");
     gv_objectiveDestroyZergHives = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PAiur01Bonus01", "", gv_objectiveDestroyZergHiveCount);
+    ObjectiveSetName(gv_objectiveDestroyZergHives, libVoiC_gf_MissionObjectiveName("PAiur01Bonus01"));
+    ObjectiveShow(gv_objectiveDestroyZergHives, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyZergHives, lv_category, "", gv_objectiveDestroyZergHiveCount, gv_objectiveDestroyZergHiveMax, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyZergHives, gv_LOCATION_ID_SOUTHWEST_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyZergHives, gv_LOCATION_ID_NORTHWEST_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyZergHives, gv_LOCATION_ID_NORTHEAST_HIVE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyZergHives, gv_LOCATION_ID_EAST_HIVE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyZergHives, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }

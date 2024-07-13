@@ -39,6 +39,13 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_CLOSE_WARP_GATE = 1;
+const int gv_LOCATION_ID_WEST_WARP_GATE = 2;
+const int gv_LOCATION_ID_NORTH_WARP_GATE = 3;
+const int gv_LOCATION_ID_NORTH_POWER_CELL = 4;
+const int gv_LOCATION_ID_EAST_POWER_CELL = 5;
+const int gv_LOCATION_ID_SOUTH_POWER_CELL = 6;
+const int gv_LOCATION_ID_SOUTHEAST_POWER_CELL = 7;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -73,8 +80,8 @@ bool gv_achievementStructureLost;
 int gv_proxyPylonsWarpedIn;
 int gv_unitsWarpedInByWarpGates;
 fixed gv_shieldsRechargedByShieldBatteries;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveRescueStalkers;
+int gv_objective_ActivatePowerCells;
+int gv_objectivePowerUpWarpGates;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -103,8 +110,8 @@ void InitGlobals () {
     gv_enemyEventStalkers = UnitGroupEmpty();
     gv_critterGroup = UnitGroupEmpty();
     gv_achievementWarpTourGroup = UnitGroupEmpty();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objective_ActivatePowerCells = c_invalidObjectiveId;
+    gv_objectivePowerUpWarpGates = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -1767,7 +1774,7 @@ bool gt_ActivatePowerCell2_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_POWER_CELL);
     gv_powerCellActivated += 1;
     if ((gv_powerCellActivated == 5)) {
         TriggerExecute(gt_AchievementSprinterCell, true, false);
@@ -1820,7 +1827,7 @@ bool gt_ActivatePowerCell3_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_POWER_CELL);
     gv_powerCellActivated += 1;
     if ((gv_powerCellActivated == 5)) {
         TriggerExecute(gt_AchievementSprinterCell, true, false);
@@ -1873,7 +1880,7 @@ bool gt_ActivatePowerCell4_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_POWER_CELL);
     gv_powerCellActivated += 1;
     if ((gv_powerCellActivated == 5)) {
         TriggerExecute(gt_AchievementSprinterCell, true, false);
@@ -1927,7 +1934,7 @@ bool gt_ActivatePowerCell5_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_POWER_CELL);
     gv_powerCellActivated += 1;
     if ((gv_powerCellActivated == 5)) {
         TriggerExecute(gt_AchievementSprinterCell, true, false);
@@ -2295,7 +2302,7 @@ bool gt_IntroduceUnpoweredWarpGatesQ_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveRescueStalkers) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectivePowerUpWarpGates) != c_objectiveStateCompleted))) {
             return false;
         }
     }
@@ -2372,7 +2379,7 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
 
     if ((UnitIsAlive(gv_warpGate01) == true) && (PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate01), "PowerSource") > 0) && (UnitGetOwner(gv_warpGate01) != gv_pLAYER_01_USER)) {
         lv_localWarpGatePoweredBool = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_WARP_GATE);
         gv_warpGatesPowered += 1;
         libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(gv_warpGate01), 3.0, Color(0.00, 100.00, 0.00));
         UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/E7F0C3E9"), null, gv_warpGate01);
@@ -2381,7 +2388,7 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
 
     if ((UnitIsAlive(gv_warpGate02) == true) && (PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate02), "PowerSource") > 0) && (UnitGetOwner(gv_warpGate02) != gv_pLAYER_01_USER)) {
         lv_localWarpGatePoweredBool = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_WARP_GATE);
         gv_warpGatesPowered += 1;
         libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(gv_warpGate02), 3.0, Color(0.00, 100.00, 0.00));
         UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/F89685B3"), null, gv_warpGate02);
@@ -2390,7 +2397,7 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
 
     if ((UnitIsAlive(gv_warpGate03) == true) && (PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate03), "PowerSource") > 0) && (UnitGetOwner(gv_warpGate03) != gv_pLAYER_01_USER)) {
         lv_localWarpGatePoweredBool = true;
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_WARP_GATE);
         gv_warpGatesPowered += 1;
         libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(gv_warpGate03), 3.0, Color(0.00, 100.00, 0.00));
         UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/4CEFF78F"), null, gv_warpGate03);
@@ -2541,7 +2548,7 @@ bool gt_RemindPlayerAboutWarpGatesQ_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((ObjectiveGetState(gv_objectiveRescueStalkers) != c_objectiveStateCompleted))) {
+        if (!((ObjectiveGetState(gv_objectivePowerUpWarpGates) != c_objectiveStateCompleted))) {
             return false;
         }
 
@@ -3531,7 +3538,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveActivatePowerCellsComplete, true, true);
@@ -4007,8 +4014,16 @@ bool gt_ObjectiveActivatePowerCellsCreate_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PAiur03Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PAiur03Primary01", "", gv_powerCellActivated);
+    gv_objective_ActivatePowerCells = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_ActivatePowerCells, libVoiC_gf_MissionObjectiveName("PAiur03Primary01"));
+    ObjectiveShow(gv_objective_ActivatePowerCells, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_ActivatePowerCells, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_powerCellActivated, libVoiC_gf_MissionObjectiveItemCount("PAiur03Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivatePowerCells, gv_LOCATION_ID_NORTH_POWER_CELL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivatePowerCells, gv_LOCATION_ID_EAST_POWER_CELL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivatePowerCells, gv_LOCATION_ID_SOUTH_POWER_CELL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivatePowerCells, gv_LOCATION_ID_SOUTHEAST_POWER_CELL);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ActivatePowerCells, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ActivatePowerCells, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4029,7 +4044,7 @@ bool gt_ObjectiveActivatePowerCellsUpdate_Func (bool testConds, bool runActions)
     }
 
     TriggerExecute(gt_ObjectiveActivatePowerCellsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_powerCellActivated);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_ActivatePowerCells, gv_powerCellActivated);
     return true;
 }
 
@@ -4060,7 +4075,7 @@ bool gt_ObjectiveActivatePowerCellsComplete_Func (bool testConds, bool runAction
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveActivatePowerCellsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_ActivatePowerCells);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4074,7 +4089,13 @@ void gt_ObjectiveActivatePowerCellsComplete_Init () {
 // Trigger: Objective - Power Up Warp Gates - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectivePowerUpWarpGatesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4089,8 +4110,14 @@ bool gt_ObjectivePowerUpWarpGatesCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PAiur03Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PAiur03Bonus01", "", gv_warpGatesPowered);
+    gv_objectivePowerUpWarpGates = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectivePowerUpWarpGates, libVoiC_gf_MissionObjectiveName("PAiur03Bonus01"));
+    ObjectiveShow(gv_objectivePowerUpWarpGates, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectivePowerUpWarpGates, lv_category, "", gv_warpGatesPowered, libVoiC_gf_MissionObjectiveItemCount("PAiur03Bonus01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePowerUpWarpGates, gv_LOCATION_ID_CLOSE_WARP_GATE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePowerUpWarpGates, gv_LOCATION_ID_WEST_WARP_GATE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePowerUpWarpGates, gv_LOCATION_ID_NORTH_WARP_GATE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectivePowerUpWarpGates, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4114,7 +4141,7 @@ bool gt_ObjectivePowerUpWarpGatesUpdate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectivePowerUpWarpGatesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_warpGatesPowered);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectivePowerUpWarpGates, gv_warpGatesPowered);
     return true;
 }
 
@@ -4142,7 +4169,7 @@ bool gt_ObjectivePowerUpWarpGatesComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectivePowerUpWarpGatesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectivePowerUpWarpGates);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
