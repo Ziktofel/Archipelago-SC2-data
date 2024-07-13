@@ -39,6 +39,13 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_ZERG_CLEARED = 1;
+const int gv_LOCATION_ID_FIRST_STASIS_LOCK = 2;
+const int gv_LOCATION_ID_SECOND_STASIS_LOCK = 3;
+const int gv_LOCATION_ID_THIRD_STASIS_LOCK = 4;
+const int gv_LOCATION_ID_FOURTH_STASIS_LOCK = 5;
+const int gv_LOCATION_ID_SOUTH_POWER_CORE = 6;
+const int gv_LOCATION_ID_EAST_POWER_CORE = 7;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_ZERG_RED = 2;
 const int gv_pLAYER_03_ZERG_BULLIES = 3;
@@ -100,12 +107,12 @@ int gv_zergStructuresRemaining;
 int gv_achievementZergCavesSealed;
 bool gv_masteryAchievementWindowClosed;
 bool gv_achievementNonProbesorColossusBuilt;
-int gv_objectiveDestroyZergBase3;
-int gv_objectiveDestroyZergBase4;
+int gv_objectiveClearOutZerg;
+int gv_objectiveStasisLocks;
 int gv_objectiveStasisLocksMax;
 int gv_objectiveStasisLocksCurrent;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveRescueStalkers;
+int gv_objectiveMegalithMustSurvive;
+int gv_objectiveDestroyPowerCoreHousing;
 int gv_objectiveDestroyPowerCoreHousingCount;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
@@ -137,11 +144,11 @@ void InitGlobals () {
     gv_caveZergGroup = UnitGroupEmpty();
     gv_bonus_PowerCoreHousing01 = UnitFromId(154);
     gv_bonus_PowerCoreHousing02 = UnitFromId(163);
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase4 = c_invalidObjectiveId;
+    gv_objectiveClearOutZerg = c_invalidObjectiveId;
+    gv_objectiveStasisLocks = c_invalidObjectiveId;
     gv_objectiveStasisLocksMax = 5;
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objectiveMegalithMustSurvive = c_invalidObjectiveId;
+    gv_objectiveDestroyPowerCoreHousing = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -276,6 +283,7 @@ trigger gt_ObjectiveDestroyPowerCoreHousingCreate;
 trigger gt_ObjectiveDestroyPowerCoreHousingComplete;
 trigger gt_ObjectiveDestroyPowerCoreHousingUpdate;
 trigger gt_ObjectiveDestroyPowerCoreHousingFailed;
+trigger gt_ObjectiveDestroyPowerCoreHousingDeactivate;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -882,7 +890,7 @@ bool gt_SouthPowerCore_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_POWER_CORE);
     return true;
 }
 
@@ -903,7 +911,7 @@ bool gt_EastPowerCore_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_POWER_CORE);
     return true;
 }
 
@@ -1732,7 +1740,7 @@ bool gt_SpawnZergIntroCave01_Func (bool testConds, bool runActions) {
 
     gf_ZergCaveAchievementTracking(gv_introCaveRocks);
     for (auto332DAD86_i = 1; auto332DAD86_i <= auto332DAD86_n; auto332DAD86_i += 1) {
-        if (((UnitIsAlive(gv_introCaveRocks) == false) || (ObjectiveGetState(gv_objectiveDestroyZergBase3) == c_objectiveStateCompleted) || (libVCMI_gf_GameIsOver() == true))) {
+        if (((UnitIsAlive(gv_introCaveRocks) == false) || (ObjectiveGetState(gv_objectiveClearOutZerg) == c_objectiveStateCompleted) || (libVCMI_gf_GameIsOver() == true))) {
             TriggerEnable(TriggerGetCurrent(), false);
             libNtve_gf_KillModel(libHots_gf_ActorForUnit(gv_introCaveRocks, 1));
             TextTagDestroy(libHots_gf_TextTagForUnit(gv_introCaveRocks, 1));
@@ -1798,7 +1806,7 @@ bool gt_ZergIntroCaveWanderers_Func (bool testConds, bool runActions) {
     }
 
     while (true) {
-        if ((((UnitIsAlive(gv_introCaveRocks) == false) && (libNtve_gf_UnitGroupIsDead(gv_introCaveUnits) == true)) || (ObjectiveGetState(gv_objectiveDestroyZergBase3) == c_objectiveStateCompleted) || (libVCMI_gf_GameIsOver() == true))) {
+        if ((((UnitIsAlive(gv_introCaveRocks) == false) && (libNtve_gf_UnitGroupIsDead(gv_introCaveUnits) == true)) || (ObjectiveGetState(gv_objectiveClearOutZerg) == c_objectiveStateCompleted) || (libVCMI_gf_GameIsOver() == true))) {
             return true;
         }
 
@@ -1872,7 +1880,7 @@ bool gt_StartStage02Q_Func (bool testConds, bool runActions) {
     UISetFrameVisible(PlayerGroupAll(), c_syncFrameTypeSupply, true);
     libVCMI_gf_StartingWorkersAutoHarvest(RegionFromId(14), null);
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/9C4408E4"), null, PlayerStartLocation(gv_pLAYER_01_USER));
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ZERG_CLEARED);
     TriggerExecute(gt_MegalithInitiation, true, false);
     TriggerExecute(gt_MonitorFenixSoAPresence, true, false);
     libVCMI_gf_SetWorkerRallyPointsPlayersNexuses(gv_pLAYER_01_USER);
@@ -2613,7 +2621,7 @@ bool gt_MegalithReachesStasisLock01Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_STASIS_LOCK);
     Wait(0.5, c_timeAI);
     while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeAI);
@@ -2660,7 +2668,7 @@ bool gt_MegalithReachesStasisLock02Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_STASIS_LOCK);
     Wait(0.5, c_timeAI);
     while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeAI);
@@ -2708,7 +2716,7 @@ bool gt_MegalithReachesStasisLock03Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_THIRD_STASIS_LOCK);
     Wait(0.5, c_timeAI);
     while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeAI);
@@ -2755,7 +2763,7 @@ bool gt_MegalithReachesStasisLock04Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FOURTH_STASIS_LOCK);
     gv_masteryAchievementWindowClosed = true;
     Wait(0.5, c_timeAI);
     while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
@@ -4864,7 +4872,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDecryptStasisLocksComplete, true, false);
@@ -5278,8 +5286,11 @@ bool gt_ObjectiveClearOutZergCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PPurifier02Primary01");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPurifier02Primary01", "", 0);
+    gv_objectiveClearOutZerg = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveClearOutZerg, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveClearOutZerg, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveClearOutZerg, gv_LOCATION_ID_ZERG_CLEARED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClearOutZerg, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5311,7 +5322,7 @@ bool gt_ObjectiveClearOutZergComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveClearOutZergCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveClearOutZerg);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5343,7 +5354,7 @@ bool gt_ObjectiveClearOutZergFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveClearOutZergCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveClearOutZerg);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5372,8 +5383,16 @@ bool gt_ObjectiveDecryptStasisLocksCreate_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PPurifier02Primary02");
-    gv_objectiveDestroyZergBase4 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPurifier02Primary02", "", gv_objectiveStasisLocksCurrent);
+    gv_objectiveStasisLocks = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveStasisLocks, libVoiC_gf_MissionObjectiveName("PPurifier02Primary02"));
+    ObjectiveShow(gv_objectiveStasisLocks, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveStasisLocks, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objectiveStasisLocksCurrent, libVoiC_gf_MissionObjectiveItemCount("PPurifier02Primary02"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveStasisLocks, gv_LOCATION_ID_FIRST_STASIS_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveStasisLocks, gv_LOCATION_ID_SECOND_STASIS_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveStasisLocks, gv_LOCATION_ID_THIRD_STASIS_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveStasisLocks, gv_LOCATION_ID_FOURTH_STASIS_LOCK);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveStasisLocks, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveStasisLocks, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5405,7 +5424,7 @@ bool gt_ObjectiveDecryptStasisLocksComplete_Func (bool testConds, bool runAction
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDecryptStasisLocksCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveStasisLocks);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5426,7 +5445,7 @@ bool gt_ObjectiveDecryptStasisLocksUpdate_Func (bool testConds, bool runActions)
     }
 
     TriggerExecute(gt_ObjectiveDecryptStasisLocksCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase4, gv_objectiveStasisLocksCurrent);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveStasisLocks, gv_objectiveStasisLocksCurrent);
     return true;
 }
 
@@ -5457,7 +5476,7 @@ bool gt_ObjectiveDecryptStasisLocksFailed_Func (bool testConds, bool runActions)
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDecryptStasisLocksCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveStasisLocks);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5486,8 +5505,10 @@ bool gt_ObjectiveMegalithMustSurviveCreate_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PPurifier02Primary03");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPurifier02Primary03", "", 0);
+    gv_objectiveMegalithMustSurvive = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveMegalithMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveMegalithMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveMegalithMustSurvive, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5519,7 +5540,7 @@ bool gt_ObjectiveMegalithMustSurviveComplete_Func (bool testConds, bool runActio
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveMegalithMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveMegalithMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5551,7 +5572,7 @@ bool gt_ObjectiveMegalithMustSurviveFailed_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveMegalithMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveMegalithMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5565,7 +5586,13 @@ void gt_ObjectiveMegalithMustSurviveFailed_Init () {
 // Trigger: Objective Destroy Power Core Housing Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDestroyPowerCoreHousingCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5583,8 +5610,13 @@ bool gt_ObjectiveDestroyPowerCoreHousingCreate_Func (bool testConds, bool runAct
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PPurifier02Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPurifier02Bonus01", "", gv_objectiveDestroyPowerCoreHousingCount);
+    gv_objectiveDestroyPowerCoreHousing = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveDestroyPowerCoreHousing, libVoiC_gf_MissionObjectiveName("PPurifier02Bonus01"));
+    ObjectiveShow(gv_objectiveDestroyPowerCoreHousing, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyPowerCoreHousing, lv_category, "", gv_objectiveDestroyPowerCoreHousingCount, libVoiC_gf_MissionObjectiveItemCount("PPurifier02Bonus01"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPowerCoreHousing, gv_LOCATION_ID_SOUTH_POWER_CORE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyPowerCoreHousing, gv_LOCATION_ID_EAST_POWER_CORE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyPowerCoreHousing, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5613,7 +5645,7 @@ bool gt_ObjectiveDestroyPowerCoreHousingComplete_Func (bool testConds, bool runA
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveDestroyPowerCoreHousingCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyPowerCoreHousing);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5637,7 +5669,7 @@ bool gt_ObjectiveDestroyPowerCoreHousingUpdate_Func (bool testConds, bool runAct
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyPowerCoreHousingCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_objectiveDestroyPowerCoreHousingCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyPowerCoreHousing, gv_objectiveDestroyPowerCoreHousingCount);
     return true;
 }
 
@@ -5668,7 +5700,7 @@ bool gt_ObjectiveDestroyPowerCoreHousingFailed_Func (bool testConds, bool runAct
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyPowerCoreHousingCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyPowerCoreHousing);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5676,6 +5708,36 @@ bool gt_ObjectiveDestroyPowerCoreHousingFailed_Func (bool testConds, bool runAct
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDestroyPowerCoreHousingFailed_Init () {
     gt_ObjectiveDestroyPowerCoreHousingFailed = TriggerCreate("gt_ObjectiveDestroyPowerCoreHousingFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Power Core Housing Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyPowerCoreHousingDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_POWER_CORE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EAST_POWER_CORE] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveDestroyPowerCoreHousingCreate, false);
+    TriggerEnable(gt_ObjectiveDestroyPowerCoreHousingUpdate, false);
+    TriggerEnable(gt_BonusObjectiveCreateQ, false);
+    TriggerEnable(gt_PowerCoreHousingDestroyedQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyPowerCoreHousingDeactivate_Init () {
+    gt_ObjectiveDestroyPowerCoreHousingDeactivate = TriggerCreate("gt_ObjectiveDestroyPowerCoreHousingDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveDestroyPowerCoreHousingDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6422,8 +6484,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     PlayerSetState(gv_pLAYER_01_USER, c_playerStateXPGain, true);
     libVCUI_gf_ShowSpearofAdunUI(true, c_transitionDurationDefault);
     VisExploreArea(gv_pLAYER_01_USER, RegionFromId(36), true, false);
-    ObjectiveShow(gv_objectiveDestroyZergBase3, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveClearOutZerg, false);
     TriggerExecute(gt_StartAI, true, false);
     Wait(0.5, c_timeReal);
     if ((gv_cinematicCompleted == true)) {
@@ -6839,6 +6900,7 @@ void InitTriggers () {
     gt_ObjectiveDestroyPowerCoreHousingComplete_Init();
     gt_ObjectiveDestroyPowerCoreHousingUpdate_Init();
     gt_ObjectiveDestroyPowerCoreHousingFailed_Init();
+    gt_ObjectiveDestroyPowerCoreHousingDeactivate_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
