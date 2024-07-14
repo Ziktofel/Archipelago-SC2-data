@@ -53,6 +53,16 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_1_TERRAZINE_NODE_COLLECTED = 1;
+const int gv_LOCATION_ID_2_TERRAZINE_NODES_COLLECTED = 2;
+const int gv_LOCATION_ID_3_TERRAZINE_NODES_COLLECTED = 3;
+const int gv_LOCATION_ID_4_TERRAZINE_NODES_COLLECTED = 4;
+const int gv_LOCATION_ID_5_TERRAZINE_NODES_COLLECTED = 5;
+const int gv_LOCATION_ID_HERC_OUTPOST = 6;
+const int gv_LOCATION_ID_UMOJAN_MINE = 7;
+const int gv_LOCATION_ID_BLIGHTBRINGER = 8;
+const int gv_LOCATION_ID_SCIENCE_FACILITY = 9;
+const int gv_LOCATION_ID_ERADICATORS = 10;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_PROTOSS_BULLIES = 2;
 const int gv_pLAYER_03_INFESTED_NOFIGHTPROTOSS = 3;
@@ -162,17 +172,17 @@ bool gv_achievement_PlayerHasKilledProtoss;
 int gv_victoryStat_LiberatorKills;
 int gv_victoryStat_ProtossWavesIntercepted;
 bool gv_achievementConstructedSiegeTankOrLiberator;
-int gv_objectiveDestroyZergBase;
+int gv_objectiveExtractTerrazine;
 int gv_objectiveExtractTerrazineCount;
 int gv_objectiveExtractTerrazineMax;
-int gv_objectiveDestroyZergBase2;
 int gv_objectiveDoNotLetDevicesBeDestroyed;
-int gv_objectiveDoNotLetDevicesBeDestroyedMax;
-int gv_objectiveRescueStalkers;
-int gv_objectiveRescueStalkers3;
-int gv_objectiveRescueStalkers2;
-int gv_objectiveRescueStalkers4;
-int gv_objectiveRescueStalkers5;
+int gv_doNotLetDevicesBeDestroyed;
+int gv_doNotLetDevicesBeDestroyedMax;
+int gv_objectiveExploreUmojanMine;
+int gv_objectiveExploreScienceFacility;
+int gv_objectiveFindHERCCompound;
+int gv_objectiveKillBlightbringer;
+int gv_objectiveKillEradicators;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -214,15 +224,15 @@ void InitGlobals () {
     gv_infestedRageWaveUnits = UnitGroupEmpty();
     gv_nydusUnloadedUnits = UnitGroupEmpty();
     gv_protossBaseAttackGroup = UnitGroupEmpty();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
+    gv_objectiveExtractTerrazine = c_invalidObjectiveId;
     gv_objectiveExtractTerrazineMax = libLotv_gf_DifficultyValueInt2(5, 5, 6, 6);
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveDoNotLetDevicesBeDestroyedMax = libLotv_gf_DifficultyValueInt2(5, 5, 4, 3);
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers3 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers2 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers4 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers5 = c_invalidObjectiveId;
+    gv_objectiveDoNotLetDevicesBeDestroyed = c_invalidObjectiveId;
+    gv_doNotLetDevicesBeDestroyedMax = libLotv_gf_DifficultyValueInt2(5, 5, 4, 3);
+    gv_objectiveExploreUmojanMine = c_invalidObjectiveId;
+    gv_objectiveExploreScienceFacility = c_invalidObjectiveId;
+    gv_objectiveFindHERCCompound = c_invalidObjectiveId;
+    gv_objectiveKillBlightbringer = c_invalidObjectiveId;
+    gv_objectiveKillEradicators = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -427,9 +437,11 @@ trigger gt_ObjectiveFindHERCCompoundFailed;
 trigger gt_ObjectiveKillBlightbringerCreate;
 trigger gt_ObjectiveKillBlightbringerComplete;
 trigger gt_ObjectiveKillBlightbringerFailed;
+trigger gt_ObjectiveKillBlightbringerDeactivate;
 trigger gt_ObjectiveKillEradicatorsCreate;
 trigger gt_ObjectiveKillEradicatorsComplete;
 trigger gt_ObjectiveKillEradicatorsFailed;
+trigger gt_ObjectiveKillEradicatorsDeactivate;
 trigger gt_BriefingCinematic;
 trigger gt_BriefingBaseHolograms;
 trigger gt_BriefingQ;
@@ -774,7 +786,7 @@ void gf_PlayerFinishesGatheringTerrazineTankQ (int lp_terrazineTankIndex) {
     gv_objectiveExtractTerrazineCount += 1;
     TriggerExecute(gt_ObjectiveExtractTerrazineUpdate, true, false);
     if ((gv_objectiveExtractTerrazineCount <= 5)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(gv_objectiveExtractTerrazineCount);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_objectiveExtractTerrazineCount);
     }
 
     if ((gv_objectiveExtractTerrazineCount >= gv_objectiveExtractTerrazineMax)) {
@@ -3461,7 +3473,7 @@ bool gt_awardMines_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_UMOJAN_MINE);
     return true;
 }
 
@@ -3488,7 +3500,7 @@ bool gt_awardScienceFacility_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SCIENCE_FACILITY);
     return true;
 }
 
@@ -3932,7 +3944,7 @@ bool gt_Init06Difficulties_Func (bool testConds, bool runActions) {
     }
 
     gv_objectiveExtractTerrazineMax = libLotv_gf_DifficultyValueInt2(5, 5, 6, 6);
-    gv_objectiveDoNotLetDevicesBeDestroyedMax = libLotv_gf_DifficultyValueInt2(5, 5, 4, 3);
+    gv_doNotLetDevicesBeDestroyedMax = libLotv_gf_DifficultyValueInt2(5, 5, 4, 3);
     TechTreeUpgradeAddLevel(gv_pLAYER_07_COLONISTS, "ShieldWall", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_03_INFESTED_NOFIGHTPROTOSS, "overlordspeed", 1);
     TechTreeUpgradeAddLevel(gv_pLAYER_05_INFESTED_FIGHTPROTOSS, "overlordspeed", 1);
@@ -5467,7 +5479,7 @@ bool gt_ReachUmojanForcesQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerEnable(gt_FriendlyUmojansQ, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_HERC_OUTPOST);
     TriggerExecute(gt_ObjectiveFindHERCCompoundComplete, true, false);
     auto2985741A_g = UnitGroup(null, gv_pLAYER_07_COLONISTS, RegionFromId(26), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto2985741A_u = UnitGroupCount(auto2985741A_g, c_unitCountAll);
@@ -6291,9 +6303,9 @@ bool gt_TerrazineTankIsDestroyed_Func (bool testConds, bool runActions) {
 
     }
     gv_terrazineTankLocations[lv_terrazineTankIndex].lv_state = ge_PRESETTerrazineTankState_Sealed;
-    gv_objectiveDoNotLetDevicesBeDestroyed += 1;
+    gv_doNotLetDevicesBeDestroyed += 1;
     TriggerExecute(gt_ObjectiveDoNotLetDevicesBeDestroyedUpdate, true, false);
-    if ((gv_objectiveDoNotLetDevicesBeDestroyed >= gv_objectiveDoNotLetDevicesBeDestroyedMax)) {
+    if ((gv_doNotLetDevicesBeDestroyed >= gv_doNotLetDevicesBeDestroyedMax)) {
         TriggerExecute(gt_DefeatProtossCapTerrazine, true, false);
         return true;
     }
@@ -7464,8 +7476,7 @@ bool gt_BonusObjectiveSpawnBlightbringerScene_Func (bool testConds, bool runActi
     libNCMI_gf_PlaySoundCinematic(SoundLink("BlightBringer_VxFx_02", -1), PlayerGroupAll(), 300.0, 0.0);
     libNtve_gf_SendActorMessageToUnit(gv_bonusObjective_Blightbringer, "AnimPlay Spell Spell 0 -1.000000 -1.000000 4.000000 AsDuration");
     Wait(3.0, c_timeGame);
-    ObjectiveShow(gv_objectiveRescueStalkers, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveExploreUmojanMine, false);
     libLbty_gf_AutoRevealRegion(RegionFromId(93), RegionFromId(93), gv_pLAYER_01_USER);
     libNCMI_gf_CinematicModeCampaign(false, c_transitionDurationDefault, true);
     libNtve_gf_MakeUnitInvulnerable(gv_nova, false);
@@ -7718,7 +7729,7 @@ bool gt_BonusObjectiveBlightbringerDies_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKillBlightbringerComplete, true, false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_BLIGHTBRINGER);
     gv_bonusObjective_BlightbringerActive = false;
     CameraShake(gv_pLAYER_01_USER, "Light", "Earthquake", 0.0, 2.0, 2.0);
     auto051B9103_g = UnitGroup("BlightbringerEgg", c_playerAny, RegionFromId(79), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
@@ -7778,7 +7789,7 @@ bool gt_BonusObjectiveEradicatorNovaEntersRoom_Func (bool testConds, bool runAct
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveKillBlightbringerCreate, true, false);
+    TriggerExecute(gt_ObjectiveKillEradicatorsCreate, true, false);
     UnitIssueOrder(UnitFromId(896), Order(AbilityCommand("UmojanLabDoorsThinLeft", 0)), c_orderQueueReplace);
     if ((gv_eradicatorsActivated == true)) {
         if ((UnitIsAlive(gv_eradicatorTypeCannon) == true) && (UnitIsAlive(gv_eradicatorTypeMissile) == true)) {
@@ -7898,8 +7909,7 @@ bool gt_BonusObjectiveSpawnEradicatorScene_Func (bool testConds, bool runActions
     UnitIssueOrder(gv_eradicatorTypeMissile, Order(AbilityCommand("move", 2)), c_orderQueueReplace);
     UnitIssueOrder(gv_eradicatorTypeCannon, OrderTargetingPoint(AbilityCommand("move", 4), PointFromId(2094)), c_orderQueueReplace);
     UnitIssueOrder(gv_eradicatorTypeCannon, Order(AbilityCommand("move", 2)), c_orderQueueAddToEnd);
-    ObjectiveShow(gv_objectiveRescueStalkers3, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveRescueStalkers3);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveExploreScienceFacility, false);
     TriggerExecute(gt_ObjectiveExploreScienceFacilityComplete, true, false);
     TriggerExecute(gt_ObjectiveKillEradicatorsCreate, true, false);
     libNCMI_gf_CinematicModeCampaign(false, c_transitionDurationDefault, true);
@@ -8334,7 +8344,7 @@ bool gt_BonusObjectiveEradicatorDies_Func (bool testConds, bool runActions) {
         TriggerStop(gt_BonusObjectiveEradicatorTypeCannonEnrage);
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_ObjectiveKillEradicatorsComplete, true, false);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ERADICATORS);
         UnitSetPosition(UnitFromId(1093), lv_dyingPoint, false);
         libNtve_gf_ShowHideUnit(UnitFromId(1093), true);
         gf_BonusObjectivePauseUnpauseUnitGroup(false, libNtve_gf_ConvertUnitToUnitGroup(UnitFromId(1093)));
@@ -9363,7 +9373,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNCMI_gf_GameOver(libNCMI_ge_CampaignMissionGameResultType_Victory);
     libNtve_gf_ChangeUnitDamage(gv_nova, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     Wait(2.0, c_timeReal);
@@ -9396,11 +9406,11 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyZergBase) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveExtractTerrazine) == c_objectiveStateCompleted)) {
         libComC_gf_CampaignAwardAchievement("Nova05_1", gv_pLAYER_01_USER);
     }
 
-    if ((gv_objectiveDoNotLetDevicesBeDestroyed == 0) && (libLotv_gf_DifficultyValueInt2(0, 1, 1, 1) == 1)) {
+    if ((gv_doNotLetDevicesBeDestroyed == 0) && (libLotv_gf_DifficultyValueInt2(0, 1, 1, 1) == 1)) {
         libComC_gf_CampaignAwardAchievement("Nova05_3", gv_pLAYER_01_USER);
     }
 
@@ -9692,9 +9702,17 @@ bool gt_ObjectiveExtractTerrazineCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova05Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase, "Nova05Primary01", "", 0);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounterMax(gv_objectiveDestroyZergBase, gv_objectiveExtractTerrazineMax);
+    gv_objectiveExtractTerrazine = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveExtractTerrazine, libComC_gf_MissionObjectiveName("Nova05Primary01"));
+    ObjectiveShow(gv_objectiveExtractTerrazine, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveExtractTerrazine, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objectiveExtractTerrazineCount, gv_objectiveExtractTerrazineMax, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExtractTerrazine, gv_LOCATION_ID_1_TERRAZINE_NODE_COLLECTED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExtractTerrazine, gv_LOCATION_ID_2_TERRAZINE_NODES_COLLECTED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExtractTerrazine, gv_LOCATION_ID_3_TERRAZINE_NODES_COLLECTED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExtractTerrazine, gv_LOCATION_ID_4_TERRAZINE_NODES_COLLECTED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExtractTerrazine, gv_LOCATION_ID_5_TERRAZINE_NODES_COLLECTED);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExtractTerrazine, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveExtractTerrazine, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9726,7 +9744,7 @@ bool gt_ObjectiveExtractTerrazineComplete_Func (bool testConds, bool runActions)
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveExtractTerrazineCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveExtractTerrazine);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9747,7 +9765,7 @@ bool gt_ObjectiveExtractTerrazineUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveExtractTerrazineCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_objectiveExtractTerrazineCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveExtractTerrazine, gv_objectiveExtractTerrazineCount);
     return true;
 }
 
@@ -9778,7 +9796,7 @@ bool gt_ObjectiveExtractTerrazineFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveExtractTerrazineCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveExtractTerrazine);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9807,9 +9825,11 @@ bool gt_ObjectiveDoNotLetDevicesBeDestroyedCreate_Func (bool testConds, bool run
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova05Primary02");
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase2, "Nova05Primary02", "", 0);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounterMax(gv_objectiveDestroyZergBase2, gv_objectiveDoNotLetDevicesBeDestroyedMax);
+    gv_objectiveDoNotLetDevicesBeDestroyed = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveDoNotLetDevicesBeDestroyed, libComC_gf_MissionObjectiveName("Nova05Primary02"));
+    ObjectiveShow(gv_objectiveDoNotLetDevicesBeDestroyed, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDoNotLetDevicesBeDestroyed, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_doNotLetDevicesBeDestroyed, gv_doNotLetDevicesBeDestroyedMax, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDoNotLetDevicesBeDestroyed, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9841,7 +9861,7 @@ bool gt_ObjectiveDoNotLetDevicesBeDestroyedComplete_Func (bool testConds, bool r
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDoNotLetDevicesBeDestroyedCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDoNotLetDevicesBeDestroyed);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9862,7 +9882,7 @@ bool gt_ObjectiveDoNotLetDevicesBeDestroyedUpdate_Func (bool testConds, bool run
     }
 
     TriggerExecute(gt_ObjectiveDoNotLetDevicesBeDestroyedCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase2, gv_objectiveDoNotLetDevicesBeDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDoNotLetDevicesBeDestroyed, gv_doNotLetDevicesBeDestroyed);
     return true;
 }
 
@@ -9893,7 +9913,7 @@ bool gt_ObjectivePreventProtossFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDoNotLetDevicesBeDestroyedCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDoNotLetDevicesBeDestroyed);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9907,7 +9927,13 @@ void gt_ObjectivePreventProtossFailed_Init () {
 // Trigger: Objective Explore Umojan Mine Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveExploreUmojanMineCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -9925,8 +9951,12 @@ bool gt_ObjectiveExploreUmojanMineCreate_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     libCMMI_gf_CreateObjectiveCampaign("Nova05Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveRescueStalkers, "Nova05Bonus01", "", 0);
+    gv_objectiveExploreUmojanMine = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveExploreUmojanMine, libComC_gf_MissionObjectiveName("Nova05Bonus01"));
+    ObjectiveShow(gv_objectiveExploreUmojanMine, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveExploreUmojanMine, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExploreUmojanMine, gv_LOCATION_ID_UMOJAN_MINE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveExploreUmojanMine, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9955,7 +9985,7 @@ bool gt_ObjectiveExploreUmojanMineComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveExploreUmojanMineCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveExploreUmojanMine);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9987,7 +10017,7 @@ bool gt_ObjectiveExploreUmojanMineFailed_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveExploreUmojanMineCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveExploreUmojanMine);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10001,7 +10031,13 @@ void gt_ObjectiveExploreUmojanMineFailed_Init () {
 // Trigger: Objective Explore Science Facility Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveExploreScienceFacilityCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -10019,8 +10055,12 @@ bool gt_ObjectiveExploreScienceFacilityCreate_Func (bool testConds, bool runActi
         Wait(1.0, c_timeGame);
     }
     libCMMI_gf_CreateObjectiveCampaign("Nova05Bonus02");
-    gv_objectiveRescueStalkers3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveRescueStalkers3, "Nova05Bonus02", "", 0);
+    gv_objectiveExploreScienceFacility = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveExploreScienceFacility, libComC_gf_MissionObjectiveName("Nova05Bonus02"));
+    ObjectiveShow(gv_objectiveExploreScienceFacility, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveExploreScienceFacility, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveExploreScienceFacility, gv_LOCATION_ID_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveExploreScienceFacility, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10049,7 +10089,7 @@ bool gt_ObjectiveExploreScienceFacilityComplete_Func (bool testConds, bool runAc
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveExploreScienceFacilityCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveExploreScienceFacility);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10081,7 +10121,7 @@ bool gt_ObjectiveExploreScienceFacilityFailed_Func (bool testConds, bool runActi
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveExploreScienceFacilityCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveExploreScienceFacility);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10095,7 +10135,13 @@ void gt_ObjectiveExploreScienceFacilityFailed_Init () {
 // Trigger: Objective Find HERC Compound Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindHERCCompoundCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -10112,9 +10158,11 @@ bool gt_ObjectiveFindHERCCompoundCreate_Func (bool testConds, bool runActions) {
     while (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeGame);
     }
-    ObjectiveCreate(StringExternal("Param/Value/2D2FAD46"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveRescueStalkers2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveRescueStalkers2);
+    ObjectiveCreate(StringExternal("Param/Value/2D2FAD46"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveFindHERCCompound = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveFindHERCCompound, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindHERCCompound, gv_LOCATION_ID_HERC_OUTPOST);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindHERCCompound, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10143,7 +10191,7 @@ bool gt_ObjectiveFindHERCCompoundComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindHERCCompoundCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFindHERCCompound);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10175,7 +10223,7 @@ bool gt_ObjectiveFindHERCCompoundFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFindHERCCompoundCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveFindHERCCompound);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10189,7 +10237,13 @@ void gt_ObjectiveFindHERCCompoundFailed_Init () {
 // Trigger: Objective Kill Blightbringer Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveKillBlightbringerCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -10206,9 +10260,11 @@ bool gt_ObjectiveKillBlightbringerCreate_Func (bool testConds, bool runActions) 
     while (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeGame);
     }
-    ObjectiveCreate(StringExternal("Param/Value/9F370619"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveRescueStalkers4 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveRescueStalkers4);
+    ObjectiveCreate(StringExternal("Param/Value/9F370619"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveKillBlightbringer = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillBlightbringer, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillBlightbringer, gv_LOCATION_ID_BLIGHTBRINGER);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillBlightbringer, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10237,7 +10293,7 @@ bool gt_ObjectiveKillBlightbringerComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKillBlightbringerCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers4);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillBlightbringer);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10269,7 +10325,7 @@ bool gt_ObjectiveKillBlightbringerFailed_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillBlightbringerCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers4);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillBlightbringer);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10280,10 +10336,54 @@ void gt_ObjectiveKillBlightbringerFailed_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Blightbringer Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillBlightbringerDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_UMOJAN_MINE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_BLIGHTBRINGER] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveKillBlightbringerCreate, false);
+    TriggerEnable(gt_ObjectiveKillBlightbringerComplete, false);
+    TriggerEnable(gt_ObjectiveKillBlightbringerFailed, false);
+    TriggerEnable(gt_BonusObjectiveRevealMinesQ, false);
+    TriggerEnable(gt_BonusObjectiveBlightbringer, false);
+    TriggerEnable(gt_BonusObjectiveBlightbringerBattleAI, false);
+    TriggerEnable(gt_BonusObjectiveSpawnBlightbringerScene, false);
+    TriggerEnable(gt_BonusObjectiveBlightbringerSpawned, false);
+    TriggerEnable(gt_BonusObjectiveFoundBlightbringerTransmissionQ, false);
+    TriggerEnable(gt_BonusObjectiveBlightbringerEggCreated, false);
+    TriggerEnable(gt_BonusObjectiveInfestedAttackNova, false);
+    TriggerEnable(gt_BonusObjectiveBlightbringerDies, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillBlightbringerDeactivate_Init () {
+    gt_ObjectiveKillBlightbringerDeactivate = TriggerCreate("gt_ObjectiveKillBlightbringerDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveKillBlightbringerDeactivate, 3.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Kill Eradicators Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveKillEradicatorsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -10300,9 +10400,11 @@ bool gt_ObjectiveKillEradicatorsCreate_Func (bool testConds, bool runActions) {
     while (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
         Wait(1.0, c_timeGame);
     }
-    ObjectiveCreate(StringExternal("Param/Value/AFEBC663"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveRescueStalkers5 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveRescueStalkers5);
+    ObjectiveCreate(StringExternal("Param/Value/AFEBC663"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveKillEradicators = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillEradicators, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillEradicators, gv_LOCATION_ID_ERADICATORS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillEradicators, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10331,7 +10433,7 @@ bool gt_ObjectiveKillEradicatorsComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveKillEradicatorsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers5);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillEradicators);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10363,7 +10465,7 @@ bool gt_ObjectiveKillEradicatorsFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillEradicatorsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers5);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillEradicators);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -10371,6 +10473,45 @@ bool gt_ObjectiveKillEradicatorsFailed_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveKillEradicatorsFailed_Init () {
     gt_ObjectiveKillEradicatorsFailed = TriggerCreate("gt_ObjectiveKillEradicatorsFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Eradicators Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillEradicatorsDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SCIENCE_FACILITY] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_ERADICATORS] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ObjectiveKillEradicatorsCreate, false);
+    TriggerEnable(gt_ObjectiveKillEradicatorsComplete, false);
+    TriggerEnable(gt_ObjectiveKillEradicatorsFailed, false);
+    TriggerEnable(gt_BonusObjectiveRevealScienceFacilityQ, false);
+    TriggerEnable(gt_BonusObjectiveProximityRevealScienceFacility, false);
+    TriggerEnable(gt_BonusObjectiveEradicatorNovaEntersRoom, false);
+    TriggerEnable(gt_BonusObjectiveActivateEradicatorTransmissionQ, false);
+    TriggerEnable(gt_BonusObjectiveActivateEradicatorEnrageTransmissionQ, false);
+    TriggerEnable(gt_BonusObjectiveEradicatorTypeMissile, false);
+    TriggerEnable(gt_BonusObjectiveEradicatorTypeCannon, false);
+    TriggerEnable(gt_BonusObjectiveEradicatorTypeMissileEnrage, false);
+    TriggerEnable(gt_BonusObjectiveEradicatorTypeCannonEnrage, false);
+    TriggerEnable(gt_BonusObjectiveEradicatorDies, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillEradicatorsDeactivate_Init () {
+    gt_ObjectiveKillEradicatorsDeactivate = TriggerCreate("gt_ObjectiveKillEradicatorsDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveKillEradicatorsDeactivate, 3.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -11865,9 +12006,11 @@ void InitTriggers () {
     gt_ObjectiveKillBlightbringerCreate_Init();
     gt_ObjectiveKillBlightbringerComplete_Init();
     gt_ObjectiveKillBlightbringerFailed_Init();
+    gt_ObjectiveKillBlightbringerDeactivate_Init();
     gt_ObjectiveKillEradicatorsCreate_Init();
     gt_ObjectiveKillEradicatorsComplete_Init();
     gt_ObjectiveKillEradicatorsFailed_Init();
+    gt_ObjectiveKillEradicatorsDeactivate_Init();
     gt_BriefingCinematic_Init();
     gt_BriefingBaseHolograms_Init();
     gt_BriefingQ_Init();
