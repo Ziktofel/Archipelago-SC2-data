@@ -44,6 +44,14 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_WEST_GARRISON = 1;
+const int gv_LOCATION_ID_CLOSE_GARRISON = 2;
+const int gv_LOCATION_ID_NORTHEAST_GARRISON = 3;
+const int gv_LOCATION_ID_SOUTHEAST_GARRISON = 4;
+const int gv_LOCATION_ID_SOUTH_GARRISON = 5;
+const int gv_LOCATION_ID_ALL_GARRISONS = 6;
+const int gv_LOCATION_ID_FORCES_RESCUED = 7;
+const int gv_LOCATION_ID_COMMUNICATIONS_HUB = 8;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_NOVASUPPORT = 2;
 const int gv_pLAYER_03_FERALZERG_MIDDLEBULLIES = 3;
@@ -120,13 +128,13 @@ int gv_victoryStat_SupplyReached;
 bool gv_achievement_PlayerSupplyExceeded35;
 bool gv_achievement_NovaHasKilledDOMUnit;
 string[gv_shared_upgrade_max_index + 1] gv_shared_upgrades;
-int gv_objectiveDestroyZergBase3;
+int gv_objectiveFillGarrisons;
 int gv_objectiveFillGarrisonsCount;
 int gv_objectiveFillGarrisonsMax;
-int gv_objectiveRescueStalkers;
-int gv_objectiveDestroyZergBase2;
-int gv_objectiveDestroyZergBase5;
-int gv_objectiveDestroyZergBase4;
+int gv_objectiveRecoverDownedForces;
+int gv_objectiveReachCommunicationsHub;
+int gv_objectiveNovaMustSurvive;
+int gv_objectiveReachCommandRoom;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -184,11 +192,11 @@ void InitGlobals () {
     gv_s3_FinalRoomTerrans = UnitGroupEmpty();
     gv_s3_FinalRoomZerg = UnitGroupEmpty();
     gv_victoryStat_SupplyReached = PlayerGetPropertyInt(gv_pLAYER_01_USER, c_playerPropSuppliesUsed);
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase5 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase4 = c_invalidObjectiveId;
+    gv_objectiveFillGarrisons = c_invalidObjectiveId;
+    gv_objectiveRecoverDownedForces = c_invalidObjectiveId;
+    gv_objectiveReachCommunicationsHub = c_invalidObjectiveId;
+    gv_objectiveNovaMustSurvive = c_invalidObjectiveId;
+    gv_objectiveReachCommandRoom = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -832,7 +840,7 @@ bool auto_gf_S1GarrisonUnit_TriggerFunc (bool testConds, bool runActions) {
 
     if ((gv_s1_GarrisonSpots[lp_garrisonIndex].lv_garrisonUnitCount >= gv_s1_GarrisonSpots[lp_garrisonIndex].lv_garrisonUnitMax)) {
         if ((gv_s1_GarrisonSpots[lp_garrisonIndex].lv_garrisonSpotCompleted == false)) {
-            lib5BD4895D_gf_AP_Core_sendLocationLocal(lp_garrisonIndex);
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lp_garrisonIndex);
         }
 
         gv_s1_GarrisonSpots[lp_garrisonIndex].lv_garrisonSpotCompleted = true;
@@ -3364,8 +3372,7 @@ bool gt_StartGame03QReachCommandRoom_Func (bool testConds, bool runActions) {
         UnitAbilityEnable(auto702D7CF7_var, "attack", true);
     }
     Wait(2.0, c_timeReal);
-    ObjectiveShow(gv_objectiveDestroyZergBase2, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveReachCommunicationsHub, false);
     TriggerExecute(gt_ObjectiveReachCommandRoomCreate, true, true);
     TriggerExecute(gt_ObjectiveNovaMustSurviveCreate, true, true);
     libNtve_gf_CreatePingFacingAngle(PlayerGroupAll(), "PingObjective", PointFromId(75), ColorWithAlpha(0.00, 100.00, 0.00, 0.00), 0.0, 270.0);
@@ -4086,7 +4093,7 @@ bool gt_S1GarrisonsAllFilledUp_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ALL_GARRISONS);
     TriggerExecute(gt_ObjectiveFillGarrisonsComplete, true, false);
     libNtve_gf_ChangeUnitDamage(gv_zeratul, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     if ((gv_achievement_PlayerSupplyExceeded35 == false) && (libLotv_gf_DifficultyValueInt2(0, 0, 1, 1) == 1)) {
@@ -4945,7 +4952,7 @@ bool gt_S1UnitEntersBonusObjectiveRevealQ_Func (bool testConds, bool runActions)
 
     }
     if ((lv_survivorsFound == true)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FORCES_RESCUED);
     }
 
     Wait(2.0, c_timeGame);
@@ -6273,7 +6280,7 @@ bool gt_S2NovaEntersBeaconIntelQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     UnitKill(gv_s2_BeaconActionableIntel);
     PingDestroy(libHots_gf_PingStoredForUnit(gv_s2_BeaconActionableIntel, 1));
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_COMMUNICATIONS_HUB);
     TriggerExecute(gt_ObjectiveReachCommunicationsHubComplete, true, false);
     TriggerExecute(gt_S2CleanUpSection02, true, true);
     TriggerExecute(gt_MidQ2, true, true);
@@ -8041,11 +8048,11 @@ bool gt_DefeatNovaDead_Func (bool testConds, bool runActions) {
     TriggerQueueClear(c_triggerQueueRemove);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveNovaMustSurviveFailed, true, false);
-    if ((ObjectiveVisible(gv_objectiveDestroyZergBase2, gv_pLAYER_01_USER) == true)) {
+    if ((ObjectiveVisible(gv_objectiveReachCommunicationsHub, gv_pLAYER_01_USER) == true)) {
         TriggerExecute(gt_ObjectiveReachCommunicationsHubFailed, true, false);
     }
 
-    if ((ObjectiveVisible(gv_objectiveDestroyZergBase4, gv_pLAYER_01_USER) == true)) {
+    if ((ObjectiveVisible(gv_objectiveReachCommandRoom, gv_pLAYER_01_USER) == true)) {
         TriggerExecute(gt_ObjectiveReachCommandRoomFailed, true, false);
     }
 
@@ -8157,7 +8164,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNCMI_gf_GameOver(libNCMI_ge_CampaignMissionGameResultType_Victory);
     libNtve_gf_MakeUnitInvulnerable(gv_zeratul, true);
     UnitKill(gv_s3_BeaconEnd);
@@ -8192,7 +8199,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libNtve_gf_ChangeUnitDamage(gv_zeratul, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
-    if ((ObjectiveGetState(gv_objectiveDestroyZergBase3) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyZergBase5) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyZergBase4) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyZergBase2) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveFillGarrisons) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveNovaMustSurvive) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveReachCommandRoom) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveReachCommunicationsHub) == c_objectiveStateCompleted)) {
         libComC_gf_CampaignAwardAchievement("Nova03_1", gv_pLAYER_01_USER);
     }
 
@@ -9505,8 +9512,17 @@ bool gt_ObjectiveFillGarrisonsCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova03Primary01");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase3, "Nova03Primary01", "", 0);
+    gv_objectiveFillGarrisons = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveFillGarrisons, libComC_gf_MissionObjectiveName("Nova03Primary01"));
+    ObjectiveShow(gv_objectiveFillGarrisons, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFillGarrisons, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_objectiveFillGarrisonsCount, libComC_gf_MissionObjectiveItemCount("Nova03Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFillGarrisons, gv_LOCATION_ID_WEST_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFillGarrisons, gv_LOCATION_ID_CLOSE_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFillGarrisons, gv_LOCATION_ID_NORTHEAST_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFillGarrisons, gv_LOCATION_ID_SOUTHEAST_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFillGarrisons, gv_LOCATION_ID_SOUTH_GARRISON);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFillGarrisons, gv_LOCATION_ID_ALL_GARRISONS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFillGarrisons, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9538,7 +9554,7 @@ bool gt_ObjectiveFillGarrisonsComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFillGarrisonsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFillGarrisons);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9562,7 +9578,7 @@ bool gt_ObjectiveFillGarrisonsUpdate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFillGarrisonsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase3, gv_objectiveFillGarrisonsCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveFillGarrisons, gv_objectiveFillGarrisonsCount);
     return true;
 }
 
@@ -9593,7 +9609,7 @@ bool gt_ObjectiveFillGarrisonsFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFillGarrisonsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveFillGarrisons);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9607,7 +9623,13 @@ void gt_ObjectiveFillGarrisonsFailed_Init () {
 // Trigger: Objective Recover Downed Forces Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRecoverDownedForcesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -9625,8 +9647,12 @@ bool gt_ObjectiveRecoverDownedForcesCreate_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     libCMMI_gf_CreateObjectiveCampaign("Nova03Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveRescueStalkers, "Nova03Bonus01", "", 0);
+    gv_objectiveRecoverDownedForces = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveRecoverDownedForces, libComC_gf_MissionObjectiveName("Nova03Bonus01"));
+    ObjectiveShow(gv_objectiveRecoverDownedForces, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveRecoverDownedForces, lv_category, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRecoverDownedForces, gv_LOCATION_ID_FORCES_RESCUED);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRecoverDownedForces, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9655,7 +9681,7 @@ bool gt_ObjectiveRecoverDownedForcesComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRecoverDownedForcesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRecoverDownedForces);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9687,7 +9713,7 @@ bool gt_ObjectiveRecoverDownedForcesFailed_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveRecoverDownedForcesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRecoverDownedForces);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9716,9 +9742,13 @@ bool gt_ObjectiveReachCommunicationsHubCreate_Func (bool testConds, bool runActi
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova03Primary02");
-    ObjectiveSetPriority(ObjectiveLastCreated(), 0);
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase2, "Nova03Primary02", "", 0);
+    gv_objectiveReachCommunicationsHub = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveReachCommunicationsHub, 2);
+    ObjectiveShow(gv_objectiveReachCommunicationsHub, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveReachCommunicationsHub, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveReachCommunicationsHub, gv_LOCATION_ID_COMMUNICATIONS_HUB);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveReachCommunicationsHub, true);
+    Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
 
@@ -9749,7 +9779,7 @@ bool gt_ObjectiveReachCommunicationsHubComplete_Func (bool testConds, bool runAc
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveReachCommunicationsHubCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveReachCommunicationsHub);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9781,7 +9811,7 @@ bool gt_ObjectiveReachCommunicationsHubFailed_Func (bool testConds, bool runActi
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveReachCommunicationsHubCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveReachCommunicationsHub);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9810,9 +9840,11 @@ bool gt_ObjectiveNovaMustSurviveCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova03Primary04");
-    ObjectiveSetPriority(ObjectiveLastCreated(), 0);
-    gv_objectiveDestroyZergBase5 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase5, "Nova03Primary04", "", 0);
+    gv_objectiveNovaMustSurvive = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveNovaMustSurvive, 0);
+    ObjectiveShow(gv_objectiveNovaMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveNovaMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveNovaMustSurvive, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9844,7 +9876,7 @@ bool gt_ObjectiveNovaMustSurviveComplete_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveNovaMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveNovaMustSurvive);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9876,7 +9908,7 @@ bool gt_ObjectiveNovaMustSurviveFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveNovaMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase5);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveNovaMustSurvive);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9905,8 +9937,12 @@ bool gt_ObjectiveReachCommandRoomCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova03Primary03");
-    gv_objectiveDestroyZergBase4 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase4, "Nova03Primary03", "", 0);
+    gv_objectiveReachCommandRoom = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objectiveReachCommandRoom, 1);
+    ObjectiveShow(gv_objectiveReachCommandRoom, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveReachCommandRoom, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveReachCommandRoom, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveReachCommandRoom, true);
     return true;
 }
 
@@ -9937,7 +9973,7 @@ bool gt_ObjectiveReachCommandRoomComplete_Func (bool testConds, bool runActions)
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveReachCommandRoomCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveReachCommandRoom);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -9969,7 +10005,7 @@ bool gt_ObjectiveReachCommandRoomFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveReachCommandRoomCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase4);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveReachCommandRoom);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -11292,10 +11328,8 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
         }
     }
 
-    ObjectiveShow(gv_objectiveDestroyZergBase3, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveRescueStalkers, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase3);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFillGarrisons, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRecoverDownedForces, false);
     gv_currentStage = 2;
     libNtve_gf_ClearAnimation(libNtve_gf_MainActorofUnit(gv_zeratul), c_animNameDefault);
     UnitAbilityEnable(gv_zeratul, "attack", true);
@@ -11684,10 +11718,8 @@ bool gt_MidCleanup2_Func (bool testConds, bool runActions) {
     libNtve_gf_SendActorMessageToGameRegion(RegionEntireMap(), "Signal GuideShow");
     UnitIssueOrder(UnitFromId(739), Order(AbilityCommand("Tarsonis_DoorNELowered", 0)), c_orderQueueReplace);
     libLbty_gf_AutoRevealRegion(RegionFromId(32), RegionFromId(32), gv_pLAYER_01_USER);
-    ObjectiveShow(gv_objectiveDestroyZergBase3, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveRescueStalkers, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase3);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFillGarrisons, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRecoverDownedForces, false);
     gv_currentStage = 3;
     SoundStop(gv_midCinematic02_AlarmSound, false);
     libNtve_gf_PauseUnit(gv_zeratul, false);
