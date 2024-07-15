@@ -53,6 +53,7 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_XANTHOS = 1;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DEFENDERSWEST = 2;
 const int gv_pLAYER_03_DEFENDERSEAST = 3;
@@ -102,10 +103,10 @@ unitgroup gv_activeNukers;
 unit gv_s2_Davis;
 int gv_s2DavisTransmission;
 point gv_lastXanthosLocation;
-int gv_objectiveDestroyZergBase;
+int gv_objectiveProtectFleet;
 int gv_objectiveProtectFleetCount;
-int gv_objectiveDestroyZergBase2;
-int gv_objectiveDestroyZergBase3;
+int gv_objectiveDestroyXanthos;
+int gv_objectiveKillDavis;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -128,10 +129,10 @@ void InitGlobals () {
     gv_activeNukers = UnitGroupEmpty();
     gv_s2DavisTransmission = c_invalidTransmissionId;
     gv_lastXanthosLocation = Point(0.0, 0.0);
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
+    gv_objectiveProtectFleet = c_invalidObjectiveId;
     gv_objectiveProtectFleetCount = 5;
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
+    gv_objectiveDestroyXanthos = c_invalidObjectiveId;
+    gv_objectiveKillDavis = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -3269,7 +3270,7 @@ bool gt_XanthosDies_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_XANTHOS);
     TriggerEnable(gt_XanthosFinalFightPlayerWipe, false);
     libNtve_gf_ChangeUnitDamage(gv_nova, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     TriggerExecute(gt_ObjectiveDestroyXanthosComplete, true, true);
@@ -5452,7 +5453,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNCMI_gf_GameOver(libNCMI_ge_CampaignMissionGameResultType_Victory);
     libNtve_gf_ChangeUnitDamage(gv_nova, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     libNCMI_gf_RunMissionVictorySequence(gt_VictoryQ);
@@ -5482,7 +5483,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyZergBase) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveDestroyZergBase3) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objectiveProtectFleet) == c_objectiveStateCompleted) && (ObjectiveGetState(gv_objectiveKillDavis) == c_objectiveStateCompleted)) {
         libComC_gf_CampaignAwardAchievement("Nova09_1", gv_pLAYER_01_USER);
     }
 
@@ -5656,8 +5657,11 @@ bool gt_ObjectiveProtectFleetCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova09Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase, "Nova09Primary01", "remaining", gv_objectiveProtectFleetCount);
+    gv_objectiveProtectFleet = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveProtectFleet, libComC_gf_MissionObjectiveName("Nova09Primary01"));
+    ObjectiveShow(gv_objectiveProtectFleet, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveProtectFleet, lib5BD4895D_ge_APObjectiveCategory_Primary, "remaining", gv_objectiveProtectFleetCount, 0, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveProtectFleet, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5689,7 +5693,7 @@ bool gt_ObjectiveProtectFleetComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveProtectFleetCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveProtectFleet);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5710,7 +5714,7 @@ bool gt_ObjectiveProtectFleetUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveProtectFleetCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_objectiveProtectFleetCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveProtectFleet, gv_objectiveProtectFleetCount);
     return true;
 }
 
@@ -5741,7 +5745,7 @@ bool gt_ObjectiveProtectFleetFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveProtectFleetCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveProtectFleet);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5770,8 +5774,11 @@ bool gt_ObjectiveDestroyXanthosCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova09Primary03");
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase2, "Nova09Primary03", "", 0);
+    gv_objectiveDestroyXanthos = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveDestroyXanthos, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyXanthos, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyXanthos, gv_LOCATION_ID_XANTHOS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyXanthos, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5803,7 +5810,7 @@ bool gt_ObjectiveDestroyXanthosComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyXanthosCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyXanthos);
     return true;
 }
 
@@ -5834,7 +5841,7 @@ bool gt_ObjectiveDestroyXanthosFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveDestroyXanthosCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyXanthos);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5863,8 +5870,11 @@ bool gt_ObjectiveKillDavisCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova09Primary04");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase3, "Nova09Primary04", "", 0);
+    gv_objectiveKillDavis = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveKillDavis, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillDavis, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillDavis, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillDavis, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5896,7 +5906,7 @@ bool gt_ObjectiveKillDavisComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillDavisCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillDavis);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5928,7 +5938,7 @@ bool gt_ObjectiveKillDavisFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveKillDavisCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillDavis);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6455,10 +6465,8 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
     ActorSend(ActorFromDoodad(DoodadFromId(1629458597)), "Signal DoodadDeath");
     UnitGroupSelect(UnitGroupSelected(gv_pLAYER_01_USER), gv_pLAYER_01_USER, false);
     UnitSelect(gv_nova, gv_pLAYER_01_USER, true);
-    ObjectiveShow(gv_objectiveDestroyZergBase2, PlayerGroupAll(), false);
-    ObjectiveShow(gv_objectiveDestroyZergBase, PlayerGroupAll(), false);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase2);
-    lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyXanthos, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveProtectFleet, false);
     libNtve_gf_ShowHideDoodadsInRegion(false, RegionFromId(7), "Smoke_Battle");
     libNtve_gf_ShowHideDoodadsInRegion(false, RegionFromId(7), "Korhal_SiegeTank_Destroyed");
     libNtve_gf_ShowHideDoodadsInRegion(false, RegionFromId(7), "SmokePillarsTall");

@@ -39,6 +39,10 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_FIRST_SQUADRON_OF_DOMINION_FLEET = 1;
+const int gv_LOCATION_ID_REMAINDER_OF_DOMINION_FLEET = 2;
+const int gv_LOCATION_ID_JINARA = 3;
+const int gv_LOCATION_ID_SCIENCE_FACILITY = 4;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -240,6 +244,7 @@ trigger gt_ObjectiveDefeattheDeathFleetComplete;
 trigger gt_ObjectiveScienceFacilityCreate;
 trigger gt_ObjectiveScienceFacilityComplete;
 trigger gt_ObjectiveScienceFacilityFailed;
+trigger gt_ObjectiveScienceFacilityDeactivate;
 trigger gt_BriefingQ;
 trigger gt_BriefingSurrounded01;
 trigger gt_BriefingSurrounded02;
@@ -1104,7 +1109,7 @@ bool gt_DefenderBasesMaintainDefenseQ_Func (bool testConds, bool runActions) {
     libComC_gf_SetAllSoundChannelVolumesCampaign(libComC_ge_VolumeChannelModeCampaign_Speech);
     libNCMI_gf_SendTransmissionCampaign(null, "Mission_Nova08|Line00005", c_transmissionDurationAdd, 0.0, true, libNCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libNCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libNCMI_gf_SendTransmissionCampaign(null, "Mission_Nova08|Line00006", c_transmissionDurationAdd, 0.0, true, libNCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libNCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    if ((UnitIsAlive(UnitFromId(2044729735)) == true)) {
+    if ((UnitIsAlive(UnitFromId(2044729735)) == true) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SCIENCE_FACILITY] == true)) {
         libNCMI_gf_SendTransmissionCampaign(null, "Mission_Nova08|Line00045", c_transmissionDurationAdd, 0.0, true, libNCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libNCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
         libComC_gf_SetAllSoundChannelVolumesCampaign(libComC_ge_VolumeChannelModeCampaign_Game);
         if ((UnitIsAlive(UnitFromId(2044729735)) == true)) {
@@ -1153,7 +1158,7 @@ bool gt_BattlecruisersOnlineQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_SQUADRON_OF_DOMINION_FLEET);
     if ((UnitIsAlive(UnitFromId(182)) == true)) {
         lv_spotValid = true;
         AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION2, RegionFromId(22), true);
@@ -1249,7 +1254,7 @@ bool gt_MoreBattlecruisersOnlineQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_REMAINDER_OF_DOMINION_FLEET);
     if ((UnitIsAlive(UnitFromId(182)) == true)) {
         lv_spotValid = true;
         AIToggleBulliesInRegion(gv_pLAYER_02_DOMINION2, RegionFromId(23), true);
@@ -2842,7 +2847,7 @@ bool gt_JinaraDies1Q_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_JINARA);
     SoundtrackStop(PlayerGroupAll(), c_soundtrackCategoryMusic, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, gv_mapMusicTrack2, c_soundtrackCueAny, c_soundtrackIndexAny, true);
     TriggerQueueEnter();
@@ -3098,7 +3103,7 @@ bool gt_VictoryDefeattheDeathFleetCompleted_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
@@ -3180,7 +3185,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveDefeattheDeathFleetComplete, true, true);
     if ((UnitIsAlive(UnitFromId(2044729735)) == true)) {
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SCIENCE_FACILITY);
         TriggerExecute(gt_ObjectiveScienceFacilityComplete, true, true);
     }
     else {
@@ -6088,7 +6093,13 @@ bool gt_ObjectiveDefeattheDeathFleetCreate_Func (bool testConds, bool runActions
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova08Primary01");
     gv_objectiveDefeatTheDeathFleet = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDefeatTheDeathFleet, "Nova08Primary01", "", 0);
+    ObjectiveShow(gv_objectiveDefeatTheDeathFleet, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDefeatTheDeathFleet, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDefeatTheDeathFleet, gv_LOCATION_ID_FIRST_SQUADRON_OF_DOMINION_FLEET);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDefeatTheDeathFleet, gv_LOCATION_ID_REMAINDER_OF_DOMINION_FLEET);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDefeatTheDeathFleet, gv_LOCATION_ID_JINARA);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDefeatTheDeathFleet, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDefeatTheDeathFleet, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6131,7 +6142,13 @@ void gt_ObjectiveDefeattheDeathFleetComplete_Init () {
 // Trigger: Objective - Science Facility - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveScienceFacilityCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -6147,7 +6164,11 @@ bool gt_ObjectiveScienceFacilityCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova08Bonus01");
     gv_objectiveScienceFacility = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveScienceFacility, "Nova08Bonus01", "", 0);
+    ObjectiveSetName(gv_objectiveScienceFacility, libComC_gf_MissionObjectiveName("Nova08Bonus01"));
+    ObjectiveShow(gv_objectiveScienceFacility, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveScienceFacility, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveScienceFacility, gv_LOCATION_ID_SCIENCE_FACILITY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveScienceFacility, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -6213,6 +6234,35 @@ bool gt_ObjectiveScienceFacilityFailed_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveScienceFacilityFailed_Init () {
     gt_ObjectiveScienceFacilityFailed = TriggerCreate("gt_ObjectiveScienceFacilityFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Science Facility - Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveScienceFacilityDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SCIENCE_FACILITY] == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(gt_ScienceFacilityDiesQ, false);
+    TriggerEnable(gt_ObjectiveScienceFacilityCreate, false);
+    TriggerEnable(gt_ObjectiveScienceFacilityComplete, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveScienceFacilityDeactivate_Init () {
+    gt_ObjectiveScienceFacilityDeactivate = TriggerCreate("gt_ObjectiveScienceFacilityDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveScienceFacilityDeactivate, 3.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -7336,6 +7386,7 @@ void InitTriggers () {
     gt_ObjectiveScienceFacilityCreate_Init();
     gt_ObjectiveScienceFacilityComplete_Init();
     gt_ObjectiveScienceFacilityFailed_Init();
+    gt_ObjectiveScienceFacilityDeactivate_Init();
     gt_BriefingQ_Init();
     gt_BriefingSurrounded01_Init();
     gt_BriefingSurrounded02_Init();
