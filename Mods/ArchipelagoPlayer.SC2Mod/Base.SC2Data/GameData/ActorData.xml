@@ -32630,44 +32630,35 @@
         <On Terms="Effect.AP_PrismaticBeamChargeChain.Stop" Send="Destroy"/>
     </CActorAction>
     <CActorUnit id="AP_VoidRayPurifier" parent="GenericUnitBase" unitName="AP_VoidRayPurifier">
+        <StatusBarFlags index="Magazine" value="0"/>
         <Model value="VoidRay_Purifier_Collection"/>
         <Macros value="PhysicsDeathsVoidAir"/>
+        <Macros value="AP_VoidRayGimbalMacro"/>
         <PortraitModel value="VoidRay_Purifier_Collection_Portrait"/>
         <BuildModel value="ProtossUnitBirth"/>
         <PlacementModel value="AP_VoidRayPlacement"/>
         <On Terms="ActorCreation" Send="StatusSet WeaponAnim 0"/>
         <On Terms="ActorCreation" Send="StatusSet WeaponAttacking 0"/>
-        <On Terms="ActorCreation" Send="StatusSet WeaponEnhanced 0"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAnim 0" Send="AnimBracketStart Powered Attack Stand,Channel Attack,End"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAnim 0" Send="StatusSet WeaponAnim 1"/>
         <On Terms="WeaponStart.*.AttackStart" Send="StatusSet WeaponAttacking 1"/>
-        <On Terms="WeaponStop.*.AttackStop" Send="StatusSet WeaponAttacking 0"/>
-        <On Terms="WeaponStop.*.AttackStop; IsStatus WeaponEnhanced 0" Send="AnimBracketStop Powered"/>
-        <On Terms="WeaponStop.*.AttackStop; IsStatus WeaponEnhanced 0" Send="StatusSet WeaponAnim 0"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On; IsStatus WeaponAnim 0" Send="AnimBracketStart Powered Attack Stand,Channel Attack,End"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On; IsStatus WeaponAnim 0" Send="StatusSet WeaponAnim 1"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On" Send="StatusSet WeaponEnhanced 1"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.Off" Send="StatusSet WeaponEnhanced 0"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.Off; IsStatus WeaponAttacking 0" Send="AnimBracketStop Powered"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.Off; IsStatus WeaponAttacking 0" Send="StatusSet WeaponAnim 0"/>
+        <On Terms="WeaponStop.*.AttackStop" Send="TimerSet 2.000000 DelayAnim"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Send="StatusSet WeaponAttacking 0"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Send="AnimBracketStop Powered"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Send="StatusSet WeaponAnim 0"/>
         <!-- center beam -->
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRayCenterBeam"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.Off; IsStatus WeaponAttacking 1" Send="Create AP_VoidRayCenterBeam"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On" Target="AP_VoidRayCenterBeam" Send="Destroy"/>
-        <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRayCenterBeam" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRayCenterBeam" Send="Destroy"/>
         <!-- sounds -->
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRaySound1"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 1" Send="Create AP_VoidRaySound2"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound1" Send="Destroy"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound2"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.Off; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound2" Send="Destroy"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.Off; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound1"/>
-        <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRaySound1" Send="Destroy"/>
-        <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRaySound2" Send="Destroy"/>
+        <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound1" Send="Destroy"/>
+        <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound2"/>
+        <On Terms="TimerExpired; TimerName DelayAnim; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound2" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName DelayAnim; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound1"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRaySound1" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRaySound2" Send="Destroy"/>
         <!-- beam animations -->
-        <On Terms="Signal.*.VoidRaySwarmAttackBeamModel" Send="RefSetFromMsg ::actor.AP_VoidRaySwarmAttackBeamModel ::Sender"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.On" Target="::actor.AP_VoidRaySwarmAttackBeamModel" Send="Signal PowerUp"/>
-        <On Terms="Behavior.AP_VoidRaySwarmDamageBoost.Off" Target="::actor.AP_VoidRaySwarmAttackBeamModel" Send="Signal PowerDown"/>
         <On Terms="Behavior.WarpInEffect.Off; IsStatus WeaponAnim 1" Send="AnimBracketStart Powered Attack Stand,Channel Attack,End"/>
         <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_VoidRay_Land"/>
         <On Terms="Behavior.Hallucination.On" Send="Create HallucinationBirthSoundLarge"/>
@@ -32728,6 +32719,79 @@
         <HostSiteOps Ops="SOpBankerVoidRay"/>
         <Aliases value="_UnitLarge"/>
     </CActorUnit>
+    <CActorTurret id="AP_VoidRayPurifierTurret">
+        <On Terms="TurretEnable.AP_VoidRayPurifier" Send="Create"/>
+    </CActorTurret>
+    <CActorEventMacro id="AP_VoidRayGimbalMacro">
+<!--    From Enoki's Data-Driven Turrets thread in SC2Mapster's Discord server-->
+        <On Terms="UnitBirth" Send="Create AP_PropsHost"/>
+        <On Terms="UnitBirth" Send="Create AP_VoidRayPurifierGimbalModel"/>
+        <On Terms="UnitBirth" Target="_AP_VoidRayGimbal" Send="Signal GimbalBirth"/>
+        <On Terms="UnitBirth" Target="_AP_VoidRayGimbal" Send="Signal GimbalSetUp"/>
+        <On Terms="SupporterDestruction" Target="_AP_VoidRayGimbal" Send="Signal GimbalDeath"/>
+        <On Terms="UnitDeath" Target="_AP_VoidRayGimbal" Send="Signal GimbalDeath"/>
+        <On Terms="ActorOrphan" Target="_AP_VoidRayGimbal" Send="Signal GimbalDeath"/>
+        <On Terms="SupporterDestruction" Target="AP_PropsHost" Send="Destroy"/>
+        <On Terms="UnitDeath" Target="AP_PropsHost" Send="Destroy"/>
+        <On Terms="ActorOrphan" Target="AP_PropsHost" Send="Destroy"/>
+        <Supporter Subject="_Unit"/>
+    </CActorEventMacro>
+    <CActorLookAt id="AP_VoidRayGimbalTurretLookAt" parent="UnitTurret">
+<!--    From Enoki's Data-Driven Turrets thread in SC2Mapster's Discord server-->
+        <Supporter Subject="_AP_VoidRayGimbal" Scope="Caster" ReachAcrossEffectTrees="1"/>
+        <Types Id="DefaultLookAtTurret">
+            <Start Group="Turret_Right" Weight="1" Time="360"/>
+            <Stop Group="Turret_Right" Weight="1" Time="360"/>
+        </Types>
+    </CActorLookAt>
+    <CActorModel id="AP_VoidRayPurifierGimbalModel">
+<!--    Adapted from Enoki's Data-Driven Turrets thread in SC2Mapster's Discord server-->
+        <Terms value="Cap 1"/>
+        <Aliases value="_UnitLarge"/>
+        <Aliases value="_Snapshot"/>
+        <Aliases value="_AP_VoidRayGimbal"/>
+        <AcceptedTransfers index="FOWColor" value="1"/>
+        <AcceptedTransfers index="FOWShader" value="1"/>
+        <AcceptedTransfers index="Status" value="1"/>
+        <On Terms="Signal.*.GimbalDeath" Target="_Unit" Send="RefClear ::Host"/>
+        <On Terms="Signal.*.GimbalDeath" Target="AP_PropsHost" Send="Destroy"/>
+        <On Terms="Signal.*.GimbalDeath" Target="AP_VoidRayGimbalTurretLookAt" Send="Destroy"/>
+        <On Terms="Signal.*.GimbalDeath" Send="Destroy"/>
+        <On Terms="SupporterDestruction" Target="_Unit" Send="RefClear ::Host"/>
+        <On Terms="SupporterDestruction" Target="AP_PropsHost" Send="Destroy"/>
+        <On Terms="SupporterDestruction" Target="AP_VoidRayGimbalTurretLookAt" Send="Destroy"/>
+        <On Terms="SupporterDestruction" Send="Destroy"/>
+        <On Terms="ActorOrphan" Target="_Unit" Send="RefClear ::Host"/>
+        <On Terms="ActorOrphan" Target="AP_PropsHost" Send="Destroy"/>
+        <On Terms="ActorOrphan" Target="AP_VoidRayGimbalTurretLookAt" Send="Destroy"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="Signal.*.GimbalBirth" Send="Create AP_VoidRayGimbalTurretLookAt"/>
+        <On Terms="WeaponStart.*.AttackStart" Target="AP_VoidRayGimbalTurretLookAt" Send="LookAtEngage Continue"/>
+        <On Terms="WeaponStop.*.AttackStop" Send="TimerSet 2.000000 DelayAnim"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRayGimbalTurretLookAt" Send="LookAtDisengage"/>
+        <On Terms="Signal.*.GimbalBirth" Send="SetOpacity 0.000000 0.000000 GimbalOpacity"/>
+        <On Terms="Signal.*.GimbalSetUp" Send="RefSet ::HostForProps AP_PropsHost"/>
+        <On Terms="Signal.*.GimbalSetUp" Target="::Main" Send="RefClear ::Host"/>
+        <On Terms="Signal.*.GimbalSetUp" Target="::Main" Send="RefSet ::Host _AP_VoidRayGimbal"/>
+        <On Terms="Signal.*.GimbalSetUp" Target="::Main" Send="RefSet ::HostForProps AP_PropsHost"/>
+        <On Terms="Signal.*.GimbalSetUp" Target="::HostForProps" Send="HostSiteOpsSet ::HostForProps SOpMoveDownByDot75"/>
+        <On Terms="Signal.*.GimbalSetUp" Target="::Main" Send="HostSiteOpsSet ::Host SOpAttachTarget"/>
+        <On Terms="Signal.*.GimbalSetUp" Send="RefSet ::HostForProps _Unit"/>
+        <HostForProps Subject="_Unit"/>
+        <Model value="PhotonCannon"/>
+        <AcceptedHostedPropTransfers index="BaseModelScale" value="0"/>
+        <AcceptedHostedPropTransfers index="CastShadows" value="0"/>
+        <AcceptedHostedPropTransfers index="CloakEffect" value="0"/>
+        <AcceptedHostedPropTransfers index="CreepEngulfment" value="0"/>
+        <AcceptedHostedPropTransfers index="Decal" value="0"/>
+        <AcceptedHostedPropTransfers index="LocalTintColor" value="0"/>
+        <AcceptedHostedPropTransfers index="ModelMaterials" value="0"/>
+        <AcceptedHostedPropTransfers index="Opacity" value="0"/>
+        <AcceptedHostedPropTransfers index="TeamColor" value="0"/>
+        <AcceptedHostedPropTransfers index="TintColor" value="0"/>
+        <AcceptedHostedPropTransfers index="WarpGroup" value="0"/>
+        <Supporter Subject="_Unit"/>
+    </CActorModel>
     <CActorSiteOpForward id="AP_VoidRaySOpForwardLaunchSwarm">
         <HostForward>
             <Subject value="_Selectable"/>
@@ -33156,4 +33220,35 @@
             <Volume value="0.000000,0.000000"/>
         </Layers>
     </CActorSound>
+    <CActorUnit id="AP_VoidRayPurifierBeamDummyUnit" parent="GenericUnitBase" unitName="AP_VoidRayPurifierBeam">
+        <Model value="ColossusAttackBeamImpact"/>
+        <UnitFlags index="ShowBlobShadow" value="0"/>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <StatusBarFlags index="Magazine" value="0"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <Aliases value="_UnitSmall"/>
+    </CActorUnit>
+    <CActorBeamSimple id="AP_VoidRayPurifierAttackBeam">
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="Create AP_ColossusAttackLaunchSound"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamDamageFieldAB.Start" Send="Create"/>
+        <HostLaunch Subject="_Unit" Scope="Caster"/>
+        <HostLaunchSiteOps Ops="SOpAttachWeapon"/>
+        <HostImpact Subject="_Unit" Scope="Target"/>
+        <HostImpactSiteOps Ops="SOpAttachCenter"/>
+        <Macros value="ActionTargetTeleportDestroy"/>
+        <Model value="ColossusAttackBeam"/>
+    </CActorBeamSimple>
+    <CActorRegionCircle id="AP_VoidRayPurifierTreeKiller">
+        <On Terms="Effect.AP_VoidRayPurifierBeamSearch.Start; At Effect" Send="Create"/>
+        <On Terms="ActorCreation" Send="QueryRegion ::Self TreeBurnQuery AgainstCenter"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamSearch.Start; At Effect" Send="Destroy"/>
+        <Radius value="0.150000"/>
+    </CActorRegionCircle>
 </Catalog>
