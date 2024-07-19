@@ -52,6 +52,7 @@ const int gv_LOCATION_ID_NORTHEAST_PSILINK_SPIRE = 5;
 const int gv_LOCATION_ID_NORTHWEST_PSILINK_SPIRE = 6;
 const int gv_LOCATION_ID_SOUTHWEST_PSILINK_SPIRE = 7;
 const int gv_LOCATION_ID_NAFASH = 8;
+const int gv_LOCATION_ID_20_UNFROZEN_STRUCTURES = 9;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -130,6 +131,8 @@ unitgroup gv_victoryHiddenUnitGroup;
 unit gv_victoryKerrigan;
 point gv_victorySpirePoint;
 sound gv_victoryEndWinHordeSound;
+int gv_objectiveUnfrozenStructures;
+int gv_protossStructuresRemaining;
 
 void InitGlobals () {
     gv_roachRescues = UnitGroupEmpty();
@@ -160,6 +163,7 @@ void InitGlobals () {
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_victoryHiddenUnitGroup = UnitGroupEmpty();
+    gv_objectiveUnfrozenStructures = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -346,6 +350,11 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveUnfrozenStructuresCreate;
+trigger gt_ObjectiveUnfrozenStructuresUpdate;
+trigger gt_ObjectiveUnfrozenStructuresComplete;
+trigger gt_ObjectiveUnfrozenStructuresFailed;
+trigger gt_UnitDiesUpdateTargetCount;
 trigger gt_ArchInit;
 trigger gt_SetMineralCount;
 trigger gt_UrsadonMatriarchFirst;
@@ -2009,6 +2018,7 @@ bool gt_StartGameStage2Q_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_AIAttackWaves, true, false);
     TriggerQueueEnter();
     TriggerExecute(gt_ObjectiveDestroyPsiLinkSpiresCreate, true, true);
+    TriggerExecute(gt_ObjectiveUnfrozenStructuresCreate, true, false);
     TriggerQueueExit();
     TriggerExecute(gt_CreatePingPsiLinkSpire01, true, false);
     Wait(6.0, c_timeReal);
@@ -2070,6 +2080,7 @@ bool gt_UnitDiesGiveEssenceUpdateStats_Func (bool testConds, bool runActions) {
 
     if ((gv_flashFreezeActive == false) && (UnitGetOwner(libNtve_gf_KillingUnit()) == gv_pLAYER_01_USER) && ((UnitGetOwner(EventUnit()) == gv_pLAYER_04_PROTOSS) || (UnitGetOwner(EventUnit()) == gv_pLAYER_05_PROTOSS) || (UnitGetOwner(EventUnit()) == gv_pLAYER_06_PROTOSS)) && (UnitTypeTestAttribute(UnitGetType(EventUnit()), c_unitAttributeStructure) == true)) {
         gv_unfrozenStructureDestroyed = (gv_unfrozenStructureDestroyed + 1);
+        TriggerExecute(gt_ObjectiveUnfrozenStructuresUpdate, true, false);
         if ((gv_unfrozenStructureDestroyed >= 20)) {
             TriggerExecute(gt_AchievementDestroyUnfrozenStructures, true, false);
         }
@@ -8598,6 +8609,184 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Unfrozen Structures Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveUnfrozenStructuresCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/137EE48E"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveUnfrozenStructures = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveUnfrozenStructures, lv_category, "", gv_unfrozenStructureDestroyed, 20, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveUnfrozenStructures, gv_LOCATION_ID_20_UNFROZEN_STRUCTURES);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveUnfrozenStructures, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveUnfrozenStructuresCreate_Init () {
+    gt_ObjectiveUnfrozenStructuresCreate = TriggerCreate("gt_ObjectiveUnfrozenStructuresCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Unfrozen Structures Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveUnfrozenStructuresUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveUnfrozenStructuresCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveUnfrozenStructures, gv_unfrozenStructureDestroyed);
+    if ((gv_unfrozenStructureDestroyed >= 20)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveUnfrozenStructuresComplete, true, false);
+        Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveUnfrozenStructuresUpdate_Init () {
+    gt_ObjectiveUnfrozenStructuresUpdate = TriggerCreate("gt_ObjectiveUnfrozenStructuresUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Unfrozen Structures Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveUnfrozenStructuresComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveUnfrozenStructuresCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveUnfrozenStructures, 20);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveUnfrozenStructures);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_20_UNFROZEN_STRUCTURES);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveUnfrozenStructuresComplete_Init () {
+    gt_ObjectiveUnfrozenStructuresComplete = TriggerCreate("gt_ObjectiveUnfrozenStructuresComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Unfrozen Structures Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveUnfrozenStructuresFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveUnfrozenStructures);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveUnfrozenStructuresFailed_Init () {
+    gt_ObjectiveUnfrozenStructuresFailed = TriggerCreate("gt_ObjectiveUnfrozenStructuresFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Unit Dies - Update Target Count
+//--------------------------------------------------------------------------------------------------
+bool gt_UnitDiesUpdateTargetCount_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitGetOwner(libNtve_gf_KillingUnit()) == gv_pLAYER_01_USER))) {
+            return false;
+        }
+
+        if (!(((UnitGetOwner(EventUnit()) == gv_pLAYER_04_PROTOSS) || (UnitGetOwner(EventUnit()) == gv_pLAYER_05_PROTOSS) || (UnitGetOwner(EventUnit()) == gv_pLAYER_06_PROTOSS)))) {
+            return false;
+        }
+
+        if (!((UnitTypeTestAttribute(UnitGetType(EventUnit()), c_unitAttributeStructure) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    gv_protossStructuresRemaining = (UnitCount(null, gv_pLAYER_04_PROTOSS, RegionPlayableMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) + UnitCount(null, gv_pLAYER_05_PROTOSS, RegionPlayableMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) + UnitCount(null, gv_pLAYER_06_PROTOSS, RegionPlayableMap(), UnitFilter((1 << c_targetFilterStructure), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    if (((gv_protossStructuresRemaining + gv_unfrozenStructureDestroyed) < 20)) {
+        TriggerExecute(gt_ObjectiveUnfrozenStructuresFailed, true, false);
+        TriggerEnable(TriggerGetCurrent(), false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_UnitDiesUpdateTargetCount_Init () {
+    gt_UnitDiesUpdateTargetCount = TriggerCreate("gt_UnitDiesUpdateTargetCount_Func");
+    TriggerAddEventUnitDied(gt_UnitDiesUpdateTargetCount, null);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
@@ -8847,6 +9036,11 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveUnfrozenStructuresCreate_Init();
+    gt_ObjectiveUnfrozenStructuresUpdate_Init();
+    gt_ObjectiveUnfrozenStructuresComplete_Init();
+    gt_ObjectiveUnfrozenStructuresFailed_Init();
+    gt_UnitDiesUpdateTargetCount_Init();
     gt_ArchInit_Init();
     gt_SetMineralCount_Init();
     gt_UrsadonMatriarchFirst_Init();
