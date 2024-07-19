@@ -58,6 +58,9 @@ const int gv_LOCATION_ID_SOUTHWEST_FROZEN_ZERG = 6;
 const int gv_LOCATION_ID_SOUTHEAST_FROZEN_ZERG = 7;
 const int gv_LOCATION_ID_WEST_FROZEN_ZERG = 8;
 const int gv_LOCATION_ID_EAST_FROZEN_ZERG = 9;
+const int gv_LOCATION_ID_WEST_LAUNCH_BAY = 10;
+const int gv_LOCATION_ID_CENTER_LAUNCH_BAY = 11;
+const int gv_LOCATION_ID_EAST_LAUNCH_BAY = 12;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -134,6 +137,7 @@ int gv_introSoundCount;
 bool gv_victoryCinematicCompleted;
 unitgroup gv_victoryHiddenUnitGroup;
 unit gv_victoryKerrigan;
+int gv_objectiveBonusDestroyLaunchBays;
 
 void InitGlobals () {
     int init_i;
@@ -165,6 +169,7 @@ void InitGlobals () {
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_introHydras = UnitGroupEmpty();
     gv_victoryHiddenUnitGroup = UnitGroupEmpty();
+    gv_objectiveBonusDestroyLaunchBays = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -307,6 +312,9 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveDestroyLaunchBaysCreate;
+trigger gt_ObjectiveDestroyLaunchBaysUpdate;
+trigger gt_ObjectiveDestroyLaunchBaysComplete;
 trigger gt_ArchInit;
 trigger gt_SetMineralCount;
 trigger gt_StasisChamberDestroyedEast;
@@ -316,6 +324,9 @@ trigger gt_SouthwestFrozenZerg;
 trigger gt_WestFrozenZerg;
 trigger gt_SoutheastFrozenZerg;
 trigger gt_EastFrozenZerg;
+trigger gt_WestLaunchBay;
+trigger gt_CenterLaunchBay;
+trigger gt_EastLaunchBay;
 
 //--------------------------------------------------------------------------------------------------
 // Custom AI Functions
@@ -1574,6 +1585,7 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ObjectiveNoShuttleCanEscapeCreate, true, true);
     TriggerExecute(gt_ObjectiveFindFrozenZergBaseCreate, true, true);
     TriggerExecute(gt_ObjectiveFindFrozenZergCreate, true, true);
+    TriggerExecute(gt_ObjectiveDestroyLaunchBaysCreate, true, true);
     TriggerExecute(gt_CreateWarpConduitPingLeft, true, false);
     TriggerQueueExit();
     Wait(8.0, c_timeAI);
@@ -4689,6 +4701,7 @@ bool gt_AchievementDestroyShuttleBaysH_Func (bool testConds, bool runActions) {
     }
 
     gv_dockingBaysDestroyed += 1;
+    TriggerExecute(gt_ObjectiveDestroyLaunchBaysUpdate, true, false);
     if ((libNtve_gf_DifficultyValueInt(0, 1, 1, 1) == 1) && (GameGetMissionTime() < 661.0)) {
         libSwaC_gf_CampaignAwardAchievement("Anniversary_ZExpedition02", gv_pLAYER_01_USER);
         TriggerDebugOutput(1, StringExternal("Param/Value/4823D88D"), false);
@@ -6088,6 +6101,107 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Launch Bays Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyLaunchBaysCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/FEA2AC04"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveBonusDestroyLaunchBays = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveBonusDestroyLaunchBays, lv_category, "", gv_dockingBaysDestroyed, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveBonusDestroyLaunchBays, gv_LOCATION_ID_WEST_LAUNCH_BAY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveBonusDestroyLaunchBays, gv_LOCATION_ID_CENTER_LAUNCH_BAY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveBonusDestroyLaunchBays, gv_LOCATION_ID_EAST_LAUNCH_BAY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveBonusDestroyLaunchBays, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyLaunchBaysCreate_Init () {
+    gt_ObjectiveDestroyLaunchBaysCreate = TriggerCreate("gt_ObjectiveDestroyLaunchBaysCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Launch Bays Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyLaunchBaysUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveDestroyLaunchBaysCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveBonusDestroyLaunchBays, gv_dockingBaysDestroyed);
+    if ((gv_dockingBaysDestroyed >= 3)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveDestroyLaunchBaysComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyLaunchBaysUpdate_Init () {
+    gt_ObjectiveDestroyLaunchBaysUpdate = TriggerCreate("gt_ObjectiveDestroyLaunchBaysUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Launch Bays Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyLaunchBaysComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyLaunchBaysCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveBonusDestroyLaunchBays);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyLaunchBaysComplete_Init () {
+    gt_ObjectiveDestroyLaunchBaysComplete = TriggerCreate("gt_ObjectiveDestroyLaunchBaysComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
@@ -6393,6 +6507,69 @@ void gt_EastFrozenZerg_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: West Launch Bay
+//--------------------------------------------------------------------------------------------------
+bool gt_WestLaunchBay_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_LAUNCH_BAY);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_WestLaunchBay_Init () {
+    gt_WestLaunchBay = TriggerCreate("gt_WestLaunchBay_Func");
+    TriggerAddEventUnitDied(gt_WestLaunchBay, UnitRefFromUnit(UnitFromId(22)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Center Launch Bay
+//--------------------------------------------------------------------------------------------------
+bool gt_CenterLaunchBay_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CENTER_LAUNCH_BAY);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_CenterLaunchBay_Init () {
+    gt_CenterLaunchBay = TriggerCreate("gt_CenterLaunchBay_Func");
+    TriggerAddEventUnitDied(gt_CenterLaunchBay, UnitRefFromUnit(UnitFromId(151)));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: East Launch Bay
+//--------------------------------------------------------------------------------------------------
+bool gt_EastLaunchBay_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_LAUNCH_BAY);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_EastLaunchBay_Init () {
+    gt_EastLaunchBay = TriggerCreate("gt_EastLaunchBay_Func");
+    TriggerAddEventUnitDied(gt_EastLaunchBay, UnitRefFromUnit(UnitFromId(153)));
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
@@ -6516,6 +6693,9 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveDestroyLaunchBaysCreate_Init();
+    gt_ObjectiveDestroyLaunchBaysUpdate_Init();
+    gt_ObjectiveDestroyLaunchBaysComplete_Init();
     gt_ArchInit_Init();
     gt_SetMineralCount_Init();
     gt_StasisChamberDestroyedEast_Init();
@@ -6525,6 +6705,9 @@ void InitTriggers () {
     gt_WestFrozenZerg_Init();
     gt_SoutheastFrozenZerg_Init();
     gt_EastFrozenZerg_Init();
+    gt_WestLaunchBay_Init();
+    gt_CenterLaunchBay_Init();
+    gt_EastLaunchBay_Init();
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -46,6 +46,7 @@ const int gv_LOCATION_ID_SOUTHWEST_BANELING_NEST = 6;
 const int gv_LOCATION_ID_SOUTHEAST_BANELING_NEST = 7;
 const int gv_LOCATION_ID_NORTH_BANELING_NEST = 8;
 const int gv_LOCATION_ID_NORTHEAST_BANELING_NEST = 9;
+const int gv_LOCATION_ID_WIN_WITHOUT_100_EGGS = 10;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -143,6 +144,7 @@ unit gv_victoryKerrigan;
 unit gv_victoryZagara;
 unitgroup gv_victoryZerg;
 int gv_objectiveRepelZagara;
+int gv_objectiveWithoutEggs;
 bool gv_aPFirstZagara;
 
 void InitGlobals () {
@@ -180,6 +182,7 @@ void InitGlobals () {
     gv_midEggHatchDelay = 1.8;
     gv_victoryZerg = UnitGroupEmpty();
     gv_objectiveRepelZagara = c_invalidObjectiveId;
+    gv_objectiveWithoutEggs = c_invalidObjectiveId;
     gv_aPFirstZagara = true;
 }
 
@@ -326,6 +329,9 @@ trigger gt_VictoryZerglings;
 trigger gt_VictoryZergHold;
 trigger gt_ObjectiveRepelZagaraCreate;
 trigger gt_ObjectiveRepelZagaraComplete;
+trigger gt_ObjectiveWithoutEggsCreate;
+trigger gt_ObjectiveWithoutEggsComplete;
+trigger gt_ObjectiveWithoutEggsFail;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -1308,6 +1314,8 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     TriggerQueueEnter();
     TriggerExecute(gt_ObjectiveCollectEggsCreate, true, true);
     TriggerExecute(gt_ObjectiveFindBanelingNestsCreate, true, false);
+    Wait(2.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveWithoutEggsCreate, true, false);
     TriggerQueueExit();
     Wait(4.0, c_timeReal);
     TriggerExecute(gt_TipMissionHelpQ, true, false);
@@ -2198,6 +2206,7 @@ bool gt_EggPickup_Func (bool testConds, bool runActions) {
                     if ((gv_eggsCollected >= 100)) {
                         TriggerEnable(TriggerGetCurrent(), false);
                         gv_eggsCollected = 100;
+                        TriggerExecute(gt_ObjectiveWithoutEggsFail, true, false);
                         TriggerExecute(gt_ObjectiveCollectEggsUpdate, true, false);
                         TriggerExecute(gt_ObjectiveCollectEggsComplete, true, false);
                         TriggerExecute(gt_ObjectiveZagaraEggsComplete, true, false);
@@ -5101,6 +5110,11 @@ bool gt_VictoryZagarasBaseDestroyed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((gv_eggsCollected < 100)) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WIN_WITHOUT_100_EGGS);
+        TriggerExecute(gt_ObjectiveWithoutEggsComplete, true, false);
+    }
+
     lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
@@ -6574,6 +6588,100 @@ void gt_ObjectiveRepelZagaraComplete_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Without Eggs - Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveWithoutEggsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/C7458DD3"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveWithoutEggs = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveWithoutEggs, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveWithoutEggs, gv_LOCATION_ID_WIN_WITHOUT_100_EGGS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveWithoutEggs, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveWithoutEggsCreate_Init () {
+    gt_ObjectiveWithoutEggsCreate = TriggerCreate("gt_ObjectiveWithoutEggsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Without Eggs - Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveWithoutEggsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveWithoutEggsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveWithoutEggs);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveWithoutEggsComplete_Init () {
+    gt_ObjectiveWithoutEggsComplete = TriggerCreate("gt_ObjectiveWithoutEggsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Without Eggs - Fail
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveWithoutEggsFail_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveWithoutEggs);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveWithoutEggsFail_Init () {
+    gt_ObjectiveWithoutEggsFail = TriggerCreate("gt_ObjectiveWithoutEggsFail_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -6973,6 +7081,9 @@ void InitTriggers () {
     gt_VictoryZergHold_Init();
     gt_ObjectiveRepelZagaraCreate_Init();
     gt_ObjectiveRepelZagaraComplete_Init();
+    gt_ObjectiveWithoutEggsCreate_Init();
+    gt_ObjectiveWithoutEggsComplete_Init();
+    gt_ObjectiveWithoutEggsFail_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
