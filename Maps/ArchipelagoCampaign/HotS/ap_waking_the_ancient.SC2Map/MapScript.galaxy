@@ -55,6 +55,7 @@ const int gv_LOCATION_ID_SOUTH_PROXY_PRIMAL_HIVE = 5;
 const int gv_LOCATION_ID_EAST_PROXY_PRIMAL_HIVE = 6;
 const int gv_LOCATION_ID_SOUTH_MAIN_PRIMAL_HIVE = 7;
 const int gv_LOCATION_ID_EAST_MAIN_PRIMAL_HIVE = 8;
+const int gv_LOCATION_ID_FLAWLESS = 9;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -182,6 +183,7 @@ bool gv_victoryCinematicCompleted;
 unitgroup gv_victoryHiddenUnitGroup;
 unit gv_victoryKerrigan;
 sound gv_victoryZurvanSound;
+int gv_objective_Flawless;
 bool gv_aPBrakkKilled;
 
 void InitGlobals () {
@@ -249,6 +251,7 @@ void InitGlobals () {
     gv_introGuardians = UnitGroupEmpty();
     gv_introZerglings = UnitGroupEmpty();
     gv_victoryHiddenUnitGroup = UnitGroupEmpty();
+    gv_objective_Flawless = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -326,7 +329,7 @@ trigger gt_PlayerStartsDraggingMeat;
 trigger gt_MutaliskButtonClicked;
 trigger gt_TransmissionTeachMutalisksQ;
 trigger gt_BrakkForcesEatingMeatQ;
-trigger gt_BrakkFrocesFightingQuillgarQ;
+trigger gt_BrakkForcesFightingQuillgorQ;
 trigger gt_ProgressUpdatePlayerFirstMeatQ;
 trigger gt_ProgressUpdatePlayer2MeatsQ;
 trigger gt_ProgressUpdatePlayer4MeatsQ;
@@ -431,6 +434,9 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveFlawlessCreate;
+trigger gt_ObjectiveFlawlessComplete;
+trigger gt_ObjectiveFlawlessFailed;
 trigger gt_ArchInit;
 trigger gt_SetMineralCount;
 trigger gt_EssencePoolAbsorbedCenter;
@@ -687,6 +693,7 @@ void gf_CorpseEatenEnemy (int lp_campIndex) {
     libNtve_gf_CreatePingFacingAngle(PlayerGroupAll(), "PingWarning", UnitGetPosition(gv_corpse_PerCamp[lp_campIndex]), ColorWithAlpha(100.00, 0.00, 0.00, 0.00), 4.0, 270.0);
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/03E2DC77"), null, UnitGetPosition(gv_corpse_PerCamp[lp_campIndex]));
     gv_score_Enemy += 1;
+    TriggerExecute(gt_ObjectiveFlawlessFailed, true, false);
     TriggerExecute(gt_ObjectiveQuillgorMeatEnemyUpdate, true, false);
     libNtve_gf_KillModel(libHots_gf_ActorForUnit(gv_corpse_PerCamp[lp_campIndex], 1));
     TextTagDestroy(libHots_gf_TextTagForUnit(gv_corpse_PerCamp[lp_campIndex], 1));
@@ -2894,6 +2901,11 @@ bool gt_CorpseEatenPlayer_Func (bool testConds, bool runActions) {
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FINISH_FEEDING);
         PingDestroy(gv_feedingPointPing);
         TriggerExecute(gt_ObjectiveHarvestMeatComplete, true, true);
+        if ((gv_score_Enemy == 0)) {
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FLAWLESS);
+            TriggerExecute(gt_ObjectiveFlawlessComplete, true, false);
+        }
+
         if ((gv_score_Player >= gv_score_Quota_Player) && (gv_aPBrakkKilled == true)) {
             TriggerExecute(gt_VictorySequence, true, false);
         }
@@ -3188,9 +3200,9 @@ void gt_BrakkForcesEatingMeatQ_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Trigger: Brakk Froces Fighting Quillgar Q
+// Trigger: Brakk Forces Fighting Quillgor Q
 //--------------------------------------------------------------------------------------------------
-bool gt_BrakkFrocesFightingQuillgarQ_Func (bool testConds, bool runActions) {
+bool gt_BrakkForcesFightingQuillgorQ_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unit lv_quillgarAlpha;
     int lv_campIndex;
@@ -3234,6 +3246,7 @@ bool gt_BrakkFrocesFightingQuillgarQ_Func (bool testConds, bool runActions) {
     if ((TriggerIsEnabled(gt_ObjectiveQuillgorMeatEnemyCreate) == true)) {
         Wait(1.0, c_timeReal);
         TriggerExecute(gt_ObjectiveQuillgorMeatEnemyCreate, true, true);
+        TriggerExecute(gt_ObjectiveFlawlessCreate, true, false);
     }
 
     TriggerQueueExit();
@@ -3252,8 +3265,8 @@ bool gt_BrakkFrocesFightingQuillgarQ_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_BrakkFrocesFightingQuillgarQ_Init () {
-    gt_BrakkFrocesFightingQuillgarQ = TriggerCreate("gt_BrakkFrocesFightingQuillgarQ_Func");
+void gt_BrakkForcesFightingQuillgorQ_Init () {
+    gt_BrakkForcesFightingQuillgorQ = TriggerCreate("gt_BrakkForcesFightingQuillgorQ_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4363,7 +4376,7 @@ bool gt_CorpseBeingEatenQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    TriggerEnable(gt_BrakkFrocesFightingQuillgarQ, false);
+    TriggerEnable(gt_BrakkForcesFightingQuillgorQ, false);
     gv_quillgorCampCorpseEatenIndex[lv_campIndex] = 4;
     if ((gv_corpse_PingWarning[lv_campIndex] == c_invalidPingId)) {
         if ((gv_firstHarvesterIndex > 0) && (gv_aIHarvestCamps[gv_firstHarvesterIndex] == lv_campIndex) && (gv_firstHarvestingWarningPing != c_invalidPingId)) {
@@ -4395,13 +4408,16 @@ bool gt_CorpseBeingEatenQ_Func (bool testConds, bool runActions) {
         if (auto1F90468F_val == 1) {
             libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
             libSwaC_gf_SendTransmissionCampaign(null, "zMission_Zerus01|Line00094", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+            TriggerExecute(gt_ObjectiveQuillgorMeatEnemyCreate, true, false);
             Wait(2.0, c_timeGame);
+            TriggerExecute(gt_ObjectiveFlawlessCreate, true, false);
             libSwaC_gf_SendTransmissionCampaign(gv_tHE_ONE_BRAKK, "zMission_Zerus01|Line00131", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
             libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Zerus01|Line00093", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
             libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
             if ((TriggerIsEnabled(gt_ObjectiveQuillgorMeatEnemyCreate) == true)) {
                 Wait(1.0, c_timeReal);
                 TriggerExecute(gt_ObjectiveQuillgorMeatEnemyCreate, true, true);
+                TriggerExecute(gt_ObjectiveFlawlessCreate, true, false);
             }
 
         }
@@ -5461,7 +5477,7 @@ bool gt_AIQuillgorHarvesterInCombat_Func (bool testConds, bool runActions) {
     if ((((lv_attacker != null) && ((UnitGetType(lv_attacker) == "SpaceCowSmall") || (UnitGetType(lv_attacker) == "SpaceCowMedium"))) || ((EventUnit() != null) && ((UnitGetType(EventUnit()) == "SpaceCowSmall") || (UnitGetType(EventUnit()) == "SpaceCowMedium"))))) {
         if ((gv_firstHarvesterIndex == 0)) {
             gv_firstHarvesterIndex = lv_harvestIndex;
-            TriggerExecute(gt_BrakkFrocesFightingQuillgarQ, true, false);
+            TriggerExecute(gt_BrakkForcesFightingQuillgorQ, true, false);
         }
 
     }
@@ -8186,6 +8202,99 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Flawless Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFlawlessCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/FE0FDD54"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_Flawless = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_Flawless, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_Flawless, gv_LOCATION_ID_FLAWLESS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_Flawless, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFlawlessCreate_Init () {
+    gt_ObjectiveFlawlessCreate = TriggerCreate("gt_ObjectiveFlawlessCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Flawless Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFlawlessComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveFlawlessCreate, true, true);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_Flawless);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFlawlessComplete_Init () {
+    gt_ObjectiveFlawlessComplete = TriggerCreate("gt_ObjectiveFlawlessComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Flawless Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFlawlessFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_Flawless);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFlawlessFailed_Init () {
+    gt_ObjectiveFlawlessFailed = TriggerCreate("gt_ObjectiveFlawlessFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
@@ -8524,7 +8633,7 @@ void InitTriggers () {
     gt_MutaliskButtonClicked_Init();
     gt_TransmissionTeachMutalisksQ_Init();
     gt_BrakkForcesEatingMeatQ_Init();
-    gt_BrakkFrocesFightingQuillgarQ_Init();
+    gt_BrakkForcesFightingQuillgorQ_Init();
     gt_ProgressUpdatePlayerFirstMeatQ_Init();
     gt_ProgressUpdatePlayer2MeatsQ_Init();
     gt_ProgressUpdatePlayer4MeatsQ_Init();
@@ -8629,6 +8738,9 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveFlawlessCreate_Init();
+    gt_ObjectiveFlawlessComplete_Init();
+    gt_ObjectiveFlawlessFailed_Init();
     gt_ArchInit_Init();
     gt_SetMineralCount_Init();
     gt_EssencePoolAbsorbedCenter_Init();
