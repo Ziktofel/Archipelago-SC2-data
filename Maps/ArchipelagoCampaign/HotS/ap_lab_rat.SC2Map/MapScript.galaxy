@@ -47,6 +47,7 @@ const int gv_LOCATION_ID_WEST_ZERGLING_GROUP = 4;
 const int gv_LOCATION_ID_HATCHERY = 5;
 const int gv_LOCATION_ID_OVERLORD = 6;
 const int gv_LOCATION_ID_GAS_TURRETS = 7;
+const int gv_LOCATION_ID_WIN_IN_UNDER_10_MINUTES = 8;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -236,6 +237,7 @@ sound gv_midEradicatorSound;
 sound gv_victoryExplosionSound;
 sound gv_victoryZergSound;
 sound gv_victoryCellSound;
+int gv_objectiveSpeedrun;
 bool gv_aPTransmissionSent;
 
 void InitGlobals () {
@@ -318,6 +320,7 @@ void InitGlobals () {
     gv_campaignIntroLabel = c_invalidDialogControlId;
     gv_campaignIntroPanel = c_invalidDialogControlId;
     gv_campaignIntroCutscene = c_cutsceneNone;
+    gv_objectiveSpeedrun = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -514,6 +517,9 @@ trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
+trigger gt_ObjectiveSpeedrunCreateQ;
+trigger gt_ObjectiveSpeedrunFail;
+trigger gt_ObjectiveSpeedrunComplete;
 trigger gt_ArchInit;
 trigger gt_SetMineralCount;
 trigger gt_HatcheryEasterEgg;
@@ -1649,6 +1655,7 @@ bool gt_IntroSequence_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/555F2103"), null, UnitGetPosition(gv_startingDrone));
     TimerStart(gv_speedRunTimer, 600.0, false, c_timeAI);
     TimerStart(gv_factoriesDestroyedTimer, 600.0, false, c_timeAI);
+    TriggerExecute(gt_ObjectiveSpeedrunCreateQ, true, false);
     Wait(1.75, c_timeGame);
     TriggerQueueEnter();
     TriggerExecute(gt_ObjectiveSelectDroneCreate, true, true);
@@ -5822,6 +5829,10 @@ bool gt_EradicatorKilled_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    if ((TimerGetRemaining(gv_speedRunTimer) > 0.0)) {
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WIN_IN_UNDER_10_MINUTES);
+    }
+
     lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     TriggerEnable(gt_NoZergLeftRoom6, false);
     TriggerExecute(gt_VictoryWarbotDestroyedCompleted, true, false);
@@ -9162,6 +9173,94 @@ void gt_onDifficultyBrutal_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Create Q
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunCreateQ_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Challenge;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/3349CB09"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveSpeedrun = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer(gv_objectiveSpeedrun, lv_category, gv_speedRunTimer, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSpeedrun, gv_LOCATION_ID_WIN_IN_UNDER_10_MINUTES);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSpeedrun, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunCreateQ_Init () {
+    gt_ObjectiveSpeedrunCreateQ = TriggerCreate("gt_ObjectiveSpeedrunCreateQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Fail
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunFail_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveSpeedrun);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunFail_Init () {
+    gt_ObjectiveSpeedrunFail = TriggerCreate("gt_ObjectiveSpeedrunFail_Func");
+    TriggerAddEventTimer(gt_ObjectiveSpeedrunFail, gv_speedRunTimer);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WIN_IN_UNDER_10_MINUTES);
+    TriggerExecute(gt_ObjectiveSpeedrunCreateQ, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSpeedrun);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunComplete_Init () {
+    gt_ObjectiveSpeedrunComplete = TriggerCreate("gt_ObjectiveSpeedrunComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Arch Init
 //--------------------------------------------------------------------------------------------------
 bool gt_ArchInit_Func (bool testConds, bool runActions) {
@@ -9461,6 +9560,9 @@ void InitTriggers () {
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
+    gt_ObjectiveSpeedrunCreateQ_Init();
+    gt_ObjectiveSpeedrunFail_Init();
+    gt_ObjectiveSpeedrunComplete_Init();
     gt_ArchInit_Init();
     gt_SetMineralCount_Init();
     gt_HatcheryEasterEgg_Init();
