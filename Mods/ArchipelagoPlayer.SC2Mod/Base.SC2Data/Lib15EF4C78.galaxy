@@ -250,6 +250,24 @@ void lib15EF4C78_InitCustomScript () {
 
 // Presets
 // Functions
+void lib15EF4C78_gf_Stukov_NewBunkerUnitProcess (unit lp_newUnit) {
+    // Variable Declarations
+    unit lv_unit;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = lp_newUnit;
+    lv_player = UnitGetOwner(lp_newUnit);
+
+    // Implementation
+    if ((UnitHasBehavior2(lp_newUnit, "AP_SIBarracksTrainTimedLifeHasBeenApplied") == false)) {
+        UnitBehaviorAdd(lv_unit, "AP_SIBarracksTrainTimedLifeHasBeenApplied", lv_unit, 1);
+        UnitBehaviorAdd(lv_unit, "AP_SIInfestedBunkerTrainTimedLife", lv_unit, 1);
+    }
+
+}
+
 int lib15EF4C78_gf_AP_GetPlayerId () {
     // Variable Declarations
     int lv_player_index;
@@ -3503,6 +3521,104 @@ bool lib15EF4C78_gf_AP_Player_isPlayerInCinematicMode (int lp_player) {
 }
 
 // Triggers
+//--------------------------------------------------------------------------------------------------
+// Trigger: Stukov_InfestedBunkerInitialSpawn
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_Stukov_InfestedBunkerInitialSpawn_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_size;
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    unitgroup auto0C07B99A_g;
+    int auto0C07B99A_u;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!(((UnitGetType(EventUnit()) == "AP_SISCV") && (libNtve_gf_TriggeringProgressUnitType() == "AP_SIInfestedBunker")))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_size = CatalogFieldValueGetAsInt(c_gameCatalogAbil, "AP_SIInfestedBunkerTransport", "TotalCargoSpace", UnitGetOwner(EventUnitProgressUnit()));
+    if ((lv_size > 0)) {
+        UnitCargoCreate(EventUnitProgressUnit(), "AP_SIInfestedTrooper", lv_size);
+        auto0C07B99A_g = UnitCargoLastCreatedGroup();
+        auto0C07B99A_u = UnitGroupCount(auto0C07B99A_g, c_unitCountAll);
+        for (;; auto0C07B99A_u -= 1) {
+            lv_unit = UnitGroupUnitFromEnd(auto0C07B99A_g, auto0C07B99A_u);
+            if (lv_unit == null) { break; }
+            lib15EF4C78_gf_Stukov_NewBunkerUnitProcess(lv_unit);
+        }
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_Stukov_InfestedBunkerInitialSpawn_Init () {
+    lib15EF4C78_gt_Stukov_InfestedBunkerInitialSpawn = TriggerCreate("lib15EF4C78_gt_Stukov_InfestedBunkerInitialSpawn_Func");
+    TriggerAddEventUnitConstructProgress(lib15EF4C78_gt_Stukov_InfestedBunkerInitialSpawn, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Stukov_InfestedBunkerAutoLoad
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_bunker;
+    int lv_player;
+    point lv_position;
+    int lv_size;
+    unit lv_newUnit;
+    point lv_rally;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_bunker = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+    lv_player = EventPlayer();
+    lv_position = UnitGetPosition(lv_bunker);
+    lv_size = CatalogFieldValueGetAsInt(c_gameCatalogAbil, "AP_SIInfestedBunkerTransport", "TotalCargoSpace", lv_player);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((lv_size > 0) && (UnitCargoValue(lv_bunker, c_unitCargoSpaceFree) > 0)) {
+        UnitCargoCreate(lv_bunker, "AP_SIInfestedTrooper", 1);
+        lv_newUnit = UnitCargoLastCreated();
+    }
+    else {
+        lv_rally = UnitRallyPointTargetPoint(lv_bunker, 1, 1);
+        if ((lv_rally != null)) {
+            lv_position = libNtve_gf_PointOffsetTowardsPoint(lv_position, 1.0, lv_rally);
+        }
+        else {
+            lv_position = PointWithOffset(lv_position, 0.0, -0.5);
+        }
+        UnitCreate(1, "AP_SIInfestedTrooper", 0, lv_player, lv_position, 270.0);
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), lv_rally), c_orderQueueReplace);
+        lv_newUnit = UnitLastCreated();
+        SoundPlayOnUnitForPlayer(SoundLink("Medivac_Unload", 0), lv_player, PlayerGroupAll(), lv_bunker, 0.0, 100.0, 0.0);
+    }
+    lib15EF4C78_gf_Stukov_NewBunkerUnitProcess(lv_newUnit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Init () {
+    lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad = TriggerCreate("lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad, c_playerAny, "AP_SIInfestedBunkerAutoSpawnerDummyMU");
+}
+
 //--------------------------------------------------------------------------------------------------
 // Trigger: AP_InitDetectionFactions
 //--------------------------------------------------------------------------------------------------
@@ -7060,6 +7176,8 @@ void lib15EF4C78_gt_EmitTransformerLand_Init () {
 }
 
 void lib15EF4C78_InitTriggers () {
+    lib15EF4C78_gt_Stukov_InfestedBunkerInitialSpawn_Init();
+    lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Init();
     lib15EF4C78_gt_AP_InitDetectionFactions_Init();
     lib15EF4C78_gt_ArchipelagoPlayerHandlersConstructor_Init();
     lib15EF4C78_gt_AP_Player_GatewayStickyKeys_Init();
