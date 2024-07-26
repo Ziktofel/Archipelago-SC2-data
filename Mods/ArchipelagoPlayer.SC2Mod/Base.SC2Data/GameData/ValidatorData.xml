@@ -674,6 +674,15 @@
         <Find value="1"/>
         <Value value="AP_HaveK5ImprovedOverlords"/>
     </CValidatorPlayerRequirement>
+    <CValidatorUnitCompareBehaviorCount id="AP_InfestedBunkerMeleeDisableAttack">
+        <WhichUnit Value="Caster"/>
+        <Behavior value="AP_StukovInfestedBunkerMeleeDisable"/>
+    </CValidatorUnitCompareBehaviorCount>
+    <CValidatorUnitCompareBehaviorCount id="AP_HavePreventKnockback">
+        <Compare value="GE"/>
+        <Value value="1"/>
+        <Behavior value="AP_PreventKnockback"/>
+    </CValidatorUnitCompareBehaviorCount>
     <CValidatorCombine id="IsArmory" parent="CValidatorCombine">
         <!-- Override -->
         <CombineArray value="AP_IsVanillaArmory"/>
@@ -734,6 +743,10 @@
     <CValidatorUnitType id="AP_IsVanillaFactory">
         <Value value="Factory"/>
     </CValidatorUnitType>
+    <CValidatorCombine id="AP_IsBunkerOrSIBunker">
+        <CombineArray value="AP_IsBunker"/>
+        <CombineArray value="AP_SIInfestedBunker"/>
+    </CValidatorCombine>
     <CValidatorCombine id="IsFactory" parent="CValidatorCombine">
         <!-- Override -->
         <CombineArray value="AP_IsVanillaFactory"/>
@@ -873,6 +886,9 @@
         <ResultFailed value="CantTargetThatUnit"/>
         <Value value="AP_Hive"/>
     </CValidatorUnitType>
+    <CValidatorUnitType id="AP_IsInfestedBunkerRooted">
+        <Value value="AP_SIInfestedBunker"/>
+    </CValidatorUnitType>
     <CValidatorCombine id="IsLair" parent="CValidatorCombine">
         <!-- Override -->
         <CombineArray value="AP_IsVanillaLair"/>
@@ -914,6 +930,11 @@
     <CValidatorUnitFilters id="AP_IsInvulnerable">
         <Filters value="Invulnerable;-"/>
     </CValidatorUnitFilters>
+    <CValidatorUnitType id="AP_IsNotISInfestedBunkerUprooted">
+        <ResultFailed value="CantTargetThatUnit"/>
+        <Value value="AP_SIInfestedBunkerUprooted"/>
+        <Find value="0"/>
+    </CValidatorUnitType>
     <CValidatorCombine id="IsOverlord" parent="CValidatorCombine">
         <!-- Override -->
         <CombineArray value="AP_IsVanillaOverlord"/>
@@ -925,6 +946,11 @@
     <CValidatorUnitType id="AP_IsAPOverlord">
         <Value value="AP_Overlord"/>
     </CValidatorUnitType>
+    <CValidatorCombine id="AP_IsTerranorInfestedMarine">
+        <ResultFailed value="MustTargetRace"/>
+        <CombineArray value="RequiresTerran"/>
+        <CombineArray value="AP_IsSIInfestedMarine"/>
+    </CValidatorCombine>
     <CValidatorCombine id="IsZergling" parent="CValidatorCombine">
         <!-- Override -->
         <CombineArray value="AP_IsVanillaZergling"/>
@@ -947,6 +973,9 @@
     <CValidatorUnitType id="AP_IsAPZerglingBurrowed">
         <Value value="AP_ZerglingBurrowed"/>
     </CValidatorUnitType>
+    <CValidatorUnitCompareBehaviorCount id="AP_NoPreventKnockback">
+        <Behavior value="AP_PreventKnockback"/>
+    </CValidatorUnitCompareBehaviorCount>
     <CValidatorCombine id="NotCommandCenter" parent="CValidatorCombine">
         <!-- Override -->
         <Negate value="1"/>
@@ -1951,6 +1980,21 @@
         <CombineArray value="IsZergling"/>
         <CombineArray value="IsZerglingBurrowed"/>
     </CValidatorCombine>
+    <CValidatorLocationCompareRange id="AP_RangeCheckLE1Dot5">
+        <WhichLocation Value="TargetUnit"/>
+        <Compare value="LE"/>
+        <Range value="1.5"/>
+    </CValidatorLocationCompareRange>
+    <CValidatorUnitFilters id="AP_GroundUnitFilter">
+        <Filters value="Ground;Stasis,Dead,Hidden,Invulnerable"/>
+    </CValidatorUnitFilters>
+    <CValidatorCombine id="AP_RangeCheckLE1Dot5andGround">
+        <CombineArray value="AP_RangeCheckLE1Dot5"/>
+        <CombineArray value="AP_GroundUnitFilter"/>
+    </CValidatorCombine>
+    <CValidatorUnitType id="AP_SIInfestedBunker">
+        <Value value="AP_SIInfestedBunker"/>
+    </CValidatorUnitType>
     <CValidatorCombine id="TechLabNotFactory" parent="CValidatorCombine">
         <!-- Override -->
         <Type value="And"/>
@@ -5347,12 +5391,14 @@
         <!-- Override -->
         <CombineArray value="IsDrone"/>
         <CombineArray value="IsOverlord"/>
+        <CombineArray value="AP_IsSISCVOrCocoon"/>
     </CValidatorCombine>
     <CValidatorCombine id="NotDroneAndNotOverlord" parent="CValidatorCombine">
         <!-- Override -->
         <Type value="And"/>
         <CombineArray value="IsDrone"/>
         <CombineArray value="IsOverlord"/>
+        <CombineArray value="AP_IsSISCVOrCocoon"/>
         <Negate value="1"/>
     </CValidatorCombine>
     <CValidatorUnitCompareBehaviorCount id="AP_VanillaNotWarpingIn">
@@ -5626,6 +5672,117 @@
         <WhichUnit Value="Caster"/>
         <Behavior value="AP_CarrierPurifierChargeBeamActive"/>
     </CValidatorUnitCompareBehaviorCount>
+    <CValidatorUnitCompareCargo id="AP_SIInfestedBunkerCargoHasCargoGTE1" parent="HasCargo">
+        <WhichUnit Value="Caster"/>
+        <Value value="1"/>
+        <Compare value="GE"/>
+        <Type value="Used"/>
+    </CValidatorUnitCompareCargo>
+    <CValidatorUnitCompareCargo id="AP_SIInfestedBunkerCargoHasCargoGTE2" parent="HasCargo">
+        <WhichUnit Value="Caster"/>
+        <Compare value="GE"/>
+        <Value value="2"/>
+        <Type value="Used"/>
+    </CValidatorUnitCompareCargo>
+    <CValidatorUnitCompareCargo id="AP_SIInfestedBunkerCargoHasCargoGTE3" parent="HasCargo">
+        <WhichUnit Value="Caster"/>
+        <Value value="3"/>
+        <Compare value="GE"/>
+        <Type value="Used"/>
+    </CValidatorUnitCompareCargo>
+    <CValidatorUnitCompareCargo id="AP_SIInfestedBunkerCargoHasCargoGTE4" parent="HasCargo">
+        <WhichUnit Value="Caster"/>
+        <Value value="4"/>
+        <Compare value="GE"/>
+        <Type value="Used"/>
+    </CValidatorUnitCompareCargo>
+    <CValidatorUnitCompareCargo id="AP_SIInfestedBunkerCargoHasCargoGTE5" parent="HasCargo">
+        <WhichUnit Value="Caster"/>
+        <Value value="5"/>
+        <Compare value="GE"/>
+        <Type value="Used"/>
+    </CValidatorUnitCompareCargo>
+    <CValidatorUnitCompareCargo id="AP_SIInfestedBunkerCargoHasCargoGTE6" parent="HasCargo">
+        <WhichUnit Value="Caster"/>
+        <Value value="6"/>
+        <Compare value="GE"/>
+        <Type value="Used"/>
+    </CValidatorUnitCompareCargo>
+    <CValidatorUnitCompareCargo id="AP_SIInfestedBunkerCargoIsNotFull" parent="HasCargo">
+        <WhichUnit Value="Caster"/>
+        <Compare value="LT"/>
+        <Value value="4"/>
+    </CValidatorUnitCompareCargo>
+    <CValidatorUnitType id="AP_TransportIsInfestedBunkerRooted">
+        <WhichUnit Effect="AP_SIInfestedBunkerBunkerRangeDummyAB" Value="Caster"/>
+        <Value value="AP_SIInfestedBunker"/>
+    </CValidatorUnitType>
+    <CValidatorUnitType id="AP_TransportIsInfestedBunkerUprooted">
+        <WhichUnit Effect="AP_SIInfestedBunkerBunkerRangeDummyAB" Value="Caster"/>
+        <Value value="AP_SIInfestedBunkerUprooted"/>
+    </CValidatorUnitType>
+    <CValidatorUnitCompareBehaviorCount id="AP_HaveInfestedStukovInfestedTerranTimedLife">
+        <Compare value="LT"/>
+        <Value value="1"/>
+        <Behavior value="AP_SIBarracksTrainTimedLifeHasBeenApplied"/>
+    </CValidatorUnitCompareBehaviorCount>
+    <CValidatorCombine id="AP_IsInfestedMarineOrInfestedTrooper">
+        <CombineArray value="AP_IsSIInfestedTrooper"/>
+        <CombineArray value="AP_IsSIInfestedMarine"/>
+    </CValidatorCombine>
+    <CValidatorUnitType id="AP_IsSIInfestedMarine">
+        <Value value="AP_SIInfestedMarine"/>
+    </CValidatorUnitType>
+    <CValidatorUnitType id="AP_IsSIInfestedTrooper">
+        <Value value="AP_SIInfestedTrooper"/>
+    </CValidatorUnitType>
+    <CValidatorLocationCompareRange id="AP_SIInfestedBunkerUprootedRangedFarForcePushRangeCheckLE1Dot5">
+        <WhichLocation Effect="AP_SIInfestedBunkerUprootedRangedFarForcePushAB" Value="TargetUnit"/>
+        <Compare value="GT"/>
+        <Range value="1.5"/>
+    </CValidatorLocationCompareRange>
+    <CValidatorLocationCompareRange id="AP_RangeCheckG1Dot5">
+        <WhichLocation Value="TargetUnit"/>
+        <Compare value="GT"/>
+        <Range value="1.5"/>
+    </CValidatorLocationCompareRange>
+    <CValidatorLocationCompareRange id="AP_RangeCheckLE5">
+        <WhichLocation Value="TargetUnit"/>
+        <Compare value="LE"/>
+        <Range value="5"/>
+    </CValidatorLocationCompareRange>
+    <CValidatorCombine id="AP_RangeCheckLE5andRangeCheckG1Dot5">
+        <Type value="And"/>
+        <CombineArray value="AP_RangeCheckG1Dot5"/>
+        <CombineArray value="AP_RangeCheckLE5"/>
+    </CValidatorCombine>
+    <CValidatorLocationCompareRange id="AP_RangeCheckG5">
+        <WhichLocation Value="TargetUnit"/>
+        <Compare value="GT"/>
+        <Range value="5"/>
+    </CValidatorLocationCompareRange>
+    <CValidatorUnitFilters id="AP_AirUnitFilter">
+        <Filters value="Air;Stasis,Dead,Hidden,Invulnerable,Unstoppable"/>
+    </CValidatorUnitFilters>
+    <CValidatorPlayerRequirement id="AP_HaveSISCVBuildChargeUpgrade">
+        <Find value="1"/>
+        <Value value="AP_HaveSISCVBuildChargeUpgrade"/>
+    </CValidatorPlayerRequirement>
+    <CValidatorPlayerRequirement id="AP_HaveSIMarinePlaguedMunitions">
+        <Find value="1"/>
+        <Value value="AP_HaveSIPlaguedMunitions"/>
+    </CValidatorPlayerRequirement>
+    <CValidatorUnitType id="AP_IsSISCV">
+        <Value value="AP_SISCV"/>
+    </CValidatorUnitType>
+    <CValidatorUnitType id="AP_IsSISCVCocoon">
+        <Value value="AP_SICocoonInfestedSCV"/>
+    </CValidatorUnitType>
+    <CValidatorCombine id="AP_IsSISCVOrCocoon" parent="CValidatorCombine">
+        <!-- Override -->
+        <CombineArray value="AP_IsSISCV"/>
+        <CombineArray value="AP_IsSISCVCocoon"/>
+    </CValidatorCombine>
     <CValidatorUnitCompareBehaviorCount id="AP_TargetedByParentVoidRayPurifier">
         <WhichUnit Value="Target"/>
         <Value value="1"/>
