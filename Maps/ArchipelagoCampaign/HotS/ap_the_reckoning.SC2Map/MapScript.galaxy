@@ -49,6 +49,7 @@ const int gv_LOCATION_ID_SOUTH_LANE = 1;
 const int gv_LOCATION_ID_NORTH_LANE = 2;
 const int gv_LOCATION_ID_EAST_LANE = 3;
 const int gv_LOCATION_ID_ODIN = 4;
+const int gv_LOCATION_ID_TRASH_THE_ODIN_EARLY = 5;
 
 //--------------------------------------------------------------------------------------------------
 // Global Structures
@@ -117,6 +118,7 @@ sound gv_victoryZergSound1;
 sound gv_victoryZergSound2;
 sound gv_victoryZergSound3;
 int gv_objectiveDefeatOdin;
+int gv_objectiveTrashOdinEarly;
 point gv_cCLocation;
 
 void InitGlobals () {
@@ -148,6 +150,7 @@ void InitGlobals () {
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_objectiveDefeatOdin = c_invalidObjectiveId;
+    gv_objectiveTrashOdinEarly = c_invalidObjectiveId;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -277,6 +280,9 @@ trigger gt_VictoryCleanup;
 trigger gt_VictoryZerg;
 trigger gt_ObjectiveDefeatOdinCreate;
 trigger gt_ObjectiveDefeatOdinComplete;
+trigger gt_ObjectiveTrashOdinEarlyCreate;
+trigger gt_ObjectiveTrashOdinEarlyComplete;
+trigger gt_ObjectiveTrashOdinEarlyFailed;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -3409,6 +3415,7 @@ bool gt_HyperionIntroQ_Func (bool testConds, bool runActions) {
     }
 
     Wait(6.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveTrashOdinEarlyCreate, true, false);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Korhal03|Line00115", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SendTransmissionCampaign(gv_hYPERION, "zMission_Korhal03|Line00116", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
@@ -3944,6 +3951,7 @@ bool gt_HyperionBigAttack3Q_Func (bool testConds, bool runActions) {
 
     libSwaC_gf_CreateMissionAutosavePoint(StringExternal("Param/Value/57AE1FF8"));
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Speech);
+    TriggerExecute(gt_ObjectiveTrashOdinEarlyFailed, true, false);
     TriggerExecute(gt_ObjectiveDefeatOdinCreate, true, false);
     libSwaC_gf_SendTransmissionCampaign(null, "zMission_Korhal03|Line00094", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     if ((UnitIsAlive(UnitFromId(603)) == true)) {
@@ -3990,8 +3998,14 @@ bool gt_OdinDiesQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ODIN);
     TriggerExecute(gt_ObjectiveDefeatOdinComplete, true, false);
+    if ((gv_odinSent == false)) {
+        TriggerExecute(gt_ObjectiveTrashOdinEarlyComplete, true, false);
+    }
+
+    Wait(0.25, c_timeGame);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ODIN);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_TRASH_THE_ODIN_EARLY);
     if ((libHots_gf_DifficultyValueInt2(0, 0, 1) == 1)) {
         TriggerExecute(gt_AchievementDestroytheOdinH, true, false);
     }
@@ -6272,7 +6286,7 @@ bool gt_ObjectiveDefeatOdinComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerExecute(gt_ObjectiveDefeatOdinCreate, true, false);
+    TriggerExecute(gt_ObjectiveDefeatOdinCreate, true, true);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDefeatOdin);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -6281,6 +6295,100 @@ bool gt_ObjectiveDefeatOdinComplete_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveDefeatOdinComplete_Init () {
     gt_ObjectiveDefeatOdinComplete = TriggerCreate("gt_ObjectiveDefeatOdinComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Trash Odin Early Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveTrashOdinEarlyCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Mastery;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/55A6BA50"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveTrashOdinEarly = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveTrashOdinEarly, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveTrashOdinEarly, gv_LOCATION_ID_TRASH_THE_ODIN_EARLY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveTrashOdinEarly, true);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveTrashOdinEarlyCreate_Init () {
+    gt_ObjectiveTrashOdinEarlyCreate = TriggerCreate("gt_ObjectiveTrashOdinEarlyCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Trash Odin Early Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveTrashOdinEarlyComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveTrashOdinEarlyCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveTrashOdinEarly);
+    Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveTrashOdinEarlyComplete_Init () {
+    gt_ObjectiveTrashOdinEarlyComplete = TriggerCreate("gt_ObjectiveTrashOdinEarlyComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Trash Odin Early Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveTrashOdinEarlyFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveTrashOdinEarly);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveTrashOdinEarlyFailed_Init () {
+    gt_ObjectiveTrashOdinEarlyFailed = TriggerCreate("gt_ObjectiveTrashOdinEarlyFailed_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6649,6 +6757,9 @@ void InitTriggers () {
     gt_VictoryZerg_Init();
     gt_ObjectiveDefeatOdinCreate_Init();
     gt_ObjectiveDefeatOdinComplete_Init();
+    gt_ObjectiveTrashOdinEarlyCreate_Init();
+    gt_ObjectiveTrashOdinEarlyComplete_Init();
+    gt_ObjectiveTrashOdinEarlyFailed_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();

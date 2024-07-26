@@ -31,6 +31,11 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_WEST_ZENITH_STONE = 1;
+const int gv_LOCATION_ID_NORTH_ZENITH_STONE = 2;
+const int gv_LOCATION_ID_EAST_ZENITH_STONE = 3;
+const int gv_LOCATION_ID_1_BILLION_ZERG = 4;
+const int gv_LOCATION_ID_1DOT5_BILLION_ZERG = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -99,11 +104,11 @@ int[4] gv_zenithStonePings;
 point[5] gv_gatherPoints;
 unitgroup[5] gv_nextAttackWave;
 int[5] gv_attackPings;
-int gv_objectiveRescueStalkers;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveDestroyZergBase3;
-int gv_objectiveDestroyZergBase2;
-int gv_objectiveRescueStalkers2;
+int gv_objective_ZenithStones;
+int gv_objective_HoldOut;
+int gv_objective_OverloadTemple;
+int gv_objective_TempleMustSurvive;
+int gv_objective_MoreZerg;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -162,11 +167,11 @@ void InitGlobals () {
     for (init_i = 0; init_i <= 4; init_i += 1) {
         gv_attackPings[init_i] = c_invalidPingId;
     }
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers2 = c_invalidObjectiveId;
+    gv_objective_ZenithStones = c_invalidObjectiveId;
+    gv_objective_HoldOut = c_invalidObjectiveId;
+    gv_objective_OverloadTemple = c_invalidObjectiveId;
+    gv_objective_TempleMustSurvive = c_invalidObjectiveId;
+    gv_objective_MoreZerg = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -1901,14 +1906,12 @@ bool gt_ZergReach1BillionQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_1_BILLION_ZERG);
     SoundPlayForPlayer(SoundLink("PShakuras02_ObjectiveStinger", -1), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
     Wait(2.0, c_timeReal);
     if ((gv_zenithStonesDestroyed == gv_zenithStonesTotal)) {
-        ObjectiveShow(gv_objectiveDestroyZergBase, PlayerGroupAll(), false);
-        lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveDestroyZergBase);
-        ObjectiveShow(gv_objectiveRescueStalkers, PlayerGroupAll(), false);
-        lib5BD4895D_gf_AP_Core_showObjective(gv_objectiveRescueStalkers);
+        lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_HoldOut, false);
+        lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ZenithStones, false);
     }
 
     TriggerExecute(gt_ObjectiveOverloadTempleCreate, true, false);
@@ -1916,7 +1919,10 @@ bool gt_ZergReach1BillionQ_Func (bool testConds, bool runActions) {
     libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
     if ((gv_zenithStonesDestroyed == gv_zenithStonesTotal)) {
         libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00039", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00072", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        if ((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_1DOT5_BILLION_ZERG] == true)) {
+            libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00072", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        }
+
     }
     else {
         libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00051", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
@@ -1945,6 +1951,10 @@ bool gt_ZergReach15BillionQ_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_1DOT5_BILLION_ZERG] == true))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1953,7 +1963,7 @@ bool gt_ZergReach15BillionQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_1DOT5_BILLION_ZERG);
     SoundPlayForPlayer(SoundLink("PShakuras02_ObjectiveStinger", -1), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
     TriggerQueueEnter();
     Wait(2.0, c_timeReal);
@@ -2692,7 +2702,7 @@ bool gt_DestroyBottomStone_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zenithStonesDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_ZENITH_STONE);
     TriggerExecute(gt_ObjectiveZenithStonesUpdate, true, false);
     PingDestroy(gv_zenithStonePings[1]);
     auto2DBC0922_g = UnitGroup(null, c_playerAny, RegionCircle(PointFromId(1255), 4.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
@@ -2762,7 +2772,7 @@ bool gt_DestroyLeftStone_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zenithStonesDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_ZENITH_STONE);
     TriggerExecute(gt_ObjectiveZenithStonesUpdate, true, false);
     PingDestroy(gv_zenithStonePings[2]);
     auto90945C30_g = UnitGroup(null, c_playerAny, RegionCircle(PointFromId(1151), 4.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
@@ -2832,7 +2842,7 @@ bool gt_DestroyRightStone_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_zenithStonesDestroyed += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_ZENITH_STONE);
     TriggerExecute(gt_ObjectiveZenithStonesUpdate, true, false);
     PingDestroy(gv_zenithStonePings[3]);
     auto6CFEB593_g = UnitGroup(null, c_playerAny, RegionCircle(PointFromId(181), 4.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
@@ -3597,7 +3607,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveOverloadTempleComplete, true, true);
@@ -4773,10 +4783,13 @@ bool gt__3MinutesRemainQ_Func (bool testConds, bool runActions) {
         Wait(2.0, c_timeReal);
         libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Speech);
     }
-    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00073", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00075", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    if ((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_1DOT5_BILLION_ZERG] == true)) {
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00073", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        libVCMI_gf_SendTransmissionCampaign(null, "pMission_Shakuras02|Line00075", c_transmissionDurationAdd, 0.0, true, libVCMI_ge_MissionTransmissionPortraitOptioins_HidePortraitAfter, libVCMI_ge_MissionTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        TriggerExecute(gt_ObjectiveMoreZergCreate, true, false);
+    }
+
     libVoiC_gf_SetAllSoundChannelVolumesCampaign(libVoiC_ge_VolumeChannelModeCampaign_Game);
-    TriggerExecute(gt_ObjectiveMoreZergCreate, true, false);
     TriggerQueueExit();
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategoryMusic, 100.0, 2.0);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "PShakuras02_Music_S1", c_soundtrackCueAny, c_soundtrackIndexAny, true);
@@ -4810,9 +4823,15 @@ bool gt_ObjectiveZenithStonesCreate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PShakuras02Primary01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 3);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras02Primary01", "", gv_zenithStonesDestroyed);
+    gv_objective_ZenithStones = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_ZenithStones, 3);
+    ObjectiveSetName(gv_objective_ZenithStones, libVoiC_gf_MissionObjectiveName("PShakuras02Primary01"));
+    ObjectiveShow(gv_objective_ZenithStones, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_ZenithStones, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_zenithStonesDestroyed, libVoiC_gf_MissionObjectiveItemCount("PShakuras02Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ZenithStones, gv_LOCATION_ID_WEST_ZENITH_STONE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ZenithStones, gv_LOCATION_ID_NORTH_ZENITH_STONE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ZenithStones, gv_LOCATION_ID_EAST_ZENITH_STONE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ZenithStones, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4844,7 +4863,7 @@ bool gt_ObjectiveZenithStonesComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveZenithStonesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_ZenithStones);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4868,7 +4887,7 @@ bool gt_ObjectiveZenithStonesUpdate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveZenithStonesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_zenithStonesDestroyed);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_ZenithStones, gv_zenithStonesDestroyed);
     return true;
 }
 
@@ -4896,9 +4915,12 @@ bool gt_ObjectiveHoldOutCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PShakuras02Primary02");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 2);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras02Primary02", "", 0);
+    gv_objective_HoldOut = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_HoldOut, 2);
+    ObjectiveShow(gv_objective_HoldOut, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_HoldOut, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_HoldOut, gv_LOCATION_ID_1_BILLION_ZERG);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_HoldOut, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4930,7 +4952,7 @@ bool gt_ObjectiveHoldOutComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveHoldOutCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_HoldOut);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4959,9 +4981,12 @@ bool gt_ObjectiveOverloadTempleCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PShakuras02Primary03");
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 1);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras02Primary03", "", 0);
+    gv_objective_OverloadTemple = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_OverloadTemple, 1);
+    ObjectiveShow(gv_objective_OverloadTemple, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_OverloadTemple, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_OverloadTemple, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_OverloadTemple, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4993,7 +5018,7 @@ bool gt_ObjectiveOverloadTempleComplete_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveOverloadTempleCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_OverloadTemple);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5022,9 +5047,11 @@ bool gt_ObjectiveTempleMustSurviveCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PShakuras02Primary04");
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    ObjectiveSetPriority(ObjectiveLastCreated(), 0);
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras02Primary04", "", 0);
+    gv_objective_TempleMustSurvive = ObjectiveLastCreated();
+    ObjectiveSetPriority(gv_objective_TempleMustSurvive, 0);
+    ObjectiveShow(gv_objective_TempleMustSurvive, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_TempleMustSurvive, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_TempleMustSurvive, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5056,7 +5083,7 @@ bool gt_ObjectiveTempleMustSurviveComplete_Func (bool testConds, bool runActions
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveTempleMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_TempleMustSurvive);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5088,7 +5115,7 @@ bool gt_ObjectiveTempleMustSurviveFailed_Func (bool testConds, bool runActions) 
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveTempleMustSurviveCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objective_TempleMustSurvive);
     return true;
 }
 
@@ -5101,7 +5128,13 @@ void gt_ObjectiveTempleMustSurviveFailed_Init () {
 // Trigger: Objective - More Zerg - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveMoreZergCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5119,8 +5152,12 @@ bool gt_ObjectiveMoreZergCreate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PShakuras02Bonus01");
-    gv_objectiveRescueStalkers2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PShakuras02Bonus01", "", 0);
+    gv_objective_MoreZerg = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_MoreZerg, libVoiC_gf_MissionObjectiveName("PShakuras02Bonus01"));
+    ObjectiveShow(gv_objective_MoreZerg, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_MoreZerg, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_MoreZerg, gv_LOCATION_ID_1DOT5_BILLION_ZERG);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_MoreZerg, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5149,7 +5186,7 @@ bool gt_ObjectiveMoreZergComplete_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveMoreZergCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_MoreZerg);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }

@@ -37,6 +37,21 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_CLOSE_NORTH_EVIDENCE_COORDINATES = 1;
+const int gv_LOCATION_ID_CLOSE_EAST_EVIDENCE_COORDINATES = 2;
+const int gv_LOCATION_ID_FAR_NORTH_EVIDENCE_COORDINATES = 3;
+const int gv_LOCATION_ID_FAR_EAST_EVIDENCE_COORDINATES = 4;
+const int gv_LOCATION_ID_EXPERIMENTAL_WEAPON = 5;
+const int gv_LOCATION_ID_NORTHWEST_SUBWAY_ENTRANCE = 6;
+const int gv_LOCATION_ID_SOUTHEAST_SUBWAY_ENTRANCE = 7;
+const int gv_LOCATION_ID_NORTHEAST_SUBWAY_ENTRANCE = 8;
+const int gv_LOCATION_ID_EXPANSION_HATCHERY = 9;
+const int gv_LOCATION_ID_BANELING_SPAWNS = 10;
+const int gv_LOCATION_ID_MUTALISK_SPAWNS = 11;
+const int gv_LOCATION_ID_NYDUS_WORM_SPAWNS = 12;
+const int gv_LOCATION_ID_LURKER_SPAWNS = 13;
+const int gv_LOCATION_ID_BROOD_LORD_SPAWNS = 14;
+const int gv_LOCATION_ID_ULTRALISK_SPAWNS = 15;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_ZERG = 2;
 const int gv_pLAYER_03_ZERG_BULLIES = 3;
@@ -129,11 +144,11 @@ int gv_zergTypesEliminated;
 int gv_achievementNuclearStrikeKillsBest;
 int gv_achievementNuclearStrikeKillsCurrent;
 int gv_anniversaryAchievementTermNuclearStrikeKillsBest;
-int gv_objectiveDestroyZergBase;
-int gv_objectiveRescueStalkers;
-int gv_objectiveRescueStalkers2;
-int gv_objectiveDestroyZergBase2;
-int gv_objectiveDestroyZergBase3;
+int gv_objective_SearchCoordinates;
+int gv_objective_RecoverEquipment;
+int gv_objective_ClearExpansionHatchery;
+int gv_objective_EliminateZergSpawns;
+int gv_objective_ClearSubwayExits;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -211,11 +226,11 @@ void InitGlobals () {
     gv_rightWaveGroup = UnitGroupEmpty();
     gv_topWaveGroup = UnitGroupEmpty();
     gv_corruptorPatrol = UnitGroupEmpty();
-    gv_objectiveDestroyZergBase = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers2 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase2 = c_invalidObjectiveId;
-    gv_objectiveDestroyZergBase3 = c_invalidObjectiveId;
+    gv_objective_SearchCoordinates = c_invalidObjectiveId;
+    gv_objective_RecoverEquipment = c_invalidObjectiveId;
+    gv_objective_ClearExpansionHatchery = c_invalidObjectiveId;
+    gv_objective_EliminateZergSpawns = c_invalidObjectiveId;
+    gv_objective_ClearSubwayExits = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -323,6 +338,7 @@ trigger gt_ObjectiveSearchCoordinatesComplete;
 trigger gt_ObjectiveSearchCoordinatesUpdate;
 trigger gt_ObjectiveRecoverEquipmentCreate;
 trigger gt_ObjectiveRecoverEquipmentComplete;
+trigger gt_ObjectiveRecoverEquipmentDeactivate;
 trigger gt_ObjectiveClearExpansionHatcheryCreate;
 trigger gt_ObjectiveClearExpansionHatcheryComplete;
 trigger gt_ObjectiveEliminateZergSpawnsCreate;
@@ -1839,7 +1855,7 @@ bool gt_onExpansionHatcheryDeath_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(9);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EXPANSION_HATCHERY);
     TriggerExecute(gt_ObjectiveClearExpansionHatcheryComplete, true, false);
     return true;
 }
@@ -2253,7 +2269,7 @@ bool gt_BeaconChecks_Func (bool testConds, bool runActions) {
 
             }
             else {
-                lib5BD4895D_gf_AP_Core_sendLocationLocal(lv_i);
+                lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lv_i);
                 gv_coordinatesSearched[lv_i] = true;
                 gv_searchCount += 1;
                 TriggerExecute(gt_ObjectiveSearchCoordinatesUpdate, true, false);
@@ -2547,7 +2563,7 @@ bool gt_KillBanelingNestsQ_Func (bool testConds, bool runActions) {
     gv_banelingLevel -= 100;
     gv_zerglingLevel += libNtve_gf_DifficultyValueInt(2, 2, 3, 4);
     gv_zergTypesEliminated += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(10);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_BANELING_SPAWNS);
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsUpdate, true, false);
     TriggerQueueEnter();
     if ((libNCMI_gf_GameIsOver() == true)) {
@@ -2604,7 +2620,7 @@ bool gt_KillSpiresQ_Func (bool testConds, bool runActions) {
     gv_mutaliskLevel -= 100;
     gv_zerglingLevel += libNtve_gf_DifficultyValueInt(2, 2, 3, 4);
     gv_zergTypesEliminated += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(11);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_MUTALISK_SPAWNS);
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsUpdate, true, false);
     TriggerQueueEnter();
     if ((libNCMI_gf_GameIsOver() == true)) {
@@ -2661,7 +2677,7 @@ bool gt_KillNydusNetworksQ_Func (bool testConds, bool runActions) {
     gv_nydusWormLevel -= 100;
     gv_zerglingLevel += libNtve_gf_DifficultyValueInt(2, 2, 3, 4);
     gv_zergTypesEliminated += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(12);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NYDUS_WORM_SPAWNS);
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsUpdate, true, false);
     TriggerQueueEnter();
     if ((libNCMI_gf_GameIsOver() == true)) {
@@ -2718,7 +2734,7 @@ bool gt_KillLurkerDensQ_Func (bool testConds, bool runActions) {
     gv_lurkerLevel -= 100;
     gv_hydraliskLevel += libNtve_gf_DifficultyValueInt(0, 0, 1, 1);
     gv_zergTypesEliminated += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(13);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_LURKER_SPAWNS);
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsUpdate, true, false);
     TriggerQueueEnter();
     if ((libNCMI_gf_GameIsOver() == true)) {
@@ -2775,7 +2791,7 @@ bool gt_KillGreaterSpiresQ_Func (bool testConds, bool runActions) {
     gv_broodLordLevel -= 100;
     gv_hydraliskLevel += libNtve_gf_DifficultyValueInt(0, 0, 1, 1);
     gv_zergTypesEliminated += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(14);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_BROOD_LORD_SPAWNS);
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsUpdate, true, false);
     TriggerQueueEnter();
     if ((libNCMI_gf_GameIsOver() == true)) {
@@ -2832,7 +2848,7 @@ bool gt_KillUltraliskCavernsQ_Func (bool testConds, bool runActions) {
     gv_ultraliskLevel -= 100;
     gv_hydraliskLevel += libNtve_gf_DifficultyValueInt(0, 0, 1, 1);
     gv_zergTypesEliminated += 1;
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(15);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_ULTRALISK_SPAWNS);
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsUpdate, true, false);
     TriggerQueueEnter();
     if ((libNCMI_gf_GameIsOver() == true)) {
@@ -3030,7 +3046,7 @@ bool gt_NewEquipmentPickupQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(5);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EXPERIMENTAL_WEAPON);
     gv_newEquipmentFound = true;
     PingDestroy(gv_newEquipmentPing);
     TriggerExecute(gt_ObjectiveRecoverEquipmentComplete, true, true);
@@ -3275,7 +3291,7 @@ bool gt_SubwayExitClearedQ_Func (bool testConds, bool runActions) {
         UnitSetState(UnitFromId(1026), c_unitStateTooltipable, true);
         UnitSetState(UnitFromId(1026), c_unitStateCursorable, true);
         lv_pingPoint = PointFromId(2396);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(6);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_SUBWAY_ENTRANCE);
         if ((gv_subwayPings[3] != c_invalidPingId)) {
             PingSetModel(gv_subwayPings[3], "BeaconScoutPing");
             PingSetPosition(gv_subwayPings[3], PointFromId(2396));
@@ -3295,7 +3311,7 @@ bool gt_SubwayExitClearedQ_Func (bool testConds, bool runActions) {
         UnitSetState(UnitFromId(196), c_unitStateTooltipable, true);
         UnitSetState(UnitFromId(196), c_unitStateCursorable, true);
         lv_pingPoint = PointFromId(3284);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(8);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_SUBWAY_ENTRANCE);
         if ((gv_subwayPings[2] != c_invalidPingId)) {
             PingSetModel(gv_subwayPings[2], "BeaconScoutPing");
             PingSetPosition(gv_subwayPings[2], PointFromId(3284));
@@ -3315,7 +3331,7 @@ bool gt_SubwayExitClearedQ_Func (bool testConds, bool runActions) {
         UnitSetState(UnitFromId(871), c_unitStateTooltipable, true);
         UnitSetState(UnitFromId(871), c_unitStateCursorable, true);
         lv_pingPoint = PointFromId(2397);
-        lib5BD4895D_gf_AP_Core_sendLocationLocal(7);
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_SUBWAY_ENTRANCE);
         if ((gv_subwayPings[4] != c_invalidPingId)) {
             PingSetModel(gv_subwayPings[4], "BeaconScoutPing");
             PingSetPosition(gv_subwayPings[4], PointFromId(2397));
@@ -5437,7 +5453,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libNCMI_gf_GameOver(libNCMI_ge_CampaignMissionGameResultType_Victory);
     libNtve_gf_ChangeUnitDamage(gv_artanis, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_No);
     Wait(2.0, c_timeReal);
@@ -5469,7 +5485,7 @@ bool gt_Victory_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    if ((ObjectiveGetState(gv_objectiveDestroyZergBase) == c_objectiveStateCompleted)) {
+    if ((ObjectiveGetState(gv_objective_SearchCoordinates) == c_objectiveStateCompleted)) {
         libComC_gf_CampaignAwardAchievement("Nova06_1", gv_pLAYER_01_USER);
     }
 
@@ -5597,8 +5613,16 @@ bool gt_ObjectiveSearchCoordinatesCreate_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova06Primary01");
-    gv_objectiveDestroyZergBase = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveDestroyZergBase, "Nova06Primary01", "", 0);
+    gv_objective_SearchCoordinates = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_SearchCoordinates, libComC_gf_MissionObjectiveName("Nova06Primary01"));
+    ObjectiveShow(gv_objective_SearchCoordinates, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_SearchCoordinates, lib5BD4895D_ge_APObjectiveCategory_Primary, "", gv_searchCount, libComC_gf_MissionObjectiveItemCount("Nova06Primary01"), false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SearchCoordinates, gv_LOCATION_ID_CLOSE_NORTH_EVIDENCE_COORDINATES);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SearchCoordinates, gv_LOCATION_ID_CLOSE_EAST_EVIDENCE_COORDINATES);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SearchCoordinates, gv_LOCATION_ID_FAR_NORTH_EVIDENCE_COORDINATES);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SearchCoordinates, gv_LOCATION_ID_FAR_EAST_EVIDENCE_COORDINATES);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_SearchCoordinates, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_SearchCoordinates, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5627,8 +5651,8 @@ bool gt_ObjectiveSearchCoordinatesComplete_Func (bool testConds, bool runActions
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveSearchCoordinatesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, 5);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_SearchCoordinates, 5);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_SearchCoordinates);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5649,7 +5673,7 @@ bool gt_ObjectiveSearchCoordinatesUpdate_Func (bool testConds, bool runActions) 
     }
 
     TriggerExecute(gt_ObjectiveSearchCoordinatesCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase, gv_searchCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_SearchCoordinates, gv_searchCount);
     return true;
 }
 
@@ -5662,7 +5686,13 @@ void gt_ObjectiveSearchCoordinatesUpdate_Init () {
 // Trigger: Objective - Recover Equipment - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveRecoverEquipmentCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5677,8 +5707,12 @@ bool gt_ObjectiveRecoverEquipmentCreate_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libCMMI_gf_CreateObjectiveCampaign("Nova06Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(gv_objectiveRescueStalkers, "Nova06Bonus01", "", 0);
+    gv_objective_RecoverEquipment = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objective_RecoverEquipment, libComC_gf_MissionObjectiveName("Nova06Bonus01"));
+    ObjectiveShow(gv_objective_RecoverEquipment, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_RecoverEquipment, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_RecoverEquipment, gv_LOCATION_ID_EXPERIMENTAL_WEAPON);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_RecoverEquipment, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5707,7 +5741,7 @@ bool gt_ObjectiveRecoverEquipmentComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRecoverEquipmentCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_RecoverEquipment);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5718,10 +5752,45 @@ void gt_ObjectiveRecoverEquipmentComplete_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective - Recover Equipment - Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRecoverEquipmentDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_EXPERIMENTAL_WEAPON] == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(546));
+    TriggerEnable(gt_SpawnBonusObjectiveCampQ, false);
+    TriggerEnable(gt_NewEquipmentPickupQ, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRecoverEquipmentDeactivate_Init () {
+    gt_ObjectiveRecoverEquipmentDeactivate = TriggerCreate("gt_ObjectiveRecoverEquipmentDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveRecoverEquipmentDeactivate, 3.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective - Clear Expansion Hatchery - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveClearExpansionHatcheryCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5735,9 +5804,11 @@ bool gt_ObjectiveClearExpansionHatcheryCreate_Func (bool testConds, bool runActi
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/77084BEC"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveRescueStalkers2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveSimple(gv_objectiveRescueStalkers2);
+    ObjectiveCreate(StringExternal("Param/Value/77084BEC"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_ClearExpansionHatchery = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objective_ClearExpansionHatchery, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ClearExpansionHatchery, gv_LOCATION_ID_EXPANSION_HATCHERY);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ClearExpansionHatchery, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5766,7 +5837,7 @@ bool gt_ObjectiveClearExpansionHatcheryComplete_Func (bool testConds, bool runAc
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveClearExpansionHatcheryCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_ClearExpansionHatchery);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5780,7 +5851,13 @@ void gt_ObjectiveClearExpansionHatcheryComplete_Init () {
 // Trigger: Objective - Eliminate Zerg Spawns - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveEliminateZergSpawnsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Extra;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5794,9 +5871,16 @@ bool gt_ObjectiveEliminateZergSpawnsCreate_Func (bool testConds, bool runActions
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/A6F8F7B7"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveDestroyZergBase2 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroyZergBase2, "", gv_zergTypesEliminated, 6);
+    ObjectiveCreate(StringExternal("Param/Value/A6F8F7B7"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_EliminateZergSpawns = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_EliminateZergSpawns, lv_category, "", gv_zergTypesEliminated, 6, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_EliminateZergSpawns, gv_LOCATION_ID_BANELING_SPAWNS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_EliminateZergSpawns, gv_LOCATION_ID_MUTALISK_SPAWNS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_EliminateZergSpawns, gv_LOCATION_ID_NYDUS_WORM_SPAWNS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_EliminateZergSpawns, gv_LOCATION_ID_LURKER_SPAWNS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_EliminateZergSpawns, gv_LOCATION_ID_BROOD_LORD_SPAWNS);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_EliminateZergSpawns, gv_LOCATION_ID_ULTRALISK_SPAWNS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_EliminateZergSpawns, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5825,7 +5909,7 @@ bool gt_ObjectiveEliminateZergSpawnsComplete_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase2);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_EliminateZergSpawns);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5846,7 +5930,7 @@ bool gt_ObjectiveEliminateZergSpawnsUpdate_Func (bool testConds, bool runActions
     }
 
     TriggerExecute(gt_ObjectiveEliminateZergSpawnsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase2, gv_zergTypesEliminated);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_EliminateZergSpawns, gv_zergTypesEliminated);
     if ((gv_zergTypesEliminated >= 6)) {
         TriggerExecute(gt_ObjectiveEliminateZergSpawnsComplete, true, false);
     }
@@ -5863,7 +5947,13 @@ void gt_ObjectiveEliminateZergSpawnsUpdate_Init () {
 // Trigger: Objective - Clear Subway Exits - Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveClearSubwayExitsCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5877,9 +5967,13 @@ bool gt_ObjectiveClearSubwayExitsCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    ObjectiveCreate(StringExternal("Param/Value/F912E94A"), StringToText(""), c_objectiveStateActive, false);
-    gv_objectiveDestroyZergBase3 = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveWithCounter(gv_objectiveDestroyZergBase3, "", gv_subwayExitsCleared, 3);
+    ObjectiveCreate(StringExternal("Param/Value/F912E94A"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objective_ClearSubwayExits = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objective_ClearSubwayExits, lv_category, "", gv_subwayExitsCleared, 3, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ClearSubwayExits, gv_LOCATION_ID_NORTHWEST_SUBWAY_ENTRANCE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ClearSubwayExits, gv_LOCATION_ID_SOUTHEAST_SUBWAY_ENTRANCE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objective_ClearSubwayExits, gv_LOCATION_ID_NORTHEAST_SUBWAY_ENTRANCE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objective_ClearSubwayExits, true);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5908,7 +6002,7 @@ bool gt_ObjectiveClearSubwayExitsComplete_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveClearSubwayExitsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyZergBase3);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objective_ClearSubwayExits);
     Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5929,7 +6023,7 @@ bool gt_ObjectiveClearSubwayExitsUpdate_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_ObjectiveClearSubwayExitsCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyZergBase3, gv_subwayExitsCleared);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objective_ClearSubwayExits, gv_subwayExitsCleared);
     if ((gv_subwayExitsCleared >= 3)) {
         TriggerExecute(gt_ObjectiveClearSubwayExitsComplete, true, false);
     }
@@ -9518,6 +9612,7 @@ void InitTriggers () {
     gt_ObjectiveSearchCoordinatesUpdate_Init();
     gt_ObjectiveRecoverEquipmentCreate_Init();
     gt_ObjectiveRecoverEquipmentComplete_Init();
+    gt_ObjectiveRecoverEquipmentDeactivate_Init();
     gt_ObjectiveClearExpansionHatcheryCreate_Init();
     gt_ObjectiveClearExpansionHatcheryComplete_Init();
     gt_ObjectiveEliminateZergSpawnsCreate_Init();

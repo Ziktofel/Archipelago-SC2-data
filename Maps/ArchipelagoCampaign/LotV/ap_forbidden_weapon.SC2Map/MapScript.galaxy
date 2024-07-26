@@ -39,6 +39,9 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
+const int gv_LOCATION_ID_SOUTH_SOLARITE = 1;
+const int gv_LOCATION_ID_NORTH_SOLARITE = 2;
+const int gv_LOCATION_ID_NORTHWEST_SOLARITE = 3;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TALDARIM = 2;
 const int gv_pLAYER_03_TALDARIM = 3;
@@ -82,7 +85,7 @@ bool gv_gatewayAchievementUnlocked;
 fixed gv_shieldsRestoredBySentries;
 timer gv_masteryAchievementTimer;
 int gv_objectiveReachTheTechVault;
-int gv_objectiveRescueStalkers;
+int gv_objectiveFindRawSolarite;
 int gv_objectiveFindRawSolariteProgress;
 int gv_objectiveFindRawSolariteProgressMax;
 unitgroup gv_cinematicHiddenUnits;
@@ -116,7 +119,7 @@ void InitGlobals () {
     }
     gv_masteryAchievementTimer = TimerCreate();
     gv_objectiveReachTheTechVault = c_invalidObjectiveId;
-    gv_objectiveRescueStalkers = c_invalidObjectiveId;
+    gv_objectiveFindRawSolarite = c_invalidObjectiveId;
     gv_objectiveFindRawSolariteProgressMax = 3;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
@@ -226,6 +229,7 @@ trigger gt_ObjectiveReachtheTechVaultFailed;
 trigger gt_ObjectiveFindRawSolariteCreate;
 trigger gt_ObjectiveFindRawSolariteComplete;
 trigger gt_ObjectiveFindRawSolariteUpdate;
+trigger gt_ObjectiveFindRawSolariteDeactivate;
 trigger gt_ObjectiveFindRawSolariteFailed;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
@@ -3913,7 +3917,7 @@ bool gt_PickupRawSolarite1_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gf_RawSolaritePickupQ(UnitFromId(274));
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(1);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_SOLARITE);
     return true;
 }
 
@@ -3954,7 +3958,7 @@ bool gt_PickupRawSolarite2_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gf_RawSolaritePickupQ(UnitFromId(98));
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(2);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_SOLARITE);
     return true;
 }
 
@@ -3995,7 +3999,7 @@ bool gt_PickupRawSolarite3_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gf_RawSolaritePickupQ(UnitFromId(425));
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(3);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_SOLARITE);
     return true;
 }
 
@@ -4634,7 +4638,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    lib5BD4895D_gf_AP_Core_sendLocationLocal(lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
     Wait(2.0, c_timeReal);
     libVCMI_gf_RunMissionVictorySequence(gt_VictoryQ);
@@ -4800,7 +4804,10 @@ bool gt_ObjectiveReachtheTechVaultCreate_Func (bool testConds, bool runActions) 
     TriggerEnable(TriggerGetCurrent(), false);
     libVCMI_gf_CreateObjectiveCampaign("PPurifier01Primary01");
     gv_objectiveReachTheTechVault = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPurifier01Primary01", "", 0);
+    ObjectiveShow(gv_objectiveReachTheTechVault, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveReachTheTechVault, lib5BD4895D_ge_APObjectiveCategory_Primary, false);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveReachTheTechVault, lib5BD4895D_gv_aP_Core_locationVictory);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveReachTheTechVault, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4894,7 +4901,13 @@ void gt_ObjectiveReachtheTechVaultFailed_Init () {
 // Trigger: Objective Find Raw Solarite Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindRawSolariteCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -4912,8 +4925,14 @@ bool gt_ObjectiveFindRawSolariteCreate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     libVCMI_gf_CreateObjectiveCampaign("PPurifier01Bonus01");
-    gv_objectiveRescueStalkers = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addObjectiveFromData(ObjectiveLastCreated(), "PPurifier01Bonus01", "", gv_objectiveFindRawSolariteProgress);
+    gv_objectiveFindRawSolarite = ObjectiveLastCreated();
+    ObjectiveSetName(gv_objectiveFindRawSolarite, libVoiC_gf_MissionObjectiveName("PPurifier01Bonus01"));
+    ObjectiveShow(gv_objectiveFindRawSolarite, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFindRawSolarite, lv_category, "", gv_objectiveFindRawSolariteProgress, libVoiC_gf_MissionObjectiveItemCount("PPurifier01Bonus01"), true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_LOCATION_ID_SOUTH_SOLARITE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_LOCATION_ID_NORTH_SOLARITE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_LOCATION_ID_NORTHWEST_SOLARITE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindRawSolarite, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4942,7 +4961,7 @@ bool gt_ObjectiveFindRawSolariteComplete_Func (bool testConds, bool runActions) 
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveFindRawSolariteCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveFindRawSolarite);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -4966,13 +4985,48 @@ bool gt_ObjectiveFindRawSolariteUpdate_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFindRawSolariteCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueStalkers, gv_objectiveFindRawSolariteProgress);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveFindRawSolarite, gv_objectiveFindRawSolariteProgress);
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveFindRawSolariteUpdate_Init () {
     gt_ObjectiveFindRawSolariteUpdate = TriggerCreate("gt_ObjectiveFindRawSolariteUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Find Raw Solarite Deactivate
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveFindRawSolariteDeactivate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_SOLARITE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_SOLARITE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTHWEST_SOLARITE] == false)))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitRemove(UnitFromId(425));
+    UnitRemove(UnitFromId(274));
+    UnitRemove(UnitFromId(98));
+    TriggerEnable(gt_RawSolariteDiscoverQ, false);
+    TriggerEnable(gt_ObjectiveFindRawSolariteCreate, false);
+    TriggerEnable(gt_ObjectiveFindRawSolariteUpdate, false);
+    TriggerEnable(gt_PickupRawSolarite1, false);
+    TriggerEnable(gt_PickupRawSolarite2, false);
+    TriggerEnable(gt_PickupRawSolarite3, false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveFindRawSolariteDeactivate_Init () {
+    gt_ObjectiveFindRawSolariteDeactivate = TriggerCreate("gt_ObjectiveFindRawSolariteDeactivate_Func");
+    TriggerAddEventTimeElapsed(gt_ObjectiveFindRawSolariteDeactivate, 2.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4997,7 +5051,7 @@ bool gt_ObjectiveFindRawSolariteFailed_Func (bool testConds, bool runActions) {
         Wait(1.0, c_timeGame);
     }
     TriggerExecute(gt_ObjectiveFindRawSolariteCreate, true, false);
-    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveRescueStalkers);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveFindRawSolarite);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
 }
@@ -5770,6 +5824,7 @@ void InitTriggers () {
     gt_ObjectiveFindRawSolariteCreate_Init();
     gt_ObjectiveFindRawSolariteComplete_Init();
     gt_ObjectiveFindRawSolariteUpdate_Init();
+    gt_ObjectiveFindRawSolariteDeactivate_Init();
     gt_ObjectiveFindRawSolariteFailed_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
