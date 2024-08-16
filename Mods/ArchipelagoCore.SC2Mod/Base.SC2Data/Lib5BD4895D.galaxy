@@ -42,6 +42,8 @@ void lib5BD4895D_InitVariables () {
     lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM_SWITCHABLE_TO_PRIMAL_ZERG = "ks_pz";
     lib5BD4895D_gv_aP_Core_Faction_DAELAAM = "da";
     lib5BD4895D_gv_aP_Core_Faction_NOVA = "nova";
+    lib5BD4895D_gv_aP_Core_blackScreen_dialog = c_invalidDialogId;
+    lib5BD4895D_gv_aP_Core_blackScreen = c_invalidDialogControlId;
     lib5BD4895D_gv_chatbox.lv_mainpanel = c_invalidDialogId;
     lib5BD4895D_gv_chatbox.lv_chatpanel = c_invalidDialogId;
     lib5BD4895D_gv_chatbox.lv_hiddenpanel = c_invalidDialogId;
@@ -1636,6 +1638,70 @@ bool auto_lib5BD4895D_gf_AP_Core_objectiveFadeHelper_TriggerFunc (bool testConds
 
 // Triggers
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_Core_mapLoadStart
+//--------------------------------------------------------------------------------------------------
+bool lib5BD4895D_gt_AP_Core_mapLoadStart_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    DialogCreate(4000, 3000, c_anchorCenter, 0, 0, true);
+    lib5BD4895D_gv_aP_Core_blackScreen_dialog = DialogLastCreated();
+    DialogSetImageVisible(lib5BD4895D_gv_aP_Core_blackScreen_dialog, false);
+    DialogControlCreate(lib5BD4895D_gv_aP_Core_blackScreen_dialog, c_triggerControlTypeImage);
+    lib5BD4895D_gv_aP_Core_blackScreen = DialogControlLastCreated();
+    DialogControlSetFullDialog(lib5BD4895D_gv_aP_Core_blackScreen, PlayerGroupAll(), true);
+    libNtve_gf_SetDialogItemImage(lib5BD4895D_gv_aP_Core_blackScreen, "Assets\\Textures\\ui_ingame_blackmask.dds", PlayerGroupAll());
+    libNtve_gf_SetDialogItemBlendMode(lib5BD4895D_gv_aP_Core_blackScreen, c_triggerBlendModeAlpha, PlayerGroupAll());
+    DialogSetVisible(lib5BD4895D_gv_aP_Core_blackScreen_dialog, PlayerGroupAll(), true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib5BD4895D_gt_AP_Core_mapLoadStart_Init () {
+    lib5BD4895D_gt_AP_Core_mapLoadStart = TriggerCreate("lib5BD4895D_gt_AP_Core_mapLoadStart_Func");
+    TriggerAddEventMapInit(lib5BD4895D_gt_AP_Core_mapLoadStart);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Core_mapLoadEnd
+//--------------------------------------------------------------------------------------------------
+bool lib5BD4895D_gt_AP_Core_mapLoadEnd_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    fixed lv_duration;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_duration = 0.25;
+
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    DialogControlFadeTransparency(lib5BD4895D_gv_aP_Core_blackScreen, PlayerGroupAll(), lv_duration, 0.0);
+    Wait(lv_duration, c_timeReal);
+    DialogDestroy(lib5BD4895D_gv_aP_Core_blackScreen_dialog);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib5BD4895D_gt_AP_Core_mapLoadEnd_Init () {
+    lib5BD4895D_gt_AP_Core_mapLoadEnd = TriggerCreate("lib5BD4895D_gt_AP_Core_mapLoadEnd_Func");
+    TriggerAddEventTimePeriodic(lib5BD4895D_gt_AP_Core_mapLoadEnd, 0.1, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Core_controllerInit
 //--------------------------------------------------------------------------------------------------
 bool lib5BD4895D_gt_AP_Core_controllerInit_Func (bool testConds, bool runActions) {
@@ -2078,6 +2144,8 @@ void lib5BD4895D_gt_AP_Core_objectiveTimerUpdate_Init () {
 }
 
 void lib5BD4895D_InitTriggers () {
+    lib5BD4895D_gt_AP_Core_mapLoadStart_Init();
+    lib5BD4895D_gt_AP_Core_mapLoadEnd_Init();
     lib5BD4895D_gt_AP_Core_controllerInit_Init();
     lib5BD4895D_gt_AP_Core_dontHideController_Init();
     lib5BD4895D_gt_AP_Core_keepControllerAlive_Init();
