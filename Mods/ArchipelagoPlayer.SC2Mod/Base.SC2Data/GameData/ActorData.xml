@@ -54,6 +54,9 @@
         <On Terms="AnimDone; AnimName Death" Send="Destroy"/>
         <Inherits index="TeamColor" value="1"/>
     </CActorModel>
+    <CActorModel default="1" id="AP_ZergMercDropModelBase" parent="AP_MercDropModelBase">
+        <Model value="AP_ZergDropPod"/>
+    </CActorModel>
     <CActorAction default="1" id="AP_MarauderAttackBase" parent="GenericAttackNoCreateBase">
         <Missile value="AP_MarauderAttackMissile"/>
         <LaunchAssets Sound="Marauder_AttackLaunch"/>
@@ -9428,6 +9431,110 @@
         <On Terms="ActorCreation; ValidateUnit AP_HaveHotSImpaler" Send="Create AP_HydraliskImpaler"/>
         <On Terms="ActorCreation; ValidateUnit AP_HaveHotSImpaler" Send="Destroy"/>
     </CActorUnit>
+    <CActorUnit id="AP_HunterKiller" parent="GenericUnitBase" unitName="AP_HunterKiller">
+        <Aliases value="_UnitMedium"/>
+        <Macros value="ZergBurrowStandardAnimMacro"/>
+        <Macros value="ZergMediumBurrowEffects"/>
+        <Macros value="UnloadDropAnim"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <Macros value="PhysicsDeathsSwarmGround"/>
+        <On Terms="Behavior.AP_MercGroundDrop.Create" Send="Create AP_HunterKillerDropModel"/>
+        <On Terms="Abil.attack.ReadyStart" Send="AnimGroupApply Ready"/>
+        <On Terms="WeaponStart.AP_HunterKillerNeedleSpines.AttackStart; WeaponTargetElevation GE 20.000000" Send="AnimBracketStart AttackSuperior Attack,Superior"/>
+        <On Terms="WeaponStart.AP_HunterKillerNeedleSpines.AttackStart; WeaponTargetElevation LE -20.000000" Send="AnimBracketStart AttackInferior Attack,Inferior"/>
+        <On Terms="WeaponStart.AP_HunterKillerMelee.AttackStart" Send="AnimPlay AttackCover Attack,Cover"/>
+        <On Terms="WeaponStart.AP_HunterKillerNeedleSpines.AttackStart" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="WeaponStop.AP_HunterKillerNeedleSpines.AttackStop" Send="AnimBracketStop AttackSuperior"/>
+        <On Terms="WeaponStop.AP_HunterKillerNeedleSpines.AttackStop" Send="AnimBracketStop AttackInferior"/>
+        <On Terms="WeaponStop.AP_HunterKillerNeedleSpines.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="Abil.attack.ReadyStop" Send="AnimGroupRemove Ready"/>
+        <On Terms="WeaponStart.AP_HunterKillerMelee.AttackStart; AnimPlaying AttackCover Cover,00" Send="TimerSet 0.400000 MeleeAttackLaunch"/>
+        <On Terms="WeaponStart.AP_HunterKillerMelee.AttackStart; AnimPlaying AttackCover Cover,01" Send="TimerSet 0.100000 MeleeAttackLaunch"/>
+        <On Terms="TimerExpired; TimerName MeleeAttackLaunch" Send="Create AP_HydraliskMeleeAttackLaunch"/>
+        <On Terms="AbilMorph.*.Start; AbilKey BurrowDown" Send="Create BurrowDownMedium"/>
+        <On Terms="AbilMorph.*.Cancel; MorphFrom AP_HunterKiller; MorphTo AP_HunterKillerBurrowed" Send="AnimClear Burrow"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_HunterKiller; MorphFrom AP_HunterKillerBurrowed" Send="AnimBracketStop Burrow"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_HunterKiller; MorphFrom AP_HunterKillerBurrowed" Send="AnimClear Burrow"/>
+        <On Terms="UnitMovementUpdate.*.Walk; AnimPlaying Birth" Send="AnimClear Birth"/>
+        <On Terms="UnitDeathCustomize; ValidateUnit AP_IsKillerPhantasm" Send="DeathCustomize Hallucination"/>
+        <On Terms="UnitBirth.AP_Hydralisk" Send="TerrainSquibActivateGroup RippleStandard"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_HunterKiller; MorphFrom AP_HunterKillerBurrowed" Send="TerrainSquibActivateGroup RippleStandard"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_HunterKillerBurrowed; MorphFrom AP_HunterKiller" Send="TerrainSquibDeactivate"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Hydra_Land"/>
+        <On Terms="UnitBirth.AP_HunterKillerBurrowed" Send="Create"/>
+        <On Terms="UnitBirth.AP_HunterKillerBurrowed" Send="AnimBracketStart Burrow Burrow IGNORE Unburrow ClosingFull,OpeningPlayForever,Instant"/>
+        <Model value="Hydralisk_Remastered"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <EventDataSound Name="HydraliskAttackImpactMelee" Actor="UnitSound" Sound="Hydralisk_AttackImpactMelee"/>
+        <BuildModel value="Hydralisk_Remastered"/>
+        <HighlightTooltip value="Unit/Name/AP_HunterKiller"/>
+        <DeathArray index="Normal" ModelLink="Hydralisk_Remastered_Death" SoundLink="AP_Hydralisk_Explode"/>
+        <DeathArray index="Disintegrate" ModelLink="Hydralisk_Remastered_DeathAcid" SoundLink="Uni_DeathFXAcid"/>
+        <DeathArray index="Fire" ModelLink="Hydralisk_Remastered_DeathFire" SoundLink="Uni_DeathFXFire"/>
+        <DeathCustoms ModelLink="HallucinationDeath" SoundLink="AP_Spectre_KillerPhantasmDeath" Name="Hallucination"/>
+        <DeathCustoms ModelLink="Hydralisk_Remastered_DeathRagdoll" Name="RagdollBasic">
+            <BodySquibs Name="FireOnMetal"/>
+            <BodySquibs Name="BloodReduced" IsFallback="1"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollSiegeTank" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollNuke" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollFire" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollAcid" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollBaneling" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollUltraUnburrow" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDPRH" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
+        <DeathActorModel value="UnitDeathModelWithDeathMotionGround"/>
+        <PlacementModel value="Hydralisk_Remastered"/>
+        <PortraitModel value="Hydralisk_Remastered_Portrait"/>
+        <TerrainSquibs>
+            <GroupName value="RippleStandard"/>
+            <MovementDistance value="0.150000,0.150000"/>
+            <IdlePeriod value="0.100000,0.250000"/>
+            <RangeUp value="1.000000"/>
+            <RangeDown value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleLarge"/>
+        </TerrainSquibs>
+        <WalkAnimMoveSpeed value="2.086"/>
+        <BarOffset value="60"/>
+        <BarWidth value="48"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\btn-unit-zerg-hydralisk-remastered.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-hydralisk-remastered.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
+        <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
+        <SoundArray index="Ready" value="Hydralisk_Ready"/>
+        <SoundArray index="What" value="Hydralisk_What"/>
+        <SoundArray index="Yes" value="Hydralisk_Yes"/>
+        <SoundArray index="Attack" value="Hydralisk_Attack"/>
+        <SoundArray index="Pissed" value="Hydralisk_Pissed"/>
+        <StatusColors index="Shields">
+            <ColorArray index="0" value="255,0,128,0"/>
+        </StatusColors>
+        <UnitIcon value="Assets\Textures\btn-unit-zerg-hydralisk-remastered.dds"/>
+        <VitalColors index="Shields">
+            <ColorArray value="255,0,128,0"/>
+        </VitalColors>
+        <VitalNames index="Shields" value="Vital/ZergShields"/>
+        <Wireframe>
+            <Image value="Assets\Textures\btn-unit-zerg-hydralisk-remastered.dds"/>
+        </Wireframe>
+        <WireframeShieldColor value="255,0,128,0"/>
+    </CActorUnit>
+    <CActorModel id="AP_HunterKillerDropModel" parent="AP_ZergMercDropModelBase">
+        <On Terms="ActorCreation" Send="SetScale 0.900000"/>
+    </CActorModel>
     <CActorAction id="AP_HydraliskAttack" parent="GenericAttack" effectImpact="AP_NeedleSpinesDamage" effectLaunch="AP_NeedleSpinesLaunchMissile">
         <LaunchSiteOps Ops="SOpAttachHarness SOpForwardImpactGuide"/>
         <LaunchAttachQuery Methods="AMFilterWeaponSetA0"/>
@@ -9438,6 +9545,18 @@
         <AcquisitionYawHalfArc value="20.000000"/>
         <AcquisitionPitchHalfArc value="20.000000"/>
         <AccuracyHalfArc value="25.000000"/>
+    </CActorAction>
+    <CActorAction id="AP_HunterKillerAttack" parent="GenericAttack" effectImpact="AP_HunterKillerDamage" effectLaunch="AP_HunterKillerLaunchMissile">
+        <LaunchSiteOps Ops="SOpAttachHarness SOpForwardImpactGuide"/>
+        <LaunchAttachQuery Methods="AMFilterWeaponSetA0"/>
+        <LaunchAssets Sound="Hydralisk_GroundAttackLaunch"/>
+        <ImpactMap index="None" Model="HydraliskAttackImpact" Sound="Hydralisk_AttackImpactRanged"/>
+        <ImpactMap index="Flesh" ModelReaction="BloodTargetImpact"/>
+        <ImpactPhysics Name="NeedleSpinesImpact" MatchKeys="Basic" Physics="AP_HydraliskAttackDeathForce"/>
+        <AcquisitionYawHalfArc value="20.000000"/>
+        <AcquisitionPitchHalfArc value="20.000000"/>
+        <AccuracyHalfArc value="25.000000"/>
+        <Missile value="AP_HydraliskAttackMissile"/>
     </CActorAction>
     <CActorModel id="AP_HydraliskFrenzyBirthModel" parent="ModelAnimationStyleOneShot">
         <On Terms="Behavior.AP_HydraliskFrenzy.On" Send="Create"/>
@@ -9496,6 +9615,16 @@
         <ShieldFlashType value="Header"/>
         <AttackAnimName value="AttackCover"/>
     </CActorAction>
+    <CActorAction id="AP_HunterKillerMeleeAttack" parent="GenericAttack" effectAttack="AP_HunterKillerMelee">
+        <ImpactPhysics>
+            <Name value="Attack"/>
+            <MatchKeys value="Basic"/>
+            <AttackAnimProps value="Cover"/>
+            <Physics value="AP_HydraliskMeleeAttackForce"/>
+        </ImpactPhysics>
+        <ShieldFlashType value="Header"/>
+        <AttackAnimName value="AttackCover"/>
+    </CActorAction>
     <CActorSound id="AP_Spell_Frenzy_Launch" parent="SoundOneShot">
         <On Terms="Behavior.AP_HydraliskFrenzy.On" Send="Create"/>
     </CActorSound>
@@ -9528,6 +9657,7 @@
     </CActorForceConeRoundedEnd>
     <CActorSound id="AP_Hydra_Land" parent="SoundOneShot"/>
     <CActorSplat id="AP_HydraliskBurrowedSplat" parent="BurrowedSplat" unitName="AP_Hydralisk"/>
+    <CActorSplat id="AP_HunterKillerBurrowedSplat" parent="BurrowedSplat" unitName="AP_HunterKiller"/>
     <CActorMissile id="AP_HydraliskAttackMissile" parent="GenericAttackMissile" unitName="AP_NeedleSpinesWeapon">
         <Model value="NeedleSpinesWeapon"/>
     </CActorMissile>
