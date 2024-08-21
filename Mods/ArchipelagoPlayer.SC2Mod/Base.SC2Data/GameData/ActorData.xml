@@ -34751,27 +34751,117 @@
         <On Terms="UnitConstruction.*.Cancel" Target="AP_ZergMercenaryCompound" Send="SetScale 1.0"/>
         <On Terms="UnitConstruction.*.Cancel" Target="AP_ZergMercenaryCompound" Send="SetOpacity 1"/>
     </CActorModel>
-    <CActorUnit id="AP_MercZergling" parent="AP_ZerglingBase" unitName="AP_MercZergling">
+    <CActorUnit id="AP_MercZergling" parent="AP_GenericBurrowerStandard" unitName="AP_MercZergling">
+        <Aliases value="_UnitSmall"/>
+        <Macros value="ZergBurrowStandardAnimMacro"/>
+        <Macros value="ZergSmallBurrowEffects"/>
+        <Macros value="UnloadDropAnim"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <Macros value="PhysicsDeathsVoidGround"/>
+        <Macros value="PhysicsDeathsSwarmGround"/>
+        <Macros value="GrabbedAnimationMacro"/>
         <On Terms="ActorCreation" Send="SetScale 1.2"/>
-        <On Terms="Upgrade.AP_HotSHaveRaptor.Add" Send="ModelSwap AP_HotSRaptor"/>
-        <On Terms="ActorCreation; ValidateUnit AP_HaveHotSHaveRaptor" Send="ModelSwap AP_HotSRaptor"/>
+        <On Terms="Upgrade.AP_HotSHaveRaptor.Add" Send="ModelSwap AP_ZerglingSCRUpgrade"/>
+        <On Terms="ActorCreation; ValidateUnit AP_HaveHotSHaveRaptor" Send="ModelSwap AP_ZerglingSCRUpgrade"/>
         <On Terms="Behavior.AP_MercGroundDrop.Create" Send="Create AP_MercZerglingDropModel"/>
+        <On Terms="AbilMorph.*.Cancel; MorphFrom AP_MercZergling; MorphTo AP_MercZerglingBurrowed" Send="AnimClear Burrow"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_MercZergling; MorphFrom AP_MercZerglingBurrowed" Send="AnimBracketStop Burrow"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_MercZergling; MorphFrom AP_MercZerglingBurrowed" Send="AnimClear Burrow"/>
+        <On Terms="UnitBirth.AP_MercZergling" Send="TerrainSquibActivateGroup RippleStandard"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_MercZergling; MorphFrom AP_MercZerglingBurrowed" Send="TerrainSquibActivateGroup RippleStandard"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_MercZerglingBurrowed; MorphFrom AP_MercZergling" Send="TerrainSquibDeactivate"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Zergling_Land"/>
+        <On Terms="UnitDeathCustomize; ValidateUnit AP_IsKillerPhantasm" Send="DeathCustomize Hallucination"/>
+        <On Terms="Effect.AP_HotSRaptorLeapLM.Start" Send="AnimPlay Jump Jump PlayForever 0.250000 0.250000"/>
+        <On Terms="Effect.AP_HotSRaptorLeapRemove.Start" Send="AnimClear Jump"/>
+        <On Terms="Behavior.AP_HotSRaptorJump.Launch" Send="AnimBracketStart Jump Jump,Start Jump Jump,End"/>
+        <On Terms="Behavior.AP_HotSRaptorJump.Launch" Send="AnimBlendTimeApply 0.100000"/>
+        <On Terms="Behavior.AP_HotSRaptorJump.LandDown" Send="AnimBlendTimeApply"/>
+        <On Terms="Behavior.AP_HotSRaptorJump.LandDown" Send="TimerSet 0.200000 LandDownDelay"/>
+        <On Terms="TimerExpired; TimerName LandDownDelay" Send="AnimBracketStop Jump"/>
+        <On Terms="Behavior.AP_HotSRaptorJump.LandUp" Send="AnimBlendTimeApply"/>
+        <On Terms="Behavior.AP_HotSRaptorJump.LandUp" Send="TimerSet 0.100000 LandUpDelay"/>
+        <On Terms="TimerExpired; TimerName LandUpDelay" Send="AnimBracketStop Jump"/>
+        <On Terms="Behavior.AP_HotSRaptorCharging.On" Send="SetVisibility"/>
+        <On Terms="Behavior.AP_HotSRaptorCharging.Off" Send="SetVisibility 1"/>
+        <On Terms="UnitMovementUpdate.*.Walk; AnimPlaying Birth" Send="AnimClear Birth"/>
+        <HighlightTooltip value="Unit/Name/AP_MercZergling"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <DeathArray index="Normal" ModelLink="ZerglingDeath" SoundLink="Zergling_Explode"/>
+        <DeathArray index="Disintegrate" ModelLink="ZerglingDeathAcid" SoundLink="Uni_DeathFXAcid"/>
+        <DeathArray index="Eviscerate" ModelLink="ZerglingDeathEviscerate" SoundLink="Zergling_DeathFXEviscerate"/>
+        <DeathArray index="Fire" ModelLink="ZerglingDeathFire" SoundLink="Zergling_DeathFXFire"/>
         <DeathCustoms ModelLink="ZerglingUpgradeDeath" SoundLink="Zergling_Explode" Name="Upgrade"/>
-        <Model value="Zergling"/>
-        <BuildModel value="Zergling"/>
-        <PlacementModel value="Zergling"/>
-        <PortraitModel value="ZerglingPortrait"/>
+        <DeathCustoms ModelLink="ZerglingUpgradeDeathFire" SoundLink="Zergling_DeathFXFire" Name="UpgradedFire"/>
+        <DeathCustoms ModelLink="ZerglingUpgradeDeathAcid" SoundLink="Uni_DeathFXAcid" Name="UpgradedAcid"/>
+        <DeathCustoms ModelLink="ZerglingUpgradeDeathEviscerate" SoundLink="Zergling_DeathFXEviscerate" Name="UpgradedEviscerate"/>
+        <DeathCustoms ActorModel="AP_ZerglingDeathRagdoll" ModelLink="ZerglingDeathRagdoll" Name="RagdollBasic">
+            <BodySquibs Name="FireOnMetal"/>
+            <BodySquibs Name="Blood" IsFallback="1"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollSiegeTank" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollNuke" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollFire" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Fire"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollAcid" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollBaneling" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollUltraUnburrow" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms ActorModel="AP_ZerglingSpineCrawlerHurlDeathRagdoll" ModelLink="ZerglingDeathRagdoll" Name="RagdollSpineCrawlerHurl"/>
+        <DeathCustoms Name="RagdollOverkillDPRH" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms ModelLink="HallucinationDeath" SoundLink="AP_Spectre_KillerPhantasmDeath" Name="Hallucination"/>
+        <DeathActorModel value="UnitDeathModelWithDeathMotionGround"/>
+        <TerrainSquibs>
+            <GroupName value="RippleStandard"/>
+            <MovementDistance value="0.250000,0.250000"/>
+            <IdlePeriod value="0.200000,0.400000"/>
+            <RangeUp value="1.000000"/>
+            <RangeDown value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleTiny"/>
+        </TerrainSquibs>
+        <Model value="AP_ZerglingSCR"/>
+        <BuildModel value="AP_ZerglingSCR"/>
+        <PlacementModel value="AP_ZerglingSCR"/>
+        <PortraitModel value="AP_ZerglingSCR_Portrait"/>
         <GroupIcon>
-            <Image value="Assets\Textures\btn-unit-zerg-zergling.dds"/>
+            <Image value="AP\Assets\Textures\btn-unit-zerg-zergling-scr.dds"/>
         </GroupIcon>
-        <HeroIcon value="Assets\Textures\btn-unit-zerg-zergling.dds"/>
-        <UnitIcon value="Assets\Textures\btn-unit-zerg-zergling.dds"/>
+        <HeroIcon value="AP\Assets\Textures\btn-unit-zerg-zergling-scr.dds"/>
+        <UnitIcon value="AP\Assets\Textures\btn-unit-zerg-zergling-scr.dds"/>
         <VitalColors index="Shields">
             <ColorArray value="255,0,128,0"/>
         </VitalColors>
         <Wireframe>
-            <Image value="Assets\Textures\btn-unit-zerg-zergling.dds"/>
+            <Image value="AP\Assets\Textures\wireframe-zerg-zergling-SCR.dds"/>
         </Wireframe>
+        <WalkAnimMoveSpeed value="3.1328"/>
+        <BarOffset value="30"/>
+        <BarWidth value="36"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
+        <MovementHerdNode value="HerdNode_ZergSmall"/>
+        <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
+        <SoundArray index="Birth" value="Zergling_Birth"/>
+        <SoundArray index="Ready" value="Zergling_Ready"/>
+        <SoundArray index="Help" value="Zergling_Help"/>
+        <SoundArray index="What" value="Zergling_What"/>
+        <SoundArray index="Yes" value="Zergling_Yes"/>
+        <SoundArray index="Attack" value="Zergling_Attack"/>
+        <SoundArray index="Pissed" value="Zergling_Pissed"/>
+        <SoundArray index="Movement" value="Zergling_Movement"/>
+        <StatusColors index="Shields">
+            <ColorArray index="0" value="255,0,128,0"/>
+        </StatusColors>
+        <VitalNames index="Shields" value="Vital/ZergShields"/>
+        <WireframeShieldColor value="255,0,128,0"/>
     </CActorUnit>
     <CActorAction id="AP_MercZerglingAttack" parent="GenericAttack" effectAttack="AP_MercClaws">
         <ImpactAttachQuery Methods="AMFilterTargetVolumes"/>
