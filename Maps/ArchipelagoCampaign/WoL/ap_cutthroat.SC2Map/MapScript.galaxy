@@ -280,6 +280,7 @@ trigger gt_NorthRelic;
 trigger gt_MidRelic;
 trigger gt_SouthwestRelic;
 trigger gt_ArchInit;
+trigger gt_FactionSwapInit;
 
 //--------------------------------------------------------------------------------------------------
 // Global Functions
@@ -1584,6 +1585,8 @@ bool gt_MiraHanGivesVulturestoPlayer_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unitgroup lv_vultureGroup;
     unit lv_medivac;
+    unit lv_overlordTransport;
+    unit lv_warpPrismTransportMode;
 
     // Automatic Variable Declarations
     // Variable Initialization
@@ -1609,13 +1612,35 @@ bool gt_MiraHanGivesVulturestoPlayer_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    TriggerEnable(TriggerGetCurrent(), false);
-    libNtve_gf_CreateUnitsAtPoint2(1, "Medivac", 0, gv_p03_MIRA_HAN, PointFromId(1242));
-    lv_medivac = UnitLastCreated();
-    UnitCargoCreate(lv_medivac, "AP_Vulture", 4);
-    libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_medivac, PointFromId(1243), PointFromId(1242));
-    Wait(6.0, c_timeGame);
-    TriggerExecute(gt_TransmissionMiraHanGivesVulturesQ, true, true);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        libNtve_gf_CreateUnitsAtPoint2(1, "OverlordTransport", 0, gv_p03_MIRA_HAN, PointFromId(1242));
+        lv_overlordTransport = UnitLastCreated();
+        UnitCargoCreate(lv_medivac, "AP_Roach", 4);
+        libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_overlordTransport, PointFromId(1243), PointFromId(1242));
+        Wait(6.0, c_timeGame);
+        TriggerExecute(gt_TransmissionMiraHanGivesVulturesQ, true, true);
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+            TriggerEnable(TriggerGetCurrent(), false);
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarpPrism", 0, gv_p03_MIRA_HAN, PointFromId(1242));
+            lv_warpPrismTransportMode = UnitLastCreated();
+            UnitCargoCreate(lv_medivac, "AP_Adept", 4);
+            libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_warpPrismTransportMode, PointFromId(1243), PointFromId(1242));
+            Wait(6.0, c_timeGame);
+            TriggerExecute(gt_TransmissionMiraHanGivesVulturesQ, true, true);
+        }
+        else {
+            TriggerEnable(TriggerGetCurrent(), false);
+            libNtve_gf_CreateUnitsAtPoint2(1, "Medivac", 0, gv_p03_MIRA_HAN, PointFromId(1242));
+            lv_medivac = UnitLastCreated();
+            UnitCargoCreate(lv_medivac, "AP_Vulture", 4);
+            libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_medivac, PointFromId(1243), PointFromId(1242));
+            Wait(6.0, c_timeGame);
+            TriggerExecute(gt_TransmissionMiraHanGivesVulturesQ, true, true);
+        }
+    }
     return true;
 }
 
@@ -3996,14 +4021,36 @@ bool gt_TransmissionMiraHanGivesVulturesQ_Func (bool testConds, bool runActions)
     Wait(SoundLengthSync(SoundLink("IncomingTransmission", -1)), c_timeReal);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
     UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/4950C282"), null, PointFromId(1243));
-    // Transmission - SoundLink("THorner02Han00017", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Han00017", -1), c_transmissionDurationAdd, 0.0, true);
-    // Transmission - SoundLink("THorner02Tychus00023", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Tychus00023", -1), c_transmissionDurationAdd, 0.0, true);
-    // Transmission - SoundLink("THorner02Raynor00024", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Raynor00024", -1), c_transmissionDurationAdd, 0.0, true);
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    TriggerExecute(gt_NewUnitVultureTipQ, true, false);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        // Transmission - SoundLink("THorner02Han00017", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Han00017", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("THorner03Tychus00046", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Tychus00023", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("TTychus01BriefingRaynor00001", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Raynor00024", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+            // Transmission - SoundLink("THorner02Han00017", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Han00017", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("AP_AdeptTransmission", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("AP_AdeptTransmission", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("TZeratul01Zeratul00051", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul01Zeratul00051", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        }
+        else {
+            // Transmission - SoundLink("THorner02Han00017", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Han00017", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("THorner02Tychus00023", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Tychus00023", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("THorner02Raynor00024", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Raynor00024", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerExecute(gt_NewUnitVultureTipQ, true, false);
+        }
+    }
     TriggerQueueExit();
     return true;
 }
@@ -6485,6 +6532,53 @@ void gt_ArchInit_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Terr");
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace);
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), 1);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(1);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            PlayerSetRace(1, "Zerg");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(1, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(1, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(1, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAUnit(1);
+                }
+
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAAutonomousCasterUnit(1);
+                }
+
+            }
+
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
@@ -6628,6 +6722,7 @@ void InitTriggers () {
     gt_MidRelic_Init();
     gt_SouthwestRelic_Init();
     gt_ArchInit_Init();
+    gt_FactionSwapInit_Init();
 }
 
 //--------------------------------------------------------------------------------------------------
