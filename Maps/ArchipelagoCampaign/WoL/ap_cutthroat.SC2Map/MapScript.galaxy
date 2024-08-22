@@ -484,6 +484,8 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
 
     libNtve_gf_SetUpgradeLevelForPlayer(gv_p02_ORLAN_ENEMY, "SiegeTech", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_p03_MIRA_HAN, "SiegeTech", 1);
+    libNtve_gf_SetUpgradeLevelForPlayer(gv_p03_MIRA_HAN, "AP_overlordtransport", 1);
+    libNtve_gf_SetUpgradeLevelForPlayer(gv_p03_MIRA_HAN, "AP_OverlordSpeed", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_p04_DOMINION, "PersonalCloaking", 1);
     return true;
 }
@@ -611,8 +613,6 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     gv_ghostNukeSilo = UnitFromId(1327);
     UnitSetPropertyFixed(UnitFromId(1226), c_unitPropEnergyPercent, 100.0);
     libNtve_gf_ShowHideUnit(UnitFromId(1327), false);
-    UnitCargoCreate(UnitFromId(271), "AP_SCV", 5);
-    libNtve_gf_AddUnitGroupToUnitGroup(UnitCargoLastCreatedGroup(), gv_playerSCVs);
     UnitCargoCreate(UnitFromId(1056), "AP_Marine", 5);
     auto4801D79A_g = UnitGroup("Bunker", gv_p02_ORLAN_ENEMY, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto4801D79A_u = UnitGroupCount(auto4801D79A_g, c_unitCountAll);
@@ -1083,8 +1083,6 @@ bool gt_IntroLanding_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    UnitIssueOrder(UnitFromId(271), OrderTargetingPoint(AbilityCommand("AP_CommandCenterLand", 0), PointFromId(46)), c_orderQueueReplace);
-    UnitIssueOrder(UnitFromId(271), Order(AbilityCommand("AP_CommandCenterTransport", 1)), c_orderQueueAddToEnd);
     UnitIssueOrder(UnitFromId(274), OrderTargetingPoint(AbilityCommand("AP_BarracksLand", 0), PointFromId(276)), c_orderQueueReplace);
     UnitIssueOrder(UnitFromId(270), OrderTargetingPoint(AbilityCommand("AP_FactoryLand", 0), PointFromId(275)), c_orderQueueReplace);
     UnitIssueOrder(UnitFromId(1056), OrderTargetingPoint(AbilityCommand("SpecOpsDropshipTransport", 2), RegionGetCenter(RegionFromId(4))), c_orderQueueReplace);
@@ -1585,8 +1583,6 @@ bool gt_MiraHanGivesVulturestoPlayer_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unitgroup lv_vultureGroup;
     unit lv_medivac;
-    unit lv_overlordTransport;
-    unit lv_warpPrismTransportMode;
 
     // Automatic Variable Declarations
     // Variable Initialization
@@ -1614,20 +1610,20 @@ bool gt_MiraHanGivesVulturestoPlayer_Func (bool testConds, bool runActions) {
 
     if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
         TriggerEnable(TriggerGetCurrent(), false);
-        libNtve_gf_CreateUnitsAtPoint2(1, "OverlordTransport", 0, gv_p03_MIRA_HAN, PointFromId(1242));
-        lv_overlordTransport = UnitLastCreated();
-        UnitCargoCreate(lv_overlordTransport, "AP_Roach", 4);
-        libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_overlordTransport, PointFromId(1243), PointFromId(1242));
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Overlord", 0, gv_p03_MIRA_HAN, PointFromId(1242));
+        lv_medivac = UnitLastCreated();
+        UnitCargoCreate(lv_medivac, "AP_Roach", 4);
+        libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_medivac, PointFromId(1243), PointFromId(1242));
         Wait(6.0, c_timeGame);
         TriggerExecute(gt_TransmissionMiraHanGivesVulturesQ, true, true);
     }
     else {
         if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
             TriggerEnable(TriggerGetCurrent(), false);
-            libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarpPrism", 0, gv_p03_MIRA_HAN, PointFromId(1242));
-            lv_warpPrismTransportMode = UnitLastCreated();
-            UnitCargoCreate(lv_warpPrismTransportMode, "AP_Adept", 4);
-            libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_warpPrismTransportMode, PointFromId(1243), PointFromId(1242));
+            libNtve_gf_CreateUnitsAtPoint2(1, "WarpPrism", 0, gv_p03_MIRA_HAN, PointFromId(1242));
+            lv_medivac = UnitLastCreated();
+            UnitCargoCreate(lv_medivac, "AP_Adept", 4);
+            libLbty_gf_OrderTransporttoUnloadAllthenDespawn(lv_medivac, PointFromId(1243), PointFromId(1242));
             Wait(6.0, c_timeGame);
             TriggerExecute(gt_TransmissionMiraHanGivesVulturesQ, true, true);
         }
@@ -1668,7 +1664,7 @@ bool gt_ChangeOwnerofVultureDropshipUnits_Func (bool testConds, bool runActions)
             return false;
         }
 
-        if (!(((UnitGetType(EventUnit()) == "AP_Vulture")))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_Roach") || (UnitGetType(EventUnit()) == "AP_Adept") || (UnitGetType(EventUnit()) == "AP_Vulture")))) {
             return false;
         }
     }
@@ -4024,18 +4020,16 @@ bool gt_TransmissionMiraHanGivesVulturesQ_Func (bool testConds, bool runActions)
     if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
         // Transmission - SoundLink("THorner02Han00017", 0)
         libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Han00017", -1), c_transmissionDurationAdd, 0.0, true);
-        // Transmission - SoundLink("THorner03Tychus00046", -1)
-        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Tychus00023", -1), c_transmissionDurationAdd, 0.0, true);
-        // Transmission - SoundLink("TTychus01BriefingRaynor00001", -1)
-        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Raynor00024", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("TValerian02ATychus00078", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02ATychus00078", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("MarSaraFidgetsEvolutionofrevolution2Raynor00034", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("MarSaraFidgetsEvolutionofrevolution2Raynor00034", -1), c_transmissionDurationAdd, 0.0, true);
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     }
     else {
         if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
             // Transmission - SoundLink("THorner02Han00017", 0)
             libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Han00017", -1), c_transmissionDurationAdd, 0.0, true);
-            // Transmission - SoundLink("TValerian02BWarfield00015", -1)
-            libCamp_gf_SendTransmissionCampaign(null, SoundLink("Adept_Ready", -1), c_transmissionDurationAdd, 0.0, true);
             // Transmission - SoundLink("TZeratul01Zeratul00051", -1)
             libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul01Zeratul00051", -1), c_transmissionDurationAdd, 0.0, true);
             libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
