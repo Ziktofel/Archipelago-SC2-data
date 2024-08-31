@@ -210,6 +210,7 @@ trigger gt_PurifierAfterAlpha;
 trigger gt_PurifierAfterBeta;
 trigger gt_PurifierAfterGamma;
 trigger gt_PurifierAfterOmega;
+trigger gt_TerrorFleetHandleMindControl;
 trigger gt_SendBetaBaseTerrorFleet;
 trigger gt_SendGammaBaseTerrorFleet;
 trigger gt_SendOmegaBaseTerrorFleet;
@@ -2334,6 +2335,47 @@ void gt_PurifierAfterOmega_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Terror Fleet Handle Mind Control
+//--------------------------------------------------------------------------------------------------
+bool gt_TerrorFleetHandleMindControl_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_targetUnit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_targetUnit = lib15EF4C78_gf_AP_Player_UnitMindControlledEventTarget();
+    UnitGroupRemove(gv_terrorFleetGroup, lv_targetUnit);
+    if ((gv_gameOver == false) && (gv_inCinematic == false) && (UnitGroupCount(gv_terrorFleetGroup, c_unitCountAlive) == 0) && (UnitGetOwner(lv_targetUnit) == gv_pLAYER06_TERRORFLEET)) {
+        if ((TriggerIsEnabled(gt_TerrorFleetBetaDestroyed) == true)) {
+            TriggerExecute(gt_TerrorFleetBetaDestroyed, false, false);
+        }
+
+        if ((TriggerIsEnabled(gt_TerrorFleetGammaDestroyed) == true)) {
+            TriggerExecute(gt_TerrorFleetGammaDestroyed, false, false);
+        }
+
+        if ((TriggerIsEnabled(gt_TerrorFleetOmegaDestroyed) == true)) {
+            TriggerExecute(gt_TerrorFleetOmegaDestroyed, false, false);
+        }
+
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_TerrorFleetHandleMindControl_Init () {
+    gt_TerrorFleetHandleMindControl = TriggerCreate("gt_TerrorFleetHandleMindControl_Func");
+    TriggerAddEventGeneric(gt_TerrorFleetHandleMindControl, lib15EF4C78_gv_aP_Player_UNIT_MIND_CONTROLLED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Send Beta Base Terror Fleet
 //--------------------------------------------------------------------------------------------------
 bool gt_SendBetaBaseTerrorFleet_Func (bool testConds, bool runActions) {
@@ -2649,6 +2691,10 @@ bool gt_TerrorFleetBetaBaseBehavior_Func (bool testConds, bool runActions) {
         if (!((UnitFilterMatch(EventUnit(), gv_pLAYER06_TERRORFLEET, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)))) == false))) {
             return false;
         }
+
+        if (!((lib15EF4C78_gf_AP_Player_UnitIsMindControlled(EventUnit()) == false))) {
+            return false;
+        }
     }
 
     // Actions
@@ -2711,6 +2757,10 @@ bool gt_TerrorFleetGammaBaseBehavior_Func (bool testConds, bool runActions) {
         }
 
         if (!((UnitFilterMatch(EventUnit(), gv_pLAYER06_TERRORFLEET, UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32)))) == false))) {
+            return false;
+        }
+
+        if (!((lib15EF4C78_gf_AP_Player_UnitIsMindControlled(EventUnit()) == false))) {
             return false;
         }
     }
@@ -2932,6 +2982,10 @@ bool gt_TerrorFleetOmegaDestroyed_Func (bool testConds, bool runActions) {
         }
 
         if (!((UnitGetOwner(EventUnit()) == gv_pLAYER06_TERRORFLEET))) {
+            return false;
+        }
+
+        if (!((lib15EF4C78_gf_AP_Player_UnitIsMindControlled(EventUnit()) == false))) {
             return false;
         }
     }
@@ -7278,6 +7332,7 @@ void InitTriggers () {
     gt_PurifierAfterBeta_Init();
     gt_PurifierAfterGamma_Init();
     gt_PurifierAfterOmega_Init();
+    gt_TerrorFleetHandleMindControl_Init();
     gt_SendBetaBaseTerrorFleet_Init();
     gt_SendGammaBaseTerrorFleet_Init();
     gt_SendOmegaBaseTerrorFleet_Init();

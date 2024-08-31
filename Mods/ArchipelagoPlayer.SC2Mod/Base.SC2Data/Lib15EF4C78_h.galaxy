@@ -46,6 +46,12 @@ const int lib15EF4C78_ge_CampaignHeroes_Stukov = 3;
 const int lib15EF4C78_ge_HeroUnit_Kerrigan = 0;
 const int lib15EF4C78_ge_HeroUnit_Stukov = 1;
 const int lib15EF4C78_ge_HeroUnit_Dehaka = 2;
+const int lib15EF4C78_ge_AP_Player_MercenaryType_BROODWAR = 0;
+const int lib15EF4C78_ge_AP_Player_MercenaryType_SCTWO = 1;
+const int lib15EF4C78_ge_AP_Player_MercenaryType_INFESTED = 2;
+const int lib15EF4C78_ge_AP_Player_MercenaryType_INFANTRY = 3;
+const int lib15EF4C78_ge_AP_Player_MercenaryType_VEHICLE = 4;
+const int lib15EF4C78_ge_AP_Player_MercenaryType_STARSHIP = 5;
 
 // Constants
 const int lib15EF4C78_gv_nMC_HEROCOUNT = 5;
@@ -70,6 +76,7 @@ const string lib15EF4C78_gv_aP_Player_ON_PRIMARY_TOWN_HALL_INIT_EVENT = "AP_Play
 const string lib15EF4C78_gv_aP_Player_ON_PRIMARY_TOWN_HALL_DEATH_EVENT = "AP_Player_OnPrimaryTownHallDeathEvent";
 const string lib15EF4C78_gv_aP_Player_ON_PRIMARY_TOWN_HALL_AFTER_DEATH_FOUND_EVENT = "AP_Player_OnPrimaryTownHallAfterDeathFoundEvent";
 const string lib15EF4C78_gv_aP_Player_ON_PRIMARY_TOWN_HALL_SET_EVENT = "AP_Player_OnPrimaryTownHallSetEvent";
+const string lib15EF4C78_gv_aP_Player_UNIT_MIND_CONTROLLED_EVENT = "AP_Player_UNIT_MIND_CONTROLLED_EVENT";
 const fixed lib15EF4C78_gv_cUC_HeroUpdateFrequency = 0.25;
 const int lib15EF4C78_gv_cUC_HeroMaxCount = 20;
 const int lib15EF4C78_gv_cUC_HEROUISHIELDBARHEIGHT = 8;
@@ -79,7 +86,7 @@ const int lib15EF4C78_gv_cUC_HEROUIBARWIDTH = 200;
 const fixed lib15EF4C78_gv_zS_SwarmHeroUIUpdateFrequency = 0.25;
 const string lib15EF4C78_gv_zSC_HeroReviveLinkKerrigan = "Abil/AP_KerriganRevive";
 const int lib15EF4C78_gv_zSC_KERRIGANMAXLEVEL = 70;
-const int lib15EF4C78_gv_aP_Player_Terran_MERC_COOLDOWN_LINK_SIZE = 16;
+const int lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE = 19;
 const string lib15EF4C78_gv_aP_PLAYER_TRANSFORMER_LAND_EVENT = "AP_PLAYER_TRANSFORMER_LAND";
 
 // Variable Declarations
@@ -173,6 +180,7 @@ int lib15EF4C78_gv_aP_Player_OnPrimaryTownHallAfterDeathFound__player;
 unit lib15EF4C78_gv_aP_Player_OnPrimaryTownHallAfterDeathFound__unit;
 unit lib15EF4C78_gv_aP_Player_OnPrimaryTownHallSet__oldBuilding;
 unit lib15EF4C78_gv_aP_Player_OnPrimaryTownHallSet__newBuilding;
+unit lib15EF4C78_gv_aP_Player_UnitMindControlledTarget;
 fixed[lib15EF4C78_gv_cUC_HeroMaxCount + 1][21] lib15EF4C78_gv_cU_HeroReviveTimer;
 fixed lib15EF4C78_gv_cU_HeroCooldownTime;
 unit[lib15EF4C78_gv_cUC_HeroMaxCount + 1][21] lib15EF4C78_gv_cU_HeroUnit;
@@ -251,8 +259,11 @@ unit lib15EF4C78_gv_zS_Dehaka;
 unit lib15EF4C78_gv_zS_Stukov;
 int lib15EF4C78_gv_zS_KerriganPhase;
 int lib15EF4C78_gv_zS_KerriganLevelLabel;
-string[lib15EF4C78_gv_aP_Player_Terran_MERC_COOLDOWN_LINK_SIZE + 1] lib15EF4C78_gv_aP_Player_Terran_MercCooldownLinks;
-abilcmd[lib15EF4C78_gv_aP_Player_Terran_MERC_COOLDOWN_LINK_SIZE + 1] lib15EF4C78_gv_aP_Player_Terran_MercAbilityCommands;
+string[lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE + 1] lib15EF4C78_gv_aP_Player_MercCooldownLinks;
+abilcmd[lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE + 1] lib15EF4C78_gv_aP_Player_MercAbilityCommands;
+string[lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE + 1] lib15EF4C78_gv_aP_Player_MercAbility;
+int[lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE + 1] lib15EF4C78_gv_aP_Player_MercAbilityInfoArrayIndex;
+int[lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE + 1] lib15EF4C78_gv_aP_Player_MercType;
 unit lib15EF4C78_gv_aP_PlayerTransformerLandTriggeringUnit;
 
 // Function Declarations
@@ -327,6 +338,7 @@ void lib15EF4C78_gf_AP_Player_findPrimaryTownHall (int lp_player);
 unit lib15EF4C78_gf_AP_Player_getPrimaryTownHall (int lp_player);
 void lib15EF4C78_gf_ZerglingRespawnSetPrimaryHatchery (int lp_player, unit lp_building);
 bool lib15EF4C78_gf_AP_Player_UnitIsMindControlled (unit lp_unit);
+unit lib15EF4C78_gf_AP_Player_UnitMindControlledEventTarget ();
 void lib15EF4C78_gf_SetHeroPanelUnit2 (int lp_index, unit lp_heroUnit, int lp_player);
 void lib15EF4C78_gf_SetHeroPanelUnitOverride (int lp_index, unit lp_heroUnit, int lp_player);
 void lib15EF4C78_gf_CU_ShowHideHeroPanel (bool lp_showHide, int lp_index);
@@ -367,6 +379,7 @@ void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, strin
 void lib15EF4C78_gf_ReplaceGasStructure (unit lp_gasStructure, string lp_desiredFaction);
 void lib15EF4C78_gf_ReplaceWorker (unit lp_worker, string lp_desiredFaction);
 void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction);
+void lib15EF4C78_gf_AP_Player_MercCompoundUpdateAvailableCount (int lp_player);
 void lib15EF4C78_gf_AP_Player_ResetMercenaryCooldowns (int lp_player);
 void lib15EF4C78_gf_AP_Player_ClearMercenaryCooldowns (int lp_player);
 void lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit (unit lp_unit);
@@ -457,6 +470,7 @@ trigger lib15EF4C78_gt_AP_Player_OnPrimaryTownHallDeathEmitEvent;
 trigger lib15EF4C78_gt_AP_Player_OnPrimaryTownHallDeathSeekNew;
 trigger lib15EF4C78_gt_AP_Player_MindControlRemoveLeash;
 trigger lib15EF4C78_gt_AP_Player_MindControlRemoveAi;
+trigger lib15EF4C78_gt_AP_Player_MindControlEmitEvent;
 trigger lib15EF4C78_gt_CU_HeroPanelUpdate;
 trigger lib15EF4C78_gt_CU_HeroUnitDamaged;
 trigger lib15EF4C78_gt_CU_HeroUnitVitalChange;
@@ -469,13 +483,21 @@ trigger lib15EF4C78_gt_AP_Player_ZS_ReviveCooldownReadyKerriganAsyncRunner;
 trigger lib15EF4C78_gt_AP_Player_ZS_KerriganDied;
 trigger lib15EF4C78_gt_AP_Player_onKerriganRevived;
 trigger lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry;
-trigger lib15EF4C78_gt_AP_Player_Terran_Merc_ArrayInit;
 trigger lib15EF4C78_gt_MedivacTankPickup;
 trigger lib15EF4C78_gt_MedivacTankDrop;
 trigger lib15EF4C78_gt_MedivacMercTankPickup;
 trigger lib15EF4C78_gt_MedivacMercTankDrop;
 trigger lib15EF4C78_gt_MedivacInfestedTankPickup;
 trigger lib15EF4C78_gt_MedivacInfestedTankDrop;
+trigger lib15EF4C78_gt_AP_Player_Merc_ArrayInit;
+trigger lib15EF4C78_gt_AP_Player_MercCompoundUpdateCounts;
+trigger lib15EF4C78_gt_AP_Player_MercCompoundOnMercUse;
+trigger lib15EF4C78_gt_AP_Player_Terran_MercCompoundTabSetInfantry;
+trigger lib15EF4C78_gt_AP_Player_Terran_MercCompoundTabSetVehicles;
+trigger lib15EF4C78_gt_AP_Player_Terran_MercCompoundTabSetStarships;
+trigger lib15EF4C78_gt_AP_Player_Zerg_MercCompoundTabSetBroodWar2;
+trigger lib15EF4C78_gt_AP_Player_Zerg_MercCompoundTabSetSC3;
+trigger lib15EF4C78_gt_AP_Player_Zerg_MercCompoundTabSetInfested2;
 trigger lib15EF4C78_gt_EmitTransformerLand;
 
 // Library Initialization

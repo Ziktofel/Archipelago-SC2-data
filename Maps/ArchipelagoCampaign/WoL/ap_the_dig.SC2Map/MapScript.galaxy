@@ -37,7 +37,11 @@ const int gv_LOCATION_ID_DOOR_OUTER_LAYER = 5;
 const int gv_LOCATION_ID_DOOR_THERMAL_BARRIER = 6;
 const int gv_LOCATION_ID_CUTTING_THROUGH_THE_CORE = 7;
 const int gv_LOCATION_ID_STRUCTURE_ACCESS_IMMINENT = 8;
+const int gv_LOCATION_ID_NORTHWESTERN_BASE = 9;
+const int gv_LOCATION_ID_NORTHEASTERN_BASE = 10;
+const int gv_LOCATION_ID_EASTERN_BASE = 11;
 const int gv_p1_USER = 1;
+const int gv_NUM_PROTOSS_BASES = 3;
 
 //--------------------------------------------------------------------------------------------------
 // Global Variables
@@ -105,6 +109,8 @@ int gv_primaryObjectiveMeltOpenTemple;
 int gv_bonusObjectiveCollectRelics;
 int gv_bonusObjectiveCollectRelicsNeeded;
 int gv_bonusObjectiveCollectRelicsFound;
+int gv_masteryObjectiveDestroyProtossBases;
+int gv_masteryObjectiveBasesDestroyed;
 actor[5] gv_midCinematicPings;
 unitgroup gv_midCinematicProtoss;
 unitgroup gv_midHiddenUnitGroup;
@@ -146,6 +152,7 @@ void InitGlobals () {
     gv_primaryObjectiveLaserDrillMustSurvive = c_invalidObjectiveId;
     gv_primaryObjectiveMeltOpenTemple = c_invalidObjectiveId;
     gv_bonusObjectiveCollectRelics = c_invalidObjectiveId;
+    gv_masteryObjectiveDestroyProtossBases = c_invalidObjectiveId;
     gv_midCinematicProtoss = UnitGroupEmpty();
     gv_midHiddenUnitGroup = UnitGroupEmpty();
 }
@@ -275,6 +282,10 @@ trigger gt_ObjectiveRelicsCreateQ;
 trigger gt_ObjectiveRelicsUpdate;
 trigger gt_ObjectiveRelicsComplete;
 trigger gt_ObjectiveRelicsRemove;
+trigger gt_MasteryObjectiveDestroyProtossCreate;
+trigger gt_MasteryNorthwestBaseDestroyed;
+trigger gt_MasteryNortheastBaseDestroyed;
+trigger gt_MasteryEasternBaseDestroyed;
 trigger gt_BriefingQ;
 trigger gt_BriefingScene00;
 trigger gt_BriefingScene01;
@@ -5108,6 +5119,7 @@ bool gt_PrimaryObjectiveOpenShrineDiscovered_Func (bool testConds, bool runActio
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_PrimaryObjectiveOpenShrineCreate, true, false);
+    TriggerExecute(gt_MasteryObjectiveDestroyProtossCreate, true, false);
     Wait(2.0, c_timeGame);
     return true;
 }
@@ -5290,6 +5302,153 @@ bool gt_ObjectiveRelicsRemove_Func (bool testConds, bool runActions) {
 void gt_ObjectiveRelicsRemove_Init () {
     gt_ObjectiveRelicsRemove = TriggerCreate("gt_ObjectiveRelicsRemove_Func");
     TriggerAddEventGeneric(gt_ObjectiveRelicsRemove, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mastery Objective Destroy Protoss Create
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryObjectiveDestroyProtossCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/100F61B2"), StringToText(""), c_objectiveStateHidden, true);
+    gv_masteryObjectiveDestroyProtossBases = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_masteryObjectiveDestroyProtossBases, lib5BD4895D_ge_APObjectiveCategory_Mastery, "", gv_masteryObjectiveBasesDestroyed, gv_NUM_PROTOSS_BASES, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_masteryObjectiveDestroyProtossBases, gv_LOCATION_ID_NORTHWESTERN_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_masteryObjectiveDestroyProtossBases, gv_LOCATION_ID_NORTHEASTERN_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_masteryObjectiveDestroyProtossBases, gv_LOCATION_ID_EASTERN_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_masteryObjectiveDestroyProtossBases, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryObjectiveDestroyProtossCreate_Init () {
+    gt_MasteryObjectiveDestroyProtossCreate = TriggerCreate("gt_MasteryObjectiveDestroyProtossCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mastery - Northwest Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryNorthwestBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((UnitCount(null, gv_p5_NW_PROTOSSLeft, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    gv_masteryObjectiveBasesDestroyed += 1;
+    TriggerExecute(gt_MasteryObjectiveDestroyProtossCreate, true, false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWESTERN_BASE);
+    if ((gv_masteryObjectiveBasesDestroyed >= gv_NUM_PROTOSS_BASES)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_masteryObjectiveDestroyProtossBases);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryNorthwestBaseDestroyed_Init () {
+    gt_MasteryNorthwestBaseDestroyed = TriggerCreate("gt_MasteryNorthwestBaseDestroyed_Func");
+    TriggerAddEventTimePeriodic(gt_MasteryNorthwestBaseDestroyed, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mastery - Northeast Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryNortheastBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((UnitCount(null, gv_p2_NE_PROTOSSMiddle, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    gv_masteryObjectiveBasesDestroyed += 1;
+    TriggerExecute(gt_MasteryObjectiveDestroyProtossCreate, true, false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEASTERN_BASE);
+    if ((gv_masteryObjectiveBasesDestroyed >= gv_NUM_PROTOSS_BASES)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_masteryObjectiveDestroyProtossBases);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryNortheastBaseDestroyed_Init () {
+    gt_MasteryNortheastBaseDestroyed = TriggerCreate("gt_MasteryNortheastBaseDestroyed_Func");
+    TriggerAddEventTimePeriodic(gt_MasteryNortheastBaseDestroyed, 1.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mastery - Eastern Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryEasternBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((UnitCount(null, gv_p4_SE_PROTOSSRight, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    gv_masteryObjectiveBasesDestroyed += 1;
+    TriggerExecute(gt_MasteryObjectiveDestroyProtossCreate, true, false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EASTERN_BASE);
+    if ((gv_masteryObjectiveBasesDestroyed >= gv_NUM_PROTOSS_BASES)) {
+        lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_masteryObjectiveDestroyProtossBases);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryEasternBaseDestroyed_Init () {
+    gt_MasteryEasternBaseDestroyed = TriggerCreate("gt_MasteryEasternBaseDestroyed_Func");
+    TriggerAddEventTimePeriodic(gt_MasteryEasternBaseDestroyed, 1.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6417,6 +6576,10 @@ void InitTriggers () {
     gt_ObjectiveRelicsUpdate_Init();
     gt_ObjectiveRelicsComplete_Init();
     gt_ObjectiveRelicsRemove_Init();
+    gt_MasteryObjectiveDestroyProtossCreate_Init();
+    gt_MasteryNorthwestBaseDestroyed_Init();
+    gt_MasteryNortheastBaseDestroyed_Init();
+    gt_MasteryEasternBaseDestroyed_Init();
     gt_BriefingQ_Init();
     gt_BriefingScene00_Init();
     gt_BriefingScene01_Init();
