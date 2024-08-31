@@ -2995,7 +2995,7 @@ void lib15EF4C78_gf_AP_Player_updatePrideOfAugustgradWeapons (unit lp_unit) {
     }
 }
 
-void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, string lp_desiredFaction) {
+void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, string lp_desiredFaction, int lp_hiveUpgrade) {
     // Automatic Variable Declarations
     unitgroup autoA0E4A284_g;
     int autoA0E4A284_u;
@@ -3013,10 +3013,18 @@ void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, strin
         }
 
         if (((UnitGetType(autoA0E4A284_var) == "AP_Hatchery") || (UnitGetType(autoA0E4A284_var) == "AP_Lair") || (UnitGetType(autoA0E4A284_var) == "AP_Hive") || (UnitGetType(autoA0E4A284_var) == "AP_Nexus") || (UnitGetType(autoA0E4A284_var) == "AP_CommandCenter"))) {
-            lib15EF4C78_gf_ReplaceTownHall(autoA0E4A284_var, lp_desiredFaction);
+            if ((lp_hiveUpgrade == 1)) {
+                lib15EF4C78_gf_ReplaceTownHall(autoA0E4A284_var, lp_desiredFaction, 1);
+                continue;
+            }
+            else {
+                lib15EF4C78_gf_ReplaceTownHall(autoA0E4A284_var, lp_desiredFaction, 0);
+                continue;
+            }
+        }
+        else {
             continue;
         }
-
         if ((lp_desiredFaction != "Zerg") && ((UnitGetType(autoA0E4A284_var) == "AP_CreepTumor") || (UnitGetType(autoA0E4A284_var) == "AP_CreepTumorBurrowed") || (UnitGetType(autoA0E4A284_var) == "AP_CreepTumorUsed"))) {
             UnitRemove(autoA0E4A284_var);
             CreepModify(UnitGetPosition(autoA0E4A284_var), 11.0, false, false);
@@ -3106,7 +3114,7 @@ void lib15EF4C78_gf_ReplaceWorker (unit lp_worker, string lp_desiredFaction) {
 
 }
 
-void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction) {
+void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction, int lp_hiveUpgrade) {
     // Variable Declarations
     unit lv_replacedTownHall;
 
@@ -3143,7 +3151,13 @@ void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction)
             libNtve_gf_ReplaceUnit(lp_townHall, "AP_CommandCenter", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
             lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
         }
+        else {
+            if ((lp_desiredFaction == "Terr") && (UnitGetType(lp_townHall) != "AP_CommandCenter")) {
+                libNtve_gf_ReplaceUnit(lp_townHall, "AP_CommandCenter", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
+            }
 
+        }
         if ((lp_desiredFaction == "Prot") && (UnitGetType(lp_townHall) != "AP_Nexus")) {
             libNtve_gf_ReplaceUnit(lp_townHall, "AP_Nexus", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
             lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
@@ -3153,10 +3167,18 @@ void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction)
     }
     else {
         if ((UnitGetType(lp_townHall) != "AP_Hatchery") && (UnitGetType(lp_townHall) != "AP_Lair") && (UnitGetType(lp_townHall) != "AP_Hive")) {
-            libNtve_gf_ReplaceUnit(lp_townHall, "AP_Lair", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
-            lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
-            CreepModify(UnitGetPosition(lp_townHall), 12.0, true, false);
-            lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lv_replacedTownHall, 3);
+            if ((lp_hiveUpgrade == 1)) {
+                libNtve_gf_ReplaceUnit(lp_townHall, "AP_Hive", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
+                CreepModify(UnitGetPosition(lp_townHall), 12.0, true, false);
+                lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lv_replacedTownHall, 3);
+            }
+            else {
+                libNtve_gf_ReplaceUnit(lp_townHall, "AP_Lair", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+                lv_replacedTownHall = libNtve_gf_LastReplacedUnit();
+                CreepModify(UnitGetPosition(lp_townHall), 12.0, true, false);
+                lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lv_replacedTownHall, 3);
+            }
         }
         else {
             lib15EF4C78_gf_AP_Player_SpawnLarvaForHatchery(lp_townHall, 3);
