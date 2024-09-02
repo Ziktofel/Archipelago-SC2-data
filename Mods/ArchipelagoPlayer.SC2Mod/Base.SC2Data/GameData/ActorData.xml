@@ -35250,4 +35250,98 @@
         <On Terms="ActorCreation; !Selected" Send="SetVisibility"/>
         <Icon value="Assets\Textures\RadarIcon2.dds"/>
     </CActorRange>
+    <CActorUnit id="AP_HunterlingPlaceholder" parent="GenericUnitStandard" unitName="AP_HunterlingPlaceholder">
+        <Model value="AP_Hunterling"/>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-mod-l2d_zerg-hunterling.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorMissile id="AP_Hunterling" parent="GenericUnitBase" unitName="AP_Hunterling">
+        <PortraitModel value="AP_HunterlingPortrait"/>
+        <WalkAnimMoveSpeed value="3.1328"/>
+        <BarWidth value="50"/>
+        <BarOffset value="30"/>
+        <DeathArray index="Normal" ModelLink="AP_HunterlingDeath" SoundLink="AP_Hunterling_Explode"/>
+        <DeathArray index="Disintegrate" ModelLink="AP_HunterlingDeathAcid" SoundLink="Uni_DeathFXAcid"/>
+        <DeathArray index="Eviscerate" ModelLink="AP_HunterlingDeathEviscerate" SoundLink="AP_Hunterling_DeathFXEviscerate"/>
+        <DeathArray index="Fire" ModelLink="AP_HunterlingDeathFire" SoundLink="AP_Hunterling_DeathFXFire"/>
+        <Aliases value="_MissileHybrids"/>
+        <UnitIcon value="AP\Assets\Custom\Textures\btn-unit-hunterling.dds"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\wireframe-mod-l2d_zerg-hunterling.dds"/>
+        </GroupIcon>
+        <Wireframe>
+            <Image value="Assets\Textures\wireframe-mod-l2d_zerg-hunterling.dds"/>
+        </Wireframe>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
+        <DeathCustoms ModelLink="AP_HunterlingAirDeath" Name="Flying"/>
+        <On Terms="Behavior.AP_MercGroundDrop.Create" Send="Create AP_MercUltraliskDropModel"/>
+        <On Terms="UnitDeathCustomize; AnimPlaying Jump" Send="DeathCustomize Flying"/>
+        <On Terms="UnitDeathCustomize; IsStatus InAir 1" Send="DeathCustomize Flying"/>
+        <!--On Terms="ActorCreation" Send="TimerSet 5.000000 Ambience"/-->
+        <!--On Terms="TimerExpired; TimerName Ambience; PassChance 50.000000" Send="Create AP_Left2Die_Hunterling_Ambience"/-->
+        <!--On Terms="TimerExpired; TimerName Ambience" Send="TimerSet 5.000000 Ambience"/-->
+        <On Terms="UnitDeathCustomize; ValidateUnit AP_HunterlingLeaping" Send="DeathCustomize Flying"/>
+        <On Terms="Behavior.AP_HunterlingJump.Launch" Send="AnimBracketStart Jump Jump,Start Jump Jump,End,A"/>
+        <On Terms="Behavior.AP_HunterlingJump.Launch" Send="AnimBlendTimeApply 0.000000"/>
+        <On Terms="Behavior.AP_HunterlingJump.LandDown" Send="AnimBracketStop Jump"/>
+        <On Terms="Behavior.AP_HunterlingJump.LandDown" Send="AnimBlendTimeApply"/>
+        <On Terms="Behavior.AP_HunterlingJump.LandUp" Send="AnimBracketStop Jump"/>
+        <On Terms="Behavior.AP_HunterlingJump.LandUp" Send="AnimBlendTimeApply"/>
+        <On Terms="WeaponStart.*.AttackStart" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="WeaponStop.*.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="Abil.AP_LeapAttack.SourceCastStart" Send="AnimClear Jump"/>
+        <On Terms="Abil.AP_LeapAttack.SourceCastStart" Send="AnimBracketStart LeapAttack Jump,Start Jump IGNORE"/>
+        <On Terms="Effect.AP_HunterlingLeapImpactDamageSearch.Start; At Caster" Send="AnimBracketStop LeapAttack"/>
+        <On Terms="Effect.AP_LeapHunterlingDamage.Start; At Caster" Send="AnimPlay PounceAttacking Spell"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Hunterling_Land"/>
+        <!--On Terms="Effect.LeapNoTargetDummy.Start; At Caster" Send="AnimPlay Land Jump,End,A"/>
+        <On Terms="Effect.LeapAttackDelayPersistent.Start; At Caster" Send="AnimPlay Falling Jump,End 0 0.000000 0.000000"/>
+        <On Terms="Effect.LeapAttackingPersistent.Start; At Caster" Send="AnimPlay PounceAttacking Spell PlayForever"/>
+        <On Terms="Behavior.LeapAttacking.Off" Send="AnimClear PounceAttacking"/-->
+        <Macros value="AntiGravDeathRemoveMacro"/>
+    </CActorMissile>
+    <CActorSound id="AP_Hunterling_Land" parent="SoundOneShot"/>
+    <CActorModel id="AP_HunterlingJumpLandDownModel" parent="ModelAnimationStyleOneShot">
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter SOpShadow"/>
+        <On Terms="Behavior.AP_HunterlingJump.LandDown" Send="Create"/>
+        <On Terms="Behavior.AP_HunterlingJump.LandUp" Send="Create"/>
+        <On Terms="Behavior.AP_HunterlingJump.LandDown" Send="TimerSet 0.300000 TriggerSound"/>
+        <On Terms="TimerExpired; TimerName TriggerSound" Send="Create AP_HunterlingJumpLandSound"/>
+        <Inherits index="CloakEffect" value="1"/>
+    </CActorModel>
+    <CActorSound id="AP_HunterlingJumpLandSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_HunterlingJump.LandUp" Send="Create"/>
+        <Sound value="AP_Hunterling_JumpLand"/>
+    </CActorSound>
+    <CActorModel id="AP_HunterlingJumpLaunchModel" parent="ModelAnimationStyleOneShot">
+        <On Terms="Behavior.AP_HunterlingJump.Launch" Send="Create"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter SOpShadow" HoldPosition="1" HoldRotation="1"/>
+        <Inherits index="CloakEffect" value="1"/>
+    </CActorModel>
+    <CActorSound id="AP_HunterlingJumpLaunchSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_HunterlingJump.Launch" Send="Create"/>
+        <Sound value="AP_Hunterling_JumpLaunch"/>
+    </CActorSound>
+    <CActorRange id="AP_LeapAttackRange" parent="RangeAbil" abil="AP_LeapAttack">
+        <Icon value="Assets\Textures\RadarIcon2.dds"/>
+        <IconArcLength value="3.250000"/>
+    </CActorRange>
+    <CActorSplat id="AP_LeapAttackCursorSplat" parent="ZergCursorSplat" abil="AP_LeapAttack"/>
+    <CActorModel id="AP_LeapAttackStun" parent="ModelAnimationStyleContinuous">
+        <On Terms="Behavior.AP_LeapHunterlingStun.On" Send="Create"/>
+        <On Terms="Behavior.AP_LeapHunterlingStun.Off" Send="AnimBracketStop BSD"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachOverhead"/>
+        <Model value="AP_ArtanisAreaStunModel"/>
+    </CActorModel>
 </Catalog>
