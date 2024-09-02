@@ -228,6 +228,7 @@ void lib15EF4C78_InitVariables () {
     lib15EF4C78_gv_zS_KerriganActualLevel = 1;
     lib15EF4C78_gv_zS_KerriganPing = c_invalidPingId;
     lib15EF4C78_gv_zS_KerriganLevelLabel = c_invalidDialogControlId;
+    lib15EF4C78_gv_cM_Mengsk_XPHungryUnits = UnitGroupEmpty();
     for (init_i = 0; init_i <= lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE; init_i += 1) {
         lib15EF4C78_gv_aP_Player_MercCooldownLinks[init_i] = "";
     }
@@ -2945,6 +2946,63 @@ int lib15EF4C78_gf_AP_Player_getKerriganLevel (int lp_player) {
     // Automatic Variable Declarations
     // Implementation
     return lib15EF4C78_gv_zS_KerriganLevel[lp_player];
+}
+
+void lib15EF4C78_gf_AP_Player_updatePrideOfAugustgradWeapons (unit lp_unit) {
+    // Automatic Variable Declarations
+    // Implementation
+    UnitWeaponRemove(lp_unit, "AP_BaseLaserBatteryMengskL1Fake");
+    UnitWeaponRemove(lp_unit, "AP_BaseLaserBatteryMengskL2Fake");
+    UnitWeaponRemove(lp_unit, "AP_BaseLaserBatteryMengskL3Fake");
+    UnitWeaponRemove(lp_unit, "AP_BaseLaserBatteryMengskL4Fake");
+    UnitWeaponRemove(lp_unit, "AP_ATXLaserBatteryMengskL1Fake");
+    UnitWeaponRemove(lp_unit, "AP_ATXLaserBatteryMengskL2Fake");
+    UnitWeaponRemove(lp_unit, "AP_ATXLaserBatteryMengskL3Fake");
+    UnitWeaponRemove(lp_unit, "AP_ATXLaserBatteryMengskL4Fake");
+    if ((TechTreeUpgradeCount(UnitGetOwner(lp_unit), "AP_AdvancedWeaponryBattlecruiser", c_techCountCompleteOnly) >= 1)) {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ATXLaserBatteryMengskL1Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ATXLaserBatteryMengskL2Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ATXLaserBatteryMengskL3Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ATXLaserBatteryMengskL4Fake", null);
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_ATXLaserBatteryMengskL1Fake", null);
+        }
+    }
+    else {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_BaseLaserBatteryMengskL1Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_BaseLaserBatteryMengskL2Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_BaseLaserBatteryMengskL3Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_BaseLaserBatteryMengskL4Fake", null);
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_BaseLaserBatteryMengskL1Fake", null);
+        }
+    }
+    UnitWeaponRemove(lp_unit, "AP_ATSLaserBatteryMengsk");
+    UnitWeaponRemove(lp_unit, "AP_ATALaserBatteryMengsk");
+    UnitWeaponRemove(lp_unit, "AP_ATXLaserBatteryMengsk");
+    if ((TechTreeUpgradeCount(UnitGetOwner(lp_unit), "AP_AdvancedWeaponryBattlecruiser", c_techCountCompleteOnly) >= 1)) {
+        UnitWeaponAdd(lp_unit, "AP_ATXLaserBatteryMengsk", "AP_Battlecruiser");
+    }
+    else {
+        UnitWeaponAdd(lp_unit, "AP_ATSLaserBatteryMengsk", "AP_Battlecruiser");
+        UnitWeaponAdd(lp_unit, "AP_ATALaserBatteryMengsk", "AP_Battlecruiser");
+    }
 }
 
 void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, string lp_desiredFaction) {
@@ -7212,6 +7270,256 @@ void lib15EF4C78_gt_MedivacInfestedTankDrop_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: CM_Mengsk_VeterancyEarned
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_dyingunit;
+    fixed lv_xp;
+    unitgroup lv_veteranunits;
+    int lv_veterancount;
+    fixed lv_xppersupplyratio;
+    fixed lv_heroicxpoverride;
+    fixed lv_minimumearnedxp;
+    fixed lv_xpradius;
+
+    // Automatic Variable Declarations
+    unitgroup autoB45ECD10_g;
+    int autoB45ECD10_u;
+    unit autoB45ECD10_var;
+
+    // Variable Initialization
+    lv_dyingunit = EventUnit();
+    lv_veteranunits = UnitGroupEmpty();
+    lv_xppersupplyratio = libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogEffect, "AP_MengskRoyalGuardExperienceGainDummy", "Amount", 0);
+    lv_heroicxpoverride = 800.0;
+    lv_minimumearnedxp = 1.0;
+    lv_xpradius = 15.0;
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitFilterMatch(lv_dyingunit, libNtve_gf_KillingPlayer(), UnitFilter(0, 0, (1 << c_targetFilterPlayer) | (1 << c_targetFilterAlly) | (1 << c_targetFilterNeutral) | (1 << c_targetFilterStructure) | (1 << c_targetFilterRawResource) | (1 << c_targetFilterHarvestableResource) | (1 << c_targetFilterMissile) | (1 << c_targetFilterDestructible) | (1 << c_targetFilterItem) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterHallucination - 32)))) == true))) {
+            return false;
+        }
+
+        if (!((libNtve_gf_KillingPlayer() != c_playerAny))) {
+            return false;
+        }
+
+        if (!((EventUnitDamageDeathCheck(c_deathTypeRemove) == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_xppersupplyratio = libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogEffect, "AP_MengskRoyalGuardExperienceGainDummy", "Amount", libNtve_gf_KillingPlayer());
+    lv_veteranunits = UnitGroupFilterRegion(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, RegionCircle(UnitGetPosition(lv_dyingunit), lv_xpradius), 0);
+    lv_veteranunits = UnitGroupFilterAlliance(lv_veteranunits, UnitGetOwner(lv_dyingunit), c_unitAllianceEnemy, 0);
+    if ((UnitGroupHasUnit(lv_veteranunits, libNtve_gf_KillingUnit()) == false) && (UnitGroupHasUnit(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, libNtve_gf_KillingUnit()) == true)) {
+        UnitGroupAdd(lv_veteranunits, libNtve_gf_KillingUnit());
+    }
+
+    lv_veterancount = UnitGroupCount(lv_veteranunits, c_unitCountAlive);
+    lv_xp = (UnitTypeGetProperty(UnitGetType(lv_dyingunit), c_unitPropSuppliesUsed) * lv_xppersupplyratio);
+    if ((lv_xp <= 0.0) && (UnitFilterMatch(lv_dyingunit, libNtve_gf_KillingPlayer(), UnitFilter((1 << c_targetFilterHeroic), 0, 0, 0)) == true)) {
+        lv_xp = lv_heroicxpoverride;
+    }
+    else if ((lv_xp <= 0.0)) {
+        return true;
+    }
+    if ((lv_veterancount == 0)) {
+        lv_veteranunits = UnitGroupCopy(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits);
+        lv_veteranunits = UnitGroupFilterAlliance(lv_veteranunits, UnitGetOwner(lv_dyingunit), c_unitAllianceEnemy, 0);
+        lv_veterancount = UnitGroupCount(lv_veteranunits, c_unitCountAlive);
+        if ((lv_veterancount == 0)) {
+            return true;
+        }
+
+    }
+
+    lv_xp = MaxF(Round((lv_xp / lv_veterancount)), lv_minimumearnedxp);
+    autoB45ECD10_g = lv_veteranunits;
+    autoB45ECD10_u = UnitGroupCount(autoB45ECD10_g, c_unitCountAll);
+    for (;; autoB45ECD10_u -= 1) {
+        autoB45ECD10_var = UnitGroupUnitFromEnd(autoB45ECD10_g, autoB45ECD10_u);
+        if (autoB45ECD10_var == null) { break; }
+        UnitXPAddXP(autoB45ECD10_var, null, lv_xp);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Init () {
+    lib15EF4C78_gt_CM_Mengsk_VeterancyEarned = TriggerCreate("lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func");
+    TriggerAddEventUnitDied(lib15EF4C78_gt_CM_Mengsk_VeterancyEarned, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: CM_Mengsk_RegisterVeteranUnit
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitGroupAdd(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, EventPlayerEffectUsedUnit(c_effectUnitCaster));
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit_Init () {
+    lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit = TriggerCreate("lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit, c_playerAny, "AP_MengskVeteranTrigger");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: CM_Mengsk_RemoveVeteranUnit
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Mengsk_RemoveVeteranUnit_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_levellingunit;
+    int lv_statusframe;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_levellingunit = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+    lv_statusframe = c_invalidDialogControlId;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    DialogControlHookupUnitStatus(c_triggerControlTypeUnitStatusBar, "HealthBar", lv_levellingunit);
+    lv_statusframe = DialogControlLastCreated();
+    DialogControlSetAnimationState(lv_statusframe, PlayerGroupAll(), "Rank", IntToString(UnitXPGetCurrentLevel(lv_levellingunit, null)));
+    UnitGroupRemove(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, lv_levellingunit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Mengsk_RemoveVeteranUnit_Init () {
+    lib15EF4C78_gt_CM_Mengsk_RemoveVeteranUnit = TriggerCreate("lib15EF4C78_gt_CM_Mengsk_RemoveVeteranUnit_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_CM_Mengsk_RemoveVeteranUnit, c_playerAny, "AP_MengskVeteranMaxedTrigger");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onPrideOfAugustgradLevelChange
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnit();
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(lv_unit) == "AP_BattlecruiserMengsk"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updatePrideOfAugustgradWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange_Init () {
+    lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange = TriggerCreate("lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange, null, "AP_MengskVeteranL1Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange, null, "AP_MengskVeteranL2Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange, null, "AP_MengskVeteranL3Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange, null, "AP_MengskVeteranL4Tracker", c_unitBehaviorChangeActivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onATXUpgradeGiven
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onATXUpgradeGiven_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    unitgroup autoC4B0ED1F_g;
+    int autoC4B0ED1F_u;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((EventUpgradeName() == "AP_AdvancedWeaponryBattlecruiser"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoC4B0ED1F_g = UnitGroup("AP_BattlecruiserMengsk", EventPlayer(), RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoC4B0ED1F_u = UnitGroupCount(autoC4B0ED1F_g, c_unitCountAll);
+    for (;; autoC4B0ED1F_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(autoC4B0ED1F_g, autoC4B0ED1F_u);
+        if (lv_unit == null) { break; }
+        lib15EF4C78_gf_AP_Player_updatePrideOfAugustgradWeapons(lv_unit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onATXUpgradeGiven_Init () {
+    lib15EF4C78_gt_AP_Player_onATXUpgradeGiven = TriggerCreate("lib15EF4C78_gt_AP_Player_onATXUpgradeGiven_Func");
+    TriggerAddEventUpgradeLevelChanged(lib15EF4C78_gt_AP_Player_onATXUpgradeGiven, c_playerAny);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onPrideOfAugustgradTrained
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnitProgressUnit();
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(lv_unit) == "AP_BattlecruiserMengsk"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updatePrideOfAugustgradWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Init () {
+    lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained = TriggerCreate("lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Func");
+    TriggerAddEventUnitTrainProgress(lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Player_Merc_ArrayInit
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_AP_Player_Merc_ArrayInit_Func (bool testConds, bool runActions) {
@@ -7698,6 +8006,12 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_MedivacMercTankDrop_Init();
     lib15EF4C78_gt_MedivacInfestedTankPickup_Init();
     lib15EF4C78_gt_MedivacInfestedTankDrop_Init();
+    lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Init();
+    lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit_Init();
+    lib15EF4C78_gt_CM_Mengsk_RemoveVeteranUnit_Init();
+    lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange_Init();
+    lib15EF4C78_gt_AP_Player_onATXUpgradeGiven_Init();
+    lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Init();
     lib15EF4C78_gt_AP_Player_Merc_ArrayInit_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundUpdateCounts_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundOnMercUse_Init();

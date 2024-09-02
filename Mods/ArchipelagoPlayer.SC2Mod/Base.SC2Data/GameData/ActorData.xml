@@ -1013,6 +1013,10 @@
         <SoundArray index="Attack" value="Reaper_Attack"/>
         <SoundArray index="Pissed" value="Reaper_Pissed"/>
     </CActorMissile>
+    <CActorLookAt default="1" id="AP_BattlecruiserLookAt" parent="UnitTurret">
+        <On Terms="SupporterDestruction.*.UnitDeathModel" Send="Destroy"/>
+        <Type value="AP_BattlecruiserTurret"/>
+    </CActorLookAt>
     <CActorSound id="AP_NydusWormTransportLoadSound" parent="SoundOneShot">
         <On Terms="AbilTransport.AP_NydusWormTransport.TransportLoad" Send="Create"/>
         <On Terms="AbilTransport.AP_NydusWormTransport.TransportUnload" Send="Create"/>
@@ -35250,4 +35254,392 @@
         <On Terms="ActorCreation; !Selected" Send="SetVisibility"/>
         <Icon value="Assets\Textures\RadarIcon2.dds"/>
     </CActorRange>
+    <CActorAction id="AP_BattlecruiserMengskYamatoAoEAttack" parent="GenericAttack" effectImpact="AP_BattlecruiserMengskYamatoAoEDamage" effectLaunch="AP_BattlecruiserMengskYamatoAoELM">
+        <LaunchAttachQuery Methods="AMFilterWeaponSetA2"/>
+        <LaunchAssets Model="BattlecruiserMengskYamatoAttackLaunch" Sound="Battlecruiser_YamatoAttackLaunch"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpForwardLaunchGuide SOp2DRotation"/>
+        <ImpactAttachQuery Methods="Origin"/>
+        <ImpactMap index="None" Sound="Battlecruiser_YamatoAttackImpact" ModelReaction="BattlecruiserMengskYamatoAttackImpactReaction"/>
+        <ImpactMap index="Shield" Sound="BattlecruiserMengskYamatoAttackImpactShield" ModelReaction="BattlecruiserMengskYamatoAttackImpactReactionShield"/>
+        <ImpactMap index="Miss" Model="None"/>
+        <ImpactModel value="AP_BattlecruiserMengskYamatoAoEAttackImpactModel"/>
+        <ImpactPhysics Name="YamatoImpact" MatchKeys="Basic" Physics="BattlecruiserYamatoAttackForce"/>
+        <ImpactPhysics Name="YamatoImpactAir" MatchKeys="BasicAir" Physics="BattlecruiserYamatoAttackForce"/>
+        <DamageMap index="None" Model="BattlecruiserMengskYamatoAttackDamage" Sound="BattlecruiserMengskYamatoAttackDamage" ModelReaction="BattlecruiserMengskYamatoAttackDamageReaction"/>
+        <DamageMap index="Shield" Sound="BattlecruiserMengskYamatoAttackDamageShield" ModelReaction="BattlecruiserMengskYamatoAttackDamageReactionShield"/>
+        <ShieldFlashType value="Full"/>
+        <ActionFlags index="LaunchForceSite" value="1"/>
+    </CActorAction>
+    <CActorModel id="AP_BattlecruiserMengskYamatoAoEAttackImpactModel" parent="GenericAttackImpactModel">
+        <HostSiteOps Ops="SOpAttachCenter SOpForwardLaunchGuide SOp2DRotation" HoldPosition="1" HoldRotation="1"/>
+    </CActorModel>
+    <CActorMissile id="AP_BattlecruiserMengskYamatoAoEAttackMissile" parent="GenericAttackMissile" unitName="AP_BattlecruiserMengskYamatoAoE">
+        <Model value="AP_BattlecruiserMengskYamatoWeapon"/>
+        <TerrainSquibs MovementDistance="0.500000" RangeDown="5.000000" RangeDownFade="1.000000">
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="AP_YamatoTerrainSquibHarnessOneShot" ModelLink="WaterSplashMassive">
+                <Flags index="OneShot" value="1"/>
+            </Visuals>
+        </TerrainSquibs>
+    </CActorMissile>
+    <CActorModel id="AP_BattlecruiserMengskYamatoAttackChargeModel" parent="ModelAddition">
+        <On Terms="Abil.AP_BattlecruiserMengskYamato.SourcePrepStart" Send="Create"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamato.SourcePrepStop" Send="Destroy"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamatoTwoCharges.SourcePrepStart" Send="Create"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamatoTwoCharges.SourcePrepStop" Send="Destroy"/>
+        <On Terms="AnimBracketStart; AnimName BSD" Send="AnimSetTime BSD 1.500000"/>
+        <On Terms="ActorCreation; ValidateUnit AP_CasterLevelGTE3" Send="SetTintColor {12,12,255 10.000000} 0.000000 OneShot AoETint"/>
+        <HostSiteOps Ops="SOpAttachCustomA"/>
+        <Model value="BattlecruiserYamatoAttackChargeModel"/>
+    </CActorModel>
+    <CActorSound id="AP_BattlecruiserMengskYamatoAttackChargeSound" parent="SoundContinuous">
+        <On Terms="Abil.AP_BattlecruiserMengskYamato.SourcePrepStart" Send="Create"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamato.SourcePrepStop" Send="Destroy"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamatoTwoCharges.SourcePrepStart" Send="Create"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamatoTwoCharges.SourcePrepStop" Send="Destroy"/>
+        <Host Subject="AP_BattlecruiserMengskYamatoAttackChargeModel"/>
+        <Sound value="Battlecruiser_YamatoAttackChargeUp"/>
+    </CActorSound>
+    <CActorModel id="AP_YamatoTerrainSquibHarnessOneShot" parent="ModelAnimationStyleOneShot">
+        <Host Subject="::Creator"/>
+        <!-- Don't want to kill the splashes as soon as the ripple arrives.  It's better to let
+             them die naturally via animation. -->
+        <Remove Terms="ActorOrphan" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpAttachHarness SOpHigherOfTerrainAndWater SOp2DRotation" HoldPosition="1" HoldRotation="1"/>
+    </CActorModel>
+    <CActorRange id="AP_BattlecruiserMengskYamatoTwoChargesRange" parent="RangeAbil" abil="AP_BattlecruiserMengskYamatoTwoCharges">
+        <Icon value="Assets\Textures\RadarIcon2.dds"/>
+        <IconArcLength value="3.250000"/>
+    </CActorRange>
+    <CActorSound id="AP_Battlecruiser_Land" parent="SoundOneShot">
+        <Sound value="Battlecruiser_Land"/>
+    </CActorSound>
+    <CActorUnit id="AP_BattlecruiserMengsk" unitName="AP_BattlecruiserMengsk" parent="GenericUnitStandard">
+<!--        <Macros value="MengskUnitColorMacro"/>-->
+        <Macros value="DeadAnimationMacro"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <Macros value="PhysicsDeathsSwarmAir"/>
+        <Macros value="PhysicsDeathsVoidAir"/>
+<!--        <CustomUnitStatusFrame value="Coop_UnitStatus_Mengsk/MengskBattlecruiser_StatusFrame"/>-->
+<!--        <StatusBarOn index="Custom" value="1"/>-->
+        <UnitFlags index="ShowBlobShadow" value="1"/>
+        <UnitFlags index="StandAnimBirthVariation" value="1"/>
+<!--        <UnitFlags index="SuppressDefaultStatusBar" value="1"/>-->
+        <CopySource value="_Unit"/>
+        <Aliases value="_Unit"/>
+        <Aliases value="_Selectable"/>
+        <Aliases value="_UnitHuge"/>
+        <AcceptedTransfers index="AnimProps" value="1"/>
+        <AcceptedTransfers index="Textures" value="1"/>
+        <AcceptedTransfers index="Status" value="1"/>
+        <AcceptedHostedPropTransfers index="BaseModelScale" value="0"/>
+<!--        <On Terms="UnitDeathCustomize; ValidateUnit BattlecruiserUpgraded" Send="DeathCustomize Upgrade"/>-->
+        <On Terms="Abil.AP_BattlecruiserMengskYamato.SourcePrepStart" Send="$Spell 0 -1.000000 -1.000000 3.500000 AsDuration"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamato.SourceFinishStop" Send="AnimClear Spell"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamatoTwoCharges.SourcePrepStart" Send="$Spell 0 -1.000000 -1.000000 3.500000 AsDuration"/>
+        <On Terms="Abil.AP_BattlecruiserMengskYamatoTwoCharges.SourceFinishStop" Send="AnimClear Spell"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create Battlecruiser_Land"/>
+        <On Terms="Behavior.AP_HyperjumpMengskTeleportOut.On" Send="SetOpacity"/>
+        <On Terms="Behavior.AP_HyperjumpMengskTeleportIn.Off" Send="SetOpacity 1.000000"/>
+        <On Terms="Behavior.AP_HyperjumpMengskTeleport.On" Send="Create AP_Battlecruiser_Mengsk_COOP_Hyperjump_Placement"/>
+        <On Terms="Behavior.AP_HyperjumpMengskTeleportIn.Off" Target="AP_Battlecruiser_Mengsk_COOP_Hyperjump_Placement" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_HyperjumpMengskTeleportOut.On" Send="Create AP_Battlecruiser_Mengsk_COOP_HyperjumpOut"/>
+        <On Terms="Behavior.AP_HyperjumpMengskTeleportIn.On" Send="Create AP_Battlecruiser_Mengsk_COOP_HyperjumpIn"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt00"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt01"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt02"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt03"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt04"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt05"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt06"/>
+        <On Terms="ActorCreation" Send="Create AP_BattlecruiserLookAt07"/>
+        <On Terms="WeaponStart.AP_ATALaserBatteryMengsk.AttackStart" Target="_BattlecruiserTurretATS" Send="LookAtEngage Continue"/>
+        <On Terms="WeaponStart.AP_ATALaserBatteryMengsk.AttackStart" Target="_BattlecruiserTurretATA" Send="LookAtEngage Continue"/>
+        <On Terms="WeaponStart.AP_ATSLaserBatteryMengsk.AttackStart" Target="_BattlecruiserTurretATS" Send="LookAtEngage Continue"/>
+        <On Terms="WeaponStart.AP_ATSLaserBatteryMengsk.AttackStart" Target="_BattlecruiserTurretATA" Send="LookAtEngage Continue"/>
+        <On Terms="Abil.attack.ReadyStop" Target="_BattlecruiserTurretATS" Send="LookAtDisengage"/>
+        <On Terms="Abil.attack.ReadyStop" Target="_BattlecruiserTurretATA" Send="LookAtDisengage"/>
+        <HostSiteOps Ops="SOpBankerBattlecruiser"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <ModelFlags index="NeedsVolumeMonitoring" value="1"/>
+        <ModelFlags index="UseSyncSeed" value="1"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <EventDataFootprint Actor="UnitFootprint" Model="BattlecruiserFootprint"/>
+        <EventDataSound Actor="UnitSound"/>
+        <Baselines index="Stand" AnimProps="Stand" BlendIn="-1.000000" BlendOut="-1.000000"/>
+        <Baselines index="Walk" AnimProps="Walk" BlendIn="-1.000000" BlendOut="-1.000000"/>
+        <BuildModel value="BattlecruiserMengsk"/>
+        <DeathArray index="Normal" AnimProps="Death" ModelLink="BattlecruiserMengskDeath" VoiceLink="BattlecruiserDeathVoice"/>
+        <DeathArray index="Eat" AnimProps="Death,Eat"/>
+        <DeathArray index="Eviscerate" AnimProps="Death,Eviscerate"/>
+        <DeathArray index="Fire" AnimProps="Death,Fire"/>
+        <DeathArray index="Silentkill" AnimProps="Death,Silentkill"/>
+        <DeathArray index="Squish" AnimProps="Death,Squish"/>
+        <DeathArray index="UnderConstruction" AnimProps="Death"/>
+        <DeathCustoms ModelLink="ZergSmallUnitDeathLow" Name="AntiGravGeneric"/>
+        <DeathCustoms ModelLink="ProtossSmallUnitDeathLow" Name="AntiGravProtoss"/>
+        <DeathCustoms ModelLink="TerranSmallUnitDeathLow" Name="AntiGravTerran"/>
+        <DeathCustoms ModelLink="ZergSmallUnitDeathLow" Name="AntiGravZerg"/>
+        <DeathCustoms ModelLink="Invisible" Name="Vortex"/>
+        <DeathCustoms ModelLink="AP_BattlecruiserMengskDeathA" Name="Upgrade"/>
+        <DeathCustoms>
+            <ActorModel value="AP_BattlecruiserMengskDeathRagdoll"/>
+            <ModelLink value="AP_BattlecruiserMengskDeathRagdoll"/>
+            <Name value="RagdollBasic"/>
+            <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
+            <BodySquibs Name="Basic" Model="TerranSquibDeathRagdoll"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollNuke" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="FireHeavy"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollFire" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="FireHeavy"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollAcid" InheritsFrom="RagdollBasic">
+            <BodySquibs Name="Acid"/>
+        </DeathCustoms>
+        <DeathCustoms Name="RagdollOverkillDPRH" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
+        <DeathCustoms>
+            <ModelLink value="DeathVoidShadowLarge"/>
+            <SoundLink value="ShadowUnit_DeathFX"/>
+            <VoiceLink value="ShadowUnit_DeathVox"/>
+            <Name value="Shadow"/>
+        </DeathCustoms>
+        <DeathCustomData Name="RagdollBasic" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollBasicAndGibNoBlood" Members="RagdollBasicNoBlood;RagdollGibNoBlood" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollBaneling" Supersedes="RagdollBasic" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollSiegeTank" Supersedes="RagdollBasic" SyncPassChance="55"/>
+        <DeathCustomData Name="RagdollNuke" Supersedes="RagdollBasic" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollUltraUnburrow"/>
+        <DeathCustomData Name="RagdollSpineCrawlerHurl" SyncPassChance="25"/>
+        <DeathCustomData Name="RagdollOverkillDPRH" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollOverkillDOI" SyncPassChance="33"/>
+        <DeathCustomData Name="RagdollFire" Supersedes="RagdollBasic,RagdollOverkillDOI,RagdollOverkillDPRH" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollAcid" Supersedes="RagdollBasic,RagdollOverkillDOI,RagdollOverkillDPRH" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollMidair" Supersedes="RagdollBasic,RagdollOverkillDOI,RagdollOverkillDPRH"/>
+        <DeathCustomData Name="RagdollUpgraded" Supersedes="RagdollBasic,RagdollOverkillDOI,RagdollOverkillDPRH" SyncPassChance="50"/>
+        <DeathCustomData Name="RagdollUpgradedMidair" Supersedes="RagdollBasic,RagdollOverkillDOI,RagdollOverkillDPRH,RagdollMidair"/>
+        <DeathCustomData Name="RagdollAoE"/>
+        <DeathActorModel value="UnitDeathModelWithDeathMotionFlier"/>
+        <DeathActorModelLow value="UnitDeathModelUnscaled"/>
+        <DeathActorSound value="UnitDeathSound"/>
+        <DeathActorVoice value="UnitDeathVoice"/>
+        <OverkillByDamagePastRemainingHealth Value="30" TestType="PercentageOfMaxLifePlusShields"/>
+        <OverkillByDamageOverInterval Value="70" Interval="1" TestType="PercentageOfMaxLifePlusShields"/>
+        <PhysicsMatchKeysOrdered value="BasicAir,Basic"/>
+        <PlacementModel value="BattlecruiserMengsk"/>
+        <PlacementActorModel value="PlacementModel"/>
+        <PlaceholderActorModel value="PlaceholderModel"/>
+        <PortraitActor value="PortraitActor"/>
+        <PortraitModel value="BattlecruiserPortrait"/>
+        <RandomScaleRange value="1.000000,1.000000"/>
+        <TerrainSquibs>
+            <MovementDistance value="0.150000,0.150000"/>
+            <IdlePeriod value="0.250000,0.500000"/>
+            <RangeDown value="5.000000"/>
+            <RangeDownFade value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleMassive2"/>
+        </TerrainSquibs>
+        <VarianceWindowStandIntro value="0.330000"/>
+        <VarianceWindowStand value="1.000000"/>
+        <VarianceWindowWalkIntro value="0.330000"/>
+        <VarianceWindowWalk value="1.000000"/>
+        <VarianceWindowWalkOutro value="0.330000"/>
+        <WalkAnimMoveSpeed value="3.75"/>
+        <BarDistance value="34"/>
+        <BarHeight value="7"/>
+        <BarOffset value="75"/>
+        <BarWidth value="130"/>
+        <GlossaryAnim value="Stand"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-Terran-Battlecruiser.dds"/>
+        </GroupIcon>
+        <GroupSoundArray index="What" value="Battlecruiser_GroupWhat"/>
+        <GroupSoundArray index="Yes" value="Battlecruiser_GroupYes"/>
+        <GroupSoundArray index="Attack" value="Battlecruiser_GroupAttack"/>
+        <GroupSoundArray index="Board" value="Battlecruiser_GroupBoard"/>
+        <GroupSoundThreshold value="2"/>
+        <HeroIcon value="Assets\Textures\btn-unit-terran-battlecruisermengsk.dds"/>
+        <HighlightTooltip value="Unit/Name/AP_BattlecruiserMengsk"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-shipplatinglevel0.dds"/>
+        <MinimapIconScale value="1.000000"/>
+        <MinimapIconBackgroundScale value="1.000000"/>
+        <MinimapRenderPriority value="Normal"/>
+        <MinimapFlashWhenAttacked value="1"/>
+        <MinimapUseSelfColor value="1"/>
+        <MinimapUseSelectionColor value="1"/>
+        <NameOffset value="110"/>
+        <ShieldArmorIcon value="Assets\Textures\btn-upgrade-protoss-shieldslevel0.dds"/>
+        <SnapshotActor value="Snapshot"/>
+        <SoundArray index="Birth" value="Battlecruiser_Birth"/>
+        <SoundArray index="Ready" value="Battlecruiser_Ready"/>
+        <SoundArray index="Help" value="Battlecruiser_Help"/>
+        <SoundArray index="What" value="Battlecruiser_What"/>
+        <SoundArray index="Yes" value="Battlecruiser_Yes"/>
+        <SoundArray index="Attack" value="Battlecruiser_Attack"/>
+        <SoundArray index="Pissed" value="Battlecruiser_Pissed"/>
+        <SoundArray index="Movement" value="Battlecruiser_Movement"/>
+        <SoundArray index="Turning" value="Battlecruiser_Turning"/>
+        <SoundArray index="Board" value="Battlecruiser_Board"/>
+        <SoundArray index="Click" value="Battlecruiser_Click"/>
+        <SoundArray index="ClickError" value="Battlecruiser_ClickError"/>
+        <SoundArray index="Highlight" value="Battlecruiser_Highlight"/>
+        <StatusTextInfo>
+            <Offset value="0,16"/>
+            <Attachment value="Ref_StatusBar"/>
+            <FontSize value="16"/>
+            <BackgroundColor value="255,255,255,255"/>
+            <BackgroundImage value="Assets\Textures\ui_ingame_workercount_bg.dds"/>
+        </StatusTextInfo>
+        <UnitIcon value="Assets\Textures\btn-unit-terran-battlecruisermengsk.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-Terran-Battlecruiser.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorSound id="AP_BattlecruiserMengsk_HyperJumpIn_Sound">
+        <On Terms="Behavior.AP_HyperjumpMengskTeleportIn.On" Send="Create"/>
+        <Sound value="Battlecruiser_HyperJumpIn"/>
+        <Layers Sound="AP_NovaAC_Griffin_Transport_FlyIn"/>
+    </CActorSound>
+    <CActorSound id="AP_BattlecruiserMengsk_HyperJumpOut_Sound">
+        <On Terms="Behavior.AP_HyperjumpMengskTeleportOut.On" Send="Create"/>
+        <Sound value="Battlecruiser_HyperJumpOut"/>
+        <Layers Sound="AP_NovaAC_Griffin_Transport_FlyOut"/>
+    </CActorSound>
+    <CActorAction id="AP_BattlecruiserMengskAirAttack" parent="GenericAttack" effectImpact="AP_ATALaserBatteryMengskSwitchATXSwitch" effectLaunch="AP_ATALaserBatteryMengskLM">
+        <LaunchAttachQuery Methods="AMFilterWeaponSetA0 AMRandomUniform"/>
+        <LaunchAssets Sound="Battlecruiser_AirAttackLaunch"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
+        <ImpactMap index="None" Sound="Battlecruiser_AirAttackImpact"/>
+        <ImpactPhysics Name="ATAImpact" MatchKeys="BasicAir" Physics="BattlecruiserAttackAirForce"/>
+        <ActionFlags index="LaunchForceSite" value="1"/>
+    </CActorAction>
+    <CActorMissile id="AP_BattlecruiserMengskAirAttackMissile" parent="GenericAttackMissile" unitName="AP_ATALaserBatteryMengskLMWeapon"/>
+    <CActorAction id="AP_BattlecruiserMengskGroundAttack" parent="GenericAttack" effectImpact="AP_ATSLaserBatteryMengskSwitch" effectLaunch="AP_ATSLaserBatteryMengskLM">
+        <LaunchAttachQuery Methods="AMFilterWeaponSetA1 AMRandomUniform"/>
+        <LaunchAssets Sound="Battlecruiser_GroundAttackLaunch"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
+        <ImpactMap index="None" Sound="Battlecruiser_GroundAttackImpact"/>
+        <ImpactPhysics Name="ATSImpact" MatchKeys="Basic" Physics="BattlecruiserAttackGroundForce"/>
+        <ActionFlags index="LaunchForceSite" value="1"/>
+    </CActorAction>
+    <CActorMissile id="AP_BattlecruiserMengskGroundAttackMissile" parent="GenericAttackMissile" unitName="AP_ATSLaserBatteryMengskLMWeapon"/>
+    <CActorAction id="AP_BattlecruiserMengskYamatoAttack" parent="GenericAttack" effectImpact="AP_BattlecruiserMengskYamatoDamage" effectLaunch="AP_BattlecruiserMengskYamatoLM">
+        <LaunchAttachQuery Methods="AMFilterWeaponSetA2"/>
+        <LaunchAssets Sound="Battlecruiser_YamatoAttackLaunch"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpForwardLaunchGuide SOp2DRotation"/>
+        <ImpactAttachQuery Methods="Origin"/>
+        <ImpactMap index="None" Sound="Battlecruiser_YamatoAttackImpact"/>
+        <ImpactMap index="Miss" Model="None"/>
+        <ImpactModel value="BattlecruiserMengskYamatoAttackImpactModel"/>
+        <ImpactPhysics Name="YamatoImpact" MatchKeys="Basic" Physics="BattlecruiserYamatoAttackForce"/>
+        <ImpactPhysics Name="YamatoImpactAir" MatchKeys="BasicAir" Physics="BattlecruiserYamatoAttackForce"/>
+        <ShieldFlashType value="Full"/>
+        <ActionFlags index="LaunchForceSite" value="1"/>
+    </CActorAction>
+    <CActorModel id="AP_BattlecruiserMengskYamatoAttackImpactModel" parent="GenericAttackImpactModel">
+        <HostSiteOps Ops="SOpAttachCenter SOpForwardLaunchGuide SOp2DRotation" HoldPosition="1" HoldRotation="1"/>
+    </CActorModel>
+    <CActorMissile id="AP_BattlecruiserMengskYamatoAttackMissile" parent="GenericAttackMissile" unitName="AP_BattlecruiserMengskYamato">
+        <Model value="YamatoWeapon"/>
+        <TerrainSquibs MovementDistance="0.500000" RangeDown="5.000000" RangeDownFade="1.000000">
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="YamatoTerrainSquibHarnessOneShot" ModelLink="WaterSplashMassive">
+                <Flags index="OneShot" value="1"/>
+            </Visuals>
+        </TerrainSquibs>
+    </CActorMissile>
+    <CActorModel id="AP_Battlecruiser_Mengsk_COOP_Hyperjump_Placement" parent="ModelAnimationStyleContinuous">
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_Battlecruiser_Mengsk_COOP_HyperjumpIn" parent="ModelAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter" HoldPosition="1"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_Battlecruiser_Mengsk_COOP_HyperjumpOut" parent="ModelAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter" HoldPosition="1"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <Flags index="SuppressCreationErrors" value="1"/>
+    </CActorModel>
+    <CActorLookAt id="AP_BattlecruiserLookAt00" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATS"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_00" Weight="1" Time="125"/>
+            <Stop Group="Turret_00" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorLookAt id="AP_BattlecruiserLookAt01" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATS"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_01" Weight="1" Time="125"/>
+            <Stop Group="Turret_01" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorLookAt id="AP_BattlecruiserLookAt02" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATS"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_02" Weight="1" Time="125"/>
+            <Stop Group="Turret_02" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorLookAt id="AP_BattlecruiserLookAt03" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATA"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_03" Weight="1" Time="125"/>
+            <Stop Group="Turret_03" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorLookAt id="AP_BattlecruiserLookAt04" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATA"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_04" Weight="1" Time="125"/>
+            <Stop Group="Turret_04" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorLookAt id="AP_BattlecruiserLookAt05" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATS"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_05" Weight="1" Time="125"/>
+            <Stop Group="Turret_05" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorLookAt id="AP_BattlecruiserLookAt06" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATS"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_06" Weight="1" Time="125"/>
+            <Stop Group="Turret_06" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorLookAt id="AP_BattlecruiserLookAt07" parent="AP_BattlecruiserLookAt">
+        <Aliases value="_BattlecruiserTurretATS"/>
+        <Types Id="AP_BattlecruiserTurret">
+            <Start Group="Turret_07" Weight="1" Time="125"/>
+            <Stop Group="Turret_07" Weight="1" Time="125"/>
+        </Types>
+    </CActorLookAt>
+    <CActorModel id="AP_MengskVeteranLevelUp" parent="ModelAnimationStyleOneShot">
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <On Terms="Effect.AP_MengskVeteranLevelUpDummy.Start; At Target" Send="Create"/>
+        <On Terms="Effect.AP_MengskVeteranMaxedTrigger.Start; At Target" Send="Create"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <AutoScaleFactor value="1.000000"/>
+    </CActorModel>
 </Catalog>
