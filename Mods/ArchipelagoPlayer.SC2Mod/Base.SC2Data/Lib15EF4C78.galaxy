@@ -2995,6 +2995,53 @@ void lib15EF4C78_gf_AP_Player_updatePrideOfAugustgradWeapons (unit lp_unit) {
     }
 }
 
+void lib15EF4C78_gf_AP_Player_updateShockDivisionWeapons (unit lp_unit) {
+    // Automatic Variable Declarations
+    // Implementation
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengsk");
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengskL2");
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengskL3");
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengskL4");
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengskSieged");
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengskSiegedL2");
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengskSiegedL3");
+    UnitWeaponRemove(lp_unit, "AP_SiegeTankMengskSiegedL4");
+    if ((UnitGetType(lp_unit) == "AP_SiegeTankMengsk")) {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengsk", "AP_SiegeTankMengsk");
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskL2", "AP_SiegeTankMengsk");
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskL3", "AP_SiegeTankMengsk");
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskL4", "AP_SiegeTankMengsk");
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengsk", "AP_SiegeTankMengsk");
+        }
+    }
+    else {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskSieged", "AP_SiegeTankMengskSieged");
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskSiegedL2", "AP_SiegeTankMengskSieged");
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskSiegedL3", "AP_SiegeTankMengskSieged");
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskSiegedL4", "AP_SiegeTankMengskSieged");
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_SiegeTankMengskSieged", "AP_SiegeTankMengskSieged");
+        }
+    }
+}
+
 void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, string lp_desiredFaction, bool lp_hiveUpgrade) {
     // Automatic Variable Declarations
     unitgroup autoA0E4A284_g;
@@ -7343,6 +7390,106 @@ void lib15EF4C78_gt_MedivacInfestedTankDrop_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: MedivacShockDivisionPickup
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_MedivacShockDivisionPickup_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_medivac;
+    unit lv_tank;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(EventUnit()) == "AP_Medivac"))) {
+            return false;
+        }
+
+        if (!((UnitGetType(EventUnitCargo()) == "AP_SiegeTankMengskSiegedTransportable"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_medivac = EventUnit();
+    lv_tank = EventUnitCargo();
+    if ((TechTreeUpgradeCount(UnitGetOwner(lv_medivac), "AP_MedivacSiegeTankAirlift", c_techCountQueuedOrBetter) >= 1)) {
+        UnitBehaviorAdd(lv_medivac, "AP_MedivacMengskSiegeTankAirlift", lv_tank, 1);
+    }
+
+    UnitBehaviorAdd(lv_medivac, "AP_SiegeTankSiegeModeProgressiveRangeIncease", lv_tank, UnitBehaviorCount(lv_tank, "AP_SiegeTankSiegeModeProgressiveRangeIncease"));
+    UnitBehaviorAdd(lv_medivac, "AP_VeterancySuppressEffects", lv_medivac, 1);
+    UnitBehaviorAdd(lv_medivac, "AP_MengskVeterancyMedivac", lv_medivac, 1);
+    UnitXPSetCurrentXP(lv_medivac, "AP_MengskVeterancyMedivac", 0.0);
+    UnitXPAddXP(lv_medivac, null, UnitXPGetCurrentXP(lv_tank, null));
+    if ((UnitGroupHasUnit(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, lv_tank) == true)) {
+        UnitGroupRemove(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, lv_tank);
+        UnitGroupAdd(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, lv_medivac);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_MedivacShockDivisionPickup_Init () {
+    lib15EF4C78_gt_MedivacShockDivisionPickup = TriggerCreate("lib15EF4C78_gt_MedivacShockDivisionPickup_Func");
+    TriggerAddEventUnitCargo(lib15EF4C78_gt_MedivacShockDivisionPickup, null, true);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: MedivacShockDivisionDrop
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_MedivacShockDivisionDrop_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_medivac;
+    unit lv_tank;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(EventUnit()) == "AP_Medivac"))) {
+            return false;
+        }
+
+        if (!((UnitGetType(EventUnitCargo()) == "AP_SiegeTankMengskSiegedTransportable"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_medivac = EventUnit();
+    lv_tank = EventUnitCargo();
+    UnitBehaviorRemove(lv_medivac, "AP_MedivacMengskSiegeTankAirlift", 1);
+    UnitBehaviorRemove(lv_medivac, "AP_SiegeTankSiegeModeProgressiveRangeIncease", c_unitBehaviorCountAll);
+    UnitBehaviorAdd(lv_tank, "AP_VeterancySuppressEffects", lv_tank, 1);
+    UnitXPSetCurrentXP(lv_tank, "AP_MengskVeterancySiegeTankMengsk", UnitXPGetCurrentXP(lv_medivac, "AP_MengskVeterancyMedivac"));
+    if ((UnitGroupHasUnit(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, lv_medivac) == true)) {
+        UnitGroupRemove(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, lv_medivac);
+        UnitGroupAdd(lib15EF4C78_gv_cM_Mengsk_XPHungryUnits, lv_tank);
+    }
+
+    UnitBehaviorRemove(lv_medivac, "AP_MengskVeterancyMedivac", 1);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_MedivacShockDivisionDrop_Init () {
+    lib15EF4C78_gt_MedivacShockDivisionDrop = TriggerCreate("lib15EF4C78_gt_MedivacShockDivisionDrop_Func");
+    TriggerAddEventUnitCargo(lib15EF4C78_gt_MedivacShockDivisionDrop, null, false);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: CM_Mengsk_VeterancyEarned
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActions) {
@@ -7620,6 +7767,70 @@ bool lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Func (bool testConds, b
 void lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Init () {
     lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained = TriggerCreate("lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Func");
     TriggerAddEventUnitTrainProgress(lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onShockDivisionLevelChange
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnit();
+
+    // Conditions
+    if (testConds) {
+        if (!(((UnitGetType(lv_unit) == "AP_SiegeTankMengsk") || (UnitGetType(lv_unit) == "AP_SiegeTankMengskSieged") || (UnitGetType(lv_unit) == "AP_SiegeTankMengskSiegedTransportable")))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updateShockDivisionWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange_Init () {
+    lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange = TriggerCreate("lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange, null, "AP_MengskVeteranL1Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange, null, "AP_MengskVeteranL2Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange, null, "AP_MengskVeteranL3Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange, null, "AP_MengskVeteranL4Tracker", c_unitBehaviorChangeActivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onShockDivisionTransform
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onShockDivisionTransform_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnit();
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updateShockDivisionWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onShockDivisionTransform_Init () {
+    lib15EF4C78_gt_AP_Player_onShockDivisionTransform = TriggerCreate("lib15EF4C78_gt_AP_Player_onShockDivisionTransform_Func");
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onShockDivisionTransform, null, AbilityCommand("AP_SiegeModeMengsk", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onShockDivisionTransform, null, AbilityCommand("AP_UnsiegeMengsk", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onShockDivisionTransform, null, AbilityCommand("AP_SiegeTankMengskSiegedTransportableMorph", 0), c_unitAbilStageComplete, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -8117,6 +8328,8 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_MedivacMercTankDrop_Init();
     lib15EF4C78_gt_MedivacInfestedTankPickup_Init();
     lib15EF4C78_gt_MedivacInfestedTankDrop_Init();
+    lib15EF4C78_gt_MedivacShockDivisionPickup_Init();
+    lib15EF4C78_gt_MedivacShockDivisionDrop_Init();
     lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Init();
     lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit_Init();
     lib15EF4C78_gt_CM_Mengsk_RemoveVeteranUnit_Init();
@@ -8124,6 +8337,8 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_AP_Player_onPrideOfAugustgradLevelChange_Init();
     lib15EF4C78_gt_AP_Player_onATXUpgradeGiven_Init();
     lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Init();
+    lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange_Init();
+    lib15EF4C78_gt_AP_Player_onShockDivisionTransform_Init();
     lib15EF4C78_gt_AP_Player_Merc_ArrayInit_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundUpdateCounts_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundOnMercUse_Init();
