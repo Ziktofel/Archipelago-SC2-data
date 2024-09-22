@@ -232,6 +232,7 @@ trigger gt_NorthwestTower;
 trigger gt_SoutheastTower;
 trigger gt_SouthwestTower;
 trigger gt_ArchInit;
+trigger gt_FactionSwapInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -1034,6 +1035,55 @@ void gt_ArchInit_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Terr", true);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(6), "Terr", true);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, true);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(6), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, true);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_pLAYER_P01_USER);
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER_P01_USER);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            PlayerSetRace(gv_pLAYER_P01_USER, "Zerg");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_P01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(gv_pLAYER_P01_USER, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_P01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAUnit(gv_pLAYER_P01_USER);
+                }
+
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAAutonomousCasterUnit(gv_pLAYER_P01_USER);
+                }
+
+            }
+
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -1645,6 +1695,13 @@ bool gt_SpawnLeviathan_Func (bool testConds, bool runActions) {
     TriggerEnable(gt_LeviathanDies, true);
     TriggerEnable(gt_LeviathanMutaCatcher, true);
     TriggerExecute(gt_LeviathanPing, true, false);
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == true)) {
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Cinematic);
+        // Transmission - SoundLink("TValerian02BWarfield00016", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02BWarfield00016", -1), c_transmissionDurationAdd, 0.0, true);
+        libNtve_gf_SetAllSoundChannelVolumes(libNtve_ge_VolumeChannelMode_Game, PlayerGroupAll(), 0.0);
+    }
+
     TriggerExecute(gt_TipLeviathanQ, true, false);
     TriggerExecute(gt_LeviathanPatrolAI, true, false);
     TriggerEnable(gt_LeviathanSpawnsMutas, true);
@@ -4331,8 +4388,14 @@ bool gt_ComsatStationQ_Func (bool testConds, bool runActions) {
     // Transmission - SoundLink("TValerian02BHorner00028", -1)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02BHorner00028", -1), c_transmissionDurationAdd, 0.0, true);
     Wait(5.0, c_timeGame);
-    // Transmission - SoundLink("TValerian02BTychus00003", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02BTychus00003", -1), c_transmissionDurationAdd, 0.0, true);
+    if (((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut"))) {
+        // Transmission - SoundLink("TValerian02BTychus00003", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02BTychus00003", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else {
+        // Transmission - SoundLink("THorner02Tychus00023", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Tychus00023", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     // Transmission - SoundLink("TValerian02BRaynor00004", -1)
     libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian02BRaynor00004", -1), c_transmissionDurationAdd, 0.0, true);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
@@ -6064,7 +6127,6 @@ bool gt_MidPlatformsQ_Func (bool testConds, bool runActions) {
             TriggerExecute(gt_FinalCinematicPlatformLinesTR, true, true);
         }
         else if (auto4985451B_val == 2) {
-            TriggerExecute(gt_FinalCinematicPlatformLinesBL, true, true);
         }
         else if (auto4985451B_val == 3) {
             TriggerExecute(gt_FinalCinematicPlatformLinesTL, true, true);
@@ -7772,6 +7834,7 @@ void InitTriggers () {
     gt_SoutheastTower_Init();
     gt_SouthwestTower_Init();
     gt_ArchInit_Init();
+    gt_FactionSwapInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
