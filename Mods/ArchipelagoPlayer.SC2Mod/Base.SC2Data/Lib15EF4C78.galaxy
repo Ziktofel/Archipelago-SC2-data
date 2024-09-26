@@ -7542,6 +7542,8 @@ void lib15EF4C78_gt_MedivacShockDivisionDrop_Init () {
 bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unit lv_dyingunit;
+    string lv_unitType;
+    fixed lv_userDataValue;
     fixed lv_xp;
     unitgroup lv_veteranunits;
     int lv_veterancount;
@@ -7557,6 +7559,7 @@ bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActi
 
     // Variable Initialization
     lv_dyingunit = EventUnit();
+    lv_unitType = UnitGetType(lv_dyingunit);
     lv_veteranunits = UnitGroupEmpty();
     lv_xppersupplyratio = libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogEffect, "AP_MengskRoyalGuardExperienceGainDummy", "Amount", 0);
     lv_heroicxpoverride = 800.0;
@@ -7591,7 +7594,13 @@ bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActi
     }
 
     lv_veterancount = UnitGroupCount(lv_veteranunits, c_unitCountAlive);
-    lv_xp = (UnitTypeGetProperty(UnitGetType(lv_dyingunit), c_unitPropSuppliesUsed) * lv_xppersupplyratio);
+    lv_userDataValue = UserDataGetFixed("AP_MengskVetarancySupplyCostOverrides", lv_unitType, "OverrideSupplyCost", 1);
+    if ((lv_userDataValue > 0.0)) {
+        lv_xp = (lv_userDataValue * lv_xppersupplyratio);
+    }
+    else {
+        lv_xp = (UnitTypeGetProperty(lv_unitType, c_unitPropSuppliesUsed) * lv_xppersupplyratio);
+    }
     if ((lv_xp <= 0.0) && (UnitFilterMatch(lv_dyingunit, libNtve_gf_KillingPlayer(), UnitFilter((1 << c_targetFilterHeroic), 0, 0, 0)) == true)) {
         lv_xp = lv_heroicxpoverride;
     }
