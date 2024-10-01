@@ -3042,6 +3042,53 @@ void lib15EF4C78_gf_AP_Player_updateShockDivisionWeapons (unit lp_unit) {
     }
 }
 
+void lib15EF4C78_gf_AP_Player_updateBlackhammerWeapons (unit lp_unit) {
+    // Automatic Variable Declarations
+    // Implementation
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskBaseModeL1Fake");
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskBaseModeL2Fake");
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskBaseModeL3Fake");
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskBaseModeL4Fake");
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskAPModeL1Fake");
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskAPModeL2Fake");
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskAPModeL3Fake");
+    UnitWeaponRemove(lp_unit, "AP_ThorMengskAPModeL4Fake");
+    if ((UnitGetType(lp_unit) == "AP_ThorMengsk")) {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskBaseModeL1Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskBaseModeL2Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskBaseModeL3Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskBaseModeL4Fake", null);
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskBaseModeL1Fake", null);
+        }
+    }
+    else if ((UnitGetType(lp_unit) == "AP_ThorMengskAP")) {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskAPModeL1Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskAPModeL2Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskAPModeL3Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskAPModeL4Fake", null);
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_ThorMengskAPModeL1Fake", null);
+        }
+    }
+}
+
 void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, string lp_desiredFaction, bool lp_hiveUpgrade) {
     // Automatic Variable Declarations
     unitgroup autoA0E4A284_g;
@@ -7602,6 +7649,8 @@ void lib15EF4C78_gt_MedivacShockDivisionDrop_Init () {
 bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unit lv_dyingunit;
+    string lv_unitType;
+    fixed lv_userDataValue;
     fixed lv_xp;
     unitgroup lv_veteranunits;
     int lv_veterancount;
@@ -7617,6 +7666,7 @@ bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActi
 
     // Variable Initialization
     lv_dyingunit = EventUnit();
+    lv_unitType = UnitGetType(lv_dyingunit);
     lv_veteranunits = UnitGroupEmpty();
     lv_xppersupplyratio = libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogEffect, "AP_MengskRoyalGuardExperienceGainDummy", "Amount", 0);
     lv_heroicxpoverride = 800.0;
@@ -7651,7 +7701,13 @@ bool lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Func (bool testConds, bool runActi
     }
 
     lv_veterancount = UnitGroupCount(lv_veteranunits, c_unitCountAlive);
-    lv_xp = (UnitTypeGetProperty(UnitGetType(lv_dyingunit), c_unitPropSuppliesUsed) * lv_xppersupplyratio);
+    lv_userDataValue = UserDataGetFixed("AP_MengskVetarancySupplyCostOverrides", lv_unitType, "OverrideSupplyCost", 1);
+    if ((lv_userDataValue > 0.0)) {
+        lv_xp = (lv_userDataValue * lv_xppersupplyratio);
+    }
+    else {
+        lv_xp = (UnitTypeGetProperty(lv_unitType, c_unitPropSuppliesUsed) * lv_xppersupplyratio);
+    }
     if ((lv_xp <= 0.0) && (UnitFilterMatch(lv_dyingunit, libNtve_gf_KillingPlayer(), UnitFilter((1 << c_targetFilterHeroic), 0, 0, 0)) == true)) {
         lv_xp = lv_heroicxpoverride;
     }
@@ -7690,6 +7746,13 @@ void lib15EF4C78_gt_CM_Mengsk_VeterancyEarned_Init () {
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_CM_Mengsk_RegisterVeteranUnit_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((UnitHasBehavior(EventPlayerEffectUsedUnit(c_effectUnitCaster), "AP_MengskVeteranL4Tracker") == false))) {
+            return false;
+        }
+    }
+
     // Actions
     if (!runActions) {
         return true;
@@ -7938,6 +8001,74 @@ void lib15EF4C78_gt_AP_Player_onShockDivisionTransform_Init () {
     TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onShockDivisionTransform, null, AbilityCommand("AP_SiegeModeMengsk", 0), c_unitAbilStageComplete, false);
     TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onShockDivisionTransform, null, AbilityCommand("AP_UnsiegeMengsk", 0), c_unitAbilStageComplete, false);
     TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onShockDivisionTransform, null, AbilityCommand("AP_SiegeTankMengskSiegedTransportableMorph", 0), c_unitAbilStageComplete, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onBlackhammerLevelChange
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnit();
+
+    // Conditions
+    if (testConds) {
+        if (!(((UnitGetType(lv_unit) == "AP_ThorMengsk") || (UnitGetType(lv_unit) == "AP_ThorMengskAP") || (UnitGetType(lv_unit) == "AP_ThorMengskSieged")))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updateBlackhammerWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange_Init () {
+    lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange = TriggerCreate("lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange, null, "AP_MengskVeteranL1Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange, null, "AP_MengskVeteranL2Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange, null, "AP_MengskVeteranL3Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange, null, "AP_MengskVeteranL4Tracker", c_unitBehaviorChangeActivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onBlackhammerTransform
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onBlackhammerTransform_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnit();
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updateBlackhammerWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onBlackhammerTransform_Init () {
+    lib15EF4C78_gt_AP_Player_onBlackhammerTransform = TriggerCreate("lib15EF4C78_gt_AP_Player_onBlackhammerTransform_Func");
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onBlackhammerTransform, null, AbilityCommand("AP_ThorMengskAPMode", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onBlackhammerTransform, null, AbilityCommand("AP_ThorMengskAPModeFromSiegeStage2", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onBlackhammerTransform, null, AbilityCommand("AP_ThorMengskNormalModeFollowedBySiege", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onBlackhammerTransform, null, AbilityCommand("AP_ThorMengskNormalMode", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onBlackhammerTransform, null, AbilityCommand("AP_ThorMengskUnsiegeAPMode", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onBlackhammerTransform, null, AbilityCommand("AP_ThorMengskUnsiege", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(lib15EF4C78_gt_AP_Player_onBlackhammerTransform, null, AbilityCommand("AP_ThorMengskSiege", 0), c_unitAbilStageComplete, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -8450,6 +8581,8 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_AP_Player_onPrideOfAugustgradTrained_Init();
     lib15EF4C78_gt_AP_Player_onShockDivisionLevelChange_Init();
     lib15EF4C78_gt_AP_Player_onShockDivisionTransform_Init();
+    lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange_Init();
+    lib15EF4C78_gt_AP_Player_onBlackhammerTransform_Init();
     lib15EF4C78_gt_AP_Player_Merc_ArrayInit_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundUpdateCounts_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundOnMercUse_Init();
