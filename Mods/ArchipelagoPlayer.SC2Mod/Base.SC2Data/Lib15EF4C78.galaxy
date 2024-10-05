@@ -228,6 +228,8 @@ void lib15EF4C78_InitVariables () {
     lib15EF4C78_gv_zS_KerriganActualLevel = 1;
     lib15EF4C78_gv_zS_KerriganPing = c_invalidPingId;
     lib15EF4C78_gv_zS_KerriganLevelLabel = c_invalidDialogControlId;
+    lib15EF4C78_gv_armedShadowOpsNovaNuke = UnitGroupEmpty();
+    lib15EF4C78_gv_armedShadowOpsMengskNuke = UnitGroupEmpty();
     lib15EF4C78_gv_cM_Mengsk_XPHungryUnits = UnitGroupEmpty();
     for (init_i = 0; init_i <= lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE; init_i += 1) {
         lib15EF4C78_gv_aP_Player_MercCooldownLinks[init_i] = "";
@@ -7188,6 +7190,188 @@ void lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: ShadowOpsNovaNukeArmed
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_ShadowOpsNovaNukeArmed_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_shadowOps;
+    unit lv_nuke;
+    string lv_nukeType;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_shadowOps = EventUnit();
+    lv_nuke = EventUnitProgressUnit();
+    lv_nukeType = libNtve_gf_TriggeringProgressUnitType();
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(lv_shadowOps) == "AP_GhostAcademy"))) {
+            return false;
+        }
+
+        if (!((lv_nukeType == "AP_HeroNuke"))) {
+            return false;
+        }
+
+        if (!((UnitMagazineCount(lv_shadowOps, "AP_HeroArmNuke") == 1))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitAbilityRemove(lv_shadowOps, "AP_HeroArmNuke");
+    UnitRemove(lv_nuke);
+    UnitMagazineArm(lv_shadowOps, AbilityCommand("AP_HeroArmNukeCountDisplay", 0), 1);
+    UnitGroupAdd(lib15EF4C78_gv_armedShadowOpsNovaNuke, lv_shadowOps);
+    UnitBehaviorRemove(lv_shadowOps, "AP_NovaNukeArming", c_unitBehaviorCountAll);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_ShadowOpsNovaNukeArmed_Init () {
+    lib15EF4C78_gt_ShadowOpsNovaNukeArmed = TriggerCreate("lib15EF4C78_gt_ShadowOpsNovaNukeArmed_Func");
+    TriggerAddEventUnitArmMagazineProgress(lib15EF4C78_gt_ShadowOpsNovaNukeArmed, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ShadowOpsNovaNukeUsed
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_ShadowOpsNovaNukeUsed_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_shadowOps;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    unitgroup auto411E78BD_g;
+    int auto411E78BD_u;
+
+    // Variable Initialization
+    lv_player = EventPlayer();
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto411E78BD_g = UnitGroupFilterPlayer(lib15EF4C78_gv_armedShadowOpsNovaNuke, lv_player, 0);
+    auto411E78BD_u = UnitGroupCount(auto411E78BD_g, c_unitCountAll);
+    for (;; auto411E78BD_u -= 1) {
+        lv_shadowOps = UnitGroupUnitFromEnd(auto411E78BD_g, auto411E78BD_u);
+        if (lv_shadowOps == null) { break; }
+        if ((UnitMagazineCount(lv_shadowOps, "AP_HeroArmNukeCountDisplay") == 0)) {
+            UnitGroupRemove(lib15EF4C78_gv_armedShadowOpsNovaNuke, lv_shadowOps);
+            UnitAbilityAdd(lv_shadowOps, "AP_HeroArmNuke");
+            UnitModifyCooldown(lv_shadowOps, "Abil/AP_HeroArmNuke", libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, "AP_HeroArmNuke", "InfoArray[" + IntToString(0) + "].Cooldown.TimeUse", lv_player), c_cooldownOperationSet);
+            UnitBehaviorAdd(lv_shadowOps, "AP_NovaNukeArming", lv_shadowOps, 1);
+        }
+
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_ShadowOpsNovaNukeUsed_Init () {
+    lib15EF4C78_gt_ShadowOpsNovaNukeUsed = TriggerCreate("lib15EF4C78_gt_ShadowOpsNovaNukeUsed_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_ShadowOpsNovaNukeUsed, c_playerAny, "AP_HeroNukeCalldown");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ShadowOpsMengskNukeArmed
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_ShadowOpsMengskNukeArmed_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_shadowOps;
+    unit lv_nuke;
+    string lv_nukeType;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_shadowOps = EventUnit();
+    lv_nuke = EventUnitProgressUnit();
+    lv_nukeType = libNtve_gf_TriggeringProgressUnitType();
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(lv_shadowOps) == "AP_GhostAcademy"))) {
+            return false;
+        }
+
+        if (!((lv_nukeType == "AP_NukeMengsk"))) {
+            return false;
+        }
+
+        if (!((UnitMagazineCount(lv_shadowOps, "AP_ArmSiloWithNukeMengsk") == 1))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitAbilityRemove(lv_shadowOps, "AP_ArmSiloWithNukeMengsk");
+    UnitRemove(lv_nuke);
+    UnitMagazineArm(lv_shadowOps, AbilityCommand("AP_ArmSiloWithNukeMengskCountDisplay", 0), 1);
+    UnitGroupAdd(lib15EF4C78_gv_armedShadowOpsMengskNuke, lv_shadowOps);
+    UnitBehaviorRemove(lv_shadowOps, "AP_MengskNukeArming", c_unitBehaviorCountAll);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_ShadowOpsMengskNukeArmed_Init () {
+    lib15EF4C78_gt_ShadowOpsMengskNukeArmed = TriggerCreate("lib15EF4C78_gt_ShadowOpsMengskNukeArmed_Func");
+    TriggerAddEventUnitArmMagazineProgress(lib15EF4C78_gt_ShadowOpsMengskNukeArmed, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: ShadowOpsMengskNukeUsed
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_ShadowOpsMengskNukeUsed_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_shadowOps;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    unitgroup auto8D28F769_g;
+    int auto8D28F769_u;
+
+    // Variable Initialization
+    lv_player = EventPlayer();
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto8D28F769_g = UnitGroupFilterPlayer(lib15EF4C78_gv_armedShadowOpsMengskNuke, lv_player, 0);
+    auto8D28F769_u = UnitGroupCount(auto8D28F769_g, c_unitCountAll);
+    for (;; auto8D28F769_u -= 1) {
+        lv_shadowOps = UnitGroupUnitFromEnd(auto8D28F769_g, auto8D28F769_u);
+        if (lv_shadowOps == null) { break; }
+        if ((UnitMagazineCount(lv_shadowOps, "AP_ArmSiloWithNukeMengskCountDisplay") == 0)) {
+            UnitGroupRemove(lib15EF4C78_gv_armedShadowOpsMengskNuke, lv_shadowOps);
+            UnitAbilityAdd(lv_shadowOps, "AP_ArmSiloWithNukeMengsk");
+            UnitModifyCooldown(lv_shadowOps, "Abil/AP_ArmSiloWithNukeMengsk", libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, "AP_ArmSiloWithNukeMengsk", "InfoArray[" + IntToString(0) + "].Cooldown.TimeUse", lv_player), c_cooldownOperationSet);
+            UnitBehaviorAdd(lv_shadowOps, "AP_MengskNukeArming", lv_shadowOps, 1);
+        }
+
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_ShadowOpsMengskNukeUsed_Init () {
+    lib15EF4C78_gt_ShadowOpsMengskNukeUsed = TriggerCreate("lib15EF4C78_gt_ShadowOpsMengskNukeUsed_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_ShadowOpsMengskNukeUsed, c_playerAny, "AP_GhostMengskNukeSwitch");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: MedivacTankPickup
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_MedivacTankPickup_Func (bool testConds, bool runActions) {
@@ -8453,6 +8637,10 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_AP_Player_ZS_KerriganDied_Init();
     lib15EF4C78_gt_AP_Player_onKerriganRevived_Init();
     lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init();
+    lib15EF4C78_gt_ShadowOpsNovaNukeArmed_Init();
+    lib15EF4C78_gt_ShadowOpsNovaNukeUsed_Init();
+    lib15EF4C78_gt_ShadowOpsMengskNukeArmed_Init();
+    lib15EF4C78_gt_ShadowOpsMengskNukeUsed_Init();
     lib15EF4C78_gt_MedivacTankPickup_Init();
     lib15EF4C78_gt_MedivacTankDrop_Init();
     lib15EF4C78_gt_MedivacMercTankPickup_Init();
