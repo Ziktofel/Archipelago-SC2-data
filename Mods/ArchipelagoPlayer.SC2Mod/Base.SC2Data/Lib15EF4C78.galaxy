@@ -228,6 +228,8 @@ void lib15EF4C78_InitVariables () {
     lib15EF4C78_gv_zS_KerriganActualLevel = 1;
     lib15EF4C78_gv_zS_KerriganPing = c_invalidPingId;
     lib15EF4C78_gv_zS_KerriganLevelLabel = c_invalidDialogControlId;
+    lib15EF4C78_gv_cM_Mengsk_WeaponPickups = UnitGroupEmpty();
+    lib15EF4C78_gv_cM_Mengsk_WeaponPickerUppers = UnitGroupEmpty();
     lib15EF4C78_gv_armedShadowOpsNovaNuke = UnitGroupEmpty();
     lib15EF4C78_gv_armedShadowOpsMengskNuke = UnitGroupEmpty();
     lib15EF4C78_gv_cM_Mengsk_XPHungryUnits = UnitGroupEmpty();
@@ -2948,6 +2950,17 @@ int lib15EF4C78_gf_AP_Player_getKerriganLevel (int lp_player) {
     // Automatic Variable Declarations
     // Implementation
     return lib15EF4C78_gv_zS_KerriganLevel[lp_player];
+}
+
+void lib15EF4C78_gf_CM_Mengsk_ForceMorphTrooper (unit lp_trooper, unit lp_pickup, string lp_morphEffect, string lp_morphBehavior, string lp_actorSignal) {
+    // Automatic Variable Declarations
+    // Implementation
+    UnitCreateEffectUnit(lp_trooper, lp_morphEffect, lp_trooper);
+    UnitBehaviorAdd(lp_trooper, lp_morphBehavior, lp_trooper, 1);
+    UnitKill(lp_pickup);
+    UnitGroupRemove(lib15EF4C78_gv_cM_Mengsk_WeaponPickerUppers, lp_trooper);
+    libNtve_gf_SendActorMessageToUnit(lp_trooper, "Signal ClearWeapon");
+    libNtve_gf_SendActorMessageToUnit(lp_trooper, (("Signal " + lp_actorSignal)));
 }
 
 void lib15EF4C78_gf_AP_Player_updatePrideOfAugustgradWeapons (unit lp_unit) {
@@ -7190,6 +7203,140 @@ void lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: CM_Mengsk_WeaponPickupRegister
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_registrant;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_registrant = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitGroupAdd(lib15EF4C78_gv_cM_Mengsk_WeaponPickups, lv_registrant);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister_Init () {
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister = TriggerCreate("lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister, c_playerAny, "AP_TrooperMengskWeaponPickupRegister");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: CM_Mengsk_WeaponPickerUpperRegister
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperRegister_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_registrant;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_registrant = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitGroupAdd(lib15EF4C78_gv_cM_Mengsk_WeaponPickerUppers, lv_registrant);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperRegister_Init () {
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperRegister = TriggerCreate("lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperRegister_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperRegister, c_playerAny, "AP_TrooperMengskWeaponPickerUpperRegister");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: CM_Mengsk_WeaponPickerUpperUnregister
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperUnregister_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_registrant;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_registrant = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitGroupRemove(lib15EF4C78_gv_cM_Mengsk_WeaponPickerUppers, lv_registrant);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperUnregister_Init () {
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperUnregister = TriggerCreate("lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperUnregister_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperUnregister, c_playerAny, "AP_TrooperMengskWeaponPickerupperUnregister");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: CM_Mengsk_WeaponPickup
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Mengsk_WeaponPickup_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_pickup;
+    unit lv_pickerupper;
+
+    // Automatic Variable Declarations
+    unitgroup auto0DB29B73_g;
+    int auto0DB29B73_u;
+    string autoC1CDD2A2_val;
+
+    // Variable Initialization
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((UnitGroupCount(lib15EF4C78_gv_cM_Mengsk_WeaponPickups, c_unitCountAlive) > 0) && (UnitGroupCount(lib15EF4C78_gv_cM_Mengsk_WeaponPickerUppers, c_unitCountAlive) > 0)) {
+        auto0DB29B73_g = lib15EF4C78_gv_cM_Mengsk_WeaponPickups;
+        auto0DB29B73_u = UnitGroupCount(auto0DB29B73_g, c_unitCountAll);
+        for (;; auto0DB29B73_u -= 1) {
+            lv_pickup = UnitGroupUnitFromEnd(auto0DB29B73_g, auto0DB29B73_u);
+            if (lv_pickup == null) { break; }
+            lv_pickerupper = UnitGroupClosestToPoint(lib15EF4C78_gv_cM_Mengsk_WeaponPickerUppers, UnitGetPosition(lv_pickup));
+            if ((UnitIsAlive(lv_pickerupper) == true) && (DistanceBetweenPoints(UnitGetPosition(lv_pickup), UnitGetPosition(lv_pickerupper)) <= 2.0)) {
+                autoC1CDD2A2_val = UnitGetType(lv_pickup);
+                if (autoC1CDD2A2_val == "AP_TrooperMengskWeaponAAPickup") {
+                    lib15EF4C78_gf_CM_Mengsk_ForceMorphTrooper(lv_pickerupper, lv_pickup, "AP_TrooperMengskMorphAA", "AP_TrooperMengskWeaponAA", "SetWeaponAA");
+                }
+                else if (autoC1CDD2A2_val == "AP_TrooperMengskWeaponFlamethrowerPickup") {
+                    lib15EF4C78_gf_CM_Mengsk_ForceMorphTrooper(lv_pickerupper, lv_pickup, "AP_TrooperMengskMorphFlamethrower", "AP_TrooperMengskWeaponFlamethrower", "SetWeaponFlamethrower");
+                }
+                else if (autoC1CDD2A2_val == "AP_TrooperMengskWeaponImprovedPickup") {
+                    lib15EF4C78_gf_CM_Mengsk_ForceMorphTrooper(lv_pickerupper, lv_pickup, "AP_TrooperMengskMorphImproved", "AP_TrooperMengskWeaponImproved", "SetWeaponImproved");
+                }
+                else {
+                    UnitGroupRemove(lib15EF4C78_gv_cM_Mengsk_WeaponPickups, lv_pickup);
+                }
+            }
+
+            lv_pickerupper = null;
+        }
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Mengsk_WeaponPickup_Init () {
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickup = TriggerCreate("lib15EF4C78_gt_CM_Mengsk_WeaponPickup_Func");
+    TriggerAddEventTimePeriodic(lib15EF4C78_gt_CM_Mengsk_WeaponPickup, 0.5, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: ShadowOpsNovaNukeArmed
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_ShadowOpsNovaNukeArmed_Func (bool testConds, bool runActions) {
@@ -8637,6 +8784,10 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_AP_Player_ZS_KerriganDied_Init();
     lib15EF4C78_gt_AP_Player_onKerriganRevived_Init();
     lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init();
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister_Init();
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperRegister_Init();
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperUnregister_Init();
+    lib15EF4C78_gt_CM_Mengsk_WeaponPickup_Init();
     lib15EF4C78_gt_ShadowOpsNovaNukeArmed_Init();
     lib15EF4C78_gt_ShadowOpsNovaNukeUsed_Init();
     lib15EF4C78_gt_ShadowOpsMengskNukeArmed_Init();
