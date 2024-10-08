@@ -121,6 +121,7 @@ struct gs_RECORD_Reinforcements {
 //--------------------------------------------------------------------------------------------------
 int gv_objectiveRaynorBases;
 string gv_mapMusicTrack;
+bool gv_stabilizerBeingSecured;
 gs_RECORD_Stabilizer[6] gv_stabilizers;
 int gv_stabilizersSecured;
 int gv_stabilizersNeeded;
@@ -370,6 +371,7 @@ bool auto_gf_SecureStabilizer_TriggerFunc (bool testConds, bool runActions) {
     // Variable Initialization
 
     // Implementation
+    gv_stabilizerBeingSecured = true;
     gf_ActivateTurbinesforStabilizer(lp_stabilizerIndex);
     libNtve_gf_CreateUnitsWithDefaultFacing(1, "SpecialOpsDropship", 0, gv_pLAYER_04_RAYNOR_AI, gv_stabilizers[lp_stabilizerIndex].lv_dropshipEntry);
     lv_dropship = UnitLastCreated();
@@ -403,30 +405,35 @@ bool auto_gf_SecureStabilizer_TriggerFunc (bool testConds, bool runActions) {
         gf_ActivateIdleStateforSCV(1, lp_stabilizerIndex);
         gf_ActivateIdleStateforSCV(2, lp_stabilizerIndex);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 3, "SensorTower", gv_stabilizers[lp_stabilizerIndex].lv_sensorTowerPoint);
+        gv_stabilizerBeingSecured = false;
     }
     else if (auto6D57B987_val == 2) {
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHWEST_STABILIZER);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 1, "SupplyDepot", gv_stabilizers[lp_stabilizerIndex].lv_supplyDepotPoint1);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 2, "SensorTower", gv_stabilizers[lp_stabilizerIndex].lv_sensorTowerPoint);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 3, "Bunker", gv_stabilizers[lp_stabilizerIndex].lv_bunkerPoint);
+        gv_stabilizerBeingSecured = false;
     }
     else if (auto6D57B987_val == 3) {
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_STABILIZER);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 1, "SupplyDepot", gv_stabilizers[lp_stabilizerIndex].lv_supplyDepotPoint1);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 2, "Bunker", gv_stabilizers[lp_stabilizerIndex].lv_bunkerPoint);
         gf_ActivateIdleStateforSCV(3, lp_stabilizerIndex);
+        gv_stabilizerBeingSecured = false;
     }
     else if (auto6D57B987_val == 4) {
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHEAST_STABILIZER);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 1, "SupplyDepot", gv_stabilizers[lp_stabilizerIndex].lv_supplyDepotPoint1);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 2, "Bunker", gv_stabilizers[lp_stabilizerIndex].lv_bunkerPoint);
         gf_ActivateIdleStateforSCV(3, lp_stabilizerIndex);
+        gv_stabilizerBeingSecured = false;
     }
     else if (auto6D57B987_val == 5) {
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTHEAST_STABILIZER);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 1, "SupplyDepot", gv_stabilizers[lp_stabilizerIndex].lv_supplyDepotPoint1);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 2, "SensorTower", gv_stabilizers[lp_stabilizerIndex].lv_sensorTowerPoint);
         gf_OrderSCVtoBuildStructure(lp_stabilizerIndex, 3, "Bunker", gv_stabilizers[lp_stabilizerIndex].lv_bunkerPoint);
+        gv_stabilizerBeingSecured = false;
     }
     else {
     }
@@ -2975,15 +2982,16 @@ bool gt_MonitorStabilizers_Func (bool testConds, bool runActions) {
 
                 if ((gv_stabilizersSecured >= gv_stabilizersNeeded)) {
                     gv_finalStabilizerIndex = lv_index;
-                    TriggerExecute(gt_VictorySecureStabilizers, true, false);
                     TimerPause(gv_skyshieldTimer, true);
                     TimerWindowShow(gv_skyshieldTimerWindow, PlayerGroupAll(), false);
+                    gf_SecureStabilizer(lv_index);
+                    TriggerExecute(gt_VictorySecureStabilizers, true, false);
                 }
                 else {
                     libVCUI_gf_FlashTimerWindow(5.0, false);
                     TimerStart(gv_skyshieldTimer, (TimerGetRemaining(gv_skyshieldTimer) + gv_additionalTimePostRepair), false, c_timeAI);
+                    gf_SecureStabilizer(lv_index);
                 }
-                gf_SecureStabilizer(lv_index);
                 TriggerExecute(gt_ReinforceOtherStabilizers, true, false);
             }
 
@@ -4716,6 +4724,9 @@ bool gt_VictorySecureStabilizers_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    while (!((gv_stabilizerBeingSecured == false))) {
+        Wait(0.5, c_timeGame);
+    }
     TriggerExecute(gt_VictorySequence, true, false);
     return true;
 }
