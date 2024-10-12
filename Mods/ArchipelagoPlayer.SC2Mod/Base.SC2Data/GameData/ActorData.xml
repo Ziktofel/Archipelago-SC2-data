@@ -34533,6 +34533,9 @@
         <On Terms="WeaponStop.*.AttackStop; ValidateUnit AP_NotQuadAndNotDoubleDamage" Send="AnimBracketStop BSD"/>
         <On Terms="Behavior.AP_VoidRayPhase2.Off; !ValidateUnit AP_QuadDamage" Send="AnimBracketStop BSD"/>
         <On Terms="Behavior.AP_VoidRayPhase3.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="WeaponStop.*.AttackStop; ValidateUnit AP_VoidRayPurifierPhase1" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase2.Off; !ValidateUnit AP_VoidRayPurifierPhase3" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.Off" Send="AnimBracketStop BSD"/>
         <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
         <Inherits index="CloakEffect" value="1"/>
         <Inherits index="Visibility" value="1"/>
@@ -34542,6 +34545,10 @@
         <On Terms="Effect.AP_PrismaticBeamChargeEffect02.Start; At Source; ValidateUnit AP_DoubleDamage" Send="Create"/>
         <On Terms="Effect.AP_PrismaticBeamChargeEffect02.Start; At Source; ValidateUnit AP_QuadDamage" Send="Create"/>
         <On Terms="Effect.AP_PrismaticBeamChargeEffect03.Start; At Source; ValidateUnit AP_QuadDamage" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamChargeEffect1.Start; At Source" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamChargeEffect2.Start; At Source; ValidateUnit AP_VoidRayPurifierPhase2" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamChargeEffect2.Start; At Source; ValidateUnit AP_VoidRayPurifierPhase3" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamChargeEffect3.Start; At Source; ValidateUnit AP_VoidRayPurifierPhase3" Send="Create"/>
         <Host>
             <Subject value="_Selectable"/>
             <Scope value="Caster"/>
@@ -34553,6 +34560,8 @@
     <CActorModel id="AP_VoidRayChargeX02" parent="AP_VoidRayChargeBase">
         <On Terms="Effect.AP_PrismaticBeamChargeEffect02.Start; At Source" Send="Create"/>
         <On Terms="Effect.AP_PrismaticBeamChargeEffect03.Start; At Source; ValidateUnit AP_QuadDamage" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamChargeEffect2.Start; At Source" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamChargeEffect3.Start; At Source; ValidateUnit AP_VoidRayPurifierPhase3" Send="Create"/>
         <Host>
             <Subject value="_Selectable"/>
             <Scope value="Caster"/>
@@ -34563,6 +34572,7 @@
     </CActorModel>
     <CActorModel id="AP_VoidRayChargeX03" parent="AP_VoidRayChargeBase">
         <On Terms="Effect.AP_PrismaticBeamChargeEffect03.Start; At Source" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamChargeEffect3.Start; At Source" Send="Create"/>
         <Host>
             <Subject value="_Selectable"/>
             <Scope value="Caster"/>
@@ -34619,14 +34629,15 @@
         <On Terms="ActorCreation" Send="StatusSet WeaponAttacking 0"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAnim 0" Send="AnimBracketStart Powered Attack Stand,Channel Attack,End"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAnim 0" Send="StatusSet WeaponAnim 1"/>
+        <On Terms="WeaponStart.*.AttackStart" Send="TimerKill DelayAnim"/>
         <On Terms="WeaponStart.*.AttackStart" Send="StatusSet WeaponAttacking 1"/>
         <On Terms="WeaponStop.*.AttackStop" Send="TimerSet 2.000000 DelayAnim"/>
         <On Terms="TimerExpired; TimerName DelayAnim" Send="StatusSet WeaponAttacking 0"/>
         <On Terms="TimerExpired; TimerName DelayAnim" Send="AnimBracketStop Powered"/>
         <On Terms="TimerExpired; TimerName DelayAnim" Send="StatusSet WeaponAnim 0"/>
         <!-- center beam -->
-        <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRayCenterBeam"/>
-        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRayCenterBeam" Send="Destroy"/>
+        <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRayPurifierCenterBeam"/>
+        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRayPurifierCenterBeam" Send="Destroy"/>
         <!-- sounds -->
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRaySound1"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 1" Send="Create AP_VoidRaySound2"/>
@@ -34719,8 +34730,8 @@
 <!--    From Enoki's Data-Driven Turrets thread in SC2Mapster's Discord server-->
         <Supporter Subject="_AP_VoidRayGimbal" Scope="Caster" ReachAcrossEffectTrees="1"/>
         <Types Id="DefaultLookAtTurret">
-            <Start Group="Turret_Right" Weight="1" Time="360"/>
-            <Stop Group="Turret_Right" Weight="1" Time="360"/>
+            <Start Group="Turret_Right" Weight="1" Rate="90"/>
+            <Stop Group="Turret_Right" Weight="1" Rate="90"/>
         </Types>
     </CActorLookAt>
     <CActorModel id="AP_VoidRayPurifierGimbalModel">
@@ -34745,7 +34756,8 @@
         <On Terms="ActorOrphan" Target="AP_VoidRayGimbalTurretLookAt" Send="Destroy"/>
         <On Terms="ActorOrphan" Send="Destroy"/>
         <On Terms="Signal.*.GimbalBirth" Send="Create AP_VoidRayGimbalTurretLookAt"/>
-        <On Terms="WeaponStart.AP_VoidRayPurifierBeamLaunch.AttackStart" Target="AP_VoidRayGimbalTurretLookAt" Send="LookAtEngage Continue"/>
+        <On Terms="WeaponStart.AP_VoidRayPurifierPrimaryBeam.AttackStart" Target="AP_VoidRayGimbalTurretLookAt" Send="LookAtEngage Continue"/>
+        <On Terms="WeaponStart.AP_VoidRayPurifierPrimaryBeam.AttackStart" Send="TimerKill DelayAnim"/>
         <On Terms="WeaponStop.*.AttackStop" Send="TimerSet 2.000000 DelayAnim"/>
         <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRayGimbalTurretLookAt" Send="LookAtDisengage"/>
         <On Terms="Signal.*.GimbalBirth" Send="SetOpacity 0.000000 0.000000 GimbalOpacity"/>
@@ -34809,12 +34821,12 @@
         <On Terms="Effect.AP_VoidRaySwarmDamage.Start; FromEffectTreeDescendant" Send="ActionDamage"/>
         <On Terms="Effect.AP_VoidRaySwarm.Stop" Send="Destroy"/>
     </CActorAction>
-    <CActorBeamSimple id="AP_VoidRayCenterBeam" parent="ModelAnimationStyleContinuous">
-        <Model value="VoidRayCenterBeam"/>
+    <CActorBeamSimple id="AP_VoidRayPurifierCenterBeam" parent="ModelAnimationStyleContinuous">
+        <Model value="ColossusAttackBeam"/>
         <HostLaunchSiteOps Ops="SOpAttachCenter"/>
         <HostImpactSiteOps Ops="SOpAttachWeapon"/>
-        <HostLaunch Subject="AP_VoidRayPurifier"/>
-        <HostImpact Subject="AP_VoidRayPurifier"/>
+        <HostLaunch Subject="_Selectable"/>
+        <HostImpact Subject="_Selectable"/>
     </CActorBeamSimple>
     <!-- no longer used! -->
     <CActorBeamSimple id="AP_VoidRaySwarmEnhancedAttackBeam" parent="BeamSimpleAnimationStyleContinuous">
@@ -35278,6 +35290,8 @@
         <On Terms="ActorCreation" Send="Create AP_ColossusAttackLaunchSound"/>
         <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
         <On Terms="Effect.AP_VoidRayPurifierBeamActorHook.Start" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamLaunchPersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayPurifierBeamLaunchPersistent.Stop" Send="Destroy"/>
         <HostLaunch Subject="_Unit" Scope="Caster"/>
         <HostLaunchSiteOps Ops="SOpAttachWeapon"/>
         <HostImpact Subject="_Unit" Scope="Target"/>
