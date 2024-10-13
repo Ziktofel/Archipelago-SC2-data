@@ -33422,6 +33422,7 @@
         <On Terms="AbilMorph.*.Finish; MorphTo AP_GuardianSCBW" Send="Create"/>
         <On Terms="ActorCreation" Send="$Birth 0 0.000000 -1.000000 0.000000"/>
         <On Terms="UnitDeathCustomize; ValidateUnit IsHallucination" Send="DeathCustomize Hallucination"/>
+        <On Terms="Abil.AP_GuardianExplosiveSpores.SourceCastStart" Send="AnimBracketStart Attack Attack"/>
         <DeathCustoms ModelLink="HallucinationDeath" SoundLink="Sentry_HallucinationDeathLarge" Name="Hallucination"/>
         <HostSiteOps Ops="AP_SOpBankerGuardianMP"/>
         <Baselines index="Stand" BlendIn="1.000000" BlendOut="1.000000"/>
@@ -40757,4 +40758,76 @@
             <Image value="Assets\Textures\wireframe-terran-liberator-aamode.dds"/>
         </Wireframe>
     </CActorUnit>
+    <CActorSimple id="AP_GuardianExplosiveSporesKnockbackAnim">
+        <On Terms="Behavior.AP_GuardianExplosiveSporesKnockback.On; ValidateUnit IsNotConstructing; ValidateUnitType AP_NotSiegedTank" Send="Create"/>
+        <On Terms="Behavior.AP_GuardianExplosiveSporesKnockback.Off" Target="_Unit" Send="AnimClear KnockbackFlail"/>
+        <On Terms="Behavior.AP_GuardianExplosiveSporesKnockback.Off" Send="Destroy"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear Attack"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackReady"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackLeft"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackRight"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimPlay KnockbackFlail Flail PlayForever,RandomStartOffset 0.100000 0.100000"/>
+        <On Terms="ActorCreation" Send="TimerSet 3.500000 KnockbackDelay"/>
+        <On Terms="TimerExpired; TimerName KnockbackDelay" Target="_Unit" Send="AnimClear KnockbackFlail"/>
+        <On Terms="TimerExpired; TimerName KnockbackDelay" Send="Destroy"/>
+    </CActorSimple>
+    <CActorUnit id="AP_GuardianExplosiveSpores" parent="GenericUnitSelectableNoAutoSoundLinks" unitName="AP_GuardianExplosiveSpores">
+        <On Terms="AnimDone; AnimName Death" Send="Destroy"/>
+        <BarWidth value="36"/>
+        <BarOffset value="10"/>
+        <UnitIcon value="Assets\Textures\btn-ability-zerg-dehaka-guardian-explosivespores.dds"/>
+        <HeroIcon value="Assets\Textures\btn-ability-zerg-dehaka-guardian-explosivespores.dds"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-Terran-D8Charge.dds"/>
+        </GroupIcon>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-Terran-D8Charge.dds"/>
+        </Wireframe>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-buildingarmor.dds"/>
+        <DeathArray index="Normal" AnimProps="Death" ModelLink="AP_GuardianExplosiveSpores" SoundLink="AP_GuardianExplosiveSporesExplode"/>
+        <StatusBarFlags index="Life" value="0"/>
+    </CActorUnit>
+    <CActorMissile id="AP_GuardianExplosiveSporesMissile" parent="GenericAttackMissile" unitName="AP_GuardianExplosiveSporesWeapon">
+        <Model value="AP_GuardianExplosiveSporesMissile"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorMissile>
+    <CActorModel id="AP_GuardianExplosiveSporesMissileImpact" parent="ModelAnimationStyleOneShotNoOrphan">
+        <On Terms="Effect.AP_GuardianExplosiveSporesSearchArea.Start" Send="Create"/>
+    </CActorModel>
+    <CActorSound id="AP_GuardianExplosiveSporesMissileImpactAS" parent="SoundOneShot">
+        <On Terms="Effect.AP_GuardianExplosiveSporesSearchArea.Start" Send="Create"/>
+        <EditorCategories value=""/>
+        <Sound value="AP_GuardianExplosiveSporesSpewage"/>
+        <Layers Sound="AP_GuardianExplosiveSporesDetonate">
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorModel id="AP_GuardianExplosiveSporesImpactModel">
+        <Flags index="SuppressCreationErrors" value="1"/>
+        <Flags index="SuppressSaveLoad" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD IGNORE Stand,A Death ContentPlayOnce,Instant"/>
+        <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <On Terms="Behavior.AP_GuardianExplosiveSporesFate.Off" Send="AnimBracketStop BSD"/>
+        <Model value="GenericAttackModel"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModel>
+    <CActorAction id="AP_GuardianExplosiveSporesAction" parent="GenericAttack" effectImpact="AP_GuardianExplosiveSporesFateAB" effectLaunch="AP_GuardianExplosiveSporesLM">
+        <LaunchAssets Sound="AP_GuardianExplosiveSporesLaunch"/>
+        <Missile value="AP_GuardianExplosiveSporesMissile"/>
+        <ImpactMap index="None" Model="AP_GuardianExplosiveSporesMissile" AnimProps="Stand,A" Sound="AP_GuardianExplosiveSporesImpact"/>
+        <ImpactModel value="AP_GuardianExplosiveSporesImpactModel"/>
+    </CActorAction>
+    <CActorRange id="AP_GuardianExplosiveSporesRange" parent="RangeAbil" abil="AP_GuardianExplosiveSpores"/>
+    <CActorModel id="AP_GuardianPrimordialFuryBuff" parent="ModelAddition">
+        <Inherits index="TintColor" value="0"/>
+        <On Terms="Behavior.AP_GuardianPrimordialFury.On" Send="Create"/>
+        <On Terms="Behavior.AP_GuardianPrimordialFury.Off" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpAttachOrigin"/>
+        <Model value="AP_GuardianPrimordialFury"/>
+    </CActorModel>
 </Catalog>
