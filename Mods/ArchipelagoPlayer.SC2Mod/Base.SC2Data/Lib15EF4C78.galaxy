@@ -3128,6 +3128,53 @@ void lib15EF4C78_gf_AP_Player_updateBulwarkCompanyWeapons (unit lp_unit) {
     }
 }
 
+void lib15EF4C78_gf_AP_Player_updateNightHawkWeapons (unit lp_unit) {
+    // Automatic Variable Declarations
+    // Implementation
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskL1Fake");
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskL2Fake");
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskL3Fake");
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskL4Fake");
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskAGL1");
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskAGL2");
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskAGL3");
+    UnitWeaponRemove(lp_unit, "AP_WraithMengskAGL4");
+    if ((TechTreeUpgradeCount(UnitGetOwner(lp_unit), "AP_WraithAdvancedLaserTechnology", c_techCountCompleteOnly) >= 1)) {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskAGL1", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskAGL2", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskAGL3", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskAGL4", null);
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskAGL1", null);
+        }
+    }
+    else {
+        if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL1Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskL1Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL2Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskL2Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL3Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskL3Fake", null);
+        }
+        else if ((UnitHasBehavior(lp_unit, "AP_MengskVeteranL4Tracker") == true)) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskL4Fake", null);
+        }
+        else if (true) {
+            UnitWeaponAdd(lp_unit, "AP_WraithMengskL1Fake", null);
+        }
+    }
+}
+
 void lib15EF4C78_gf_RemoveUnusedStartingUnits (unitgroup lp_startingUnits, string lp_desiredFaction, bool lp_hiveUpgrade) {
     // Automatic Variable Declarations
     unitgroup autoA0E4A284_g;
@@ -7267,6 +7314,40 @@ void lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_NightHawkResonatingFeedbackInterferenceEffect
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_NightHawkResonatingFeedbackInterferenceEffect_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_registrant;
+    unit lv_registrant2;
+    fixed lv_targetEnergy;
+    fixed lv_stunDuration;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_registrant = EventPlayerEffectUsedUnit(c_effectUnitCaster);
+    lv_registrant2 = EventPlayerEffectUsedUnit(c_effectUnitTarget);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_targetEnergy = UnitGetPropertyFixed(lv_registrant2, c_unitPropEnergy, c_unitPropCurrent);
+    lv_stunDuration = (lv_targetEnergy / 5.0);
+    UnitSetPropertyFixed(lv_registrant2, c_unitPropEnergy, 0.0);
+    UnitBehaviorAdd(lv_registrant2, "AP_WraithMengskResonatingFeedbackInterference", lv_registrant, 1);
+    UnitBehaviorSetDuration(lv_registrant2, "AP_WraithMengskResonatingFeedbackInterference", lv_stunDuration);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_NightHawkResonatingFeedbackInterferenceEffect_Init () {
+    lib15EF4C78_gt_AP_Player_NightHawkResonatingFeedbackInterferenceEffect = TriggerCreate("lib15EF4C78_gt_AP_Player_NightHawkResonatingFeedbackInterferenceEffect_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_AP_Player_NightHawkResonatingFeedbackInterferenceEffect, c_playerAny, "AP_WraithMengskResonatingFeedbackInterferenceDummy");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: CM_Mengsk_WeaponPickupRegister
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister_Func (bool testConds, bool runActions) {
@@ -8396,6 +8477,116 @@ void lib15EF4C78_gt_AP_Player_onBulwarkCompanyLevelChange_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onNightHawkLevelChange
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onNightHawkLevelChange_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnit();
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(lv_unit) == "AP_WraithMengsk"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updateNightHawkWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onNightHawkLevelChange_Init () {
+    lib15EF4C78_gt_AP_Player_onNightHawkLevelChange = TriggerCreate("lib15EF4C78_gt_AP_Player_onNightHawkLevelChange_Func");
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onNightHawkLevelChange, null, "AP_MengskVeteranL1Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onNightHawkLevelChange, null, "AP_MengskVeteranL2Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onNightHawkLevelChange, null, "AP_MengskVeteranL3Tracker", c_unitBehaviorChangeActivate);
+    TriggerAddEventUnitBehaviorChange(lib15EF4C78_gt_AP_Player_onNightHawkLevelChange, null, "AP_MengskVeteranL4Tracker", c_unitBehaviorChangeActivate);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onAdvancedLaserTechnologyUpgradeGiven
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onAdvancedLaserTechnologyUpgradeGiven_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    unitgroup auto11D0EAB2_g;
+    int auto11D0EAB2_u;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((EventUpgradeName() == "AP_WraithAdvancedLaserTechnology"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    auto11D0EAB2_g = UnitGroup("AP_WraithMengsk", EventPlayer(), RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto11D0EAB2_u = UnitGroupCount(auto11D0EAB2_g, c_unitCountAll);
+    for (;; auto11D0EAB2_u -= 1) {
+        lv_unit = UnitGroupUnitFromEnd(auto11D0EAB2_g, auto11D0EAB2_u);
+        if (lv_unit == null) { break; }
+        lib15EF4C78_gf_AP_Player_updateNightHawkWeapons(lv_unit);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onAdvancedLaserTechnologyUpgradeGiven_Init () {
+    lib15EF4C78_gt_AP_Player_onAdvancedLaserTechnologyUpgradeGiven = TriggerCreate("lib15EF4C78_gt_AP_Player_onAdvancedLaserTechnologyUpgradeGiven_Func");
+    TriggerAddEventUpgradeLevelChanged(lib15EF4C78_gt_AP_Player_onAdvancedLaserTechnologyUpgradeGiven, c_playerAny);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Player_onNightHawkTrained
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Player_onNightHawkTrained_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unit lv_unit;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unit = EventUnitProgressUnit();
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(lv_unit) == "AP_WraithMengsk"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_AP_Player_updateNightHawkWeapons(lv_unit);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Player_onNightHawkTrained_Init () {
+    lib15EF4C78_gt_AP_Player_onNightHawkTrained = TriggerCreate("lib15EF4C78_gt_AP_Player_onNightHawkTrained_Func");
+    TriggerAddEventUnitTrainProgress(lib15EF4C78_gt_AP_Player_onNightHawkTrained, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Player_Merc_ArrayInit
 //--------------------------------------------------------------------------------------------------
 bool lib15EF4C78_gt_AP_Player_Merc_ArrayInit_Func (bool testConds, bool runActions) {
@@ -8886,6 +9077,7 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_AP_Player_ZS_KerriganDied_Init();
     lib15EF4C78_gt_AP_Player_onKerriganRevived_Init();
     lib15EF4C78_gt_AP_Triggers_Kerrigan_HeroReviveOnBehaviorExpiry_Init();
+    lib15EF4C78_gt_AP_Player_NightHawkResonatingFeedbackInterferenceEffect_Init();
     lib15EF4C78_gt_CM_Mengsk_WeaponPickupRegister_Init();
     lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperRegister_Init();
     lib15EF4C78_gt_CM_Mengsk_WeaponPickerUpperUnregister_Init();
@@ -8914,6 +9106,9 @@ void lib15EF4C78_InitTriggers () {
     lib15EF4C78_gt_AP_Player_onBlackhammerLevelChange_Init();
     lib15EF4C78_gt_AP_Player_onBlackhammerTransform_Init();
     lib15EF4C78_gt_AP_Player_onBulwarkCompanyLevelChange_Init();
+    lib15EF4C78_gt_AP_Player_onNightHawkLevelChange_Init();
+    lib15EF4C78_gt_AP_Player_onAdvancedLaserTechnologyUpgradeGiven_Init();
+    lib15EF4C78_gt_AP_Player_onNightHawkTrained_Init();
     lib15EF4C78_gt_AP_Player_Merc_ArrayInit_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundUpdateCounts_Init();
     lib15EF4C78_gt_AP_Player_MercCompoundOnMercUse_Init();
