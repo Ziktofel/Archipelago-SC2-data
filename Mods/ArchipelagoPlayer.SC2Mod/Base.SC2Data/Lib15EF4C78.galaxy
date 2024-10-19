@@ -23,6 +23,8 @@ void lib15EF4C78_InitVariables () {
 
     lib15EF4C78_InitVariables_completed = true;
 
+    lib15EF4C78_gv_stukov_HordeGroup = UnitGroupEmpty();
+    lib15EF4C78_gv_stukov_BunkerGroup = UnitGroupEmpty();
     lib15EF4C78_gv_kerriganPsiStrikeEnergyCost2 = libNtve_gf_CostOfAbility("AP_NovaPsiStrike", "Energy");
     for (init_i = 0; init_i <= lib15EF4C78_gv_nMC_HEROCOUNT; init_i += 1) {
         lib15EF4C78_gv_nM_HeroReviveCDLink[init_i] = "";
@@ -269,6 +271,26 @@ void lib15EF4C78_gf_Stukov_NewBunkerUnitProcess (unit lp_newUnit) {
     if ((UnitHasBehavior2(lp_newUnit, "AP_SIBarracksTrainTimedLifeHasBeenApplied") == false)) {
         UnitBehaviorAdd(lv_unit, "AP_SIBarracksTrainTimedLifeHasBeenApplied", lv_unit, 1);
         UnitBehaviorAdd(lv_unit, "AP_SIInfestedBunkerTrainTimedLife", lv_unit, 1);
+    }
+
+    UnitGroupAdd(lib15EF4C78_gv_stukov_HordeGroup, lp_newUnit);
+    lib15EF4C78_gf_Stukov_SingleUnitGoToRally(lv_unit, true);
+}
+
+void lib15EF4C78_gf_Stukov_SingleUnitGoToRally (unit lp_rallyingUnit, bool lp_overrideExistingOrders) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lib15EF4C78_gv_stukov_RallyPoint != null) && ((lp_overrideExistingOrders == true) || (UnitOrderCount(lp_rallyingUnit) == 0))) {
+        UnitIssueOrder(lp_rallyingUnit, OrderTargetingPoint(AbilityCommand("move", 3), lib15EF4C78_gv_stukov_RallyPoint), c_orderQueueReplace);
+    }
+
+}
+
+void lib15EF4C78_gf_Stukov_HordeGoToRally () {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lib15EF4C78_gv_stukov_RallyPoint != null)) {
+        UnitGroupIssueOrder(lib15EF4C78_gv_stukov_HordeGroup, OrderTargetingPoint(AbilityCommand("move", 3), lib15EF4C78_gv_stukov_RallyPoint), c_orderQueueReplace);
     }
 
 }
@@ -3867,68 +3889,27 @@ bool lib15EF4C78_gf_AP_Player_isPlayerInCinematicMode (int lp_player) {
 
 // Triggers
 //--------------------------------------------------------------------------------------------------
-// Trigger: CM_Stukov_UnitCostRefund
+// Trigger: Stukov_InfestedBunkerRegister
 //--------------------------------------------------------------------------------------------------
-bool lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Func (bool testConds, bool runActions) {
+bool lib15EF4C78_gt_Stukov_InfestedBunkerRegister_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Actions
     if (!runActions) {
         return true;
     }
 
-    PlayerModifyPropertyInt(EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster), c_playerPropMinerals, c_playerPropOperAdd, CatalogFieldValueGetAsInt(c_gameCatalogUnit, UnitGetType(EventPlayerEffectUsedUnit(c_effectUnitTarget)), "CostResource[" + IntToString(0) + "]", EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster)));
-    PlayerModifyPropertyInt(EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster), c_playerPropVespene, c_playerPropOperAdd, CatalogFieldValueGetAsInt(c_gameCatalogUnit, UnitGetType(EventPlayerEffectUsedUnit(c_effectUnitTarget)), "CostResource[" + IntToString(1) + "]", EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster)));
+    UnitGroupAdd(lib15EF4C78_gv_stukov_BunkerGroup, EventPlayerEffectUsedUnit(c_effectUnitCaster));
+    if ((lib15EF4C78_gv_stukov_RallyPoint != null)) {
+        UnitGroupIssueOrder(lib15EF4C78_gv_stukov_BunkerGroup, OrderTargetingPoint(AbilityCommand("AP_SIInfestedBunkerRally", 0), lib15EF4C78_gv_stukov_RallyPoint), c_orderQueueReplace);
+    }
+
     return true;
 }
 
 //--------------------------------------------------------------------------------------------------
-void lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Init () {
-    lib15EF4C78_gt_CM_Stukov_UnitCostRefund = TriggerCreate("lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Func");
-    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_CM_Stukov_UnitCostRefund, c_playerAny, "AP_CocoonCreateLM");
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Stukov_InfestedSiegeTankDeath
-//--------------------------------------------------------------------------------------------------
-bool lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Func (bool testConds, bool runActions) {
-    // Variable Declarations
-    int lv_stackCount;
-    int lv_player;
-
-    // Automatic Variable Declarations
-    int auto3194256A_ae;
-    const int auto3194256A_ai = 1;
-
-    // Variable Initialization
-    lv_player = UnitGetOwner(EventUnit());
-
-    // Conditions
-    if (testConds) {
-        if (!((UnitHasBehavior2(EventUnit(), "AP_StukovInfestedSiegeTankAmmo") == true))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    lv_stackCount = UnitBehaviorCount(EventUnit(), "AP_StukovInfestedSiegeTankAmmo");
-    auto3194256A_ae = lv_stackCount;
-    lv_stackCount = 1;
-    for ( ; ( (auto3194256A_ai >= 0 && lv_stackCount <= auto3194256A_ae) || (auto3194256A_ai < 0 && lv_stackCount >= auto3194256A_ae) ) ; lv_stackCount += auto3194256A_ai ) {
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SIVolatileInfested", 0, 1, UnitGetPosition(EventUnit()));
-        UnitSetState(UnitLastCreated(), c_unitStateUsingSupply, false);
-        UnitBehaviorAddPlayer(UnitLastCreated(), "AP_SIBarracksTrainTimedLife", lv_player, 1);
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Init () {
-    lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath = TriggerCreate("lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Func");
-    TriggerAddEventUnitDied(lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath, null);
+void lib15EF4C78_gt_Stukov_InfestedBunkerRegister_Init () {
+    lib15EF4C78_gt_Stukov_InfestedBunkerRegister = TriggerCreate("lib15EF4C78_gt_Stukov_InfestedBunkerRegister_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_Stukov_InfestedBunkerRegister, 1, "AP_SIInfestedBunkerCreation");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4006,15 +3987,13 @@ bool lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Func (bool testConds, bool run
         lv_newUnit = UnitCargoLastCreated();
     }
     else {
-        if ((UnitRallyPointTargetPoint(lv_bunker, 1, 1) != null)) {
-            lv_position = libNtve_gf_PointOffsetTowardsPoint(lv_position, 1.0, UnitRallyPointTargetPoint(lv_bunker, 1, 1));
-            UnitCreate(1, "AP_SIInfestedTrooper", 0, lv_player, lv_position, 270.0);
-            UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), UnitRallyPointTargetPoint(lv_bunker, 1, 1)), c_orderQueueReplace);
+        if ((lib15EF4C78_gv_stukov_RallyPoint != null)) {
+            lv_position = libNtve_gf_PointOffsetTowardsPoint(lv_position, 1.0, lib15EF4C78_gv_stukov_RallyPoint);
         }
         else {
             lv_position = PointWithOffset(lv_position, 0.0, -0.5);
-            UnitCreate(1, "AP_SIInfestedTrooper", 0, lv_player, lv_position, 270.0);
         }
+        UnitCreate(1, "AP_SIInfestedTrooper", 0, lv_player, lv_position, 270.0);
         lv_newUnit = UnitLastCreated();
         SoundPlayOnUnitForPlayer(SoundLink("Medivac_Unload", 0), lv_player, PlayerGroupAll(), lv_bunker, 0.0, 100.0, 0.0);
     }
@@ -4026,6 +4005,143 @@ bool lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Func (bool testConds, bool run
 void lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Init () {
     lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad = TriggerCreate("lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Func");
     TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad, c_playerAny, "AP_SIInfestedBunkerAutoSpawnerDummyMU");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Stukov_InfestedBunkerUnloadRally
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_Stukov_InfestedBunkerUnloadRally_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gf_Stukov_NewBunkerUnitProcess(EventPlayerEffectUsedUnit(c_effectUnitTarget));
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_Stukov_InfestedBunkerUnloadRally_Init () {
+    lib15EF4C78_gt_Stukov_InfestedBunkerUnloadRally = TriggerCreate("lib15EF4C78_gt_Stukov_InfestedBunkerUnloadRally_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_Stukov_InfestedBunkerUnloadRally, 1, "AP_SIInfestedBunkerBunkerUnloadSet");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Stukov_HordeWaveCreated
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_Stukov_HordeWaveCreated_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitGroupAdd(lib15EF4C78_gv_stukov_HordeGroup, EventUnitCreatedUnit());
+    lib15EF4C78_gf_Stukov_SingleUnitGoToRally(EventUnitCreatedUnit(), false);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_Stukov_HordeWaveCreated_Init () {
+    lib15EF4C78_gt_Stukov_HordeWaveCreated = TriggerCreate("lib15EF4C78_gt_Stukov_HordeWaveCreated_Func");
+    TriggerAddEventUnitCreated(lib15EF4C78_gt_Stukov_HordeWaveCreated, null, "AP_SIMorphtoInfestedMarine", null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Stukov_RallyPlaced
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_Stukov_RallyPlaced_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib15EF4C78_gv_stukov_RallyTarget = null;
+    lib15EF4C78_gv_stukov_RallyPoint = EventPlayerEffectUsedPoint(c_effectLocationTargetPoint);
+    if ((lib15EF4C78_gv_stukov_RallyBeaconUnit != null)) {
+        UnitRemove(lib15EF4C78_gv_stukov_RallyBeaconUnit);
+    }
+
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SIStukovRallyBeaconPsiEmitterPoint", c_unitCreateIgnorePlacement, 0, lib15EF4C78_gv_stukov_RallyPoint);
+    lib15EF4C78_gv_stukov_RallyBeaconUnit = UnitLastCreated();
+    UnitGroupIssueOrder(lib15EF4C78_gv_stukov_BunkerGroup, OrderTargetingPoint(AbilityCommand("AP_SIInfestedBunkerRally", 0), lib15EF4C78_gv_stukov_RallyPoint), c_orderQueueReplace);
+    lib15EF4C78_gf_Stukov_HordeGoToRally();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_Stukov_RallyPlaced_Init () {
+    lib15EF4C78_gt_Stukov_RallyPlaced = TriggerCreate("lib15EF4C78_gt_Stukov_RallyPlaced_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_Stukov_RallyPlaced, c_playerAny, "AP_SIStukovPlaceHordeRallyCP");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: CM_Stukov_UnitCostRefund
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    PlayerModifyPropertyInt(EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster), c_playerPropMinerals, c_playerPropOperAdd, CatalogFieldValueGetAsInt(c_gameCatalogUnit, UnitGetType(EventPlayerEffectUsedUnit(c_effectUnitTarget)), "CostResource[" + IntToString(0) + "]", EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster)));
+    PlayerModifyPropertyInt(EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster), c_playerPropVespene, c_playerPropOperAdd, CatalogFieldValueGetAsInt(c_gameCatalogUnit, UnitGetType(EventPlayerEffectUsedUnit(c_effectUnitTarget)), "CostResource[" + IntToString(1) + "]", EventPlayerEffectUsedUnitOwner(c_effectPlayerCaster)));
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Init () {
+    lib15EF4C78_gt_CM_Stukov_UnitCostRefund = TriggerCreate("lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Func");
+    TriggerAddEventPlayerEffectUsed(lib15EF4C78_gt_CM_Stukov_UnitCostRefund, c_playerAny, "AP_CocoonCreateLM");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Stukov_InfestedSiegeTankDeath
+//--------------------------------------------------------------------------------------------------
+bool lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_stackCount;
+    int lv_player;
+
+    // Automatic Variable Declarations
+    int auto3194256A_ae;
+    const int auto3194256A_ai = 1;
+
+    // Variable Initialization
+    lv_player = UnitGetOwner(EventUnit());
+
+    // Conditions
+    if (testConds) {
+        if (!((UnitHasBehavior2(EventUnit(), "AP_StukovInfestedSiegeTankAmmo") == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lv_stackCount = UnitBehaviorCount(EventUnit(), "AP_StukovInfestedSiegeTankAmmo");
+    auto3194256A_ae = lv_stackCount;
+    lv_stackCount = 1;
+    for ( ; ( (auto3194256A_ai >= 0 && lv_stackCount <= auto3194256A_ae) || (auto3194256A_ai < 0 && lv_stackCount >= auto3194256A_ae) ) ; lv_stackCount += auto3194256A_ai ) {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_SIVolatileInfested", 0, 1, UnitGetPosition(EventUnit()));
+        UnitSetState(UnitLastCreated(), c_unitStateUsingSupply, false);
+        UnitBehaviorAddPlayer(UnitLastCreated(), "AP_SIBarracksTrainTimedLife", lv_player, 1);
+        UnitGroupAdd(lib15EF4C78_gv_stukov_HordeGroup, UnitLastCreated());
+        lib15EF4C78_gf_Stukov_SingleUnitGoToRally(UnitLastCreated(), false);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Init () {
+    lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath = TriggerCreate("lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Func");
+    TriggerAddEventUnitDied(lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath, null);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -8985,10 +9101,14 @@ void lib15EF4C78_gt_EmitTransformerLand_Init () {
 }
 
 void lib15EF4C78_InitTriggers () {
-    lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Init();
-    lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Init();
+    lib15EF4C78_gt_Stukov_InfestedBunkerRegister_Init();
     lib15EF4C78_gt_Stukov_InfestedBunkerInitialSpawn_Init();
     lib15EF4C78_gt_Stukov_InfestedBunkerAutoLoad_Init();
+    lib15EF4C78_gt_Stukov_InfestedBunkerUnloadRally_Init();
+    lib15EF4C78_gt_Stukov_HordeWaveCreated_Init();
+    lib15EF4C78_gt_Stukov_RallyPlaced_Init();
+    lib15EF4C78_gt_CM_Stukov_UnitCostRefund_Init();
+    lib15EF4C78_gt_AP_Stukov_InfestedSiegeTankDeath_Init();
     lib15EF4C78_gt_AP_InitDetectionFactions_Init();
     lib15EF4C78_gt_ArchipelagoPlayerHandlersConstructor_Init();
     lib15EF4C78_gt_AP_Player_GatewayStickyKeys_Init();
