@@ -6,9 +6,10 @@ This repo contains the required StarCraft2 map and mod data for Archipelago
 - This mod contains original Blizzard® assets for mod compatibility reasons.
     These are part of the base game. 
     They're licensed by their terms.
-- This mod contains some assets and code from SC2plusSCBW mod. See their license.
+- This mod contains some assets and code from SCEvoComplete mod. See their license. See https://github.com/TeamKoprulu/SCEvoComplete
 - This mod contains some assets created by Enoki and Subsourian. See their licenses.
 - This mod contains some assets created by DaveSpectre. See their license.
+- This mod contains some assets created by AlleyV. See their license.
 - This mod uses the Archipelago logo created by Krista Corkos and Christopher Wilson. See their license.
 - All third-party licenses are under [Mods/ArchipelagoPlayer.SC2Mod/3rdpartyLicenses/](Mods/ArchipelagoPlayer.SC2Mod/3rdpartyLicenses/)
 - Otherwise, MIT license shall apply, see [LICENSE](LICENSE)
