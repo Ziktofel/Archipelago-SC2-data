@@ -34530,10 +34530,9 @@
         <Terms value="Cap 1"/>
         <On Terms="ActorOrphan" Send="Destroy"/>
         <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
-        <On Terms="WeaponStop.*.AttackStop; ValidateUnit AP_NotQuadAndNotDoubleDamage" Send="AnimBracketStop BSD"/>
+        <On Terms="WeaponStop.*.AttackStop; ValidateUnit AP_NotQuadAndNotDoubleDamageOrDawnbringerPhase1" Send="AnimBracketStop BSD"/>
         <On Terms="Behavior.AP_VoidRayPhase2.Off; !ValidateUnit AP_QuadDamage" Send="AnimBracketStop BSD"/>
         <On Terms="Behavior.AP_VoidRayPhase3.Off" Send="AnimBracketStop BSD"/>
-        <On Terms="WeaponStop.*.AttackStop; ValidateUnit AP_VoidRayPurifierPhase1" Send="AnimBracketStop BSD"/>
         <On Terms="Behavior.AP_VoidRayPurifierPhase2.Off; !ValidateUnit AP_VoidRayPurifierPhase3" Send="AnimBracketStop BSD"/>
         <On Terms="Behavior.AP_VoidRayPurifierPhase3.Off" Send="AnimBracketStop BSD"/>
         <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
@@ -34627,26 +34626,39 @@
         <PlacementModel value="AP_VoidRayPlacement"/>
         <On Terms="ActorCreation" Send="StatusSet WeaponAnim 0"/>
         <On Terms="ActorCreation" Send="StatusSet WeaponAttacking 0"/>
+        <On Terms="ActorCreation" Send="StatusSet WeaponEnhanced 0"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAnim 0" Send="AnimBracketStart Powered Attack Stand,Channel Attack,End"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAnim 0" Send="StatusSet WeaponAnim 1"/>
-        <On Terms="WeaponStart.*.AttackStart" Send="TimerKill DelayAnim"/>
         <On Terms="WeaponStart.*.AttackStart" Send="StatusSet WeaponAttacking 1"/>
-        <On Terms="WeaponStop.*.AttackStop" Send="TimerSet 2.000000 DelayAnim"/>
-        <On Terms="TimerExpired; TimerName DelayAnim" Send="StatusSet WeaponAttacking 0"/>
-        <On Terms="TimerExpired; TimerName DelayAnim" Send="AnimBracketStop Powered"/>
-        <On Terms="TimerExpired; TimerName DelayAnim" Send="StatusSet WeaponAnim 0"/>
+        <On Terms="WeaponStop.*.AttackStop" Send="StatusSet WeaponAttacking 0"/>
+        <On Terms="WeaponStop.*.AttackStop; IsStatus WeaponEnhanced 0" Send="AnimBracketStop Powered"/>
+        <On Terms="WeaponStop.*.AttackStop; IsStatus WeaponEnhanced 0" Send="StatusSet WeaponAnim 0"/>
+        <!-- charge -->
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.On; IsStatus WeaponAnim 0" Send="AnimBracketStart Powered Attack Stand,Channel Attack,End"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.On; IsStatus WeaponAnim 0" Send="StatusSet WeaponAnim 1"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase2.On" Send="StatusSet WeaponEnhanced 1"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase2.Off; !ValidateUnit AP_VoidRayPurifierPhase3" Send="StatusSet WeaponEnhanced 0"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase2.Off; !ValidateUnit AP_VoidRayPurifierPhase3; IsStatus WeaponAttacking 0" Send="AnimBracketStop Powered"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase2.Off; !ValidateUnit AP_VoidRayPurifierPhase3; IsStatus WeaponAttacking 0" Send="StatusSet WeaponAnim 0"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.Off" Send="StatusSet WeaponEnhanced 0"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.Off; IsStatus WeaponAttacking 0" Send="AnimBracketStop Powered"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.Off; IsStatus WeaponAttacking 0" Send="StatusSet WeaponAnim 0"/>
+        <On Terms="Signal.*.UnitRemoved" Target="AP_VoidRayEnhancementAddition01" Send="Destroy Immediate"/>
+        <On Terms="Signal.*.UnitRemoved" Target="AP_VoidRayEnhancementAddition02" Send="Destroy Immediate"/>
+        <On Terms="Signal.*.UnitRemoved" Target="AP_VoidRayEnhancementAddition03" Send="Destroy Immediate"/>
         <!-- center beam -->
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRayPurifierCenterBeam"/>
-        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRayPurifierCenterBeam" Send="Destroy"/>
+        <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRayPurifierCenterBeam" Send="Destroy"/>
+        <On Terms="Signal.*.UnitRemoved" Target="AP_VoidRayVoidCenterBeam" Send="Destroy Immediate"/>
         <!-- sounds -->
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRaySound1"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 1" Send="Create AP_VoidRaySound2"/>
-        <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound1" Send="Destroy"/>
-        <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound2"/>
-        <On Terms="TimerExpired; TimerName DelayAnim; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound2" Send="Destroy"/>
-        <On Terms="TimerExpired; TimerName DelayAnim; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound1"/>
-        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRaySound1" Send="Destroy"/>
-        <On Terms="TimerExpired; TimerName DelayAnim" Target="AP_VoidRaySound2" Send="Destroy"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.On; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound1" Send="Destroy"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.On; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound2"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.Off; IsStatus WeaponAttacking 1" Target="AP_VoidRaySound2" Send="Destroy"/>
+        <On Terms="Behavior.AP_VoidRayPurifierPhase3.Off; IsStatus WeaponAttacking 1" Send="Create AP_VoidRaySound1"/>
+        <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRaySound1" Send="Destroy"/>
+        <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRaySound2" Send="Destroy"/>
         <!-- beam animations -->
         <On Terms="Behavior.WarpInEffect.Off; IsStatus WeaponAnim 1" Send="AnimBracketStart Powered Attack Stand,Channel Attack,End"/>
         <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_VoidRay_Land"/>
@@ -34822,6 +34834,7 @@
         <On Terms="Effect.AP_VoidRaySwarm.Stop" Send="Destroy"/>
     </CActorAction>
     <CActorBeamSimple id="AP_VoidRayPurifierCenterBeam" parent="ModelAnimationStyleContinuous">
+        <Terms value="Cap 1"/>
         <Model value="ColossusAttackBeam"/>
         <HostLaunchSiteOps Ops="SOpAttachCenter"/>
         <HostImpactSiteOps Ops="SOpAttachWeapon"/>
