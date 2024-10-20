@@ -8,6 +8,7 @@
 include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/CampaignLib"
+include "Lib15EF4C78"
 include "Lib88187CC2"
 include "Lib5BD4895D"
 include "LibABFE498B"
@@ -19,6 +20,7 @@ void InitLibs () {
     libNtve_InitLib();
     libLbty_InitLib();
     libCamp_InitLib();
+    lib15EF4C78_InitLib();
     lib88187CC2_InitLib();
     lib5BD4895D_InitLib();
     libABFE498B_InitLib();
@@ -251,6 +253,7 @@ trigger gt_ObjectiveRescueReapersCreateQ;
 trigger gt_ObjectiveRescueReapersUpdate;
 trigger gt_ObjectiveRescueReapersComplete;
 trigger gt_ArchInit;
+trigger gt_FactionSwapInit;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -427,6 +430,10 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     UnitGroupAdd(gv_toshReapers, UnitFromId(1159));
     UnitGroupAdd(gv_toshReapers, UnitFromId(1155));
     UnitGroupAdd(gv_toshReapers, UnitFromId(1154));
+    UnitGroupAdd(gv_toshReapers, UnitFromId(1433416105));
+    UnitGroupAdd(gv_toshReapers, UnitFromId(1016016046));
+    UnitBehaviorRemove(UnitFromId(1016016046), "AP_DetectorRadar", 1);
+    UnitBehaviorRemove(UnitFromId(1016016046), "AP_DetectorRadarDetected", 1);
     libNtve_gf_MakeUnitInvulnerable(UnitFromId(660), true);
     UnitSetState(UnitFromId(660), c_unitStateSelectable, false);
     UnitSetState(UnitFromId(660), c_unitStateTargetable, false);
@@ -695,8 +702,10 @@ bool gt_StartHarvesting_Func (bool testConds, bool runActions) {
     }
 
     lv_mineralGroup = UnitGroup("RichMineralField", c_playerAny, RegionFromId(1), UnitFilter(0, 0, 0, 0), 0);
-    lv_mineralHarvesters = UnitGroup("AP_SCV", gv_p01_USER, RegionFromId(1), UnitFilter(0, 0, 0, 0), 0);
+    lv_mineralHarvesters = UnitGroup(null, gv_p01_USER, RegionFromId(1), UnitFilter((1 << c_targetFilterWorker), 0, 0, 0), 0);
     UnitGroupIssueOrder(lv_mineralHarvesters, OrderTargetingUnitGroup(AbilityCommand("AP_SCVHarvest", 0), lv_mineralGroup), c_orderQueueReplace);
+    UnitGroupIssueOrder(lv_mineralHarvesters, OrderTargetingUnitGroup(AbilityCommand("AP_DroneHarvest", 0), lv_mineralGroup), c_orderQueueReplace);
+    UnitGroupIssueOrder(lv_mineralHarvesters, OrderTargetingUnitGroup(AbilityCommand("AP_ProbeHarvest", 0), lv_mineralGroup), c_orderQueueReplace);
     libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionPlayableMap(), gv_p02_ZERG);
     libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionPlayableMap(), gv_p04_ZERG);
     return true;
@@ -2243,7 +2252,7 @@ bool gt_IntroReapersChangeOwner_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_Reaper"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_Reaper") || (UnitGetType(EventUnit()) == "AP_Hunterling") || (UnitGetType(EventUnit()) == "AP_StalkerPurifier")))) {
             return false;
         }
 
@@ -2337,6 +2346,7 @@ bool gt_ReapersReinforcements01_Func (bool testConds, bool runActions) {
     unitgroup lv_reaperGroup;
 
     // Automatic Variable Declarations
+    string auto4899B80C_val;
     unitgroup autoC03B76C5_g;
     int autoC03B76C5_u;
     unit autoC03B76C5_var;
@@ -2375,8 +2385,19 @@ bool gt_ReapersReinforcements01_Func (bool testConds, bool runActions) {
     lv_playerGroup = UnitGroup(null, gv_p01_USER, RegionFromId(55), UnitFilter((1 << c_targetFilterGround), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     if ((UnitGroupCount(lv_playerGroup, c_unitCountAlive) > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        SoundPlay(SoundLink("Reaper_Pissed", 0), PlayerGroupAll(), 100.0, 0.0);
-        UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/83BA4089"), null, UnitGetPosition(UnitFromId(803)));
+        auto4899B80C_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (auto4899B80C_val == "Prot") {
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/6BDAF434"), null, RegionGetCenter(RegionFromId(48)));
+            SoundPlay(SoundLink("AP_Instigator_Yes", 1), PlayerGroupAll(), 100.0, 0.0);
+        }
+        else if (auto4899B80C_val == "Zerg") {
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/0A17C4AC"), null, RegionGetCenter(RegionFromId(48)));
+            SoundPlay(SoundLink("AP_SCBW_Zergling_Ready", 0), PlayerGroupAll(), 100.0, 0.0);
+        }
+        else {
+            SoundPlay(SoundLink("Reaper_Pissed", 0), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/83BA4089"), null, UnitGetPosition(UnitFromId(803)));
+        }
         autoC03B76C5_g = UnitGroup(null, gv_p05_TOSH, RegionFromId(48), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
         autoC03B76C5_u = UnitGroupCount(autoC03B76C5_g, c_unitCountAll);
         for (;; autoC03B76C5_u -= 1) {
@@ -2384,9 +2405,16 @@ bool gt_ReapersReinforcements01_Func (bool testConds, bool runActions) {
             if (autoC03B76C5_var == null) { break; }
             UnitGroupAdd(lv_reaperGroup, autoC03B76C5_var);
             libNtve_gf_ShareVisionofUnit(autoC03B76C5_var, true, gv_p01_USER);
-            UnitIssueOrder(autoC03B76C5_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1927)), c_orderQueueReplace);
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                UnitIssueOrder(autoC03B76C5_var, OrderTargetingPoint(AbilityCommand("AP_BlinkMultiple", 0), PointFromId(1927)), c_orderQueueReplace);
+                UnitIssueOrder(autoC03B76C5_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1927)), c_orderQueueAddToEnd);
+                Wait(0.5, c_timeGame);
+            }
+            else {
+                UnitIssueOrder(autoC03B76C5_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1927)), c_orderQueueReplace);
+                Wait(2.5, c_timeGame);
+            }
         }
-        Wait(2.5, c_timeGame);
         autoDB292AD8_g = lv_reaperGroup;
         autoDB292AD8_u = UnitGroupCount(autoDB292AD8_g, c_unitCountAll);
         for (;; autoDB292AD8_u -= 1) {
@@ -2422,6 +2450,7 @@ bool gt_ReapersReinforcements02_Func (bool testConds, bool runActions) {
     unitgroup lv_reaperGroup;
 
     // Automatic Variable Declarations
+    string autoCF567DE9_val;
     unitgroup auto20B79E52_g;
     int auto20B79E52_u;
     unit auto20B79E52_var;
@@ -2460,8 +2489,19 @@ bool gt_ReapersReinforcements02_Func (bool testConds, bool runActions) {
     lv_playerGroup = UnitGroup(null, gv_p01_USER, RegionFromId(57), UnitFilter((1 << c_targetFilterGround), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     if ((UnitGroupCount(lv_playerGroup, c_unitCountAlive) > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        SoundPlay(SoundLink("Reaper_Attack", 4), PlayerGroupAll(), 100.0, 0.0);
-        UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/8A5216EA"), null, UnitGetPosition(UnitFromId(1392)));
+        autoCF567DE9_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoCF567DE9_val == "Prot") {
+            SoundPlay(SoundLink("AP_Instigator_What", 2), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/908978E1"), null, RegionGetCenter(RegionFromId(56)));
+        }
+        else if (autoCF567DE9_val == "Zerg") {
+            SoundPlay(SoundLink("Zergling_Yes", 3), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/D4F6AB0F"), null, RegionGetCenter(RegionFromId(56)));
+        }
+        else {
+            SoundPlay(SoundLink("Reaper_Attack", 4), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/8A5216EA"), null, UnitGetPosition(UnitFromId(1392)));
+        }
         auto20B79E52_g = UnitGroup(null, gv_p05_TOSH, RegionFromId(56), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
         auto20B79E52_u = UnitGroupCount(auto20B79E52_g, c_unitCountAll);
         for (;; auto20B79E52_u -= 1) {
@@ -2469,9 +2509,16 @@ bool gt_ReapersReinforcements02_Func (bool testConds, bool runActions) {
             if (auto20B79E52_var == null) { break; }
             UnitGroupAdd(lv_reaperGroup, auto20B79E52_var);
             libNtve_gf_ShareVisionofUnit(auto20B79E52_var, true, gv_p01_USER);
-            UnitIssueOrder(auto20B79E52_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1925)), c_orderQueueReplace);
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                UnitIssueOrder(auto20B79E52_var, OrderTargetingPoint(AbilityCommand("AP_BlinkMultiple", 0), PointFromId(1925)), c_orderQueueReplace);
+                UnitIssueOrder(auto20B79E52_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1925)), c_orderQueueAddToEnd);
+                Wait(0.5, c_timeGame);
+            }
+            else {
+                UnitIssueOrder(auto20B79E52_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1925)), c_orderQueueReplace);
+                Wait(2.5, c_timeGame);
+            }
         }
-        Wait(2.5, c_timeGame);
         auto1D10E944_g = lv_reaperGroup;
         auto1D10E944_u = UnitGroupCount(auto1D10E944_g, c_unitCountAll);
         for (;; auto1D10E944_u -= 1) {
@@ -2507,6 +2554,7 @@ bool gt_ReapersReinforcements03_Func (bool testConds, bool runActions) {
     unitgroup lv_reaperGroup;
 
     // Automatic Variable Declarations
+    string autoAD1CAB42_val;
     unitgroup autoE81781EA_g;
     int autoE81781EA_u;
     unit autoE81781EA_var;
@@ -2545,8 +2593,19 @@ bool gt_ReapersReinforcements03_Func (bool testConds, bool runActions) {
     lv_playerGroup = UnitGroup(null, gv_p01_USER, RegionFromId(58), UnitFilter((1 << c_targetFilterGround), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     if ((UnitGroupCount(lv_playerGroup, c_unitCountAlive) > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        SoundPlay(SoundLink("Reaper_Attack", 3), PlayerGroupAll(), 100.0, 0.0);
-        UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/D4674BF0"), null, UnitGetPosition(UnitFromId(1405)));
+        autoAD1CAB42_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoAD1CAB42_val == "Prot") {
+            SoundPlay(SoundLink("AP_Instigator_Yes", 5), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/A3E5B732"), null, RegionGetCenter(RegionFromId(59)));
+        }
+        else if (autoAD1CAB42_val == "Zerg") {
+            SoundPlay(SoundLink("Zergling_What", 5), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/EC94BAF8"), null, RegionGetCenter(RegionFromId(59)));
+        }
+        else {
+            SoundPlay(SoundLink("Reaper_Attack", 3), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/D4674BF0"), null, UnitGetPosition(UnitFromId(1405)));
+        }
         autoE81781EA_g = UnitGroup(null, gv_p05_TOSH, RegionFromId(59), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
         autoE81781EA_u = UnitGroupCount(autoE81781EA_g, c_unitCountAll);
         for (;; autoE81781EA_u -= 1) {
@@ -2554,9 +2613,16 @@ bool gt_ReapersReinforcements03_Func (bool testConds, bool runActions) {
             if (autoE81781EA_var == null) { break; }
             UnitGroupAdd(lv_reaperGroup, autoE81781EA_var);
             libNtve_gf_ShareVisionofUnit(autoE81781EA_var, true, gv_p01_USER);
-            UnitIssueOrder(autoE81781EA_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1912)), c_orderQueueReplace);
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                UnitIssueOrder(autoE81781EA_var, OrderTargetingPoint(AbilityCommand("AP_BlinkMultiple", 0), PointFromId(1912)), c_orderQueueReplace);
+                UnitIssueOrder(autoE81781EA_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1912)), c_orderQueueAddToEnd);
+                Wait(0.5, c_timeGame);
+            }
+            else {
+                UnitIssueOrder(autoE81781EA_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1912)), c_orderQueueReplace);
+                Wait(2.5, c_timeGame);
+            }
         }
-        Wait(2.5, c_timeGame);
         auto59045EC4_g = lv_reaperGroup;
         auto59045EC4_u = UnitGroupCount(auto59045EC4_g, c_unitCountAll);
         for (;; auto59045EC4_u -= 1) {
@@ -2592,6 +2658,7 @@ bool gt_ReapersReinforcements04_Func (bool testConds, bool runActions) {
     unitgroup lv_reaperGroup;
 
     // Automatic Variable Declarations
+    string auto85FCFA49_val;
     unitgroup autoFD3BFCD1_g;
     int autoFD3BFCD1_u;
     unit autoFD3BFCD1_var;
@@ -2630,18 +2697,37 @@ bool gt_ReapersReinforcements04_Func (bool testConds, bool runActions) {
     lv_playerGroup = UnitGroup(null, gv_p01_USER, RegionFromId(63), UnitFilter((1 << c_targetFilterGround), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     if ((UnitGroupCount(lv_playerGroup, c_unitCountAlive) > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        SoundPlay(SoundLink("Reaper_Attack", 1), PlayerGroupAll(), 100.0, 0.0);
-        UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/ABFF9FFB"), null, UnitGetPosition(UnitFromId(1915)));
+        auto85FCFA49_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (auto85FCFA49_val == "Prot") {
+            SoundPlay(SoundLink("AP_Instigator_Yes", 0), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/32981C41"), null, RegionGetCenter(RegionFromId(60)));
+        }
+        else if (auto85FCFA49_val == "Zerg") {
+            SoundPlay(SoundLink("Zergling_Ready", 2), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/D4FA1938"), null, RegionGetCenter(RegionFromId(60)));
+        }
+        else {
+            SoundPlay(SoundLink("Reaper_Attack", 1), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/ABFF9FFB"), null, UnitGetPosition(UnitFromId(1915)));
+        }
         autoFD3BFCD1_g = UnitGroup(null, gv_p05_TOSH, RegionFromId(60), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
         autoFD3BFCD1_u = UnitGroupCount(autoFD3BFCD1_g, c_unitCountAll);
         for (;; autoFD3BFCD1_u -= 1) {
             autoFD3BFCD1_var = UnitGroupUnitFromEnd(autoFD3BFCD1_g, autoFD3BFCD1_u);
             if (autoFD3BFCD1_var == null) { break; }
             UnitGroupAdd(lv_reaperGroup, autoFD3BFCD1_var);
+            UnitGroupRemove(gv_toshReapers, autoFD3BFCD1_var);
             libNtve_gf_ShareVisionofUnit(autoFD3BFCD1_var, true, gv_p01_USER);
-            UnitIssueOrder(autoFD3BFCD1_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1917)), c_orderQueueReplace);
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                UnitIssueOrder(autoFD3BFCD1_var, OrderTargetingPoint(AbilityCommand("AP_BlinkMultiple", 0), PointFromId(1917)), c_orderQueueReplace);
+                UnitIssueOrder(autoFD3BFCD1_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1917)), c_orderQueueAddToEnd);
+                Wait(0.5, c_timeGame);
+            }
+            else {
+                UnitIssueOrder(autoFD3BFCD1_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1917)), c_orderQueueReplace);
+                Wait(2.5, c_timeGame);
+            }
         }
-        Wait(2.5, c_timeGame);
         autoFF38DCB0_g = lv_reaperGroup;
         autoFF38DCB0_u = UnitGroupCount(autoFF38DCB0_g, c_unitCountAll);
         for (;; autoFF38DCB0_u -= 1) {
@@ -2677,6 +2763,7 @@ bool gt_ReapersReinforcements05_Func (bool testConds, bool runActions) {
     unitgroup lv_reaperGroup;
 
     // Automatic Variable Declarations
+    string auto2CACE8BA_val;
     unitgroup autoC926F1D5_g;
     int autoC926F1D5_u;
     unit autoC926F1D5_var;
@@ -2715,8 +2802,19 @@ bool gt_ReapersReinforcements05_Func (bool testConds, bool runActions) {
     lv_playerGroup = UnitGroup(null, gv_p01_USER, RegionFromId(62), UnitFilter((1 << c_targetFilterGround), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     if ((UnitGroupCount(lv_playerGroup, c_unitCountAlive) > 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
-        SoundPlay(SoundLink("Reaper_What", 2), PlayerGroupAll(), 100.0, 0.0);
-        UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/8D9E3F4F"), null, UnitGetPosition(UnitFromId(1922)));
+        auto2CACE8BA_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (auto2CACE8BA_val == "Prot") {
+            SoundPlay(SoundLink("AP_Instigator_Attack", 6), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/3349C794"), null, RegionGetCenter(RegionFromId(61)));
+        }
+        else if (auto2CACE8BA_val == "Zerg") {
+            SoundPlay(SoundLink("Zergling_Yes", 5), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/4F549FDF"), null, RegionGetCenter(RegionFromId(61)));
+        }
+        else {
+            SoundPlay(SoundLink("Reaper_What", 2), PlayerGroupAll(), 100.0, 0.0);
+            UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/8D9E3F4F"), null, UnitGetPosition(UnitFromId(1922)));
+        }
         autoC926F1D5_g = UnitGroup(null, gv_p05_TOSH, RegionFromId(61), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
         autoC926F1D5_u = UnitGroupCount(autoC926F1D5_g, c_unitCountAll);
         for (;; autoC926F1D5_u -= 1) {
@@ -2724,9 +2822,16 @@ bool gt_ReapersReinforcements05_Func (bool testConds, bool runActions) {
             if (autoC926F1D5_var == null) { break; }
             UnitGroupAdd(lv_reaperGroup, autoC926F1D5_var);
             libNtve_gf_ShareVisionofUnit(autoC926F1D5_var, true, gv_p01_USER);
-            UnitIssueOrder(autoC926F1D5_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1926)), c_orderQueueReplace);
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                UnitIssueOrder(autoC926F1D5_var, OrderTargetingPoint(AbilityCommand("AP_BlinkMultiple", 0), PointFromId(1926)), c_orderQueueReplace);
+                UnitIssueOrder(autoC926F1D5_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1926)), c_orderQueueAddToEnd);
+                Wait(0.5, c_timeGame);
+            }
+            else {
+                UnitIssueOrder(autoC926F1D5_var, OrderTargetingPoint(AbilityCommand("attack", 0), PointFromId(1926)), c_orderQueueReplace);
+                Wait(2.5, c_timeGame);
+            }
         }
-        Wait(2.5, c_timeGame);
         autoF7D09147_g = lv_reaperGroup;
         autoF7D09147_u = UnitGroupCount(autoF7D09147_g, c_unitCountAll);
         for (;; autoF7D09147_u -= 1) {
@@ -3320,6 +3425,12 @@ bool gt_TransmissionReaperIntroQ_Func (bool testConds, bool runActions) {
     unitgroup autoB5E80A33_g;
     int autoB5E80A33_u;
     unit autoB5E80A33_var;
+    unitgroup autoAE7867C0_g;
+    int autoAE7867C0_u;
+    unit autoAE7867C0_var;
+    unitgroup autoA90B9ED4_g;
+    int autoA90B9ED4_u;
+    unit autoA90B9ED4_var;
     unitgroup auto59E65917_g;
     int auto59E65917_u;
     unit auto59E65917_var;
@@ -3348,27 +3459,83 @@ bool gt_TransmissionReaperIntroQ_Func (bool testConds, bool runActions) {
     TriggerQueueEnter();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTosh01Tosh00012", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTosh01Tosh00012", -1), c_transmissionDurationAdd, 0.0, true);
-    auto59E65917_g = gv_toshReapers;
-    auto59E65917_u = UnitGroupCount(auto59E65917_g, c_unitCountAll);
-    for (;; auto59E65917_u -= 1) {
-        auto59E65917_var = UnitGroupUnitFromEnd(auto59E65917_g, auto59E65917_u);
-        if (auto59E65917_var == null) { break; }
-        gv_unitsRescued += 1;
-        libNtve_gf_ShareVisionofUnit(auto59E65917_var, true, gv_p01_USER);
-    }
-    // Transmission - SoundLink("TTosh01Swann00002", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTosh01Swann00002", -1), c_transmissionDurationAdd, 0.0, true);
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/CF04682F"), null, UnitGroupRandomUnit(gv_toshReapers, c_unitCountAlive));
-    MinimapPing(PlayerGroupAll(), RegionGetCenter(RegionFromId(18)), 2.0, Color(0.00, 100.00, 0.00));
-    Wait(2.0, c_timeReal);
-    if ((libNtve_gf_UnitGroupIsDead(gv_toshReapers) == false)) {
-        SoundPlay(SoundLink("Reaper_What", 1), PlayerGroupAll(), 100.0, 0.0);
-        SoundWait(SoundLastPlayed(), 0.0, c_soundOffsetEnd);
-    }
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        // Transmission - SoundLink("TTosh03BTosh00034", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTosh03BTosh00034", -1), c_transmissionDurationAdd, 0.0, true);
+        autoAE7867C0_g = gv_toshReapers;
+        autoAE7867C0_u = UnitGroupCount(autoAE7867C0_g, c_unitCountAll);
+        for (;; autoAE7867C0_u -= 1) {
+            autoAE7867C0_var = UnitGroupUnitFromEnd(autoAE7867C0_g, autoAE7867C0_u);
+            if (autoAE7867C0_var == null) { break; }
+            gv_unitsRescued += 1;
+            libNtve_gf_ShareVisionofUnit(autoAE7867C0_var, true, gv_p01_USER);
+        }
+        // Transmission - SoundLink("TTychus02Raynor00002", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus02Raynor00002", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/672343E2"), null, UnitGroupRandomUnit(gv_toshReapers, c_unitCountAlive));
+        MinimapPing(PlayerGroupAll(), RegionGetCenter(RegionFromId(18)), 2.0, Color(0.00, 100.00, 0.00));
+        Wait(2.0, c_timeReal);
+        if ((libNtve_gf_UnitGroupIsDead(gv_toshReapers) == false)) {
+            SoundPlay(SoundLink("AP_Left2Die_Hunterling_Attack_Vx", 1), PlayerGroupAll(), 100.0, 0.0);
+            SoundWait(SoundLastPlayed(), 0.0, c_soundOffsetEnd);
+        }
 
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+            VisRevealArea(gv_p05_TOSH, RegionFromId(18), 0.0, false);
+            // Transmission - SoundLink("TValerian01Horner00015", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TValerian01Horner00015", -1), c_transmissionDurationAdd, 0.0, true);
+            libNtve_gf_CreateUnitsWithDefaultFacing(2, "AP_StalkerPurifier", c_unitCreateIgnorePlacement, gv_p05_TOSH, RegionGetCenter(RegionFromId(18)));
+            UnitGroupAddUnitGroup(gv_toshReapers, UnitLastCreatedGroup());
+            libCamp_gf_CreateDropPod(libCamp_ge_DropPodRace_Terran, RegionGetCenter(RegionFromId(18)), UnitLastCreatedGroup(), false);
+            auto59E65917_g = gv_toshReapers;
+            auto59E65917_u = UnitGroupCount(auto59E65917_g, c_unitCountAll);
+            for (;; auto59E65917_u -= 1) {
+                auto59E65917_var = UnitGroupUnitFromEnd(auto59E65917_g, auto59E65917_u);
+                if (auto59E65917_var == null) { break; }
+                gv_unitsRescued += 1;
+                libNtve_gf_ShareVisionofUnit(auto59E65917_var, true, gv_p01_USER);
+            }
+            // Transmission - SoundLink("TTychus01Raynor00012", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus01Raynor00012", -1), c_transmissionDurationAdd, 0.0, true);
+            // Transmission - SoundLink("TScene03Zeratul001", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TScene03Zeratul001", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/CF04682F"), null, UnitGroupRandomUnit(gv_toshReapers, c_unitCountAlive));
+            MinimapPing(PlayerGroupAll(), RegionGetCenter(RegionFromId(18)), 2.0, Color(0.00, 100.00, 0.00));
+            Wait(2.0, c_timeReal);
+            if ((libNtve_gf_UnitGroupIsDead(gv_toshReapers) == false)) {
+                SoundPlay(SoundLink("AP_Instigator_Ready", 0), PlayerGroupAll(), 100.0, 0.0);
+                SoundWait(SoundLastPlayed(), 0.0, c_soundOffsetEnd);
+            }
+
+        }
+        else {
+            // Transmission - SoundLink("TTosh01Tosh00012", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTosh01Tosh00012", -1), c_transmissionDurationAdd, 0.0, true);
+            autoA90B9ED4_g = gv_toshReapers;
+            autoA90B9ED4_u = UnitGroupCount(autoA90B9ED4_g, c_unitCountAll);
+            for (;; autoA90B9ED4_u -= 1) {
+                autoA90B9ED4_var = UnitGroupUnitFromEnd(autoA90B9ED4_g, autoA90B9ED4_u);
+                if (autoA90B9ED4_var == null) { break; }
+                gv_unitsRescued += 1;
+                libNtve_gf_ShareVisionofUnit(autoA90B9ED4_var, true, gv_p01_USER);
+            }
+            // Transmission - SoundLink("TTosh01Swann00002", -1)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTosh01Swann00002", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/ED661519"), null, UnitGroupRandomUnit(gv_toshReapers, c_unitCountAlive));
+            MinimapPing(PlayerGroupAll(), RegionGetCenter(RegionFromId(18)), 2.0, Color(0.00, 100.00, 0.00));
+            Wait(2.0, c_timeReal);
+            if ((libNtve_gf_UnitGroupIsDead(gv_toshReapers) == false)) {
+                SoundPlay(SoundLink("Reaper_What", 1), PlayerGroupAll(), 100.0, 0.0);
+                SoundWait(SoundLastPlayed(), 0.0, c_soundOffsetEnd);
+            }
+
+        }
+    }
     TriggerExecute(gt_ReaperTip, true, false);
     TriggerQueueExit();
     return true;
@@ -4913,7 +5080,12 @@ bool gt_ObjectiveRescueReapersCreateQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    ObjectiveCreate(StringExternal("Param/Value/0C674C18"), StringToText(""), c_objectiveStateHidden, false);
+    if (((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot"))) {
+        ObjectiveCreate(StringExternal("Param/Value/9A2CB6BB"), StringToText(""), c_objectiveStateHidden, false);
+    }
+    else {
+        ObjectiveCreate(StringExternal("Param/Value/0C674C18"), StringToText(""), c_objectiveStateHidden, false);
+    }
     gv_objectiveFindReaperGroups = ObjectiveLastCreated();
     lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFindReaperGroups, lib5BD4895D_ge_APObjectiveCategory_Secondary, "Groups Left", gv_reaperGroupsLeft, 0, false);
     lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindReaperGroups, gv_LOCATION_ID_SOUTHWEST_REAPERS);
@@ -5007,6 +5179,111 @@ bool gt_ArchInit_Func (bool testConds, bool runActions) {
 void gt_ArchInit_Init () {
     gt_ArchInit = TriggerCreate("gt_ArchInit_Func");
     TriggerAddEventMapInit(gt_ArchInit);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    unitgroup autoB9B7EC79_g;
+    int autoB9B7EC79_u;
+    unit autoB9B7EC79_var;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if (((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr"))) {
+        UnitRemove(UnitFromId(1433416105));
+        UnitRemove(UnitFromId(1016016046));
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Terr", false);
+    }
+    else {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, false);
+        autoB9B7EC79_g = UnitGroup("AP_Reaper", gv_p05_TOSH, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        autoB9B7EC79_u = UnitGroupCount(autoB9B7EC79_g, c_unitCountAll);
+        for (;; autoB9B7EC79_u -= 1) {
+            autoB9B7EC79_var = UnitGroupUnitFromEnd(autoB9B7EC79_g, autoB9B7EC79_u);
+            if (autoB9B7EC79_var == null) { break; }
+            UnitRemove(autoB9B7EC79_var);
+        }
+        TechTreeAbilityAllow(1, AbilityCommand("AP_CommandCenterTrain", 0), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 13), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 18), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 3), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 6), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 22), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 0), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 20), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 24), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 27), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 26), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 25), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 4), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 10), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 15), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 21), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 12), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 5), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 19), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 7), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 8), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 9), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 11), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 1), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 23), false);
+        TechTreeAbilityAllow(1, AbilityCommand("AP_TerranBuild", 2), false);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            UnitRemove(UnitFromId(1016016046));
+            PlayerSetRace(1, "Zerg");
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hunterling", 0, gv_p05_TOSH, PointFromId(1638342380));
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hunterling", 0, gv_p05_TOSH, PointFromId(1420993300));
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hunterling", 0, gv_p05_TOSH, PointFromId(160284879));
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hunterling", 0, gv_p05_TOSH, PointFromId(2051365124));
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hunterling", 0, gv_p05_TOSH, PointFromId(332688463));
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hunterling", 0, gv_p05_TOSH, PointFromId(639463237));
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(1, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                UnitRemove(UnitFromId(1433416105));
+                PlayerSetRace(1, "Prot");
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(245754862));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(1638342380));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(1420993300));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(983477412));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(415054114));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(160284879));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(2051365124));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Observer", 0, gv_p05_TOSH, PointFromId(498541549));
+                UnitBehaviorRemove(UnitLastCreated(), "AP_DetectorRadar", 1);
+                UnitBehaviorRemove(UnitLastCreated(), "AP_DetectorRadarDetected", 1);
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(332688463));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(498541549));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(639463237));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_StalkerPurifier", 0, gv_p05_TOSH, PointFromId(582443020));
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(1, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAUnit(1);
+                }
+
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAAutonomousCasterUnit(1);
+                }
+
+            }
+
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5808,6 +6085,7 @@ void InitTriggers () {
     gt_ObjectiveRescueReapersUpdate_Init();
     gt_ObjectiveRescueReapersComplete_Init();
     gt_ArchInit_Init();
+    gt_FactionSwapInit_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
