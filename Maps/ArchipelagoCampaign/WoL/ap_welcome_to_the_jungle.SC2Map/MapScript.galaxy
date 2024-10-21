@@ -145,6 +145,7 @@ trigger gt_WestRelic;
 trigger gt_NorthEastRelic;
 trigger gt_AwardPlayerdependingonSealedNodes;
 trigger gt_ArchInit;
+trigger gt_FactionSwapInit;
 trigger gt_Initialization;
 trigger gt_Init01Technology;
 trigger gt_Init02Players;
@@ -1183,6 +1184,52 @@ void gt_ArchInit_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if (((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr"))) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Terr", false);
+    }
+    else {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, false);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_p1_USER);
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_p1_USER);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            PlayerSetRace(1, "Zerg");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p1_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(1, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p1_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAUnit(gv_p1_USER);
+                }
+
+                if ((libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 2)) {
+                    lib15EF4C78_gf_AP_Player_CreateSoAAutonomousCasterUnit(gv_p1_USER);
+                }
+
+            }
+
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Initialization
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
@@ -2209,7 +2256,7 @@ bool gt_Playerstartsharvestingterrazine_Func (bool testConds, bool runActions) {
 
     // Conditions
     if (testConds) {
-        if (!((UnitGetType(EventUnit()) == "AP_SCV"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
 
@@ -2334,6 +2381,8 @@ bool gt_Playerstartsharvestingterrazine_Func (bool testConds, bool runActions) {
 void gt_Playerstartsharvestingterrazine_Init () {
     gt_Playerstartsharvestingterrazine = TriggerCreate("gt_Playerstartsharvestingterrazine_Func");
     TriggerAddEventUnitAbility(gt_Playerstartsharvestingterrazine, null, AbilityCommand("AP_SCVHarvest", 0), c_abilHarvestStageHarvest, false);
+    TriggerAddEventUnitAbility(gt_Playerstartsharvestingterrazine, null, AbilityCommand("AP_ProbeHarvest", 0), c_abilHarvestStageHarvest, false);
+    TriggerAddEventUnitAbility(gt_Playerstartsharvestingterrazine, null, AbilityCommand("AP_DroneHarvest", 0), c_abilHarvestStageHarvest, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2439,7 +2488,7 @@ bool gt_SCViskilledwhileharvesting_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_SCV"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
     }
@@ -2529,7 +2578,7 @@ bool gt_SCVharvestingmanuallystopped_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_SCV"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
     }
@@ -2561,6 +2610,8 @@ bool gt_SCVharvestingmanuallystopped_Func (bool testConds, bool runActions) {
 void gt_SCVharvestingmanuallystopped_Init () {
     gt_SCVharvestingmanuallystopped = TriggerCreate("gt_SCVharvestingmanuallystopped_Func");
     TriggerAddEventUnitAbility(gt_SCVharvestingmanuallystopped, null, AbilityCommand("AP_SCVHarvest", 0), c_unitAbilStageCancel, false);
+    TriggerAddEventUnitAbility(gt_SCVharvestingmanuallystopped, null, AbilityCommand("AP_ProbeHarvest", 0), c_unitAbilStageCancel, false);
+    TriggerAddEventUnitAbility(gt_SCVharvestingmanuallystopped, null, AbilityCommand("AP_DroneHarvest", 0), c_unitAbilStageCancel, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2620,7 +2671,7 @@ bool gt_SCVisheadinghomewithterrazine_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_SCV"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
 
@@ -2662,7 +2713,11 @@ bool gt_SCVisheadinghomewithterrazine_Func (bool testConds, bool runActions) {
 void gt_SCVisheadinghomewithterrazine_Init () {
     gt_SCVisheadinghomewithterrazine = TriggerCreate("gt_SCVisheadinghomewithterrazine_Func");
     TriggerAddEventUnitAbility(gt_SCVisheadinghomewithterrazine, null, AbilityCommand("AP_SCVHarvest", 1), c_abilHarvestStageWaitToReturn, false);
+    TriggerAddEventUnitAbility(gt_SCVisheadinghomewithterrazine, null, AbilityCommand("AP_ProbeHarvest", 1), c_abilHarvestStageWaitToReturn, false);
+    TriggerAddEventUnitAbility(gt_SCVisheadinghomewithterrazine, null, AbilityCommand("AP_DroneHarvest", 1), c_abilHarvestStageWaitToReturn, false);
     TriggerAddEventUnitAbility(gt_SCVisheadinghomewithterrazine, null, AbilityCommand("AP_SCVHarvest", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_SCVisheadinghomewithterrazine, null, AbilityCommand("AP_ProbeHarvest", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_SCVisheadinghomewithterrazine, null, AbilityCommand("AP_DroneHarvest", 0), c_unitAbilStageComplete, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2674,6 +2729,8 @@ bool gt_FirstTerrazineReturnQ_Func (bool testConds, bool runActions) {
     unit lv_firstSCVGoingHome;
 
     // Automatic Variable Declarations
+    string autoA6E1847A_val;
+
     // Variable Initialization
 
     // Conditions
@@ -2704,8 +2761,19 @@ bool gt_FirstTerrazineReturnQ_Func (bool testConds, bool runActions) {
     UIAlertUnit("Trigger", gv_p1_USER, StringExternal("Param/Value/6130E297"), null, lv_firstSCVGoingHome);
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTosh02SCV00006", -1)
-    libCamp_gf_SendTransmissionCampaign(lv_firstSCVGoingHome, SoundLink("TTosh02SCV00006", -1), c_transmissionDurationAdd, 0.0, true);
+    autoA6E1847A_val = UnitGetType(lv_firstSCVGoingHome);
+    if (autoA6E1847A_val == "AP_Drone") {
+        // Transmission - SoundLink("TTosh02Drone00068", -1)
+        libCamp_gf_SendTransmissionCampaign(lv_firstSCVGoingHome, SoundLink("TTosh02Drone00068", -1), c_transmissionDurationAdd, 3.0, true);
+    }
+    else if (autoA6E1847A_val == "AP_Probe") {
+        // Transmission - SoundLink("TTosh02Probe00069", -1)
+        libCamp_gf_SendTransmissionCampaign(lv_firstSCVGoingHome, SoundLink("TTosh02Probe00069", -1), c_transmissionDurationAdd, 3.0, true);
+    }
+    else {
+        // Transmission - SoundLink("TTosh02SCV00006", -1)
+        libCamp_gf_SendTransmissionCampaign(lv_firstSCVGoingHome, SoundLink("TTosh02SCV00006", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     libNtve_gf_KillModel(lv_talkIcon);
     TriggerQueueExit();
@@ -2733,7 +2801,7 @@ bool gt_SCVwithterrazinediesonreturntrip_Func (bool testConds, bool runActions) 
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_SCV"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
     }
@@ -2874,6 +2942,8 @@ bool gt_Playerhasclaimedterrazine_Func (bool testConds, bool runActions) {
 void gt_Playerhasclaimedterrazine_Init () {
     gt_Playerhasclaimedterrazine = TriggerCreate("gt_Playerhasclaimedterrazine_Func");
     TriggerAddEventUnitAbility(gt_Playerhasclaimedterrazine, null, AbilityCommand("AP_SCVHarvest", 1), c_abilHarvestStageDropOff, false);
+    TriggerAddEventUnitAbility(gt_Playerhasclaimedterrazine, null, AbilityCommand("AP_ProbeHarvest", 1), c_abilHarvestStageDropOff, false);
+    TriggerAddEventUnitAbility(gt_Playerhasclaimedterrazine, null, AbilityCommand("AP_DroneHarvest", 1), c_abilHarvestStageDropOff, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4968,6 +5038,7 @@ void InitTriggers () {
     gt_NorthEastRelic_Init();
     gt_AwardPlayerdependingonSealedNodes_Init();
     gt_ArchInit_Init();
+    gt_FactionSwapInit_Init();
     gt_Initialization_Init();
     gt_Init01Technology_Init();
     gt_Init02Players_Init();
