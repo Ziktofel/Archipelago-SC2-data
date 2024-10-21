@@ -39,6 +39,34 @@
         <On Terms="ActorCreation; ValidateUnit AP_IsBurrowedUnit" Send="AnimBracketStart Burrow Burrow IGNORE Unburrow ClosingFull,OpeningPlayForever,Instant,DontResetOnUnhide"/>
         <On Terms="UnitDeathCustomize; ValidateUnit IsHallucination" Send="DeathCustomize Hallucination"/>
     </CActorUnit>
+    <CActorModel default="1" id="AP_CoopSelfOnlyFloatingTextActorDefault">
+        <?token id="effectPickup" type="CEffectLink" value="Bogus"?>
+        <?token id="actorCreate" type="CActorLink" value="Bogus"?>
+        <?token id="upgradedActorCreate" type="CActorLink" value="Bogus"?>
+        <Host Subject="FloatingTextSite" Actor="Create"/>
+        <HostSiteOps Ops="SOpAttachOriginStationary"/>
+        <Model value="Invisible"/>
+        <Aliases value="_FloatingText"/>
+        <On Terms="Effect.##effectPickup##.Start" Send="Create"/>
+        <On Terms="ActorCreation; !ValidatePlayer AP_HaveKerriganUpgradedResourceDrops" Send="Create ##actorCreate##"/>
+        <On Terms="ActorCreation; ValidatePlayer AP_HaveKerriganUpgradedResourceDrops" Send="Create ##upgradedActorCreate##"/>
+        <On Terms="ActorCreation" Send="TimerSet 3.000000 Die"/>
+        <On Terms="TimerExpired; TimerName Die" Send="Destroy"/>
+        <Filter index="Ally" value="1"/>
+    </CActorModel>
+    <CActorText default="1" id="AP_CoopSelfOnlyPickupTextDefault">
+        <Host Subject="_FloatingText"/>
+        <FixedSize value="28"/>
+        <HeightOffset value="1.500000"/>
+        <AlignV value="Bottom"/>
+        <Text value="Button/Tooltip/##id##"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.010000 StartMover"/>
+        <On Terms="ActorCreation" Send="TimerSet 2.000000 Die"/>
+        <On Terms="ActorCreation" Send="SetOpacity 0.000000 2.000000"/>
+        <On Terms="TimerExpired; TimerName StartMover" Send="Create PickupTextMover"/>
+        <On Terms="TimerExpired; TimerName Die" Send="Destroy"/>
+        <Filter index="Ally" value="1"/>
+    </CActorText>
     <CActorModel default="1" id="AP_MercDropModelBase">
         <Flags index="SuppressSaveLoad" value="1"/>
         <Host Subject="_Selectable"/>
@@ -19619,6 +19647,7 @@
         <On Terms="Abil.AP_MindBolt.SourceCastStart; !ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="$Spell"/>
         <On Terms="Abil.AP_WildMutation.SourceCastStart; ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="AnimPlay Spell Stand,Work"/>
         <On Terms="Abil.AP_WildMutation.SourceCastStart; !ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="$Spell"/>
+        <On Terms="Abil.AP_KerriganVoidCoopEconDrop.SourceCastStart" Send="$Spell,F NonLooping"/>
         <!-- Technically can only be cast by the infested model -->
         <On Terms="Abil.AP_PsiStrike.SourcePrepStart" Send="AnimPlay SpellC Spell,C PlayForever 0.250000 0.250000"/>
         <On Terms="Abil.AP_PsiStrike.SourceChannelStop" Send="AnimClear SpellC"/>
@@ -41248,4 +41277,291 @@
         <On Terms="ActorCreation; ModelName AP_MissileTurret_Stukov_COOP_Placement; ModelIsLowQuality" Send="Create AP_SIMissileTurretProtectRange"/>
         <On Terms="ActorDestruction" Target="AP_SIMissileTurretProtectRange" Send="Destroy"/>
     </CActorModel>
+    <CActorSiteOpOrbiter id="AP_KerriganVoidCoopEconDropGasOrbiter">
+        <BaseYawPeriod value="15.000000"/>
+        <BaseRadiusInner value="0.300000"/>
+        <BaseRadiusOuter value="0.300000"/>
+        <BaseRadiusPeriod value="2.000000"/>
+    </CActorSiteOpOrbiter>
+    <CActorSiteOpOrbiter id="AP_KerriganVoidCoopEconDropMineralsOrbiter">
+        <BaseYaw value="180"/>
+        <BaseYawPeriod value="15.000000"/>
+        <BaseRadiusInner value="0.300000"/>
+        <BaseRadiusOuter value="0.300000"/>
+        <BaseRadiusPeriod value="2.000000"/>
+    </CActorSiteOpOrbiter>
+    <CActorModel id="AP_KerriganVoidCoopEconDropGasCanisterGlow" parent="ModelAddition">
+        <On Terms="ActorCreation" Send="SetTintColor 50,255,0"/>
+        <Model value="AP_GasCanisterGlow"/>
+        <Host Subject="::Creator"/>
+        <HostForProps Subject="::Creator"/>
+        <Filter index="Ally" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_KerriganVoidCoopEconDropMineralCrystalGlow" parent="ModelAddition">
+        <Model value="AP_MineralCrystalGlow"/>
+        <Host Subject="::Creator"/>
+        <HostForProps Subject="::Creator"/>
+        <Filter index="Ally" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_KerriganVoidCoopEconDropGas" parent="ModelAddition">
+        <AutoScaleFactor value="1.500000"/>
+        <HostSiteOps Ops="SOpAttachCenter AP_KerriganVoidCoopEconDropGasOrbiter SOpForwardNorth"/>
+        <Model value="AP_NaturalGas"/>
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropGasCanisterGlow"/>
+    </CActorModel>
+    <CActorModel id="AP_KerriganVoidCoopEconDropMinerals" parent="ModelAddition">
+        <AutoScaleFactor value="1.500000"/>
+        <HostSiteOps Ops="SOpAttachCenter AP_KerriganVoidCoopEconDropMineralsOrbiter SOpForwardNorth"/>
+        <Model value="AP_NaturalMinerals"/>
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropMineralCrystalGlow"/>
+    </CActorModel>
+    <CActorUnit id="AP_KerriganVoidCoopEconDropLT1" parent="GenericUnitStandardNoAutoSoundLinks" unitName="AP_KerriganVoidCoopEconDropLT1">
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropMinerals"/>
+        <!--On Terms="ActorCreation" Send="Create MineralCrystalGlow"/-->
+        <Model value="AP_KerriganEconDropInvisible"/>
+        <!--ModelAspectSets>
+            <Aspects RegardsAs="Self" Model="NaturalMinerals"/>
+            <Aspects RegardsAs="Ally" Model="Invisible"/>
+            <Aspects RegardsAs="Enemy" Model="Invisible"/>
+        </ModelAspectSets-->
+        <Inherits index="Visibility" value="1"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </GroupIcon>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <UnitIcon value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </Wireframe>
+        <Scale value="0.800000"/>
+        <HighlightSubTooltip value="Unit/Name/AP_KerriganVoidCoopEconDropSubtip"/>
+        <Filter index="Ally" value="1"/>
+        <Filter index="Neutral" value="1"/>
+        <Filter index="Enemy" value="1"/>
+    </CActorUnit>
+    <CActorUnit id="AP_KerriganVoidCoopEconDrop1" parent="GenericUnitStandardNoAutoSoundLinks" unitName="AP_KerriganVoidCoopEconDrop1">
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropMinerals"/>
+        <!--On Terms="ActorCreation" Send="Create MineralCrystalGlow"/-->
+        <Model value="AP_KerriganEconDropInvisible"/>
+        <!--ModelAspectSets>
+            <Aspects RegardsAs="Self" Model="NaturalMinerals"/>
+            <Aspects RegardsAs="Ally" Model="Invisible"/>
+            <Aspects RegardsAs="Enemy" Model="Invisible"/>
+        </ModelAspectSets-->
+        <Inherits index="Visibility" value="1"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </GroupIcon>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <UnitIcon value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </Wireframe>
+        <HighlightSubTooltip value="Unit/Name/AP_KerriganVoidCoopEconDropSubtip"/>
+        <Filter index="Ally" value="1"/>
+        <Filter index="Neutral" value="1"/>
+        <Filter index="Enemy" value="1"/>
+    </CActorUnit>
+    <CActorUnit id="AP_KerriganVoidCoopEconDrop2" parent="GenericUnitStandardNoAutoSoundLinks" unitName="AP_KerriganVoidCoopEconDrop2">
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropGas"/>
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropMinerals"/>
+        <Model value="AP_KerriganEconDropInvisible"/>
+        <Inherits index="Visibility" value="1"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </GroupIcon>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <UnitIcon value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </Wireframe>
+        <HighlightSubTooltip value="Unit/Name/KerriganVoidCoopEconDropSubtip"/>
+        <Filter index="Ally" value="1"/>
+        <Filter index="Neutral" value="1"/>
+        <Filter index="Enemy" value="1"/>
+    </CActorUnit>
+    <CActorUnit id="AP_KerriganVoidCoopEconDrop3" parent="GenericUnitStandardNoAutoSoundLinks" unitName="AP_KerriganVoidCoopEconDrop3">
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropGas"/>
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropMinerals"/>
+        <Model value="AP_KerriganEconDropInvisible"/>
+        <Inherits index="Visibility" value="1"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </GroupIcon>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <UnitIcon value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </Wireframe>
+        <HighlightSubTooltip value="Unit/Name/AP_KerriganVoidCoopEconDropSubtip"/>
+        <Filter index="Ally" value="1"/>
+        <Filter index="Neutral" value="1"/>
+        <Filter index="Enemy" value="1"/>
+    </CActorUnit>
+    <CActorUnit id="AP_KerriganVoidCoopEconDrop4" parent="GenericUnitStandardNoAutoSoundLinks" unitName="AP_KerriganVoidCoopEconDrop4">
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropGas"/>
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropMinerals"/>
+        <Model value="AP_KerriganEconDropInvisible"/>
+        <Inherits index="Visibility" value="1"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </GroupIcon>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <UnitIcon value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </Wireframe>
+        <Scale value="1.200000"/>
+        <HighlightSubTooltip value="Unit/Name/KerriganVoidCoopEconDropSubtip"/>
+        <Filter index="Ally" value="1"/>
+        <Filter index="Neutral" value="1"/>
+        <Filter index="Enemy" value="1"/>
+    </CActorUnit>
+    <CActorUnit id="AP_KerriganVoidCoopEconDrop5" parent="GenericUnitStandardNoAutoSoundLinks" unitName="AP_KerriganVoidCoopEconDrop5">
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropGas"/>
+        <On Terms="ActorCreation" Send="Create AP_KerriganVoidCoopEconDropMinerals"/>
+        <Model value="AP_KerriganEconDropInvisible"/>
+        <Inherits index="Visibility" value="1"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </GroupIcon>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+        <StatusBarFlags index="Duration" value="0"/>
+        <UnitIcon value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-general-mineralpallet.dds"/>
+        </Wireframe>
+        <Scale value="1.400000"/>
+        <HighlightSubTooltip value="Unit/Name/AP_KerriganVoidCoopEconDropSubtip"/>
+        <Filter index="Ally" value="1"/>
+        <Filter index="Neutral" value="1"/>
+        <Filter index="Enemy" value="1"/>
+    </CActorUnit>
+    <CActorModel id="AP_KerriganVoidCoopEconDropLT1Float" parent="AP_CoopSelfOnlyFloatingTextActorDefault" upgradedActorCreate="AP_KerriganVoidCoopEconDropLT1UpgradedText" effectPickup="AP_KR0" actorCreate="AP_KerriganVoidCoopEconDropLT1Text"/>
+    <CActorText id="AP_KerriganVoidCoopEconDropLT1Text" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorText id="AP_KerriganVoidCoopEconDropLT1UpgradedText" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorModel id="AP_KerriganVoidCoopEconDrop1Float" parent="AP_CoopSelfOnlyFloatingTextActorDefault" upgradedActorCreate="AP_KerriganVoidCoopEconDrop1UpgradedText" effectPickup="AP_KR1" actorCreate="AP_KerriganVoidCoopEconDrop1Text"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop1Text" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop1UpgradedText" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorModel id="AP_KerriganVoidCoopEconDrop2Float" parent="AP_CoopSelfOnlyFloatingTextActorDefault" upgradedActorCreate="AP_KerriganVoidCoopEconDrop2UpgradedText" effectPickup="AP_KR2" actorCreate="AP_KerriganVoidCoopEconDrop2Text"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop2Text" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop2UpgradedText" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorModel id="AP_KerriganVoidCoopEconDrop3Float" parent="AP_CoopSelfOnlyFloatingTextActorDefault" upgradedActorCreate="AP_KerriganVoidCoopEconDrop3UpgradedText" effectPickup="AP_KR3" actorCreate="AP_KerriganVoidCoopEconDrop3Text"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop3Text" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop3UpgradedText" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorModel id="AP_KerriganVoidCoopEconDrop4Float" parent="AP_CoopSelfOnlyFloatingTextActorDefault" upgradedActorCreate="AP_KerriganVoidCoopEconDrop4UpgradedText" effectPickup="AP_KR4" actorCreate="AP_KerriganVoidCoopEconDrop4Text"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop4Text" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop4UpgradedText" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorModel id="AP_KerriganVoidCoopEconDrop5Float" parent="AP_CoopSelfOnlyFloatingTextActorDefault" upgradedActorCreate="AP_KerriganVoidCoopEconDrop5UpgradedText" effectPickup="AP_KR5" actorCreate="AP_KerriganVoidCoopEconDrop5Text"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop5Text" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorText id="AP_KerriganVoidCoopEconDrop5UpgradedText" parent="AP_CoopSelfOnlyPickupTextDefault"/>
+    <CActorModel id="AP_KerriganEconDropTarget" parent="ModelAnimationStyleContinuous">
+        <!--On Terms="ActorCreation" Send="SetTintColor {187,9,156 3.000000}"/-->
+        <!--On Terms="ActorCreation" Send="$Birth PlayForever"/-->
+        <On Terms="Behavior.AP_KerriganVoidCoopEconDrop.On" Send="Create"/>
+        <On Terms="Behavior.AP_KerriganVoidCoopEconDrop.Off" Send="Destroy"/>
+        <Inherits index="CloakEffect" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter SOpAttachOverhead" HoldRotation="1"/>
+    </CActorModel>
+    <CActorRange id="AP_KerriganEconDropRange" parent="RangeAbilHover" abil="AP_KerriganVoidCoopEconDrop">
+        <Abil Link=""/>
+        <Range value="12.000000"/>
+    </CActorRange>
+    <CActorModel id="AP_KerriganEconDropMineralCrystalGlow" parent="ModelAddition">
+        <Model value="Invisible"/>
+        <ModelAspectSets>
+            <Aspects RegardsAs="Self" Model="PickupMineralCrystalGlow"/>
+            <Aspects RegardsAs="Ally" Model="Invisible"/>
+            <Aspects RegardsAs="Enemy" Model="Invisible"/>
+        </ModelAspectSets>
+        <Inherits index="BaseModelScale" value="0"/>
+        <Inherits index="Scale" value="0"/>
+    </CActorModel>
+    <CActorModel id="AP_KerriganEconDropGasCanisterGlow" parent="ModelAddition">
+        <Model value="Invisible"/>
+        <ModelAspectSets>
+            <Aspects RegardsAs="Self" Model="PickupGasCanisterGlow"/>
+            <Aspects RegardsAs="Ally" Model="Invisible"/>
+            <Aspects RegardsAs="Enemy" Model="Invisible"/>
+        </ModelAspectSets>
+        <Inherits index="BaseModelScale" value="0"/>
+        <Inherits index="Scale" value="0"/>
+        <On Terms="ActorCreation" Send="SetTintColor 50,255,0"/>
+    </CActorModel>
+    <CActorModel id="AP_KerriganEconDropImpact" parent="ModelAnimationStyleContinuous">
+        <On Terms="ActorCreation" Send="SetTintColor {187,9,156 3.000000}"/>
+        <On Terms="Behavior.AP_KerriganVoidCoopEconDropCaster.On" Send="Create"/>
+        <On Terms="Behavior.AP_KerriganVoidCoopEconDropCaster.Off" Send="Destroy"/>
+        <HostSiteOps Ops="SOpShadow" HoldRotation="1"/>
+    </CActorModel>
+    <CActorSound id="AP_KerriganCoop_AssimilationAura_OffSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_KerriganVoidCoopEconDropCaster.Off" Send="Create"/>
+        <Sound value="AP_KerriganCoop_AssimilationAura_Off"/>
+    </CActorSound>
+    <CActorSound id="AP_KerriganCoop_AssimilationAura_OnSound" parent="SoundContinuous">
+        <On Terms="Behavior.AP_KerriganVoidCoopEconDropCaster.On" Send="Create"/>
+        <On Terms="Behavior.AP_KerriganVoidCoopEconDropCaster.Off" Send="Destroy"/>
+        <Sound value="AP_KerriganCoop_AssimilationAura_Loop"/>
+        <Layers>
+            <Sound value="AP_KerriganCoop_AssimilationAura_Loop2"/>
+            <PitchSource value="Sound"/>
+            <PlayDelaySource value="Sound"/>
+            <VolumeSource value="Sound"/>
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+        <Layers>
+            <Sound value="AP_KerriganCoop_AssimilationAuraStart"/>
+            <PitchSource value="Sound"/>
+            <PlayDelaySource value="Sound"/>
+            <VolumeSource value="Sound"/>
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+        <Layers>
+            <Sound value="AP_KerriganCoop_AssimilationAuraStart2"/>
+            <PitchSource value="Sound"/>
+            <PlayDelaySource value="Sound"/>
+            <VolumeSource value="Sound"/>
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
 </Catalog>
