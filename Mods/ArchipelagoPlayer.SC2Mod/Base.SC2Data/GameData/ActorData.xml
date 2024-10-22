@@ -1527,6 +1527,16 @@
             <Image value="AP\Assets\Textures\Wireframe-Terran-medic.dds"/>
         </Wireframe>
     </CActorUnit>
+    <CActorSimple id="AP_PsionicLiftImpactAnimBase" default="1">
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear Attack"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackReady"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackLeft"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackRight"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="AnimPlay PsionicLiftKnockback Flail PlayForever,RandomStartOffset 0.100000 0.100000"/>
+        <On Terms="ActorCreation" Send="TimerSet 3.000000 KnockbackDelay"/>
+        <On Terms="TimerExpired; TimerName KnockbackDelay" Target="_Unit" Send="AnimClear PsionicLiftKnockback"/>
+        <On Terms="TimerExpired; TimerName KnockbackDelay" Send="Destroy"/>
+    </CActorSimple>
     <CActorSound id="AP_NydusWormTransportLoadSound" parent="SoundOneShot">
         <On Terms="AbilTransport.AP_NydusWormTransport.TransportLoad" Send="Create"/>
         <On Terms="AbilTransport.AP_NydusWormTransport.TransportUnload" Send="Create"/>
@@ -19648,6 +19658,13 @@
         <On Terms="Abil.AP_WildMutation.SourceCastStart; ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="AnimPlay Spell Stand,Work"/>
         <On Terms="Abil.AP_WildMutation.SourceCastStart; !ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="$Spell"/>
         <On Terms="Abil.AP_KerriganVoidCoopEconDrop.SourceCastStart" Send="$Spell,F NonLooping"/>
+        <On Terms="Abil.KerriganVoidCoopCrushingGripWave.SourceCastStart; ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="Signal CrushingGripWaveInfested"/>
+        <On Terms="Abil.KerriganVoidCoopCrushingGripWave.SourceCastStart; !ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="Signal CrushingGripWaveGhost"/>
+        <On Terms="Abil.KerriganVoidCoopCrushingGripWave.SourceCastStart; ValidatePlayer AP_HaveKerriganInfestedCosmetic" Send="$Spell,B 0 -1.000000 -1.000000 4.000000 AsTimeScale"/>
+        <On Terms="Signal.*.CrushingGripWaveInfested" Send="TimerSet 0.375000 AnimSpeedChangeOne"/>
+        <On Terms="Signal.*.CrushingGripWaveGhost" Send="$Spell,One NonLooping"/>
+        <On Terms="Signal.*.CrushingGripWaveInfested" Send="AnimClear Spell"/>
+        <On Terms="Behavior.AP_KerriganVoidCoopCrushingGripWaveStun.Off; ValidateUnit AP_HaveKerriganInfestedCosmetic" Send="AnimSetTimeScale Spell 1.000000"/>
         <!-- Technically can only be cast by the infested model -->
         <On Terms="Abil.AP_PsiStrike.SourcePrepStart" Send="AnimPlay SpellC Spell,C PlayForever 0.250000 0.250000"/>
         <On Terms="Abil.AP_PsiStrike.SourceChannelStop" Send="AnimClear SpellC"/>
@@ -19999,16 +20016,30 @@
         <HostSiteOps Ops="SOpAttachCenter"/>
         <AutoScaleFactor value="0.700000"/>
     </CActorModel>
-    <CActorSimple id="AP_PsionicLiftImpactAnim">
+    <CActorModel id="AP_PsionicLiftImpactCoop" parent="ModelAnimationStyleContinuous">
+        <Model value="AP_PsionicLiftImpactCoop"/>
+        <AutoScaleFactor value="0.700000"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <On Terms="Behavior.AP_PsionicLiftController.On" Send="Create"/>
+        <On Terms="Behavior.AP_PsionicLiftControllerFinal.Off" Send="AnimBracketStop BSD"/>
+    </CActorModel>
+    <CActorSimple id="AP_PsionicLiftImpactAnim" parent="AP_PsionicLiftImpactAnimBase">
         <On Terms="Behavior.AP_PsionicLift.On" Send="Create"/>
-        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear Attack"/>
-        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackReady"/>
-        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackLeft"/>
-        <On Terms="ActorCreation" Target="_Unit" Send="AnimClear AttackRight"/>
-        <On Terms="ActorCreation" Target="_Unit" Send="AnimPlay PsionicLiftKnockback Flail PlayForever,RandomStartOffset 0.100000 0.100000"/>
-        <On Terms="ActorCreation" Send="TimerSet 3.000000 KnockbackDelay"/>
-        <On Terms="TimerExpired; TimerName KnockbackDelay" Target="_Unit" Send="AnimClear PsionicLiftKnockback"/>
-        <On Terms="TimerExpired; TimerName KnockbackDelay" Send="Destroy"/>
+    </CActorSimple>
+    <CActorSimple id="AP_PsionicLiftImpactAnimCoop" parent="AP_PsionicLiftImpactAnimBase">
+        <Remove Terms="ActorCreation" Send="TimerSet 3.000000 KnockbackDelay"/>
+        <Remove Terms="TimerExpired; TimerName KnockbackDelay" Target="_Unit" Send="AnimClear PsionicLiftKnockback"/>
+        <Remove Terms="TimerExpired; TimerName KnockbackDelay" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.500000 KnockbackDelay"/>
+        <On Terms="TimerExpired; TimerName KnockbackDelay" Target="_Unit" Send="AnimSetPausedAll"/>
+        <On Terms="Behavior.AP_PsionicLiftStun.Off" Target="_Unit" Send="AnimSetPausedAll 0"/>
+        <On Terms="Behavior.AP_PsionicLiftStun.Off" Target="_Unit" Send="AnimClear PsionicLiftKnockback"/>
+        <On Terms="Behavior.AP_PsionicLiftStun.Off" Send="Destroy"/>
+        <On Terms="Behavior.AP_PsionicLiftStun.On" Send="Create"/>
+        <On Terms="UnitDeath" Target="_Unit" Send="AnimSetPausedAll 0"/>
+        <On Terms="UnitDeath" Target="_Unit" Send="AnimClear PsionicLiftKnockback"/>
+        <On Terms="UnitDeath" Send="Destroy"/>
     </CActorSimple>
     <CActorModel id="AP_PsionicLiftImpactDeath">
         <Flags index="SuppressSaveLoad" value="1"/>
@@ -41562,6 +41593,57 @@
             <Pitch value="0.000000,0.000000"/>
             <PlayDelay value="0,0"/>
             <Volume value="0.000000,0.000000"/>
+        </Layers>
+    </CActorSound>
+    <CActorModelMaterial id="AP_GlazePsionicLift" parent="GlazeParent">
+        <On Terms="Behavior.AP_PsionicLiftController.On" Send="Create"/>
+        <On Terms="ActorCreation" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="Behavior.AP_PsionicLiftControllerFinal.Off" Send="ModelMaterialRemoveFrom ::Main"/>
+        <On Terms="Behavior.AP_PsionicLiftControllerFinal.Off" Send="Destroy"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModelMaterial>
+    <CActorModel id="AP_CrushingGripWaveCast" parent="ModelAnimationStyleOneShot">
+        <On Terms="Effect.AP_KerriganVoidCoopCrushingGripWaveCP.Start; At Caster" Send="Create"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <Host Subject="_Unit"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+    </CActorModel>
+    <CActorSound id="AP_ImmobilizationWave_KerriganRisesSound" parent="SoundOneShot">
+        <On Terms="Abil.AP_KerriganVoidCoopCrushingGripWave.SourceCastStart" Send="Create"/>
+        <Sound value="AP_ImmobilizationWave_KerriganRises"/>
+    </CActorSound>
+    <CActorSound id="AP_ImmobilizationWave_ShockwaveExplosionSound" parent="SoundOneShot">
+        <On Terms="Effect.AP_KerriganVoidCoopCrushingGripWaveCP.Start; At Caster" Send="Create"/>
+        <Sound value="AP_ImmobilizationWave_ShockwaveExplosion"/>
+        <Layers>
+            <Sound value="AP_ImmobilizationWave_ShockwaveLFE"/>
+            <PitchSource value="Sound"/>
+            <PlayDelaySource value="Sound"/>
+            <VolumeSource value="Actor"/>
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="-15.000000,-15.000000"/>
+        </Layers>
+        <Layers>
+            <Sound value="AP_ImmobilizationWave_ShockwaveExplsoionDistant"/>
+            <PitchSource value="Sound"/>
+            <PlayDelaySource value="Sound"/>
+            <VolumeSource value="Actor"/>
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="-9.000000,-9.000000"/>
+        </Layers>
+        <Layers>
+            <Sound value="AP_ImmobilzationWave_Vox"/>
+            <PitchSource value="Sound"/>
+            <PlayDelaySource value="Sound"/>
+            <VolumeSource value="Actor"/>
+            <Chance value="100"/>
+            <Pitch value="0.000000,0.000000"/>
+            <PlayDelay value="0,0"/>
+            <Volume value="-12.000000,-12.000000"/>
         </Layers>
     </CActorSound>
 </Catalog>
