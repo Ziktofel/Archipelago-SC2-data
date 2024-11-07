@@ -430,6 +430,7 @@ trigger gt_VictoryCinematic;
 trigger gt_VictoryCinematicCameraShakes;
 trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
+trigger gt_FactionSwapInit;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -2050,7 +2051,7 @@ void gf_HideKerrigan () {
     unit auto76C2A3E1_var;
 
     // Implementation
-    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") && (libABFE498B_gv_aP_Triggers_Option_KerriganPresence != 4)))) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
         UnitBehaviorAdd(gv_kerrigan, "AP_ImmortalShakurasAntiAirMissileDisableAttack", gv_kerrigan, 1);
@@ -2083,10 +2084,11 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
     gf_HideKerrigan();
-    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") && (libABFE498B_gv_aP_Triggers_Option_KerriganPresence != 4))) && (libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
+    }
+    else {
         lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_pLAYER_01_USER);
     }
-
     lib15EF4C78_gf_StartingWorkersAutoHarvest(gv_pLAYER_01_USER, RegionFromId(24), RegionFromId(42));
     TriggerExecute(gt_IntroQ, true, true);
     return true;
@@ -3146,6 +3148,10 @@ bool gt_TransmissionTeachMutalisksQ_Func (bool testConds, bool runActions) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
             return false;
         }
+
+        if (!((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut"))) {
+            return false;
+        }
     }
 
     // Actions
@@ -3753,7 +3759,7 @@ bool gt_EssencePoolApproached_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) && (UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER)) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
+        if (!((((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER) && ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut"))) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
             return false;
         }
     }
@@ -3879,7 +3885,7 @@ bool gt_EssencePoolAbsorbedQ_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) && (UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER)) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
+        if (!((((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER) && ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut"))) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
             return false;
         }
     }
@@ -4269,6 +4275,9 @@ bool gt_CorpseSetup_Func (bool testConds, bool runActions) {
     int lv_campIndex;
 
     // Automatic Variable Declarations
+    string auto2D94053B_val;
+    string autoF54BFE36_val;
+
     // Variable Initialization
 
     // Actions
@@ -4299,7 +4308,18 @@ bool gt_CorpseSetup_Func (bool testConds, bool runActions) {
         }
 
         if ((gv_gameOver == false) && (gv_score_Player < gv_score_Quota_Player)) {
-            libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergMainObjective, libSwaC_ge_CampaginReticleSize_Medium, StringExternal("Param/Value/1FD16CD6"), EventUnit(), "Ref_Center");
+            auto2D94053B_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+            if (auto2D94053B_val == "Neut") {
+                libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergMainObjective, libSwaC_ge_CampaginReticleSize_Medium, StringExternal("Param/Value/1FD16CD6"), EventUnit(), "Ref_Center");
+            }
+            else if (auto2D94053B_val == "Terr") {
+                libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergMainObjective, libSwaC_ge_CampaginReticleSize_Medium, StringExternal("Param/Value/4676B29F"), EventUnit(), "Ref_Center");
+            }
+            else if (auto2D94053B_val == "Prot") {
+                libSwaC_gf_AttachReticleEffectAndTextTagOnUnit(libSwaC_ge_CampaginReticleType_ZergMainObjective, libSwaC_ge_CampaginReticleSize_Medium, StringExternal("Param/Value/86967AAE"), EventUnit(), "Ref_Center");
+            }
+            else {
+            }
             libHots_gf_StoreActorForUnit(EventUnit(), 1, libNtve_gf_ActorLastCreated());
             libHots_gf_StoreTextTagForUnit(EventUnit(), 1, TextTagLastCreated());
             TextTagAttachToUnit(TextTagLastCreated(), EventUnit(), 1.0);
@@ -4311,7 +4331,18 @@ bool gt_CorpseSetup_Func (bool testConds, bool runActions) {
         UnitStatusBarOverride(EventUnit(), c_unitStatusGroupAll);
         UnitSetState(EventUnit(), c_unitStateTooltipable, true);
         libNtve_gf_ShareVisionofUnit(EventUnit(), true, gv_pLAYER_01_USER);
-        libSwaC_gf_SetUnitInfoTextCampaign(EventUnit(), StringExternal("Param/Value/BEFEBA35"), StringExternal("Param/Value/DF2D61EA"), null);
+        autoF54BFE36_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoF54BFE36_val == "Neut") {
+            libSwaC_gf_SetUnitInfoTextCampaign(EventUnit(), StringExternal("Param/Value/BEFEBA35"), StringExternal("Param/Value/DF2D61EA"), null);
+        }
+        else if (autoF54BFE36_val == "Terr") {
+            libSwaC_gf_SetUnitInfoTextCampaign(EventUnit(), StringExternal("Param/Value/806C8A21"), StringExternal("Param/Value/1F3BA70C"), null);
+        }
+        else if (autoF54BFE36_val == "Prot") {
+            libSwaC_gf_SetUnitInfoTextCampaign(EventUnit(), StringExternal("Param/Value/9EC61A2B"), StringExternal("Param/Value/00C92837"), null);
+        }
+        else {
+        }
         libNtve_gf_CreatePingFacingAngle(PlayerGroupAll(), "PingSimple", UnitGetPosition(EventUnit()), ColorWithAlpha(0.00, 100.00, 0.00, 0.00), 0.0, 270.0);
         PingSetVisible(PingLastCreated(), false);
         PingSetTooltip(PingLastCreated(), StringExternal("Param/Value/DBA07935"));
@@ -4567,7 +4598,7 @@ bool gt_CorpseHarvestStarted_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_Drone"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
 
@@ -4759,6 +4790,8 @@ bool gt_CorpseHarvestEndedFinished_Func (bool testConds, bool runActions) {
     int lv_corpseCount;
 
     // Automatic Variable Declarations
+    string autoDA4E7E22_val;
+
     // Variable Initialization
 
     // Conditions
@@ -4771,7 +4804,7 @@ bool gt_CorpseHarvestEndedFinished_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_Drone"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
 
@@ -4800,7 +4833,18 @@ bool gt_CorpseHarvestEndedFinished_Func (bool testConds, bool runActions) {
         UnitGroupRemove(gv_corpses_All, lv_corpse);
         gv_corpse_PerCamp[lv_campIndex] = null;
         UnitGroupAdd(gv_meats, lv_corpse);
-        libSwaC_gf_SetUnitInfoTextCampaign(lv_corpse, StringExternal("Param/Value/F977BE30"), StringExternal("Param/Value/6BC70AF2"), null);
+        autoDA4E7E22_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoDA4E7E22_val == "Neut") {
+            libSwaC_gf_SetUnitInfoTextCampaign(lv_corpse, StringExternal("Param/Value/F977BE30"), StringExternal("Param/Value/6BC70AF2"), null);
+        }
+        else if (autoDA4E7E22_val == "Terr") {
+            libSwaC_gf_SetUnitInfoTextCampaign(lv_corpse, StringExternal("Param/Value/EB657889"), StringExternal("Param/Value/15316ED1"), null);
+        }
+        else if (autoDA4E7E22_val == "Prot") {
+            libSwaC_gf_SetUnitInfoTextCampaign(lv_corpse, StringExternal("Param/Value/45ECDE50"), StringExternal("Param/Value/A0C1E920"), null);
+        }
+        else {
+        }
     }
 
     gv_quillgorCampCorpseHarvestedByDrone[lv_campIndex] = false;
@@ -4836,7 +4880,7 @@ bool gt_CorpseHarvestEndedDied_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnit()) == "AP_Drone"))) {
+        if (!(((UnitGetType(EventUnit()) == "AP_Drone") || (UnitGetType(EventUnit()) == "AP_SISCV") || (UnitGetType(EventUnit()) == "AP_SCV") || (UnitGetType(EventUnit()) == "AP_Probe")))) {
             return false;
         }
 
@@ -7072,7 +7116,7 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_IntroCinematic, true, true);
         TriggerExecute(gt_IntroCinematicEnd, true, true);
     }
@@ -8112,6 +8156,45 @@ void gt_VictoryCleanup_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Zerg", false);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, true);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            PlayerSetRace(gv_pLAYER_01_USER, "Terr");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(gv_pLAYER_01_USER, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+            }
+
+        }
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER_01_USER);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_pLAYER_01_USER);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -8363,7 +8446,7 @@ bool gt_EssencePoolAbsorbedCenter_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) && (UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER)) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
+        if (!((((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER) && ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut"))) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
             return false;
         }
     }
@@ -8403,7 +8486,7 @@ bool gt_EssencePoolAbsorbedEast_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) && (UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER)) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
+        if (!((((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER) && ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut"))) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
             return false;
         }
     }
@@ -8443,7 +8526,7 @@ bool gt_EssencePoolAbsorbedSouth_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) && (UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER)) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
+        if (!((((UnitGetOwner(EventUnit()) == gv_pLAYER_01_USER) && ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut"))) || ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0) && (EventUnit() == gv_kerrigan))))) {
             return false;
         }
     }
@@ -8736,6 +8819,7 @@ void InitTriggers () {
     gt_VictoryCinematicCameraShakes_Init();
     gt_VictoryCinematicEnd_Init();
     gt_VictoryCleanup_Init();
+    gt_FactionSwapInit_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
