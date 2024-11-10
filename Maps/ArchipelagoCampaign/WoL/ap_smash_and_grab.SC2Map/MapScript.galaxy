@@ -36,6 +36,7 @@ const int gv_LOCATION_ID_THIRD_RELIC = 3;
 const int gv_LOCATION_ID_FOURTH_RELIC = 4;
 const int gv_LOCATION_ID_FIRST_FORCEFIELD_AREA_BUSTED = 5;
 const int gv_LOCATION_ID_SECOND_FORCEFIELD_AREA_BUSTED = 6;
+const int gv_LOCATION_ID_DESTROY_KERRIGAN_BASE = 7;
 const int gv_p1_USER = 1;
 const int gv_p2_ZERG = 2;
 const int gv_p3_TEMPLE = 3;
@@ -80,6 +81,7 @@ actor gv_relicPingActor;
 int gv_objective_Relics;
 int gv_relicsFound;
 int gv_relicsNeeded;
+int gv_masteryObjectiveDestroyKerriganBase;
 bool gv_victoryCinematicCompleted;
 unitgroup gv_zerglingGroupNorth;
 unitgroup gv_zerglingGroupSouth;
@@ -105,6 +107,7 @@ void InitGlobals () {
     gv_objective_GetToTheArtifact = c_invalidObjectiveId;
     gv_objective_DestroytheStatues = c_invalidObjectiveId;
     gv_objective_Relics = c_invalidObjectiveId;
+    gv_masteryObjectiveDestroyKerriganBase = c_invalidObjectiveId;
     gv_zerglingGroupNorth = UnitGroupEmpty();
     gv_zerglingGroupSouth = UnitGroupEmpty();
     gv_objective_Forcefields = c_invalidObjectiveId;
@@ -204,6 +207,8 @@ trigger gt_ObjectiveRelicsUpdate;
 trigger gt_ObjectiveRelicsComplete;
 trigger gt_ObjectiveRelicsRemove;
 trigger gt_RelicTipQ;
+trigger gt_MasteryObjectiveDestroyKerriganBaseCreate;
+trigger gt_MasteryKerriganBaseDestroyed;
 trigger gt_IntroBriefingQ;
 trigger gt_IntroBriefingCinematic;
 trigger gt_BriefingZergAttacks;
@@ -357,6 +362,8 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_ArtifactRaceQ, true, false);
     Wait(8.0, c_timeReal);
     TriggerExecute(gt_ObjectiveForcefieldsCreateQ, true, true);
+    Wait(8.0, c_timeReal);
+    TriggerExecute(gt_MasteryObjectiveDestroyKerriganBaseCreate, true, true);
     return true;
 }
 
@@ -4257,6 +4264,79 @@ void gt_RelicTipQ_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: MasteryObjectiveDestroyKerriganBaseCreate
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryObjectiveDestroyKerriganBaseCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/46949AA6"), StringToText(""), c_objectiveStateHidden, true);
+    gv_masteryObjectiveDestroyKerriganBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_masteryObjectiveDestroyKerriganBase, lib5BD4895D_ge_APObjectiveCategory_Mastery, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_masteryObjectiveDestroyKerriganBase, gv_LOCATION_ID_DESTROY_KERRIGAN_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_masteryObjectiveDestroyKerriganBase, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryObjectiveDestroyKerriganBaseCreate_Init () {
+    gt_MasteryObjectiveDestroyKerriganBaseCreate = TriggerCreate("gt_MasteryObjectiveDestroyKerriganBaseCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: MasteryKerriganBaseDestroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryKerriganBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitFilterMatch(EventUnit(), gv_p2_ZERG, UnitFilter((1 << c_targetFilterPreventDefeat), 0, 0, 0)) == true))) {
+            return false;
+        }
+
+        if (!((UnitCount(null, gv_p2_ZERG, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, 0, 0), 0) == 0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_MasteryObjectiveDestroyKerriganBaseCreate, true, false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_DESTROY_KERRIGAN_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_masteryObjectiveDestroyKerriganBase);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryKerriganBaseDestroyed_Init () {
+    gt_MasteryKerriganBaseDestroyed = TriggerCreate("gt_MasteryKerriganBaseDestroyed_Func");
+    TriggerAddEventUnitDied(gt_MasteryKerriganBaseDestroyed, null);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Briefing Q
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroBriefingQ_Func (bool testConds, bool runActions) {
@@ -5923,6 +6003,8 @@ void InitTriggers () {
     gt_ObjectiveRelicsComplete_Init();
     gt_ObjectiveRelicsRemove_Init();
     gt_RelicTipQ_Init();
+    gt_MasteryObjectiveDestroyKerriganBaseCreate_Init();
+    gt_MasteryKerriganBaseDestroyed_Init();
     gt_IntroBriefingQ_Init();
     gt_IntroBriefingCinematic_Init();
     gt_BriefingZergAttacks_Init();
