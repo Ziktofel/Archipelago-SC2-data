@@ -250,6 +250,7 @@ trigger gt_StartUpgradesNormal;
 trigger gt_StartUpgradesHard;
 trigger gt_AIGiveResources;
 trigger gt_Player2SendsAIWave;
+trigger gt_Player2SendsAIOdin;
 trigger gt_TipMissionHelpQ;
 trigger gt_ObjectiveDestroyPalaceGateCreate;
 trigger gt_ObjectiveDestroyPalaceGateComplete;
@@ -797,10 +798,6 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     gf_HideKerrigan();
     if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence >= 4) || ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")))) {
         lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_PLAYER_01_USER);
-    }
-
-    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true))) {
-        cai_wave_enable(20, gv_PLAYER_02_DOMINION_RED, false);
     }
 
     TriggerExecute(gt_IntroQ, true, true);
@@ -3983,8 +3980,16 @@ bool gt_HyperionBigAttack3Q_Func (bool testConds, bool runActions) {
     libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Korhal03|Line00093", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
     if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true))) {
-        cai_wave_enable(20, gv_PLAYER_02_DOMINION_RED, true);
-        cai_wave_run(20, gv_PLAYER_02_DOMINION_RED, PlayerGroupSingle(gv_PLAYER_07_DOMINION_GREEN22), true);
+        AIAttackWaveAddUnits3(1, 1, 1, "Odin");
+        AIAttackWaveAddUnits3(1, 1, 2, "MengskSiegeTank");
+        AIAttackWaveAddUnits3(8, 8, 12, "MengskGoliath");
+        AIAttackWaveAddUnits3(12, 12, 16, "MengskMarine");
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2634), false);
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2635), false);
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2636), false);
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2), false);
+        AIAttackWaveSetGatherEarlyNoReplace(gv_PLAYER_02_DOMINION_RED);
+        AIAttackWaveSend(gv_PLAYER_02_DOMINION_RED, 0, false);
     }
 
     TriggerQueueExit();
@@ -4645,6 +4650,10 @@ bool gt_StartAI_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true))) {
+        AIWaveDelete(AIWaveGet(gv_PLAYER_02_DOMINION_RED, 20));
+    }
+
     cai_startall();
     cai_waves_run(gv_PLAYER_02_DOMINION_RED, PlayerGroupSingle(gv_PLAYER_01_USER));
     cai_waves_run(gv_PLAYER_03_DOMINION_BLUE, PlayerGroupSingle(gv_PLAYER_01_USER));
@@ -4854,6 +4863,41 @@ bool gt_Player2SendsAIWave_Func (bool testConds, bool runActions) {
 void gt_Player2SendsAIWave_Init () {
     gt_Player2SendsAIWave = TriggerCreate("gt_Player2SendsAIWave_Func");
     TriggerAddEventPlayerAIWave(gt_Player2SendsAIWave, gv_PLAYER_02_DOMINION_RED);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Player 2 Sends AI Odin
+//--------------------------------------------------------------------------------------------------
+bool gt_Player2SendsAIOdin_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true)))) {
+            return false;
+        }
+
+        if (!(((EventPlayerWave() == AIUnitGetWave(UnitFromId(603))) || (EventPlayerWave() == AIWaveGet(gv_PLAYER_02_DOMINION_RED, 20))))) {
+            return false;
+        }
+
+        if (!((TimerGetRemaining(gv_objectiveTrashOdinEarlyTimer) > 10.0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    AIAttackWaveCancel(EventPlayerWave());
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_Player2SendsAIOdin_Init () {
+    gt_Player2SendsAIOdin = TriggerCreate("gt_Player2SendsAIOdin_Func");
+    TriggerAddEventPlayerAIWave(gt_Player2SendsAIOdin, gv_PLAYER_02_DOMINION_RED);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6786,6 +6830,7 @@ void InitTriggers () {
     gt_StartUpgradesHard_Init();
     gt_AIGiveResources_Init();
     gt_Player2SendsAIWave_Init();
+    gt_Player2SendsAIOdin_Init();
     gt_TipMissionHelpQ_Init();
     gt_ObjectiveDestroyPalaceGateCreate_Init();
     gt_ObjectiveDestroyPalaceGateComplete_Init();
