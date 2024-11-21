@@ -141,6 +141,7 @@ void gf_RevealPath (int lp_startingWaypoint, int lp_endingWaypoint);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_FactionSwapInit;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -661,6 +662,47 @@ void gf_RevealPath (int lp_startingWaypoint, int lp_endingWaypoint) {
         PingSetScale(PingLastCreated(), 0.65);
         Wait(0.125, c_timeGame);
     }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(10), "Prot", false);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(11), "Prot", false);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(10), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, false);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(11), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, false);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            PlayerSetRace(gv_pLAYER_01_USER, "Terr");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+                PlayerSetRace(gv_pLAYER_01_USER, "Zerg");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+            }
+
+        }
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER_01_USER);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_pLAYER_01_USER);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2370,6 +2412,7 @@ bool gt_UnitKillsHoldingPen02Q_Func (bool testConds, bool runActions) {
         UnitSetPosition(autoF83E96A0_var, RegionGetCenter(RegionFromId(14)), false);
         libNtve_gf_ShowHideUnit(autoF83E96A0_var, true);
         libNtve_gf_PauseUnit(autoF83E96A0_var, false);
+        lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit(autoF83E96A0_var);
     }
     UnitGroupAddUnitGroup(lv_rescuedUnits, UnitGroup(null, gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(14), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     auto3C101BAB_g = lv_rescuedUnits;
@@ -2380,6 +2423,7 @@ bool gt_UnitKillsHoldingPen02Q_Func (bool testConds, bool runActions) {
         libNtve_gf_RescueUnit(auto3C101BAB_var, gv_pLAYER_01_USER, true);
         libNtve_gf_PauseUnit(auto3C101BAB_var, false);
         libNtve_gf_MakeUnitInvulnerable(auto3C101BAB_var, false);
+        lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit(auto3C101BAB_var);
     }
     UnitGroupIssueOrder(lv_rescuedUnits, OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(421)), c_orderQueueReplace);
     TriggerExecute(gt_ObjectiveFreeCaptiveProtoss02Complete, true, true);
@@ -3095,6 +3139,12 @@ void gt_DestroyPylon2Reticle_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ReclaimPylon1WarpInReinforcements_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string auto85C97BF8_val;
+    string autoAE275D5F_val;
+    string autoDEED9C58_val;
+    string auto86D41432_val;
+    string auto5FC0FAF5_val;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -3119,15 +3169,80 @@ bool gt_ReclaimPylon1WarpInReinforcements_Func (bool testConds, bool runActions)
     lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_FIRST_PYLON);
     VisRevealArea(gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(12), 16.0, false);
     Wait(4.0, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1518)), c_orderQueueReplace);
+    auto85C97BF8_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto85C97BF8_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1518)), c_orderQueueReplace);
+    }
+    else if (auto85C97BF8_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Marauder", 0, gv_pLAYER_01_USER, PointFromId(1518));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1518), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (auto85C97BF8_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(1518));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1518), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1519)), c_orderQueueReplace);
+    autoAE275D5F_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoAE275D5F_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1519)), c_orderQueueReplace);
+    }
+    else if (autoAE275D5F_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(2, "AP_Marine", 0, gv_pLAYER_01_USER, PointFromId(1519));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1519), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (autoAE275D5F_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(4, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(1519));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1519), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1520)), c_orderQueueReplace);
+    autoDEED9C58_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoDEED9C58_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1520)), c_orderQueueReplace);
+    }
+    else if (autoDEED9C58_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Marauder", 0, gv_pLAYER_01_USER, PointFromId(1520));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1520), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (autoDEED9C58_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(1520));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1520), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1521)), c_orderQueueReplace);
+    auto86D41432_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto86D41432_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1521)), c_orderQueueReplace);
+    }
+    else if (auto86D41432_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(2, "AP_Marine", 0, gv_pLAYER_01_USER, PointFromId(1521));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1521), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (auto86D41432_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(4, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(1521));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1521), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1522)), c_orderQueueReplace);
+    auto5FC0FAF5_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto5FC0FAF5_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1522)), c_orderQueueReplace);
+    }
+    else if (auto5FC0FAF5_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Marauder", 0, gv_pLAYER_01_USER, PointFromId(1522));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1522), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (auto5FC0FAF5_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(1522));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1522), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     return true;
 }
 
@@ -3141,6 +3256,12 @@ void gt_ReclaimPylon1WarpInReinforcements_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ReclaimPylon2WarpInReinforcements_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string auto79D1824C_val;
+    string auto44C538A7_val;
+    string autoE4DDF8B7_val;
+    string auto3584A6E5_val;
+    string autoE25C5B16_val;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -3165,15 +3286,80 @@ bool gt_ReclaimPylon2WarpInReinforcements_Func (bool testConds, bool runActions)
     lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_PYLON);
     VisRevealArea(gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(47), 16.0, false);
     Wait(4.0, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1595)), c_orderQueueReplace);
+    auto79D1824C_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto79D1824C_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1595)), c_orderQueueReplace);
+    }
+    else if (auto79D1824C_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Marauder", 0, gv_pLAYER_01_USER, PointFromId(1595));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1595), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (auto79D1824C_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(1595));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1595), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1596)), c_orderQueueReplace);
+    auto44C538A7_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto44C538A7_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1596)), c_orderQueueReplace);
+    }
+    else if (auto44C538A7_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(2, "AP_Marine", 0, gv_pLAYER_01_USER, PointFromId(1596));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1596), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (auto44C538A7_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(4, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(1596));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1596), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1597)), c_orderQueueReplace);
+    autoE4DDF8B7_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoE4DDF8B7_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1597)), c_orderQueueReplace);
+    }
+    else if (autoE4DDF8B7_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Marauder", 0, gv_pLAYER_01_USER, PointFromId(1597));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1597), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (autoE4DDF8B7_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(1597));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1597), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1598)), c_orderQueueReplace);
+    auto3584A6E5_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto3584A6E5_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 0), PointFromId(1598)), c_orderQueueReplace);
+    }
+    else if (auto3584A6E5_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(2, "AP_Marine", 0, gv_pLAYER_01_USER, PointFromId(1598));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1598), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (auto3584A6E5_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(4, "AP_Zergling", 0, gv_pLAYER_01_USER, PointFromId(1598));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1598), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     Wait(0.2, c_timeAI);
-    UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1599)), c_orderQueueReplace);
+    autoE25C5B16_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoE25C5B16_val == "Neut") {
+        UnitIssueOrder(gv_superWarpGate, OrderTargetingPoint(AbilityCommand("AP_SuperWarpGateTrain", 1), PointFromId(1599)), c_orderQueueReplace);
+    }
+    else if (autoE25C5B16_val == "Terr") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Marauder", 0, gv_pLAYER_01_USER, PointFromId(1599));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Terran, PointFromId(1599), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else if (autoE25C5B16_val == "Zerg") {
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "AP_Hydralisk", 0, gv_pLAYER_01_USER, PointFromId(1599));
+        libA3DDD02B_gf_CreateDropPod(libA3DDD02B_ge_DropPodRace_Zerg, PointFromId(1599), UnitLastCreatedGroup(), false, gv_pLAYER_01_USER);
+    }
+    else {
+    }
     return true;
 }
 
@@ -5249,6 +5435,8 @@ void gt__10thAnniversaryAchievementDestroyallZergstructuresbeforefreeingallcapti
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFreeCaptiveProtoss01Create_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string auto660675BD_val;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5262,7 +5450,18 @@ bool gt_ObjectiveFreeCaptiveProtoss01Create_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue01Primary01");
+    auto660675BD_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto660675BD_val == "Neut") {
+        libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue01Primary01");
+    }
+    else if (auto660675BD_val == "Terr") {
+        ObjectiveCreate(StringExternal("Param/Value/F68656E9"), StringToText(""), c_objectiveStateActive, true);
+    }
+    else if (auto660675BD_val == "Zerg") {
+        ObjectiveCreate(StringExternal("Param/Value/499FC3E1"), StringToText(""), c_objectiveStateActive, true);
+    }
+    else {
+    }
     gv_objectiveFreeCaptiveProtoss01 = ObjectiveLastCreated();
     ObjectiveSetPriority(gv_objectiveFreeCaptiveProtoss01, 3);
     ObjectiveShow(gv_objectiveFreeCaptiveProtoss01, PlayerGroupAll(), false);
@@ -5341,6 +5540,8 @@ void gt_ObjectiveFreeCaptiveProtoss01Failed_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFreeCaptiveProtoss02Create_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string autoD421CB1A_val;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5354,7 +5555,18 @@ bool gt_ObjectiveFreeCaptiveProtoss02Create_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue01Primary02");
+    autoD421CB1A_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoD421CB1A_val == "Neut") {
+        libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue01Primary02");
+    }
+    else if (autoD421CB1A_val == "Terr") {
+        ObjectiveCreate(StringExternal("Param/Value/DDFCDE26"), StringToText(""), c_objectiveStateActive, true);
+    }
+    else if (autoD421CB1A_val == "Zerg") {
+        ObjectiveCreate(StringExternal("Param/Value/31F4EEE5"), StringToText(""), c_objectiveStateActive, true);
+    }
+    else {
+    }
     gv_objectiveFreeCaptiveProtoss02 = ObjectiveLastCreated();
     ObjectiveSetPriority(gv_objectiveFreeCaptiveProtoss02, 2);
     ObjectiveShow(gv_objectiveFreeCaptiveProtoss02, PlayerGroupAll(), false);
@@ -5433,6 +5645,8 @@ void gt_ObjectiveFreeCaptiveProtoss02Failed_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFreeCaptiveProtoss03Create_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string auto685B8D6D_val;
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -5446,7 +5660,18 @@ bool gt_ObjectiveFreeCaptiveProtoss03Create_Func (bool testConds, bool runAction
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue01Primary03");
+    auto685B8D6D_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto685B8D6D_val == "Neut") {
+        libA3DDD02B_gf_CreateObjectiveCampaign("PPrologue01Primary03");
+    }
+    else if (auto685B8D6D_val == "Terr") {
+        ObjectiveCreate(StringExternal("Param/Value/C19FC40F"), StringToText(""), c_objectiveStateActive, true);
+    }
+    else if (auto685B8D6D_val == "Zerg") {
+        ObjectiveCreate(StringExternal("Param/Value/F2B35562"), StringToText(""), c_objectiveStateActive, true);
+    }
+    else {
+    }
     gv_objectiveFreeCaptiveProtoss03 = ObjectiveLastCreated();
     ObjectiveSetPriority(gv_objectiveFreeCaptiveProtoss03, 1);
     ObjectiveShow(gv_objectiveFreeCaptiveProtoss03, PlayerGroupAll(), false);
@@ -5748,7 +5973,7 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_IntroCinematic, true, true);
         TriggerExecute(gt_IntroCinematicEnd, true, true);
     }
@@ -6151,7 +6376,7 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_MidSetup, true, true);
         TriggerExecute(gt_MidCinematic, true, true);
         TriggerExecute(gt_MidCinematicEnd, true, true);
@@ -6162,6 +6387,8 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
         }
 
         UnitGroupAddUnitGroup(gv_midZealots, UnitGroup("AP_ZealotAiur", gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        UnitGroupAddUnitGroup(gv_midZealots, UnitGroup("AP_Zergling", gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        UnitGroupAddUnitGroup(gv_midZealots, UnitGroup("AP_TrooperMengsk", gv_pLAYER_10_PROTOSS_CAPTIVES, RegionFromId(13), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
         libA3DDD02B_gf_SendTransmissionCampaign(gv_midSpeaker, "vpMission_VoidPrologue01|Line00072", c_transmissionDurationAdd, 0.0, false, libA3DDD02B_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libA3DDD02B_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     }
     TriggerExecute(gt_MidCleanup, true, true);
@@ -6403,6 +6630,7 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
             libNtve_gf_PauseUnit(autoD588310C_var, false);
             libNtve_gf_MakeUnitInvulnerable(autoD588310C_var, false);
             libNtve_gf_RescueUnit(autoD588310C_var, gv_pLAYER_01_USER, true);
+            lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit(autoD588310C_var);
         }
         UnitGroupIssueOrder(gv_midZealots, OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(283)), c_orderQueueReplace);
     }
@@ -6757,6 +6985,7 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_FactionSwapInit_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
