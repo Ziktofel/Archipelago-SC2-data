@@ -118,6 +118,7 @@ sound gv_victoryZergSound1;
 sound gv_victoryZergSound2;
 sound gv_victoryZergSound3;
 int gv_objectiveDefeatOdin;
+timer gv_objectiveTrashOdinEarlyTimer;
 int gv_objectiveTrashOdinEarly;
 point gv_cCLocation;
 
@@ -150,6 +151,7 @@ void InitGlobals () {
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_objectiveDefeatOdin = c_invalidObjectiveId;
+    gv_objectiveTrashOdinEarlyTimer = TimerCreate();
     gv_objectiveTrashOdinEarly = c_invalidObjectiveId;
 }
 
@@ -248,6 +250,7 @@ trigger gt_StartUpgradesNormal;
 trigger gt_StartUpgradesHard;
 trigger gt_AIGiveResources;
 trigger gt_Player2SendsAIWave;
+trigger gt_Player2SendsAIOdin;
 trigger gt_TipMissionHelpQ;
 trigger gt_ObjectiveDestroyPalaceGateCreate;
 trigger gt_ObjectiveDestroyPalaceGateComplete;
@@ -278,6 +281,7 @@ trigger gt_VictoryCinematic;
 trigger gt_VictoryCinematicEnd;
 trigger gt_VictoryCleanup;
 trigger gt_VictoryZerg;
+trigger gt_FactionSwapInit;
 trigger gt_ObjectiveDefeatOdinCreate;
 trigger gt_ObjectiveDefeatOdinComplete;
 trigger gt_ObjectiveTrashOdinEarlyCreate;
@@ -740,7 +744,7 @@ void gf_HideKerrigan () {
     unit auto2F463DB8_var;
 
     // Implementation
-    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0)) {
+    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence < 4) && ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut"))) {
         libNtve_gf_PauseUnit(gv_kerrigan, true);
         libNtve_gf_ShowHideUnit(gv_kerrigan, false);
         UnitBehaviorAdd(gv_kerrigan, "AP_ImmortalShakurasAntiAirMissileDisableAttack", gv_kerrigan, 1);
@@ -792,7 +796,7 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
         }
     }
     gf_HideKerrigan();
-    if ((libABFE498B_gv_aP_Triggers_Option_KerriganPresence > 0)) {
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence >= 4) || ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")))) {
         lib15EF4C78_gf_SetHeroPanelUnit(1, gv_kerrigan, gv_PLAYER_01_USER);
     }
 
@@ -3932,7 +3936,14 @@ bool gt_HyperionBigAttack3Q_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    Wait(1350.0, c_timeAI);
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true))) {
+        TimerStart(gv_objectiveTrashOdinEarlyTimer, 2700.0, false, c_timeAI);
+        Wait(2700.0, c_timeAI);
+    }
+    else {
+        TimerStart(gv_objectiveTrashOdinEarlyTimer, 1350.0, false, c_timeAI);
+        Wait(1350.0, c_timeAI);
+    }
     while (true) {
         if ((UnitIsAlive(UnitFromId(603)) == false)) {
             return true;
@@ -3968,6 +3979,19 @@ bool gt_HyperionBigAttack3Q_Func (bool testConds, bool runActions) {
     libSwaC_gf_SendTransmissionCampaign(gv_hYPERION, "zMission_Korhal03|Line00083", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Korhal03|Line00093", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libSwaC_ge_VolumeChannelModeCampaign_Game);
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true))) {
+        AIAttackWaveAddUnits3(1, 1, 1, "Odin");
+        AIAttackWaveAddUnits3(1, 1, 2, "MengskSiegeTank");
+        AIAttackWaveAddUnits3(8, 8, 12, "MengskGoliath");
+        AIAttackWaveAddUnits3(12, 12, 16, "MengskMarine");
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2634), false);
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2635), false);
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2636), false);
+        AIAttackWaveAddWaypoint(gv_PLAYER_02_DOMINION_RED, PointFromId(2), false);
+        AIAttackWaveSetGatherEarlyNoReplace(gv_PLAYER_02_DOMINION_RED);
+        AIAttackWaveSend(gv_PLAYER_02_DOMINION_RED, 0, false);
+    }
+
     TriggerQueueExit();
     return true;
 }
@@ -4626,6 +4650,10 @@ bool gt_StartAI_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    if (((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true))) {
+        AIWaveDelete(AIWaveGet(gv_PLAYER_02_DOMINION_RED, 20));
+    }
+
     cai_startall();
     cai_waves_run(gv_PLAYER_02_DOMINION_RED, PlayerGroupSingle(gv_PLAYER_01_USER));
     cai_waves_run(gv_PLAYER_03_DOMINION_BLUE, PlayerGroupSingle(gv_PLAYER_01_USER));
@@ -4835,6 +4863,41 @@ bool gt_Player2SendsAIWave_Func (bool testConds, bool runActions) {
 void gt_Player2SendsAIWave_Init () {
     gt_Player2SendsAIWave = TriggerCreate("gt_Player2SendsAIWave_Func");
     TriggerAddEventPlayerAIWave(gt_Player2SendsAIWave, gv_PLAYER_02_DOMINION_RED);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Player 2 Sends AI Odin
+//--------------------------------------------------------------------------------------------------
+bool gt_Player2SendsAIOdin_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!(((libABFE498B_gv_aP_Triggers_Option_KerriganPresence == 0) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Neut") || (libABFE498B_gv_aP_Triggers_Option_takeOverAIAllies == true)))) {
+            return false;
+        }
+
+        if (!(((EventPlayerWave() == AIUnitGetWave(UnitFromId(603))) || (EventPlayerWave() == AIWaveGet(gv_PLAYER_02_DOMINION_RED, 20))))) {
+            return false;
+        }
+
+        if (!((TimerGetRemaining(gv_objectiveTrashOdinEarlyTimer) > 10.0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    AIAttackWaveCancel(EventPlayerWave());
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_Player2SendsAIOdin_Init () {
+    gt_Player2SendsAIOdin = TriggerCreate("gt_Player2SendsAIOdin_Func");
+    TriggerAddEventPlayerAIWave(gt_Player2SendsAIOdin, gv_PLAYER_02_DOMINION_RED);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5165,7 +5228,7 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_IntroCinematic, true, true);
         TriggerExecute(gt_IntroCinematicEnd, true, true);
     }
@@ -5515,7 +5578,7 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategorySpell, 20.0, 0.2);
     libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Korhal03|Line00103", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_MidSetup, true, true);
         TriggerExecute(gt_MidCinematic, true, true);
         TriggerExecute(gt_MidCinematicEnd, true, true);
@@ -6232,6 +6295,47 @@ void gt_VictoryZerg_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(8), "Zerg", false);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(9), "Zerg", false);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(8), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, true);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(9), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, true);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            PlayerSetRace(gv_PLAYER_01_USER, "Terr");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_PLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(gv_PLAYER_01_USER, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_PLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+            }
+
+        }
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_PLAYER_01_USER);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_PLAYER_01_USER);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Defeat Odin Create
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveDefeatOdinCreate_Func (bool testConds, bool runActions) {
@@ -6324,7 +6428,7 @@ bool gt_ObjectiveTrashOdinEarlyCreate_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     ObjectiveCreate(StringExternal("Param/Value/55A6BA50"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveTrashOdinEarly = ObjectiveLastCreated();
-    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveTrashOdinEarly, lv_category, true);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer(gv_objectiveTrashOdinEarly, lv_category, gv_objectiveTrashOdinEarlyTimer, true);
     lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveTrashOdinEarly, gv_LOCATION_ID_TRASH_THE_ODIN_EARLY);
     lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveTrashOdinEarly, true);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
@@ -6726,6 +6830,7 @@ void InitTriggers () {
     gt_StartUpgradesHard_Init();
     gt_AIGiveResources_Init();
     gt_Player2SendsAIWave_Init();
+    gt_Player2SendsAIOdin_Init();
     gt_TipMissionHelpQ_Init();
     gt_ObjectiveDestroyPalaceGateCreate_Init();
     gt_ObjectiveDestroyPalaceGateComplete_Init();
@@ -6756,6 +6861,7 @@ void InitTriggers () {
     gt_VictoryCinematicEnd_Init();
     gt_VictoryCleanup_Init();
     gt_VictoryZerg_Init();
+    gt_FactionSwapInit_Init();
     gt_ObjectiveDefeatOdinCreate_Init();
     gt_ObjectiveDefeatOdinComplete_Init();
     gt_ObjectiveTrashOdinEarlyCreate_Init();
