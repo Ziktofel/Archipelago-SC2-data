@@ -132,6 +132,7 @@ void gf_VictoryWarpOutUnit (unit lp_unit);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_FactionSwapInit;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -166,6 +167,7 @@ trigger gt_PowerCell4Reinforcements1;
 trigger gt_PowerCell4Reinforcements2;
 trigger gt_IntroduceUnpoweredWarpGatesQ;
 trigger gt_WarpGatePowered;
+trigger gt_EliteStructuresRepaired;
 trigger gt_WarpGatePoweredUpQ;
 trigger gt_BonusProximityTrigger;
 trigger gt_RemindPlayerAboutWarpGatesQ;
@@ -750,6 +752,54 @@ bool auto_gf_VictoryWarpOutUnit_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(9), "Prot", false);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(9), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, false);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            PlayerSetRace(gv_pLAYER_01_USER, "Terr");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+            gv_warpGate01 = UnitFromId(1864202707);
+            gv_warpGate02 = UnitFromId(469717793);
+            gv_warpGate03 = UnitFromId(372417056);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+                PlayerSetRace(gv_pLAYER_01_USER, "Zerg");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+                gv_warpGate01 = UnitFromId(1082242112);
+                gv_warpGate02 = UnitFromId(1029664774);
+                gv_warpGate03 = UnitFromId(89009976);
+                UnitRemove(UnitFromId(675788715));
+                UnitRemove(UnitFromId(11051567));
+                UnitRemove(UnitFromId(2056147807));
+            }
+
+        }
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER_01_USER);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_pLAYER_01_USER);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -1015,6 +1065,9 @@ void gt_Init02Players_Init () {
 // Trigger: Init 03 Units
 //--------------------------------------------------------------------------------------------------
 bool gt_Init03Units_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_untitledVariable001;
+
     // Automatic Variable Declarations
     unitgroup autoDA3828FB_g;
     int autoDA3828FB_u;
@@ -1025,6 +1078,8 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     unitgroup auto31775418_g;
     int auto31775418_u;
     unit auto31775418_var;
+
+    // Variable Initialization
 
     // Actions
     if (!runActions) {
@@ -1073,6 +1128,12 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     UnitGroupAddUnitGroup(gv_critterGroup, UnitGroup("CarrionBird", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     UnitGroupAddUnitGroup(gv_critterGroup, UnitGroup("Crabeetle", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     UnitGroupAddUnitGroup(gv_critterGroup, UnitGroup("KarakFemale", c_playerAny, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitSetPropertyFixed(UnitFromId(1864202707), c_unitPropLifePercent, 50.0);
+    UnitSetPropertyFixed(UnitFromId(469717793), c_unitPropLifePercent, 50.0);
+    UnitSetPropertyFixed(UnitFromId(372417056), c_unitPropLifePercent, 50.0);
+    UnitBehaviorRemove(UnitFromId(1029664774), "AP_ZergBuildingNotOnCreep", 1);
+    UnitBehaviorRemove(UnitFromId(89009976), "AP_ZergBuildingNotOnCreep", 1);
+    UnitBehaviorRemove(UnitFromId(1082242112), "AP_ZergBuildingNotOnCreep", 1);
     return true;
 }
 
@@ -1413,6 +1474,10 @@ bool gt_DeployPylonQ_Func (bool testConds, bool runActions) {
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
             return false;
         }
+
+        if (!((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut"))) {
+            return false;
+        }
     }
 
     // Actions
@@ -1618,6 +1683,10 @@ bool gt_TeachWarpGatesQ_Func (bool testConds, bool runActions) {
         }
 
         if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut"))) {
             return false;
         }
     }
@@ -2367,7 +2436,7 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetType(EventUnitProgressUnit()) == "AP_Pylon"))) {
+        if (!(((UnitGetType(EventUnitProgressUnit()) == "AP_Pylon") || (UnitGetType(EventUnitProgressUnit()) == "AP_CreepTumor") || (UnitGetType(EventUnitProgressUnit()) == "AP_CreepTumorQueen")))) {
             return false;
         }
     }
@@ -2377,7 +2446,7 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    if ((UnitIsAlive(gv_warpGate01) == true) && (PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate01), "PowerSource") > 0) && (UnitGetOwner(gv_warpGate01) != gv_pLAYER_01_USER)) {
+    if ((UnitIsAlive(gv_warpGate01) == true) && ((PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate01), "PowerSource") > 0) || (DistanceBetweenPoints(UnitGetPosition(EventUnitProgressUnit()), UnitGetPosition(gv_warpGate01)) <= 5.0)) && (UnitGetOwner(gv_warpGate01) != gv_pLAYER_01_USER)) {
         lv_localWarpGatePoweredBool = true;
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_WARP_GATE);
         gv_warpGatesPowered += 1;
@@ -2386,7 +2455,7 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
         libNtve_gf_RescueUnit(gv_warpGate01, gv_pLAYER_01_USER, true);
     }
 
-    if ((UnitIsAlive(gv_warpGate02) == true) && (PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate02), "PowerSource") > 0) && (UnitGetOwner(gv_warpGate02) != gv_pLAYER_01_USER)) {
+    if ((UnitIsAlive(gv_warpGate02) == true) && ((PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate02), "PowerSource") > 0) || (DistanceBetweenPoints(UnitGetPosition(EventUnitProgressUnit()), UnitGetPosition(gv_warpGate02)) <= 4.0)) && (UnitGetOwner(gv_warpGate02) != gv_pLAYER_01_USER)) {
         lv_localWarpGatePoweredBool = true;
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_WARP_GATE);
         gv_warpGatesPowered += 1;
@@ -2395,12 +2464,88 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
         libNtve_gf_RescueUnit(gv_warpGate02, gv_pLAYER_01_USER, true);
     }
 
-    if ((UnitIsAlive(gv_warpGate03) == true) && (PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate03), "PowerSource") > 0) && (UnitGetOwner(gv_warpGate03) != gv_pLAYER_01_USER)) {
+    if ((UnitIsAlive(gv_warpGate03) == true) && ((PowerLevel(gv_pLAYER_01_USER, UnitGetPosition(gv_warpGate03), "PowerSource") > 0) || (DistanceBetweenPoints(UnitGetPosition(EventUnitProgressUnit()), UnitGetPosition(gv_warpGate03)) <= 4.0)) && (UnitGetOwner(gv_warpGate03) != gv_pLAYER_01_USER)) {
         lv_localWarpGatePoweredBool = true;
         lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_WARP_GATE);
         gv_warpGatesPowered += 1;
         libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(gv_warpGate03), 3.0, Color(0.00, 100.00, 0.00));
         UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/4CEFF78F"), null, gv_warpGate03);
+        libNtve_gf_RescueUnit(gv_warpGate03, gv_pLAYER_01_USER, true);
+    }
+    else {
+        if ((lv_localWarpGatePoweredBool == true)) {
+            if ((gv_warpGatesPowered >= 3)) {
+                TriggerEnable(TriggerGetCurrent(), false);
+                TriggerExecute(gt_ObjectivePowerUpWarpGatesUpdate, true, false);
+                TriggerExecute(gt_ObjectivePowerUpWarpGatesComplete, true, true);
+            }
+            else {
+                TriggerExecute(gt_ObjectivePowerUpWarpGatesUpdate, true, true);
+            }
+            TriggerExecute(gt_WarpGatePoweredUpQ, true, false);
+        }
+
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_WarpGatePowered_Init () {
+    gt_WarpGatePowered = TriggerCreate("gt_WarpGatePowered_Func");
+    TriggerEnable(gt_WarpGatePowered, false);
+    TriggerAddEventUnitConstructProgress(gt_WarpGatePowered, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: EliteStructuresRepaired
+//--------------------------------------------------------------------------------------------------
+bool gt_EliteStructuresRepaired_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    bool lv_localWarpGatePoweredBool;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr"))) {
+            return false;
+        }
+
+        if (!((lib30B9E51A_gv_aP_Player_LotV_loadFinished == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((UnitGetPropertyFixed(gv_warpGate01, c_unitPropLifePercent, c_unitPropCurrent) >= 90.0) && (UnitGetOwner(gv_warpGate01) != gv_pLAYER_01_USER)) {
+        lv_localWarpGatePoweredBool = true;
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_CLOSE_WARP_GATE);
+        gv_warpGatesPowered += 1;
+        libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(gv_warpGate01), 3.0, Color(0.00, 100.00, 0.00));
+        UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/A1F09DBF"), null, gv_warpGate01);
+        libNtve_gf_RescueUnit(gv_warpGate01, gv_pLAYER_01_USER, true);
+    }
+
+    if ((UnitGetPropertyFixed(gv_warpGate02, c_unitPropLifePercent, c_unitPropCurrent) >= 90.0) && (UnitGetOwner(gv_warpGate02) != gv_pLAYER_01_USER)) {
+        lv_localWarpGatePoweredBool = true;
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_WARP_GATE);
+        gv_warpGatesPowered += 1;
+        libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(gv_warpGate02), 3.0, Color(0.00, 100.00, 0.00));
+        UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/72FC9611"), null, gv_warpGate02);
+        libNtve_gf_RescueUnit(gv_warpGate02, gv_pLAYER_01_USER, true);
+    }
+
+    if ((UnitGetPropertyFixed(gv_warpGate03, c_unitPropLifePercent, c_unitPropCurrent) >= 90.0) && (UnitGetOwner(gv_warpGate03) != gv_pLAYER_01_USER)) {
+        lv_localWarpGatePoweredBool = true;
+        lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_POWER_CELL);
+        gv_warpGatesPowered += 1;
+        libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), UnitGetPosition(gv_warpGate03), 3.0, Color(0.00, 100.00, 0.00));
+        UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/DCCB1D30"), null, gv_warpGate03);
         libNtve_gf_RescueUnit(gv_warpGate03, gv_pLAYER_01_USER, true);
     }
 
@@ -2420,10 +2565,9 @@ bool gt_WarpGatePowered_Func (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void gt_WarpGatePowered_Init () {
-    gt_WarpGatePowered = TriggerCreate("gt_WarpGatePowered_Func");
-    TriggerEnable(gt_WarpGatePowered, false);
-    TriggerAddEventUnitConstructProgress(gt_WarpGatePowered, null, c_unitProgressStageComplete);
+void gt_EliteStructuresRepaired_Init () {
+    gt_EliteStructuresRepaired = TriggerCreate("gt_EliteStructuresRepaired_Func");
+    TriggerAddEventTimePeriodic(gt_EliteStructuresRepaired, 1.0, c_timeGame);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -4093,6 +4237,8 @@ bool gt_ObjectivePowerUpWarpGatesCreate_Func (bool testConds, bool runActions) {
     int lv_category;
 
     // Automatic Variable Declarations
+    string auto306E504D_val;
+
     // Variable Initialization
     lv_category = lib5BD4895D_ge_APObjectiveCategory_Secondary;
 
@@ -4109,9 +4255,23 @@ bool gt_ObjectivePowerUpWarpGatesCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libVCMI_gf_CreateObjectiveCampaign("PAiur03Bonus01");
+    auto306E504D_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto306E504D_val == "Neut") {
+        libVCMI_gf_CreateObjectiveCampaign("PAiur03Bonus01");
+    }
+    else if (auto306E504D_val == "Terr") {
+        ObjectiveCreate(StringExternal("Param/Value/2E886969"), StringToText(""), c_objectiveStateActive, false);
+    }
+    else if (auto306E504D_val == "Zerg") {
+        ObjectiveCreate(StringExternal("Param/Value/01175565"), StringToText(""), c_objectiveStateActive, false);
+    }
+    else {
+    }
     gv_objectivePowerUpWarpGates = ObjectiveLastCreated();
-    ObjectiveSetName(gv_objectivePowerUpWarpGates, libVoiC_gf_MissionObjectiveName("PAiur03Bonus01"));
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        ObjectiveSetName(gv_objectivePowerUpWarpGates, libVoiC_gf_MissionObjectiveName("PAiur03Bonus01"));
+    }
+
     ObjectiveShow(gv_objectivePowerUpWarpGates, PlayerGroupAll(), false);
     lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectivePowerUpWarpGates, lv_category, "", gv_warpGatesPowered, libVoiC_gf_MissionObjectiveItemCount("PAiur03Bonus01"), false);
     lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectivePowerUpWarpGates, gv_LOCATION_ID_CLOSE_WARP_GATE);
@@ -4199,7 +4359,7 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_IntroCinematic, true, true);
         TriggerExecute(gt_IntroCinematicEnd, true, true);
     }
@@ -5245,6 +5405,7 @@ void gt_VictoryMusic_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_FactionSwapInit_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
@@ -5279,6 +5440,7 @@ void InitTriggers () {
     gt_PowerCell4Reinforcements2_Init();
     gt_IntroduceUnpoweredWarpGatesQ_Init();
     gt_WarpGatePowered_Init();
+    gt_EliteStructuresRepaired_Init();
     gt_WarpGatePoweredUpQ_Init();
     gt_BonusProximityTrigger_Init();
     gt_RemindPlayerAboutWarpGatesQ_Init();
