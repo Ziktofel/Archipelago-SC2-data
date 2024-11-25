@@ -209,6 +209,19 @@ void libABFE498B_gf_AP_Triggers_setSoAOptions (int lp_bitArrayValue) {
     TriggerExecute(libABFE498B_gt_AP_Triggers_InitSoA, true, false);
 }
 
+void libABFE498B_gf_AP_Triggers_unlockTradeStructure (int lp_player, int lp_value) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_value == 1)) {
+        TechTreeUnitAllow(lp_player, "AP_TradeStructure", true);
+        lib5BD4895D_gv_aP_Core_tradeSendUnitType = "AP_TradeStructureSendDummy";
+        lib5BD4895D_gv_aP_Core_tradeReceiveUnitType = "AP_TradeStructureReceiveDummy";
+    }
+    else {
+        TechTreeUnitAllow(lp_player, "AP_TradeStructure", false);
+    }
+}
+
 void libABFE498B_gf_AP_Triggers_unlockTerranUnits (int lp_player, int lp_bitArrayValue) {
     // Automatic Variable Declarations
     // Implementation
@@ -9076,8 +9089,12 @@ bool libABFE498B_gt_AP_Triggers_setOptions_Func (bool testConds, bool runActions
     string lv_storyLevels;
     string lv_enableMorphling;
     string lv_overrideRace;
+    string lv_enableTrade;
+    int lv_currentPlayer;
 
     // Automatic Variable Declarations
+    playergroup auto03CC9166_g;
+
     // Variable Initialization
     lv_skipCutscenes = "";
     lv_disableForcedCamera = "";
@@ -9094,6 +9111,7 @@ bool libABFE498B_gt_AP_Triggers_setOptions_Func (bool testConds, bool runActions
     lv_storyLevels = "";
     lv_enableMorphling = "";
     lv_overrideRace = "";
+    lv_enableTrade = "";
 
     // Actions
     if (!runActions) {
@@ -9116,6 +9134,7 @@ bool libABFE498B_gt_AP_Triggers_setOptions_Func (bool testConds, bool runActions
     lv_storyLevels = StringWord(EventChatMessage(false), 14);
     lv_enableMorphling = StringWord(EventChatMessage(false), 15);
     lv_overrideRace = StringWord(EventChatMessage(false), 16);
+    lv_enableTrade = StringWord(EventChatMessage(false), 17);
     libABFE498B_gf_AP_Triggers_setDifficulty(lv_difficulty);
     libABFE498B_gf_AP_Triggers_setGameSpeed(lv_gameSpeed);
     libABFE498B_gv_aP_Triggers_Option_genericUpgradeResearch = StringToInt(lv_genericUpgradeResearch);
@@ -9131,6 +9150,13 @@ bool libABFE498B_gt_AP_Triggers_setOptions_Func (bool testConds, bool runActions
     libABFE498B_gv_aP_Triggers_Option_grantStoryLevels = StringToInt(lv_storyLevels);
     libABFE498B_gf_AP_Triggers_setRaceOverride(lv_overrideRace);
     libABFE498B_gf_AP_Triggers_setSoAOptions(StringToInt(lv_soaOptions));
+    auto03CC9166_g = lib5BD4895D_gv_aP_Core_affectedPlayers;
+    lv_currentPlayer = -1;
+    while (true) {
+        lv_currentPlayer = PlayerGroupNextPlayer(auto03CC9166_g, lv_currentPlayer);
+        if (lv_currentPlayer < 0) { break; }
+        libABFE498B_gf_AP_Triggers_unlockTradeStructure(lv_currentPlayer, StringToInt(lv_enableTrade));
+    }
     return true;
 }
 
@@ -9539,6 +9565,33 @@ void libABFE498B_gt_UpgradeProtossStructures_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_Triggers_tradeNydusBuilt
+//--------------------------------------------------------------------------------------------------
+bool libABFE498B_gt_AP_Triggers_tradeNydusBuilt_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((UnitGetType(EventUnitProgressUnit()) == "AP_TradeStructure"))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gv_aP_Core_tradeUnit = EventUnitProgressUnit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void libABFE498B_gt_AP_Triggers_tradeNydusBuilt_Init () {
+    libABFE498B_gt_AP_Triggers_tradeNydusBuilt = TriggerCreate("libABFE498B_gt_AP_Triggers_tradeNydusBuilt_Func");
+    TriggerAddEventUnitConstructProgress(libABFE498B_gt_AP_Triggers_tradeNydusBuilt, null, c_unitProgressStageComplete);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Triggers_InitSoA
 //--------------------------------------------------------------------------------------------------
 bool libABFE498B_gt_AP_Triggers_InitSoA_Func (bool testConds, bool runActions) {
@@ -9592,6 +9645,7 @@ void libABFE498B_InitTriggers () {
     libABFE498B_gt_AP_Triggers_giveProtossTech_Init();
     libABFE498B_gt_AP_Triggers_techTreeInit_Init();
     libABFE498B_gt_UpgradeProtossStructures_Init();
+    libABFE498B_gt_AP_Triggers_tradeNydusBuilt_Init();
     libABFE498B_gt_AP_Triggers_InitSoA_Init();
 }
 

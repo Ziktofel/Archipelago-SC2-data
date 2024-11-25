@@ -51,6 +51,7 @@ void lib5BD4895D_InitVariables () {
     for (init_i = 0; init_i <= 7; init_i += 1) {
         lib5BD4895D_gv_aP_Core_rainbowColors[init_i] = 1;
     }
+    lib5BD4895D_gv_aP_Core_tradeFlavorName = "Void Trade";
     lib5BD4895D_gv_aP_Core_objectiveUsedCategories = 4;
     lib5BD4895D_gv_aP_Core_objectiveDefaultTimer = TimerCreate();
     lib5BD4895D_gv_aP_Core_objectivePanel.lv_dialogPanel = c_invalidDialogControlId;
@@ -1800,6 +1801,164 @@ void lib5BD4895D_gt_AP_Core_rainbowColorsInit_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: AP_Core_tradeStart
+//--------------------------------------------------------------------------------------------------
+bool lib5BD4895D_gt_AP_Core_tradeStart_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_tradeUnit != null))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libNtve_gf_TriggeringProgressUnitType() == lib5BD4895D_gv_aP_Core_tradeSendUnitType)) {
+        if ((UnitGroupCount(UnitCargoGroup(lib5BD4895D_gv_aP_Core_tradeUnit), c_unitCountAlive) == 0)) {
+            UnitIssueOrder(lib5BD4895D_gv_aP_Core_tradeUnit, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+        }
+
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib5BD4895D_gt_AP_Core_tradeStart_Init () {
+    lib5BD4895D_gt_AP_Core_tradeStart = TriggerCreate("lib5BD4895D_gt_AP_Core_tradeStart_Func");
+    TriggerAddEventUnitTrainProgress(lib5BD4895D_gt_AP_Core_tradeStart, UnitRefFromVariable("lib5BD4895D_gv_aP_Core_tradeUnit"), c_unitProgressStageStart);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Core_tradeFail
+//--------------------------------------------------------------------------------------------------
+bool lib5BD4895D_gt_AP_Core_tradeFail_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    string lv_message;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_message = StringSub(EventChatMessage(false), 11, StringLength(EventChatMessage(false)));
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_sendchatmessage(EventPlayer(), StringSub(EventChatMessage(false), 11, StringLength(EventChatMessage(false))));
+    if ((lib5BD4895D_gv_aP_Core_tradeUnit != null) && (UnitIsAlive(lib5BD4895D_gv_aP_Core_tradeUnit) == true) && (UnitOrder(lib5BD4895D_gv_aP_Core_tradeUnit, 0) != null)) {
+        UnitIssueOrder(lib5BD4895D_gv_aP_Core_tradeUnit, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib5BD4895D_gt_AP_Core_tradeFail_Init () {
+    lib5BD4895D_gt_AP_Core_tradeFail = TriggerCreate("lib5BD4895D_gt_AP_Core_tradeFail_Func");
+    TriggerAddEventChatMessage(lib5BD4895D_gt_AP_Core_tradeFail, c_playerAny, "?TradeFail", false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Core_tradeSendSuccess
+//--------------------------------------------------------------------------------------------------
+bool lib5BD4895D_gt_AP_Core_tradeSendSuccess_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    unitgroup autoE5F28EA7_g;
+    int autoE5F28EA7_u;
+    unit autoE5F28EA7_var;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib5BD4895D_gf_sendchatmessage(EventPlayer(), StringSub(EventChatMessage(false), 14, StringLength(EventChatMessage(false))));
+    if ((lib5BD4895D_gv_aP_Core_tradeUnit != null) && (UnitIsAlive(lib5BD4895D_gv_aP_Core_tradeUnit) == true) && (UnitOrder(lib5BD4895D_gv_aP_Core_tradeUnit, 0) != null)) {
+        autoE5F28EA7_g = UnitCargoGroup(lib5BD4895D_gv_aP_Core_tradeUnit);
+        autoE5F28EA7_u = UnitGroupCount(autoE5F28EA7_g, c_unitCountAll);
+        for (;; autoE5F28EA7_u -= 1) {
+            autoE5F28EA7_var = UnitGroupUnitFromEnd(autoE5F28EA7_g, autoE5F28EA7_u);
+            if (autoE5F28EA7_var == null) { break; }
+            UnitRemove(autoE5F28EA7_var);
+        }
+        UnitIssueOrder(lib5BD4895D_gv_aP_Core_tradeUnit, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib5BD4895D_gt_AP_Core_tradeSendSuccess_Init () {
+    lib5BD4895D_gt_AP_Core_tradeSendSuccess = TriggerCreate("lib5BD4895D_gt_AP_Core_tradeSendSuccess_Func");
+    TriggerAddEventChatMessage(lib5BD4895D_gt_AP_Core_tradeSendSuccess, c_playerAny, "?TradeSuccess", false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: AP_Core_tradeReceiveSuccess
+//--------------------------------------------------------------------------------------------------
+bool lib5BD4895D_gt_AP_Core_tradeReceiveSuccess_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_refunds;
+    int lv_word;
+    string lv_unitType;
+    int lv_unitCount;
+    int lv_totalCount;
+    int lv_mineralCost;
+    int lv_vespeneCost;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_refunds = StringToInt(StringWord(EventChatMessage(false), 2));
+    lv_word = 3;
+    lv_mineralCost = UnitTypeGetCost(lib5BD4895D_gv_aP_Core_tradeReceiveUnitType, c_unitCostMinerals);
+    lv_vespeneCost = UnitTypeGetCost(lib5BD4895D_gv_aP_Core_tradeReceiveUnitType, c_unitCostVespene);
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((lib5BD4895D_gv_aP_Core_tradeUnit != null) && (UnitIsAlive(lib5BD4895D_gv_aP_Core_tradeUnit) == true) && (UnitOrder(lib5BD4895D_gv_aP_Core_tradeUnit, 0) != null)) {
+        UnitIssueOrder(lib5BD4895D_gv_aP_Core_tradeUnit, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
+        while ((StringWord(EventChatMessage(false), lv_word) != null)) {
+            lv_unitType = (StringWord(EventChatMessage(false), lv_word));
+            lv_unitCount = StringToInt(StringWord(EventChatMessage(false), (lv_word + 1)));
+            lv_totalCount = (lv_totalCount + lv_unitCount);
+            UnitCargoCreate(lib5BD4895D_gv_aP_Core_tradeUnit, lv_unitType, lv_unitCount);
+            lv_word = (lv_word + 2);
+        }
+        PlayerModifyPropertyInt(UnitGetOwner(lib5BD4895D_gv_aP_Core_tradeUnit), c_playerPropMinerals, c_playerPropOperSubtract, (lv_mineralCost * lv_totalCount));
+        PlayerModifyPropertyInt(UnitGetOwner(lib5BD4895D_gv_aP_Core_tradeUnit), c_playerPropVespene, c_playerPropOperSubtract, (lv_vespeneCost * lv_totalCount));
+        if ((lv_totalCount == 0)) {
+            lib5BD4895D_gf_sendchatmessage(EventPlayer(), (lib5BD4895D_gv_aP_Core_tradeFlavorName + " failed: No units were found. Trade cost refunded."));
+        }
+        else {
+            if ((lv_refunds > 0)) {
+                lib5BD4895D_gf_sendchatmessage(EventPlayer(), (lib5BD4895D_gv_aP_Core_tradeFlavorName + " partially successful: " + IntToString(lv_totalCount) + " units received, " + IntToString(lv_refunds) + " refunded."));
+            }
+            else {
+                lib5BD4895D_gf_sendchatmessage(EventPlayer(), (lib5BD4895D_gv_aP_Core_tradeFlavorName + " successful: Units received!"));
+            }
+        }
+    }
+    else {
+        lib5BD4895D_gf_sendchatmessage(EventPlayer(), (lib5BD4895D_gv_aP_Core_tradeFlavorName + " successful, but the trading structure couldn't be found. The received units are lost to the void..."));
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib5BD4895D_gt_AP_Core_tradeReceiveSuccess_Init () {
+    lib5BD4895D_gt_AP_Core_tradeReceiveSuccess = TriggerCreate("lib5BD4895D_gt_AP_Core_tradeReceiveSuccess_Func");
+    TriggerAddEventChatMessage(lib5BD4895D_gt_AP_Core_tradeReceiveSuccess, c_playerAny, "?Trade ", false);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: AP_Core_giveStartingResources
 //--------------------------------------------------------------------------------------------------
 bool lib5BD4895D_gt_AP_Core_giveStartingResources_Func (bool testConds, bool runActions) {
@@ -1998,6 +2157,10 @@ void lib5BD4895D_InitTriggers () {
     lib5BD4895D_gt_AP_Core_keepControllerAlive_Init();
     lib5BD4895D_gt_updatechatbox_Init();
     lib5BD4895D_gt_AP_Core_rainbowColorsInit_Init();
+    lib5BD4895D_gt_AP_Core_tradeStart_Init();
+    lib5BD4895D_gt_AP_Core_tradeFail_Init();
+    lib5BD4895D_gt_AP_Core_tradeSendSuccess_Init();
+    lib5BD4895D_gt_AP_Core_tradeReceiveSuccess_Init();
     lib5BD4895D_gt_AP_Core_giveStartingResources_Init();
     lib5BD4895D_gt_AP_Core_setFactionColorHandler_Init();
     lib5BD4895D_gt_AP_Triggers_loadFinished_Init();
