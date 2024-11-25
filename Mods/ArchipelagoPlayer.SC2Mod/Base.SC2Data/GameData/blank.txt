@@ -1,0 +1,380 @@
+    <CAbilEffectTarget id="AP_TimeField">
+        <EditorCategories value="Race:Protoss,AbilityorEffectType:Units"/>
+        <Effect index="0" value="AP_TimeFieldCreatePersistent"/>
+        <Flags index="AllowMovement" value="1"/>
+        <Flags index="NoDeceleration" value="1"/>
+        <Flags index="RequireTargetVision" value="0"/>
+        <Cost>
+            <Vital index="Energy" value="75"/>
+        </Cost>
+        <CursorEffect value="AP_TimeFieldSearchArea"/>
+        <AINotifyEffect value="AP_TimeFieldCreatePersistent"/>
+        <Range value="9"/>
+        <CmdButtonArray index="Execute" DefaultButtonFace="AP_TimeField"/>
+        <Arc value="360"/>
+    </CAbilEffectTarget>
+
+
+    <CBehaviorBuff id="AP_TimeField">
+        <Alignment value="Negative"/>
+        <InfoIcon value="Assets\Textures\btn-ability-protoss-timewarp.dds"/>
+        <EditorCategories value="Race:Protoss,AbilityorEffectType:Units"/>
+        <Duration value="0.125"/>
+        <Modification MoveSpeedMultiplier="0.5"/>
+    </CBehaviorBuff>
+    <CBehaviorBuff id="AP_TimeFieldDecelerationBuff">
+        <InfoFlags index="Hidden" value="1"/>
+        <EditorCategories value="AbilityorEffectType:Units"/>
+        <Modification DecelerationBonus="1000"/>
+        <Duration value="1"/>
+    </CBehaviorBuff>
+
+    <CEffectApplyBehavior id="AP_TimeFieldApplyBehavior">
+        <ValidatorArray value="NotFrenzied"/>
+        <EditorCategories value="Race:Protoss"/>
+        <Behavior value="AP_TimeField"/>
+    </CEffectApplyBehavior>
+    <CEffectCreatePersistent id="AP_TimeFieldCreatePersistent">
+        <EditorCategories value="Race:Protoss"/>
+        <InitialEffect value="AP_TimeFieldSearchAreaImpactDummy"/>
+        <PeriodCount value="160"/>
+        <PeriodicEffectArray value="AP_TimeFieldSearchArea"/>
+        <PeriodicPeriodArray value="0.0625"/>
+    </CEffectCreatePersistent>
+    <CEffectEnumArea id="AP_TimeFieldSearchAreaImpactDummy">
+        <EditorCategories value="Race:Protoss"/>
+        <SearchFilters value="Ground;Player,Ally,Neutral,Structure,Missile,Stasis,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="3.5" Effect="AP_TimeFieldDamageDummy"/>
+    </CEffectEnumArea>
+    <CEffectDamage id="AP_TimeFieldDamageDummy" parent="DU_WEAP">
+        <EditorCategories value="Race:Protoss"/>
+        <Kind value="Spell"/>
+    </CEffectDamage>
+    <CEffectApplyBehavior id="AP_TimeFieldDecelerationApply">
+        <ValidatorArray value="NotFrenzied"/>
+        <WhichUnit Value="Caster"/>
+        <Behavior value="AP_TimeFieldDecelerationBuff"/>
+    </CEffectApplyBehavior>
+    <CEffectCreatePersistent id="AP_TimeFieldInitialPersistent">
+        <EditorCategories value=""/>
+        <Flags index="Channeled" value="1"/>
+        <InitialEffect value="AP_TimeFieldDecelerationApply"/>
+        <PeriodCount value="1"/>
+        <PeriodicPeriodArray value="5"/>
+        <PeriodicEffectArray value="AP_TimeFieldCreatePersistent"/>
+    </CEffectCreatePersistent>
+    <CEffectEnumArea id="AP_TimeFieldSearchArea">
+        <EditorCategories value="Race:Protoss"/>
+        <SearchFilters value="Ground;Player,Ally,Neutral,Structure,Missile,Stasis,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="3.5" Effect="AP_TimeFieldApplyBehavior"/>
+    </CEffectEnumArea>
+    <CEffectEnumArea id="AP_TimeFieldSearchAreaImpactDummy">
+        <EditorCategories value="Race:Protoss"/>
+        <SearchFilters value="Ground;Player,Ally,Neutral,Structure,Missile,Stasis,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="3.5" Effect="AP_TimeFieldDamageDummy"/>
+    </CEffectEnumArea>
+
+
+
+    <CActorSplat id="AP_TimeFieldCursorSplat" parent="ProtossCursorSplat" abil="AP_TimeField"/>
+    <CActorModel id="AP_TimeFieldImpactModel" parent="ModelAnimationStyleOneShot">
+        <Terms value="Cap 1"/>
+        <Inherits index="CloakEffect" value="1"/>
+        <On Terms="Behavior.AP_TimeField.On" Send="Create"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachOrigin"/>
+        <AutoScaleFactor value="1.000000"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+    </CActorModel>
+    <CActorModel id="AP_TimeFieldModel" parent="ModelAnimationStyleContinuous">
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Stop" Send="AnimBracketStop BSD"/>
+        <On Terms="ModelEvent; ModelEventName SoundStart" Send="Create GuardianShieldSoundBirth"/>
+        <On Terms="ModelEvent; ModelEventName SoundLoopStart" Send="Create GuardianShieldSoundLoop"/>
+        <On Terms="ModelEvent; ModelEventName SoundLoopEnd" Target="GuardianShieldSoundLoop" Send="Destroy"/>
+        <On Terms="ModelEvent; ModelEventName SoundLoopEnd" Send="Create GuardianShieldSoundDeath"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Macros value="GlobalLoopMacro"/>
+        <Inherits index="TeamColor" value="1"/>
+        <HostForProps Subject="_Unit" Scope="Caster" Actor="Find"/>
+    </CActorModel>
+    <CActorRange id="AP_TimeFieldRange">
+        <EditorCategories value=""/>
+        <On Terms="Abil.AP_TimeField.TargetOn" Send="Create"/>
+        <On Terms="Abil.AP_TimeField.TargetOff" Send="Destroy"/>
+        <Abil Link="AP_TimeField"/>
+        <IconArcLength value="3.250000"/>
+    </CActorRange>
+    <CActorBeamSimple id="AP_TimeFieldBeam" parent="BeamSimpleAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death ContentPlayOnce"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death OpeningPlayForever"/>
+        <On Terms="Abil.AP_TimeField.SourceCastStart" Send="Create"/>
+        <On Terms="Abil.AP_TimeField.SourceChannelStop" Send="Destroy"/>
+        <Model value="MothershipAttackBeam"/>
+        <HostLaunch Subject="_Selectable"/>
+        <HostLaunchSiteOps Ops="SOpAttachCenter"/>
+        <HostImpact Subject="_Selectable"/>
+        <HostImpactSiteOps Ops="SOpLowerBy375"/>
+    </CActorBeamSimple>
+    <CActorSound id="AP_TimeFieldLoop" parent="SoundContinuous">
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Stop" Send="Destroy"/>
+        <Sound value="Mothership_TimeWarpLoop"/>
+    </CActorSound>
+    <CActorModel id="AP_TimeFieldImpactModel">
+        <On Terms="ActorCreation; ValidateUnit IsCarrier" Send="SetScale 0.400000"/>
+        <On Terms="ActorCreation; ValidateUnit IsTempest" Send="SetScale 0.600000"/>
+        <On Terms="ActorCreation; ValidateUnit IsStalker" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsMothershipCore" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsMothership" Send="SetScale 0.300000"/>
+        <On Terms="ActorCreation; ValidateUnit IsOracle" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsColossus" Send="SetScale 0.600000"/>
+        <On Terms="ActorCreation; ValidateUnit IsImmortal" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsArchon" Send="SetScale 0.800000"/>
+        <On Terms="ActorCreation; ValidateUnit IsWarpPrism" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsWarpPrismPhasing" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsPhoenix" Send="SetScale 0.600000"/>
+        <On Terms="ActorCreation; ValidateUnit IsVoidRay" Send="SetScale 0.600000"/>
+        <On Terms="ActorCreation; ValidateUnit IsBattlecruiser" Send="SetScale 0.600000"/>
+        <On Terms="ActorCreation; ValidateUnit IsSiegeTank" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsThor" Send="SetScale 0.400000"/>
+        <On Terms="ActorCreation; ValidateUnit IsBanshee" Send="SetScale 0.600000"/>
+        <On Terms="ActorCreation; ValidateUnit IsViking" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsWarHound" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsHellion" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsHellionTank" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsMedivac" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsRaven" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsUltralisk" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsUltraliskBurrowed" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsQueen" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsQueenBurrowed" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsOverseer" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsOverlord" Send="SetScale 0.500000"/>
+        <On Terms="ActorCreation; ValidateUnit IsBroodLord" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsInfestor" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsInfestorBurrowed" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsHydralisk" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsHydraliskBurrowed" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsSwarmHost" Send="SetScale 0.700000"/>
+        <On Terms="ActorCreation; ValidateUnit IsSwarmHostBurrowed" Send="SetScale 0.700000"/>
+    </CActorModel>
+
+
+    <CButton id="AP_TimeField">
+        <Icon value="Assets\Textures\btn-ability-protoss-timewarp.dds"/>
+        <AlertIcon value="Assets\Textures\btn-ability-protoss-timewarp.dds"/>
+        <EditorCategories value="Race:Protoss"/>
+    </CButton>
+
+    -----------------------------------------
+
+    <CAbilEffectTarget id="AP_MothershipCoreMassRecall">
+        <EditorCategories value="Race:Protoss,AbilityorEffectType:Units"/>
+        <Effect index="0" value="AP_MothershipCoreMassRecallPrepare"/>
+        <Range value="500"/>
+        <Arc value="360"/>
+        <AINotifyEffect value="MassRecall"/>
+        <Cost>
+            <Vital index="Energy" value="100"/>
+            <Charge Link=""/>
+            <Cooldown Link=""/>
+        </Cost>
+        <CursorEffect value="AP_MothershipCoreMassRecallSearch"/>
+        <CmdButtonArray index="Execute" DefaultButtonFace="AP_MothershipCoreMassRecall"/>
+        <TargetFilters value="-;Ally,Neutral,Enemy"/>
+        <Flags index="AllowMovement" value="1"/>
+    </CAbilEffectTarget>
+
+
+    <CButton id="AP_MothershipCoreMassRecall">
+        <Icon value="Assets\Textures\btn-ability-protoss-massrecall.dds"/>
+        <AlertIcon value="Assets\Textures\btn-ability-protoss-massrecall.dds"/>
+    </CButton>
+
+    <CEffectApplyBehavior id="AP_MothershipCoreMassRecallApplyBehavior">
+        <ValidatorArray value="NotReleasedInterceptor"/>
+        <ValidatorArray index="0" value="AP_NotAPLarvaEgg"/>
+        <ValidatorArray value="AP_NotAPLarva"/>
+        <ValidatorArray value="AP_NotAbducted"/>
+        <Behavior value="AP_MothershipCoreRecalling"/>
+    </CEffectApplyBehavior>
+    <CEffectApplyBehavior id="AP_MothershipCoreMassRecallPostBehavior">
+        <EditorCategories value="Race:Protoss"/>
+        <Behavior value="AP_MothershipCoreRecalled"/>
+    </CEffectApplyBehavior>
+    <CEffectSet id="AP_MothershipCoreMassRecallPrepare">
+        <ValidatorArray value="AP_IsAPNexus"/>
+        <ValidatorArray value="IsNotConstructing"/>
+        <EditorCategories value=""/>
+        <EffectArray value="AP_MothershipCoreMassRecallSearch"/>
+    </CEffectSet>
+    <CEffectEnumArea id="AP_MothershipCoreMassRecallSearch">
+        <AreaArray Radius="6.5" Effect="AP_MothershipCoreMassRecallApplyBehavior"/>
+        <EditorCategories value="Race:Protoss"/>
+        <ImpactLocation Value="CasterPoint"/>
+        <MinCount value="1"/>
+        <SearchFilters value="-;Ally,Neutral,Enemy,Structure,Missile,Item,Dead,Hidden,Invulnerable"/>
+        <SearchFlags index="ExtendByUnitRadius" value="1"/>
+    </CEffectEnumArea>
+    <CEffectSet id="AP_MothershipCoreMassRecallSet">
+        <ValidatorArray value="AP_NotAPLarvaEgg"/>
+        <ValidatorArray value="AP_NotAPLarva"/>
+        <EffectArray value="AP_MothershipCoreMassRecallTeleport"/>
+        <EffectArray value="AP_MothershipCoreMassRecallPostBehavior"/>
+    </CEffectSet>
+    <CEffectTeleport id="AP_MothershipCoreMassRecallTeleport">
+        <EditorCategories value="Race:Protoss"/>
+        <TargetLocation Effect="AP_MothershipCoreMassRecallSearch" Value="TargetPoint"/>
+        <SourceLocation Effect="AP_MothershipCoreMassRecallSearch" Value="CasterPoint"/>
+        <TeleportFlags index="TestCliff" value="1"/>
+        <TeleportFlags index="TestFog" value="0"/>
+        <PlacementArc value="360"/>
+        <PlacementAround Effect="AP_MothershipCoreMassRecallSearch"/>
+        <PlacementRange value="15"/>
+    </CEffectTeleport>
+    <CEffectRemoveBehavior id="AP_MothershipMassRecallDeathRemove">
+        <ValidatorArray value="AP_NotAPLarvaEgg"/>
+        <ValidatorArray value="AP_NotAPLarva"/>
+        <ValidatorArray value="AP_NotAbducted"/>
+        <EditorCategories value=""/>
+        <BehaviorLink value="AP_MothershipCoreRecalling"/>
+    </CEffectRemoveBehavior>
+    <CEffectEnumArea id="AP_MothershipCoreMassRecallDeathSearch">
+        <EditorCategories value=""/>
+        <ImpactLocation Value="CasterPoint"/>
+        <SearchFilters value="-;Ally,Neutral,Enemy,Structure,Missile,Item,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="9" Effect="AP_MothershipCoreMassRecallDeathRemove"/>
+        <SearchFlags index="ExtendByUnitRadius" value="1"/>
+    </CEffectEnumArea>
+    <CActorRange id="AP_MothershipCoreMassRecall">
+        <On Terms="Abil.AP_MothershipCoreMassRecall.TargetOn" Send="Create"/>
+        <On Terms="Abil.AP_MothershipCoreMassRecall.TargetOff" Send="Destroy"/>
+        <Range value="6.000000"/>
+        <Icon value="Assets\Textures\radaricon2.dds"/>
+    </CActorRange>
+    <CActorSplat id="AP_MothershipCoreMassRecallCursorSplat">
+        <Remove Terms="Abil.AP_MothershipCoreMassRecall.Cursor" Send="Create"/>
+    </CActorSplat>
+
+AP_ArbiterMPRecalling
+AP_ArbiterMPRecallingImpact
+
+    <CBehaviorBuff id="AP_MothershipCoreRecalling">
+        <InfoFlags index="Hidden" value="1"/>
+        <EditorCategories value="Race:Protoss,AbilityorEffectType:Units"/>
+        <Duration value="1.5"/>
+        <ExpireEffect value="AP_MothershipCoreMassRecallSet"/>
+        <Modification>
+            <ModifyFlags index="DisableAbils" value="1"/>
+            <StateFlags index="SuppressAttack" value="1"/>
+            <StateFlags index="SuppressPassenger" value="1"/>
+            <StateFlags index="Uncommandable" value="1"/>
+            <AbilClassDisableArray index="CAbilAttack" value="1"/>
+            <AbilClassDisableArray index="CAbilMove" value="1"/>
+        </Modification>
+        <RemoveValidatorArray value="CasterNotDead"/>
+    </CBehaviorBuff>
+    <CBehaviorBuff id="AP_MothershipCoreRecalled">
+        <InfoFlags index="Hidden" value="1"/>
+        <EditorCategories value="Race:Protoss,AbilityorEffectType:Units"/>
+        <Duration value="2"/>
+        <Modification>
+            <ModifyFlags index="DisableAbils" value="1"/>
+            <StateFlags index="SuppressAttack" value="1"/>
+            <StateFlags index="SuppressPassenger" value="1"/>
+            <StateFlags index="Uncommandable" value="1"/>
+            <AbilClassDisableArray index="CAbilAttack" value="1"/>
+            <AbilClassDisableArray index="CAbilMove" value="1"/>
+        </Modification>
+    </CBehaviorBuff>
+
+
+-----------------------------------------------------------
+
+
+    <CAbilEffectTarget id="MothershipCorePurifyNexus">
+        <EditorCategories value="AbilityorEffectType:Units,Race:Protoss"/>
+        <Effect index="0" value="MothershipCoreApplyPurifyAB"/>
+        <Flags index="AllowMovement" value="1"/>
+        <Flags index="NoDeceleration" value="1"/>
+        <Cost>
+            <Vital index="Energy" value="100"/>
+        </Cost>
+        <Range value="10"/>
+        <RangeSlop value="0"/>
+        <Arc value="360"/>
+        <CmdButtonArray index="Execute" DefaultButtonFace="MothershipCoreWeapon"/>
+        <TargetFilters value="-;Ally,Neutral,Enemy"/>
+    </CAbilEffectTarget>
+
+
+    <CActorModel id="MothershipCorePurifyLight" parent="ModelAnimationStyleContinuous">
+        <On Terms="Behavior.Purify.On" Send="Create"/>
+        <On Terms="Behavior.Purify.Off" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart Work Stand,Work,Start Stand,Work Stand,Work,End"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachOverhead"/>
+        <Inherits index="CloakEffect" value="1"/>
+        <Inherits index="TeamColor" value="1"/>
+    </CActorModel>
+    <CActorRange id="MothershipCorePurifyNexus">
+        <EditorCategories value=""/>
+        <On Terms="Abil.MothershipCorePurifyNexus.TargetOn" Send="Create"/>
+        <On Terms="Abil.MothershipCorePurifyNexus.TargetOff" Send="Destroy"/>
+        <Abil Link="MothershipCorePurifyNexus"/>
+        <Icon value="Assets\Textures\radaricon2.dds"/>
+    </CActorRange>
+    <CActorRange id="MothershipCoreWeaponRange">
+        <On Terms="Behavior.Purify.On" Send="Create"/>
+        <On Terms="Behavior.Purify.Off" Send="Destroy"/>
+        <On Terms="Behavior.MothershipCoreWeapon.On" Send="Create"/>
+        <On Terms="Behavior.MothershipCoreWeapon.Off" Send="Destroy"/>
+        <Icon value="Assets\Textures\RadarIcon2.dds"/>
+        <IconArcLength value="3.250000"/>
+        <Inherits index="Visibility" value="0"/>
+        <FogVisibility value="Visible"/>
+    </CActorRange>
+    <CActorSound id="Mothership_PhotonOverchargeCastSound" parent="SoundOneShot">
+        <On Terms="Behavior.Purify.On" Send="Create"/>
+        <Sound value="Mothership_PhotonOverchargeActivate"/>
+    </CActorSound>
+
+    <CBehaviorBuff id="Purify">
+        <InfoIcon value="Assets\Textures\btn-ability-protoss-purify.dds"/>
+        <EditorCategories value="AbilityorEffectType:Units"/>
+        <Duration value="60"/>
+        <Modification Detect="15.5">
+            <WeaponArray Link="MothershipCoreWeapon" Turret="AP_Pylon"/>
+        </Modification>
+        <TimeScaleSource Value="Global"/>
+    </CBehaviorBuff>
+    <CBehaviorBuff id="MothershipCoreDisableAttack">
+        <InfoFlags index="Hidden" value="1"/>
+        <Modification>
+            <WeaponDisableArray value="MothershipCoreWeapon"/>
+        </Modification>
+        <!--WeaponDisableArray value="MothershipPurifyWeapon"/-->
+        <DisableValidatorArray value="HasMothershipCoreWeapon"/>
+        <DisableValidatorArray value="NoMothershipCorePurifyNexus"/>
+    </CBehaviorBuff>
+    <CBehaviorBuff id="MothershipCoreWeapon">
+        <InfoFlags index="Hidden" value="1"/>
+        <EditorCategories value="Race:Terran,AbilityorEffectType:Units"/>
+        <Duration value="25"/>
+    </CBehaviorBuff>
+
+
+    <CEffectApplyBehavior id="MothershipCoreApplyPurifyAB">
+        <ValidatorArray index="0" value="AP_IsAPNexus"/>
+        <ValidatorArray value="IsNotConstructing"/>
+        <EditorCategories value=""/>
+        <Marker Link="Effect/MothershipCorePurifyNexusApply"/>
+        <Behavior value="Purify"/>
+    </CEffectApplyBehavior>
+
+    <CModel id="AP_MothershipCorePurifyLight" parent="PersistentSpellFX">
+        <Model value="Assets\Effects\Protoss\PurifyLaunch\PurifyLaunch.m3"/>
+        <EditorCategories value="Race:Protoss"/>
+    </CModel>

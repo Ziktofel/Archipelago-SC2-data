@@ -7844,9 +7844,11 @@
     </CActorRange>
     <CActorSimple id="AP_ArbiterMPRecallOpacity">
         <On Terms="Behavior.AP_ArbiterMPRecalling.On" Send="Create"/>
+        <On Terms="Behavior.AP_MothershipCoreRecalling.On" Send="Create"/>
         <On Terms="ActorCreation" Target="_Unit" Send="SetOpacity 0.400000 0.250000 MassRecallOpacity"/>
         <On Terms="ActorCreation" Target="_Unit" Send="SetTintColor 100,100,255 0.250000 OneShot MassRecallTint"/>
         <On Terms="Behavior.AP_ArbiterMPRecalled.Off" Send="TimerSet 0.150000 ClearRecallOpacity"/>
+        <On Terms="Behavior.AP_MothershipCoreRecalled.Off" Send="TimerSet 0.150000 ClearRecallOpacity"/>
         <On Terms="Behavior.AP_Yoink.On" Target="_Unit" Send="ClearOpacity 0.250000 MassRecallOpacity"/>
         <On Terms="Behavior.AP_Yoink.On" Target="_Unit" Send="ClearTintColor 0.250000 MassRecallTint"/>
         <On Terms="Behavior.AP_Yoink.On" Send="Destroy"/>
@@ -7857,6 +7859,7 @@
     <CActorModel id="AP_ArbiterMPRecalledImpact" parent="ModelAnimationStyleOneShot">
         <Terms value="Cap 1"/>
         <On Terms="Behavior.AP_ArbiterMPRecalled.On" Send="Create"/>
+        <On Terms="Behavior.AP_MothershipCoreRecalled.On" Send="Create"/>
         <Host Subject="_Selectable"/>
         <HostSiteOps Ops="SOpShadow"/>
         <AutoScaleFactor value="0.450000"/>
@@ -7864,12 +7867,14 @@
     <CActorSound id="AP_ArbiterMPRecalledImpactSound" parent="SoundOneShot">
         <Terms value="Cap 1"/>
         <On Terms="Behavior.AP_ArbiterMPRecalled.On" Send="Create"/>
+        <On Terms="Behavior.AP_MothershipCoreRecalled.On" Send="Create"/>
         <Host Subject="_Selectable"/>
         <Sound value="AP_ArbiterMP_RecallEnd"/>
     </CActorSound>
     <CActorModel id="AP_ArbiterMPRecallingImpact" parent="ModelAnimationStyleOneShot">
         <Terms value="Cap 1"/>
         <On Terms="Behavior.AP_ArbiterMPRecalling.On" Send="Create"/>
+        <On Terms="Behavior.AP_MothershipCoreRecalling.On" Send="Create"/>
         <Host Subject="_Selectable"/>
         <HostSiteOps Ops="SOpShadow"/>
         <AutoScaleFactor value="0.450000"/>
@@ -7877,6 +7882,7 @@
     <CActorSound id="AP_ArbiterMPRecallingImpactSound" parent="SoundOneShot">
         <Terms value="Cap 1"/>
         <On Terms="Behavior.AP_ArbiterMPRecalling.On" Send="Create"/>
+        <On Terms="Behavior.AP_MothershipCoreRecalling.On" Send="Create"/>
         <Host Subject="_Selectable"/>
         <Sound value="AP_ArbiterMP_RecallStart"/>
     </CActorSound>
@@ -21857,6 +21863,63 @@
     <CActorSound id="AP_Herc_GrappleRetract" parent="SoundOneShot">
         <Sound value="AP_Herc_Grapple_Move"/>
     </CActorSound>
+    <CActorSplat id="AP_TimeFieldCursorSplat" parent="ProtossCursorSplat" abil="AP_TimeField"/>
+    <CActorModel id="AP_TimeFieldImpactModel" parent="ModelAnimationStyleOneShot">
+        <Terms value="Cap 1"/>
+        <Inherits index="CloakEffect" value="1"/>
+        <On Terms="Behavior.AP_TimeField.On" Send="Create"/>
+        <Host Subject="_Unit"/>
+        <HostSiteOps Ops="SOpAttachOrigin"/>
+        <AutoScaleFactor value="1.000000"/>
+        <ModelFlags index="AllowHitTest" value="0"/>
+    </CActorModel>
+    <CActorModel id="AP_TimeFieldModel" parent="ModelAnimationStyleContinuous">
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Stop" Send="AnimBracketStop BSD"/>
+        <On Terms="ModelEvent; ModelEventName SoundStart" Send="Create GuardianShieldSoundBirth"/>
+        <On Terms="ModelEvent; ModelEventName SoundLoopStart" Send="Create GuardianShieldSoundLoop"/>
+        <On Terms="ModelEvent; ModelEventName SoundLoopEnd" Target="GuardianShieldSoundLoop" Send="Destroy"/>
+        <On Terms="ModelEvent; ModelEventName SoundLoopEnd" Send="Create GuardianShieldSoundDeath"/>
+        <HostSiteOps Ops="SOpShadow"/>
+        <Macros value="GlobalLoopMacro"/>
+        <Inherits index="TeamColor" value="1"/>
+        <HostForProps Subject="_Unit" Scope="Caster" Actor="Find"/>
+    </CActorModel>
+    <CActorRange id="AP_TimeFieldRange">
+        <EditorCategories value=""/>
+        <On Terms="Abil.AP_TimeField.TargetOn" Send="Create"/>
+        <On Terms="Abil.AP_TimeField.TargetOff" Send="Destroy"/>
+        <Abil Link="AP_TimeField"/>
+        <IconArcLength value="3.250000"/>
+    </CActorRange>
+    <CActorBeamSimple id="AP_TimeFieldBeam" parent="BeamSimpleAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death ContentPlayOnce"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death OpeningPlayForever"/>
+        <On Terms="Abil.AP_TimeField.SourceCastStart" Send="Create"/>
+        <On Terms="Abil.AP_TimeField.SourceChannelStop" Send="Destroy"/>
+        <Model value="MothershipAttackBeam"/>
+        <HostLaunch Subject="_Selectable"/>
+        <HostLaunchSiteOps Ops="SOpAttachCenter"/>
+        <HostImpact Subject="_Selectable"/>
+        <HostImpactSiteOps Ops="SOpLowerBy375"/>
+    </CActorBeamSimple>
+    <CActorSound id="AP_TimeFieldLoop" parent="SoundContinuous">
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_TimeFieldCreatePersistent.Stop" Send="Destroy"/>
+        <Sound value="Mothership_TimeWarpLoop"/>
+    </CActorSound>
+    <CActorModel id="AP_TimeFieldImpactModel">
+    </CActorModel>
+    <CActorRange id="AP_MothershipCoreMassRecall">
+        <On Terms="Abil.AP_MothershipCoreMassRecall.TargetOn" Send="Create"/>
+        <On Terms="Abil.AP_MothershipCoreMassRecall.TargetOff" Send="Destroy"/>
+        <Range value="6.000000"/>
+        <Icon value="Assets\Textures\radaricon2.dds"/>
+    </CActorRange>
+    <CActorSplat id="AP_MothershipCoreMassRecallCursorSplat">
+        <Remove Terms="Abil.AP_MothershipCoreMassRecall.Cursor" Send="Create"/>
+    </CActorSplat>
     <CActorForceSphere id="AP_WarhoundMissileAttackForce">
         <Host Subject="_ImpactGuide"/>
         <HostSiteOps Ops="SOpMoveDownByDot25 SOpRandomPointInSphereDot25"/>

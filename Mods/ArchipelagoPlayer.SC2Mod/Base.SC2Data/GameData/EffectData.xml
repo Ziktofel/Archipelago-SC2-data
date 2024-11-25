@@ -17230,6 +17230,114 @@
         <CaseArray Validator="AP_HERCRooted" Effect="AP_HercGrappleCreatePlaceholderRemove"/>
         <CaseDefault value="AP_HercGrappleLaunchCaster"/>
     </CEffectSwitch>
+    <CEffectApplyBehavior id="AP_TimeFieldApplyBehavior">
+        <ValidatorArray value="NotFrenzied"/>
+        <EditorCategories value="Race:Protoss"/>
+        <Behavior value="AP_TimeField"/>
+    </CEffectApplyBehavior>
+    <CEffectCreatePersistent id="AP_TimeFieldCreatePersistent">
+        <EditorCategories value="Race:Protoss"/>
+        <InitialEffect value="AP_TimeFieldSearchAreaImpactDummy"/>
+        <PeriodCount value="160"/>
+        <PeriodicEffectArray value="AP_TimeFieldSearchArea"/>
+        <PeriodicPeriodArray value="0.0625"/>
+    </CEffectCreatePersistent>
+    <CEffectEnumArea id="AP_TimeFieldSearchAreaImpactDummy">
+        <EditorCategories value="Race:Protoss"/>
+        <SearchFilters value="Ground;Player,Ally,Neutral,Structure,Missile,Stasis,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="3.5" Effect="AP_TimeFieldDamageDummy"/>
+    </CEffectEnumArea>
+    <CEffectDamage id="AP_TimeFieldDamageDummy" parent="DU_WEAP">
+        <EditorCategories value="Race:Protoss"/>
+        <Kind value="Spell"/>
+    </CEffectDamage>
+    <CEffectApplyBehavior id="AP_TimeFieldDecelerationApply">
+        <ValidatorArray value="NotFrenzied"/>
+        <WhichUnit Value="Caster"/>
+        <Behavior value="AP_TimeFieldDecelerationBuff"/>
+    </CEffectApplyBehavior>
+    <CEffectCreatePersistent id="AP_TimeFieldInitialPersistent">
+        <EditorCategories value=""/>
+        <Flags index="Channeled" value="1"/>
+        <InitialEffect value="AP_TimeFieldDecelerationApply"/>
+        <PeriodCount value="1"/>
+        <PeriodicPeriodArray value="5"/>
+        <PeriodicEffectArray value="AP_TimeFieldCreatePersistent"/>
+    </CEffectCreatePersistent>
+    <CEffectEnumArea id="AP_TimeFieldSearchArea">
+        <EditorCategories value="Race:Protoss"/>
+        <SearchFilters value="-;Player,Ally,Neutral,Structure,Missile,Stasis,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="3.5" Effect="AP_TimeFieldApplyBehavior"/>
+    </CEffectEnumArea>
+    <CEffectEnumArea id="AP_TimeFieldSearchAreaImpactDummy">
+        <EditorCategories value="Race:Protoss"/>
+        <SearchFilters value="Ground;Player,Ally,Neutral,Structure,Missile,Stasis,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="3.5" Effect="AP_TimeFieldDamageDummy"/>
+    </CEffectEnumArea>    
+    <CEffectApplyBehavior id="AP_MothershipCoreMassRecallApplyBehavior">
+        <ValidatorArray value="NotReleasedInterceptor"/>
+        <ValidatorArray index="0" value="AP_NotAPLarvaEgg"/>
+        <ValidatorArray value="AP_NotAPLarva"/>
+        <ValidatorArray value="AP_NotAbducted"/>
+        <Behavior value="AP_MothershipCoreRecalling"/>
+    </CEffectApplyBehavior>
+    <CEffectApplyBehavior id="AP_MothershipCoreMassRecallPostBehavior">
+        <EditorCategories value="Race:Protoss"/>
+        <Behavior value="AP_MothershipCoreRecalled"/>
+    </CEffectApplyBehavior>
+    <CEffectSet id="AP_MothershipCoreMassRecallPrepare">
+        <ValidatorArray value="AP_IsAPNexus"/>
+        <ValidatorArray value="IsNotConstructing"/>
+        <EditorCategories value=""/>
+        <EffectArray value="AP_MothershipCoreMassRecallSearch"/>
+    </CEffectSet>
+    <CEffectEnumArea id="AP_MothershipCoreMassRecallSearch">
+        <AreaArray Radius="6.5" Effect="AP_MothershipCoreMassRecallApplyBehavior"/>
+        <EditorCategories value="Race:Protoss"/>
+        <ImpactLocation Value="CasterPoint"/>
+        <MinCount value="1"/>
+        <SearchFilters value="-;Ally,Neutral,Enemy,Structure,Missile,Item,Dead,Hidden,Invulnerable"/>
+        <SearchFlags index="ExtendByUnitRadius" value="1"/>
+    </CEffectEnumArea>
+    <CEffectSet id="AP_MothershipCoreMassRecallSet">
+        <ValidatorArray value="AP_NotAPLarvaEgg"/>
+        <ValidatorArray value="AP_NotAPLarva"/>
+        <EffectArray value="AP_MothershipCoreMassRecallTeleport"/>
+        <EffectArray value="AP_MothershipCoreMassRecallPostBehavior"/>
+    </CEffectSet>
+    <CEffectTeleport id="AP_MothershipCoreMassRecallTeleport">
+        <EditorCategories value="Race:Protoss"/>
+        <TargetLocation Effect="AP_MothershipCoreMassRecallSearch" Value="TargetPoint"/>
+        <SourceLocation Effect="AP_MothershipCoreMassRecallSearch" Value="CasterPoint"/>
+        <TeleportFlags index="TestCliff" value="1"/>
+        <TeleportFlags index="TestFog" value="0"/>
+        <PlacementArc value="360"/>
+        <PlacementAround Effect="AP_MothershipCoreMassRecallSearch"/>
+        <PlacementRange value="15"/>
+    </CEffectTeleport>
+    <CEffectRemoveBehavior id="AP_MothershipMassRecallDeathRemove">
+        <ValidatorArray value="AP_NotAPLarvaEgg"/>
+        <ValidatorArray value="AP_NotAPLarva"/>
+        <ValidatorArray value="AP_NotAbducted"/>
+        <EditorCategories value=""/>
+        <BehaviorLink value="AP_MothershipCoreRecalling"/>
+    </CEffectRemoveBehavior>
+    <CEffectEnumArea id="AP_MothershipCoreMassRecallDeathSearch">
+        <EditorCategories value=""/>
+        <ImpactLocation Value="CasterPoint"/>
+        <SearchFilters value="-;Ally,Neutral,Enemy,Structure,Missile,Item,Dead,Hidden,Invulnerable"/>
+        <AreaArray Radius="9" Effect="AP_MothershipCoreMassRecallDeathRemove"/>
+        <SearchFlags index="ExtendByUnitRadius" value="1"/>
+    </CEffectEnumArea>
+    <CActorRange id="AP_MothershipCoreMassRecall">
+        <On Terms="Abil.AP_MothershipCoreMassRecall.TargetOn" Send="Create"/>
+        <On Terms="Abil.AP_MothershipCoreMassRecall.TargetOff" Send="Destroy"/>
+        <Range value="6.000000"/>
+        <Icon value="Assets\Textures\radaricon2.dds"/>
+    </CActorRange>
+    <CActorSplat id="AP_MothershipCoreMassRecallCursorSplat">
+        <Remove Terms="Abil.AP_MothershipCoreMassRecall.Cursor" Send="Create"/>
+    </CActorSplat>
     <CEffectCreatePersistent id="AP_TornadoMissileCP">
         <ValidatorArray value="AP_TornadoMaxDistance"/>
         <ValidatorArray value="AP_TornadoMissileFilters"/>
