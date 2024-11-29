@@ -196,8 +196,9 @@ trigger gt_IntroSequence;
 trigger gt_StartGame;
 trigger gt_BrutaliskStumbledUpon;
 trigger gt_CreateMedivacIntro;
+trigger gt_ScourgishInquisition1;
+trigger gt_ScourgishInquisition2;
 trigger gt_IntroMedivacsFinished;
-trigger gt_MedivacTrained;
 trigger gt_Site1DestructionComplete;
 trigger gt_Site1ActivateDefenses;
 trigger gt_Site1SubwaySpawns;
@@ -317,6 +318,7 @@ trigger gt_ObjectiveRescueCreateQ;
 trigger gt_ObjectiveRescueUpdate;
 trigger gt_ObjectiveRescueComplete;
 trigger gt_ArchInit;
+trigger gt_FactionSwapInit;
 trigger gt_VictoryQ;
 trigger gt_VictorySetup;
 trigger gt_VictoryCinematic;
@@ -1051,7 +1053,15 @@ void gt_BrutaliskStumbledUpon_Init () {
 // Trigger: Create Medivac Intro
 //--------------------------------------------------------------------------------------------------
 bool gt_CreateMedivacIntro_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_scourgeGroup1;
+    unitgroup lv_scourgeGroup2;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_scourgeGroup1 = UnitGroupEmpty();
+    lv_scourgeGroup2 = UnitGroupEmpty();
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -1068,7 +1078,12 @@ bool gt_CreateMedivacIntro_Func (bool testConds, bool runActions) {
     libNtve_gf_CreateUnitsAtPoint2(1, "AP_Medivac", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(999));
     gv_medivac01 = UnitLastCreated();
     libNtve_gf_AddUnitGroupToUnitGroup(UnitLastCreatedGroup(), gv_medivacUnits);
-    UnitCargoCreate(gv_medivac01, "AP_Marine", 2);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        UnitCargoCreate(gv_medivac01, "AP_HunterKiller", 1);
+    }
+    else {
+        UnitCargoCreate(gv_medivac01, "AP_Marine", 2);
+    }
     libNtve_gf_AddUnitGroupToUnitGroup(UnitCargoLastCreatedGroup(), gv_medivacUnits);
     UnitSetPropertyFixed(gv_medivac01, c_unitPropEnergyPercent, 100.0);
     UnitSetState(UnitLastCreated(), c_unitStateTooltipable, false);
@@ -1079,10 +1094,21 @@ bool gt_CreateMedivacIntro_Func (bool testConds, bool runActions) {
     libNtve_gf_AddUnitGroupToUnitGroup(UnitLastCreatedGroup(), gv_medivacUnits);
     UnitSetPropertyFixed(gv_medivac02, c_unitPropEnergyPercent, 100.0);
     UnitSetState(UnitLastCreated(), c_unitStateTooltipable, false);
-    UnitCargoCreate(gv_medivac02, "AP_Marine", 2);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        UnitCargoCreate(gv_medivac02, "AP_HunterKiller", 1);
+    }
+    else {
+        UnitCargoCreate(gv_medivac02, "AP_Marine", 2);
+    }
     libNtve_gf_AddUnitGroupToUnitGroup(UnitCargoLastCreatedGroup(), gv_medivacUnits);
     UnitIssueOrder(gv_medivac02, OrderTargetingPoint(AbilityCommand("AP_MedivacTransport", 2), PointFromId(1117)), c_orderQueueReplace);
     UnitIssueOrder(gv_medivac02, Order(AbilityCommand("move", 2)), c_orderQueueAddToEnd);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        Wait(3.0, c_timeGame);
+        TriggerExecute(gt_ScourgishInquisition1, true, false);
+        TriggerExecute(gt_ScourgishInquisition2, true, false);
+    }
+
     return true;
 }
 
@@ -1092,13 +1118,146 @@ void gt_CreateMedivacIntro_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Scourgish Inquisition 1
+//--------------------------------------------------------------------------------------------------
+bool gt_ScourgishInquisition1_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_scourgeGroup;
+
+    // Automatic Variable Declarations
+    unitgroup auto23A2AC8A_g;
+    int auto23A2AC8A_u;
+    unit auto23A2AC8A_var;
+    unitgroup auto158B9EA8_g;
+    int auto158B9EA8_u;
+    unit auto158B9EA8_var;
+
+    // Variable Initialization
+    lv_scourgeGroup = UnitGroupEmpty();
+
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    libNtve_gf_CreateUnitsWithDefaultFacing(12, "AP_Scourge", 0, 8, PointFromId(999));
+    lv_scourgeGroup = UnitLastCreatedGroup();
+    auto23A2AC8A_g = lv_scourgeGroup;
+    auto23A2AC8A_u = UnitGroupCount(auto23A2AC8A_g, c_unitCountAll);
+    for (;; auto23A2AC8A_u -= 1) {
+        auto23A2AC8A_var = UnitGroupUnitFromEnd(auto23A2AC8A_g, auto23A2AC8A_u);
+        if (auto23A2AC8A_var == null) { break; }
+        libNtve_gf_ChangeUnitDamage(auto23A2AC8A_var, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_Minimal);
+    }
+    UnitGroupIssueOrder(lv_scourgeGroup, OrderTargetingUnit(AbilityCommand("attack", 0), gv_medivac01), c_orderQueueReplace);
+    while (!((UnitIsAlive(gv_medivac01) == false))) {
+        Wait(0.5, c_timeGame);
+    }
+    auto158B9EA8_g = lv_scourgeGroup;
+    auto158B9EA8_u = UnitGroupCount(auto158B9EA8_g, c_unitCountAll);
+    for (;; auto158B9EA8_u -= 1) {
+        auto158B9EA8_var = UnitGroupUnitFromEnd(auto158B9EA8_g, auto158B9EA8_u);
+        if (auto158B9EA8_var == null) { break; }
+        UnitKill(auto158B9EA8_var);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ScourgishInquisition1_Init () {
+    gt_ScourgishInquisition1 = TriggerCreate("gt_ScourgishInquisition1_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Scourgish Inquisition 2
+//--------------------------------------------------------------------------------------------------
+bool gt_ScourgishInquisition2_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_scourgeGroup;
+
+    // Automatic Variable Declarations
+    unitgroup autoF2D10299_g;
+    int autoF2D10299_u;
+    unit autoF2D10299_var;
+    unitgroup auto30EC0504_g;
+    int auto30EC0504_u;
+    unit auto30EC0504_var;
+
+    // Variable Initialization
+    lv_scourgeGroup = UnitGroupEmpty();
+
+    // Conditions
+    if (testConds) {
+        if (!((gv_gameOver == false))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    libNtve_gf_CreateUnitsWithDefaultFacing(12, "AP_Scourge", 0, 8, PointFromId(2827));
+    lv_scourgeGroup = UnitLastCreatedGroup();
+    autoF2D10299_g = lv_scourgeGroup;
+    autoF2D10299_u = UnitGroupCount(autoF2D10299_g, c_unitCountAll);
+    for (;; autoF2D10299_u -= 1) {
+        autoF2D10299_var = UnitGroupUnitFromEnd(autoF2D10299_g, autoF2D10299_u);
+        if (autoF2D10299_var == null) { break; }
+        libNtve_gf_ChangeUnitDamage(autoF2D10299_var, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_Minimal);
+    }
+    UnitGroupIssueOrder(lv_scourgeGroup, OrderTargetingUnit(AbilityCommand("attack", 0), gv_medivac02), c_orderQueueReplace);
+    while (!((UnitIsAlive(gv_medivac02) == false))) {
+        Wait(0.5, c_timeGame);
+    }
+    auto30EC0504_g = lv_scourgeGroup;
+    auto30EC0504_u = UnitGroupCount(auto30EC0504_g, c_unitCountAll);
+    for (;; auto30EC0504_u -= 1) {
+        auto30EC0504_var = UnitGroupUnitFromEnd(auto30EC0504_g, auto30EC0504_u);
+        if (auto30EC0504_var == null) { break; }
+        UnitKill(auto30EC0504_var);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ScourgishInquisition2_Init () {
+    gt_ScourgishInquisition2 = TriggerCreate("gt_ScourgishInquisition2_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Medivacs Finished
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroMedivacsFinished_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_prisms;
+
     // Automatic Variable Declarations
     unitgroup autoF6137478_g;
     int autoF6137478_u;
     unit autoF6137478_var;
+    unitgroup auto9FB6BD88_g;
+    int auto9FB6BD88_u;
+    unit auto9FB6BD88_var;
+
+    // Variable Initialization
+    lv_prisms = UnitGroupEmpty();
 
     // Conditions
     if (testConds) {
@@ -1128,19 +1287,30 @@ bool gt_IntroMedivacsFinished_Func (bool testConds, bool runActions) {
         if (autoF6137478_var == null) { break; }
         libNtve_gf_RescueUnit(autoF6137478_var, gv_p01_USER, true);
         lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit(autoF6137478_var);
-        if ((UnitGetType(autoF6137478_var) == "AP_Medivac")) {
-            if ((libNtve_gf_DifficultyValueInt(1, 1, 0, 0) == 1)) {
-                UnitSetInfoText(autoF6137478_var, StringExternal("Param/Value/EB077EA5"), StringExternal("Param/Value/8595A3F1"), StringExternal("Param/Value/AE692EA9"));
-                UnitSetState(autoF6137478_var, c_unitStateTooltipable, true);
-            }
-            else {
-                UnitSetInfoText(autoF6137478_var, StringExternal("Param/Value/1D83D7CE"), StringToText(""), StringToText(""));
-            }
-        }
-
     }
     TriggerExecute(gt_TipNewUnitMedivacQ, true, true);
     TriggerExecute(gt_TipTransportQ, true, true);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        Wait(2.0, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarpPrism", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(995));
+        UnitSetHeight(UnitLastCreated(), 20.0, 0.0);
+        UnitSetHeight(UnitLastCreated(), 3.75, 3.0);
+        UnitGroupAdd(lv_prisms, UnitLastCreated());
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarpPrism", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(1117));
+        UnitSetHeight(UnitLastCreated(), 20.0, 0.0);
+        UnitSetHeight(UnitLastCreated(), 3.75, 3.0);
+        UnitGroupAdd(lv_prisms, UnitLastCreated());
+        Wait(1.0, c_timeGame);
+        auto9FB6BD88_g = lv_prisms;
+        auto9FB6BD88_u = UnitGroupCount(auto9FB6BD88_g, c_unitCountAll);
+        for (;; auto9FB6BD88_u -= 1) {
+            auto9FB6BD88_var = UnitGroupUnitFromEnd(auto9FB6BD88_g, auto9FB6BD88_u);
+            if (auto9FB6BD88_var == null) { break; }
+            libNtve_gf_RescueUnit(auto9FB6BD88_var, gv_p01_USER, true);
+        }
+    }
+
     return true;
 }
 
@@ -1149,43 +1319,6 @@ void gt_IntroMedivacsFinished_Init () {
     gt_IntroMedivacsFinished = TriggerCreate("gt_IntroMedivacsFinished_Func");
     TriggerEnable(gt_IntroMedivacsFinished, false);
     TriggerAddEventTimePeriodic(gt_IntroMedivacsFinished, 1.0, c_timeGame);
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trigger: Medivac Trained
-//--------------------------------------------------------------------------------------------------
-bool gt_MedivacTrained_Func (bool testConds, bool runActions) {
-    // Automatic Variable Declarations
-    // Conditions
-    if (testConds) {
-        if (!((gv_gameOver == false))) {
-            return false;
-        }
-
-        if (!((UnitGetType(EventUnitProgressUnit()) == "AP_Medivac"))) {
-            return false;
-        }
-    }
-
-    // Actions
-    if (!runActions) {
-        return true;
-    }
-
-    if ((libNtve_gf_DifficultyValueInt(1, 1, 0, 0) == 1)) {
-        UnitSetInfoText(EventUnitProgressUnit(), StringExternal("Param/Value/0494ADCA"), StringExternal("Param/Value/D71A7F16"), StringExternal("Param/Value/DBD1FCB1"));
-        UnitSetState(EventUnitProgressUnit(), c_unitStateTooltipable, true);
-    }
-    else {
-        UnitSetInfoText(EventUnitProgressUnit(), StringExternal("Param/Value/A452F47F"), StringToText(""), StringToText(""));
-    }
-    return true;
-}
-
-//--------------------------------------------------------------------------------------------------
-void gt_MedivacTrained_Init () {
-    gt_MedivacTrained = TriggerCreate("gt_MedivacTrained_Func");
-    TriggerAddEventUnitTrainProgress(gt_MedivacTrained, null, c_unitProgressStageComplete);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -3155,6 +3288,11 @@ bool gt_IntroMilitiaStartQ_Func (bool testConds, bool runActions) {
     actor lv_talkActor;
 
     // Automatic Variable Declarations
+    string auto5F20BAFE_val;
+    const int autoC64EE707_n = 2;
+    int autoC64EE707_i;
+    const int auto0CF50EB2_n = 4;
+    int auto0CF50EB2_i;
     const int auto3587E73F_n = 4;
     int auto3587E73F_i;
     unitgroup auto893DB8D7_g;
@@ -3163,6 +3301,9 @@ bool gt_IntroMilitiaStartQ_Func (bool testConds, bool runActions) {
     unitgroup autoF42710C8_g;
     int autoF42710C8_u;
     unit autoF42710C8_var;
+    string auto53594B18_val;
+    string autoE5431E21_val;
+    string autoA067942C_val;
 
     // Variable Initialization
 
@@ -3182,11 +3323,30 @@ bool gt_IntroMilitiaStartQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    for (auto3587E73F_i = 1; auto3587E73F_i <= auto3587E73F_n; auto3587E73F_i += 1) {
-        libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarPig", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(1680));
-        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(35))), c_orderQueueReplace);
-        UnitSetPropertyFixed(UnitLastCreated(), c_unitPropLifePercent, 75.0);
-        UnitGroupAdd(gv_introMilitia, UnitLastCreated());
+    auto5F20BAFE_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto5F20BAFE_val == "Zerg") {
+        for (autoC64EE707_i = 1; autoC64EE707_i <= autoC64EE707_n; autoC64EE707_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_HunterKiller", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(1680));
+            UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(35))), c_orderQueueReplace);
+            UnitSetPropertyFixed(UnitLastCreated(), c_unitPropLifePercent, 75.0);
+            UnitGroupAdd(gv_introMilitia, UnitLastCreated());
+        }
+    }
+    else if (auto5F20BAFE_val == "Prot") {
+        for (auto0CF50EB2_i = 1; auto0CF50EB2_i <= auto0CF50EB2_n; auto0CF50EB2_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_Adept", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(1680));
+            UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(35))), c_orderQueueReplace);
+            UnitSetPropertyFixed(UnitLastCreated(), c_unitPropShieldsPercent, 55.0);
+            UnitGroupAdd(gv_introMilitia, UnitLastCreated());
+        }
+    }
+    else {
+        for (auto3587E73F_i = 1; auto3587E73F_i <= auto3587E73F_n; auto3587E73F_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarPig", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(1680));
+            UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), RegionGetCenter(RegionFromId(35))), c_orderQueueReplace);
+            UnitSetPropertyFixed(UnitLastCreated(), c_unitPropLifePercent, 75.0);
+            UnitGroupAdd(gv_introMilitia, UnitLastCreated());
+        }
     }
     gv_uNITIntroSpeaker = UnitLastCreated();
     Wait(1.5, c_timeGame);
@@ -3209,11 +3369,20 @@ bool gt_IntroMilitiaStartQ_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_AchievementAllUnitsRescued, true, false);
     TriggerQueueEnter();
     UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/5299697B"), null, gv_uNITIntroSpeaker);
-    libNtve_gf_AttachModelToUnit(gv_uNITIntroSpeaker, "TalkIcon", "Origin");
+    libNtve_gf_AttachModelToUnit(gv_uNITIntroSpeaker, "TalkIcon", "Ref_Origin");
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTychus03Marine700017", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus03Marine700017", -1), c_transmissionDurationAdd, 1.0, true);
+    auto53594B18_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto53594B18_val == "Zerg") {
+        SoundPlayForPlayer(SoundLink("AP_SCBW_Hydralisk_Ready", -1), c_maxPlayers, PlayerGroupAll(), 100.0, 0.0);
+    }
+    else if (auto53594B18_val == "Prot") {
+        SoundPlayForPlayer(SoundLink("Adept_Pissed", -1), c_maxPlayers, PlayerGroupAll(), 150.0, 0.0);
+    }
+    else {
+        // Transmission - SoundLink("TTychus03Marine700017", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus03Marine700017", -1), c_transmissionDurationAdd, 1.0, true);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     libNtve_gf_KillModel(libNtve_gf_ActorLastCreated());
     TriggerQueueExit();
@@ -3223,18 +3392,38 @@ bool gt_IntroMilitiaStartQ_Func (bool testConds, bool runActions) {
     Wait(10.0, c_timeGame);
     if ((TriggerIsEnabled(gt_Site1MilitiaHeadsUpQ) == true)) {
         TriggerEnable(gt_Site1MilitiaHeadsUpQ, false);
-        libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(2654));
+        autoE5431E21_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoE5431E21_val == "Zerg") {
+            libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(734733913));
+        }
+        else if (autoE5431E21_val == "Prot") {
+            libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(228429242));
+        }
+        else {
+            libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(2654));
+        }
         gv_site1RescuableReticule = libNtve_gf_ActorLastCreated();
         TriggerQueueEnter();
         UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/5F4C1497"), null, gv_uNITSite1Speaker);
         MinimapPing(PlayerGroupAll(), UnitGetPosition(gv_uNITSite1Speaker), 2.0, Color(100.00, 100.00, 0.00));
         libNtve_gf_ShareVisionofUnit(gv_uNITSite1Speaker, true, gv_p01_USER);
-        libNtve_gf_AttachModelToUnit(gv_uNITSite1Speaker, "TalkIcon", "Origin");
+        libNtve_gf_AttachModelToUnit(gv_uNITSite1Speaker, "TalkIcon", "Ref_Origin");
         lv_talkActor = libNtve_gf_ActorLastCreated();
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
         libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-        // Transmission - SoundLink("TTychus03MoebiusMarine00022", -1)
-        libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TTychus03MoebiusMarine00022", -1), c_transmissionDurationAdd, 0.0, true);
+        autoA067942C_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoA067942C_val == "Zerg") {
+            // Transmission - SoundLink("TValerian02AInfestedRefugee00021", -1)
+            libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TValerian02AInfestedRefugee00021", -1), c_transmissionDurationAdd, 0.0, true);
+        }
+        else if (autoA067942C_val == "Prot") {
+            // Transmission - SoundLink("TRaynor01Raynor00015", -1)
+            libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TRaynor01Raynor00015", -1), c_transmissionDurationAdd, 0.0, true);
+        }
+        else {
+            // Transmission - SoundLink("TTychus03MoebiusMarine00022", -1)
+            libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TTychus03MoebiusMarine00022", -1), c_transmissionDurationAdd, 0.0, true);
+        }
         libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
         libNtve_gf_KillModel(lv_talkActor);
         TriggerEnable(gt_Site1MilitiaRescued, true);
@@ -3257,6 +3446,9 @@ bool gt_Site1MilitiaHeadsUpQ_Func (bool testConds, bool runActions) {
     actor lv_talkActor;
 
     // Automatic Variable Declarations
+    string auto64F1080E_val;
+    string auto7CD1D777_val;
+
     // Variable Initialization
 
     // Conditions
@@ -3289,18 +3481,38 @@ bool gt_Site1MilitiaHeadsUpQ_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+    auto64F1080E_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto64F1080E_val == "Zerg") {
+    }
+    else if (auto64F1080E_val == "Prot") {
+    }
+    else {
+    }
     libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(2654));
     gv_site1RescuableReticule = libNtve_gf_ActorLastCreated();
     TriggerQueueEnter();
     UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/B04777F1"), null, gv_uNITSite1Speaker);
     MinimapPing(PlayerGroupAll(), UnitGetPosition(gv_uNITSite1Speaker), 2.0, Color(100.00, 100.00, 0.00));
     libNtve_gf_ShareVisionofUnit(gv_uNITSite1Speaker, true, gv_p01_USER);
-    libNtve_gf_AttachModelToUnit(gv_uNITSite1Speaker, "TalkIcon", "Origin");
-    lv_talkActor = libNtve_gf_ActorLastCreated();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTychus03MoebiusMarine00022", -1)
-    libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TTychus03MoebiusMarine00022", -1), c_transmissionDurationAdd, 0.0, true);
+    auto7CD1D777_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto7CD1D777_val == "Zerg") {
+        libNtve_gf_AttachModelToUnit(gv_uNITSite1Speaker, "TalkIcon", "Ref_Origin");
+        lv_talkActor = libNtve_gf_ActorLastCreated();
+        // Transmission - SoundLink("TValerian02AInfestedRefugee00021", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TValerian02AInfestedRefugee00021", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else if (auto7CD1D777_val == "Prot") {
+        // Transmission - SoundLink("TRaynor01Raynor00015", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TRaynor01Raynor00015", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else {
+        libNtve_gf_AttachModelToUnit(gv_uNITSite1Speaker, "TalkIcon", "Ref_Origin");
+        lv_talkActor = libNtve_gf_ActorLastCreated();
+        // Transmission - SoundLink("TTychus03MoebiusMarine00022", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TTychus03MoebiusMarine00022", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     libNtve_gf_KillModel(lv_talkActor);
     TriggerEnable(gt_Site1MilitiaRescued, true);
@@ -3333,7 +3545,7 @@ bool gt_Site1MilitiaRescued_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)))) {
+        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrismPhasing", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrism", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Yggdrasil", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || ((UnitGroupCount(UnitGroup("AP_Overlord", gv_p01_USER, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) && (TechTreeUpgradeCount(gv_p01_USER, "AP_overlordtransport", c_techCountQueuedOrBetter) >= 1))))) {
             return false;
         }
 
@@ -3381,6 +3593,8 @@ bool gt_TheWallHeadsUpQ_Func (bool testConds, bool runActions) {
     actor lv_talkActor;
 
     // Automatic Variable Declarations
+    string auto579DDD62_val;
+
     // Variable Initialization
 
     // Conditions
@@ -3418,12 +3632,25 @@ bool gt_TheWallHeadsUpQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/E0CF8433"), null, PointFromId(1308));
     MinimapPing(PlayerGroupAll(), UnitGetPosition(gv_uNITWallSpeaker), 2.0, Color(100.00, 100.00, 0.00));
     libNtve_gf_ShareVisionofUnit(gv_uNITWallSpeaker, true, gv_p01_USER);
-    libNtve_gf_AttachModelToUnit(gv_uNITWallSpeaker, "TalkIcon", "Origin");
-    lv_talkActor = libNtve_gf_ActorLastCreated();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTychus03MoebiusMarine00030", -1)
-    libCamp_gf_SendTransmissionCampaign(gv_uNITWallSpeaker, SoundLink("TTychus03MoebiusMarine00030", -1), c_transmissionDurationAdd, 0.0, true);
+    auto579DDD62_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto579DDD62_val == "Zerg") {
+        libNtve_gf_AttachModelToUnit(gv_uNITWallSpeaker, "TalkIcon", "Ref_Origin");
+        lv_talkActor = libNtve_gf_ActorLastCreated();
+        // Transmission - SoundLink("THanson02InfestedRefugee00005", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITWallSpeaker, SoundLink("THanson02InfestedRefugee00005", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else if (auto579DDD62_val == "Prot") {
+        // Transmission - SoundLink("TZeratul01Zeratul00076", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite1Speaker, SoundLink("TZeratul01Zeratul00076", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else {
+        libNtve_gf_AttachModelToUnit(gv_uNITWallSpeaker, "TalkIcon", "Ref_Origin");
+        lv_talkActor = libNtve_gf_ActorLastCreated();
+        // Transmission - SoundLink("TTychus03MoebiusMarine00030", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITWallSpeaker, SoundLink("TTychus03MoebiusMarine00030", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     libNtve_gf_KillModel(lv_talkActor);
     TriggerEnable(gt_TheWallRescued, true);
@@ -3456,7 +3683,7 @@ bool gt_TheWallRescued_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)))) {
+        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrismPhasing", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrism", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Yggdrasil", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || ((UnitGroupCount(UnitGroup("AP_Overlord", gv_p01_USER, RegionFromId(73), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) && (TechTreeUpgradeCount(gv_p01_USER, "AP_overlordtransport", c_techCountQueuedOrBetter) >= 1))))) {
             return false;
         }
 
@@ -3504,6 +3731,9 @@ bool gt_Site2MilitiaHeadsUpQ_Func (bool testConds, bool runActions) {
     actor lv_talkActor;
 
     // Automatic Variable Declarations
+    string auto1212D02D_val;
+    string auto47837471_val;
+
     // Variable Initialization
 
     // Conditions
@@ -3535,20 +3765,40 @@ bool gt_Site2MilitiaHeadsUpQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(2656));
+    auto1212D02D_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto1212D02D_val == "Zerg") {
+        libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(2079767245));
+    }
+    else if (auto1212D02D_val == "Prot") {
+        libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(1446728418));
+    }
+    else {
+        libNtve_gf_CreateModelAtPoint("BriefingUnitSelectLarge", PointFromId(2656));
+    }
     gv_site2RescuableReticule = libNtve_gf_ActorLastCreated();
     TriggerQueueEnter();
     UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/5A52BBEB"), null, gv_uNITSite2Speaker);
     MinimapPing(PlayerGroupAll(), UnitGetPosition(gv_uNITSite2Speaker), 2.0, Color(100.00, 100.00, 0.00));
     libNtve_gf_ShareVisionofUnit(gv_uNITSite2Speaker, true, gv_p01_USER);
-    libNtve_gf_AttachModelToUnit(gv_uNITSite2Speaker, "TalkIcon", "Origin");
-    lv_talkActor = libNtve_gf_ActorLastCreated();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTychus03MoebiusMarauder00027", -1)
-    libCamp_gf_SendTransmissionCampaign(gv_uNITSite2Speaker, SoundLink("TTychus03MoebiusMarauder00027", -1), c_transmissionDurationAdd, 0.0, true);
+    auto47837471_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto47837471_val == "Zerg") {
+        // Transmission - SoundLink("TValerian02ATychus00020", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite2Speaker, SoundLink("TValerian02ATychus00020", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else if (auto47837471_val == "Prot") {
+        // Transmission - SoundLink("TZeratul02Zeratul00031", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite2Speaker, SoundLink("TZeratul02Zeratul00046", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else {
+        libNtve_gf_AttachModelToUnit(gv_uNITSite2Speaker, "TalkIcon", "Ref_Origin");
+        lv_talkActor = libNtve_gf_ActorLastCreated();
+        // Transmission - SoundLink("TTychus03MoebiusMarauder00027", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite2Speaker, SoundLink("TTychus03MoebiusMarauder00027", -1), c_transmissionDurationAdd, 0.0, true);
+        libNtve_gf_KillModel(lv_talkActor);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    libNtve_gf_KillModel(lv_talkActor);
     TriggerEnable(gt_Site2MilitiaRescued, true);
     TriggerQueueExit();
     return true;
@@ -3579,7 +3829,7 @@ bool gt_Site2MilitiaRescued_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)))) {
+        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrismPhasing", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrism", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Yggdrasil", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || ((UnitGroupCount(UnitGroup("AP_Overlord", gv_p01_USER, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) && (TechTreeUpgradeCount(gv_p01_USER, "AP_overlordtransport", c_techCountQueuedOrBetter) >= 1))))) {
             return false;
         }
 
@@ -3627,8 +3877,14 @@ bool gt_AliveInsideHeadsUpQ_Func (bool testConds, bool runActions) {
     actor lv_talkActor;
 
     // Automatic Variable Declarations
+    string autoBE1F6F1C_val;
     const int autoF4FA28C1_n = 5;
     int autoF4FA28C1_i;
+    const int auto136EAD32_n = 3;
+    int auto136EAD32_i;
+    const int auto8C25A516_n = 3;
+    int auto8C25A516_i;
+    string auto6D4EE29D_val;
 
     // Variable Initialization
 
@@ -3657,8 +3913,18 @@ bool gt_AliveInsideHeadsUpQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    for (autoF4FA28C1_i = 1; autoF4FA28C1_i <= autoF4FA28C1_n; autoF4FA28C1_i += 1) {
-        libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarPig", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(794));
+    autoBE1F6F1C_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoBE1F6F1C_val == "Zerg") {
+        for (auto136EAD32_i = 1; auto136EAD32_i <= auto136EAD32_n; auto136EAD32_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_SIInfestedTrooper", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(794));
+            SoundPlayOnUnit(SoundLink("Medivac_Unload", -1), PlayerGroupAll(), UnitLastCreated(), 0.0, 100.0, 0.0);
+            libNtve_gf_ShareVisionofUnit(UnitLastCreated(), true, gv_p01_USER);
+            UnitGroupAdd(gv_gROUPAliveInside, UnitLastCreated());
+            Wait(0.5, c_timeGame);
+            UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(788)), c_orderQueueReplace);
+            Wait(0.5, c_timeGame);
+        }
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_HunterKiller", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(794));
         SoundPlayOnUnit(SoundLink("Medivac_Unload", -1), PlayerGroupAll(), UnitLastCreated(), 0.0, 100.0, 0.0);
         libNtve_gf_ShareVisionofUnit(UnitLastCreated(), true, gv_p01_USER);
         UnitGroupAdd(gv_gROUPAliveInside, UnitLastCreated());
@@ -3666,17 +3932,50 @@ bool gt_AliveInsideHeadsUpQ_Func (bool testConds, bool runActions) {
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(788)), c_orderQueueReplace);
         Wait(0.5, c_timeGame);
     }
+    else if (autoBE1F6F1C_val == "Prot") {
+        for (auto8C25A516_i = 1; auto8C25A516_i <= auto8C25A516_n; auto8C25A516_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_Dragoon", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(794));
+            SoundPlayOnUnit(SoundLink("Medivac_Unload", -1), PlayerGroupAll(), UnitLastCreated(), 0.0, 100.0, 0.0);
+            libNtve_gf_ShareVisionofUnit(UnitLastCreated(), true, gv_p01_USER);
+            UnitGroupAdd(gv_gROUPAliveInside, UnitLastCreated());
+            Wait(0.5, c_timeGame);
+            UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(788)), c_orderQueueReplace);
+            Wait(0.5, c_timeGame);
+        }
+    }
+    else {
+        for (autoF4FA28C1_i = 1; autoF4FA28C1_i <= autoF4FA28C1_n; autoF4FA28C1_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_WarPig", 0, gv_p06_MOEBIUS_SEC_FORCE, PointFromId(794));
+            SoundPlayOnUnit(SoundLink("Medivac_Unload", -1), PlayerGroupAll(), UnitLastCreated(), 0.0, 100.0, 0.0);
+            libNtve_gf_ShareVisionofUnit(UnitLastCreated(), true, gv_p01_USER);
+            UnitGroupAdd(gv_gROUPAliveInside, UnitLastCreated());
+            Wait(0.5, c_timeGame);
+            UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(788)), c_orderQueueReplace);
+            Wait(0.5, c_timeGame);
+        }
+    }
     TriggerQueueEnter();
     UIAlertPoint("Trigger", gv_p01_USER, StringExternal("Param/Value/CE9DBEA6"), null, PointFromId(794));
     MinimapPing(PlayerGroupAll(), RegionGetCenter(RegionFromId(62)), 2.0, Color(100.00, 100.00, 0.00));
-    libNtve_gf_AttachModelToUnit(UnitGroupRandomUnit(gv_gROUPAliveInside, c_unitCountAlive), "TalkIcon", "Origin");
-    lv_talkActor = libNtve_gf_ActorLastCreated();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTychus03MoebiusMarine00030", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus03MoebiusMarine00030", -1), c_transmissionDurationAdd, 0.0, true);
+    auto6D4EE29D_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto6D4EE29D_val == "Zerg") {
+        // Transmission - SoundLink("THanson02Hanson00014", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THanson02Hanson00014", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else if (auto6D4EE29D_val == "Prot") {
+        // Transmission - SoundLink("THorner02Tychus00023", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THorner02Tychus00023", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else {
+        libNtve_gf_AttachModelToUnit(UnitGroupRandomUnit(gv_gROUPAliveInside, c_unitCountAlive), "TalkIcon", "Ref_Origin");
+        lv_talkActor = libNtve_gf_ActorLastCreated();
+        // Transmission - SoundLink("TTychus03MoebiusMarine00030", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus03MoebiusMarine00030", -1), c_transmissionDurationAdd, 0.0, true);
+        libNtve_gf_KillModel(lv_talkActor);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    libNtve_gf_KillModel(lv_talkActor);
     TriggerEnable(gt_AliveInsideRescued, true);
     TriggerQueueExit();
     return true;
@@ -3707,7 +4006,7 @@ bool gt_AliveInsideRescued_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)))) {
+        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrismPhasing", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrism", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Yggdrasil", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || ((UnitGroupCount(UnitGroup("AP_Overlord", gv_p01_USER, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) && (TechTreeUpgradeCount(gv_p01_USER, "AP_overlordtransport", c_techCountQueuedOrBetter) >= 1))))) {
             return false;
         }
 
@@ -3754,6 +4053,8 @@ bool gt_Site3MilitiaHeadsUpQ_Func (bool testConds, bool runActions) {
     actor lv_talkActor;
 
     // Automatic Variable Declarations
+    string auto5A766366_val;
+
     // Variable Initialization
 
     // Conditions
@@ -3795,8 +4096,19 @@ bool gt_Site3MilitiaHeadsUpQ_Func (bool testConds, bool runActions) {
     lv_talkActor = libNtve_gf_ActorLastCreated();
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TTychus03MoebiusMarine00021", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus03MoebiusMarine00021", -1), c_transmissionDurationAdd, 0.0, true);
+    auto5A766366_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto5A766366_val == "Zerg") {
+        // Transmission - SoundLink("TValerian02AInfestedMarine00022", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite3Speaker, SoundLink("TValerian02AInfestedMarine00022", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else if (auto5A766366_val == "Prot") {
+        // Transmission - SoundLink("TTychus05DarkTemplar00026", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite3Speaker, SoundLink("TTychus05DarkTemplar00026", -1), c_transmissionDurationAdd, 0.0, true);
+    }
+    else {
+        // Transmission - SoundLink("TTychus03MoebiusMarine00021", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_uNITSite3Speaker, SoundLink("TTychus03MoebiusMarine00021", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     libNtve_gf_KillModel(lv_talkActor);
     TriggerEnable(gt_Site3MilitiaRescued, true);
@@ -3829,7 +4141,7 @@ bool gt_Site3MilitiaRescued_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)))) {
+        if (!(((UnitGroupCount(UnitGroup(null, gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterAir) | (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Medivac", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Hercules", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrismPhasing", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_WarpPrism", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || (UnitGroupCount(UnitGroup("AP_Yggdrasil", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) || ((UnitGroupCount(UnitGroup("AP_Overlord", gv_p01_USER, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0) && (TechTreeUpgradeCount(gv_p01_USER, "AP_overlordtransport", c_techCountQueuedOrBetter) >= 1))))) {
             return false;
         }
 
@@ -5154,14 +5466,23 @@ bool gt_TransmissionMedivacIntroQ_Func (bool testConds, bool runActions) {
         CameraPan(gv_p01_USER, RegionGetCenter(RegionFromId(35)), 3.0, -1, 10, true);
     }
 
-    // Transmission - SoundLink("TTychus03Narud00005", -1)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus03Narud00005", -1), c_transmissionDurationAdd, 0.0, true);
-    lv_talkActor = libNtve_gf_AttachModelToUnit(lv_chosenMedivac, "TalkIcon", "Origin");
-    UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/5ACED848"), null, lv_chosenMedivac);
-    // Transmission - SoundLink("TTychus03Medivac00010", -1)
-    libCamp_gf_SendTransmissionCampaign(lv_chosenMedivac, SoundLink("TTychus03Medivac00010", -1), c_transmissionDurationAdd, 0.0, true);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace != "Prot")) {
+        // Transmission - SoundLink("TTychus03Narud00005", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TTychus03Narud00005", -1), c_transmissionDurationAdd, 0.0, true);
+        UIAlertUnit("Trigger", gv_p01_USER, StringExternal("Param/Value/5ACED848"), null, lv_chosenMedivac);
+        // Transmission - SoundLink("TTychus03Medivac00010", -1)
+        libCamp_gf_SendTransmissionCampaign(lv_chosenMedivac, SoundLink("TTychus03Medivac00010", -1), c_transmissionDurationAdd, 0.0, true);
+        libNtve_gf_KillModel(lv_talkActor);
+    }
+    else {
+        // Transmission - SoundLink("TTychus03Narud00005", -1)
+        libCamp_gf_SendTransmissionCampaign(gv_medivac02, SoundLink("TTychus03Narud00005", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("TRaynor01Raynor00055", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor01Raynor00055", -1), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("THanson01Hanson00032", -1)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("THanson01Hanson00032", -1), c_transmissionDurationAdd, 0.0, true);
+    }
     libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    libNtve_gf_KillModel(lv_talkActor);
     TriggerQueueExit();
     return true;
 }
@@ -5312,6 +5633,10 @@ bool gt_TransmissionAliveInsideRescuedQ_Func (bool testConds, bool runActions) {
         if (!((gv_inCinematic == false))) {
             return false;
         }
+
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
+            return false;
+        }
     }
 
     // Actions
@@ -5349,6 +5674,10 @@ bool gt_TransmissionTheWallRescuedQ_Func (bool testConds, bool runActions) {
         }
 
         if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
             return false;
         }
     }
@@ -5395,6 +5724,10 @@ bool gt_TransmissionSite1MilitiaRescuedQ_Func (bool testConds, bool runActions) 
         if (!((gv_inCinematic == false))) {
             return false;
         }
+
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
+            return false;
+        }
     }
 
     // Actions
@@ -5435,6 +5768,10 @@ bool gt_TransmissionSite2MilitiaRescuedQ_Func (bool testConds, bool runActions) 
         if (!((gv_inCinematic == false))) {
             return false;
         }
+
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
+            return false;
+        }
     }
 
     // Actions
@@ -5472,6 +5809,10 @@ bool gt_TransmissionSite3MilitiaRescuedQ_Func (bool testConds, bool runActions) 
         }
 
         if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!(((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")))) {
             return false;
         }
     }
@@ -6371,6 +6712,55 @@ void gt_ArchInit_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Terr", false);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(6), "Terr", false);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, false);
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(6), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, false);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_p01_USER);
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_p01_USER);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            PlayerSetRace(gv_p01_USER, "Zerg");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM_SWITCHABLE_TO_PRIMAL_ZERG);
+            gv_uNITSite1Speaker = UnitFromId(1758883606);
+            gv_uNITSite2Speaker = UnitFromId(2010210499);
+            gv_uNITSite3Speaker = UnitFromId(1856429658);
+            gv_uNITWallSpeaker = UnitFromId(334103018);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+                PlayerSetRace(gv_p01_USER, "Prot");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_p01_USER, lib5BD4895D_gv_aP_Core_Faction_DAELAAM);
+                gv_uNITSite1Speaker = UnitFromId(125132978);
+                gv_uNITSite2Speaker = UnitFromId(552617609);
+                gv_uNITSite3Speaker = UnitFromId(998612816);
+                gv_uNITWallSpeaker = UnitFromId(117942605);
+            }
+
+        }
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+    TriggerAddEventGeneric(gt_FactionSwapInit, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Victory Q
 //--------------------------------------------------------------------------------------------------
 bool gt_VictoryQ_Func (bool testConds, bool runActions) {
@@ -7080,8 +7470,9 @@ void InitTriggers () {
     gt_StartGame_Init();
     gt_BrutaliskStumbledUpon_Init();
     gt_CreateMedivacIntro_Init();
+    gt_ScourgishInquisition1_Init();
+    gt_ScourgishInquisition2_Init();
     gt_IntroMedivacsFinished_Init();
-    gt_MedivacTrained_Init();
     gt_Site1DestructionComplete_Init();
     gt_Site1ActivateDefenses_Init();
     gt_Site1SubwaySpawns_Init();
@@ -7201,6 +7592,7 @@ void InitTriggers () {
     gt_ObjectiveRescueUpdate_Init();
     gt_ObjectiveRescueComplete_Init();
     gt_ArchInit_Init();
+    gt_FactionSwapInit_Init();
     gt_VictoryQ_Init();
     gt_VictorySetup_Init();
     gt_VictoryCinematic_Init();
