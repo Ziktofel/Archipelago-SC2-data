@@ -195,6 +195,7 @@ void gf_HybridDominatorAI (unit lp_hybrid);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_FactionSwapInit;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -933,6 +934,46 @@ bool auto_gf_HybridDominatorAI_TriggerFunc (bool testConds, bool runActions) {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), "Prot", false);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(5), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, true);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            PlayerSetRace(gv_pLAYER_01_USER, "Terr");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+            libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "AP_HaveGhostOrSpectreOrThorNuke", 1);
+            libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_01_USER, "AP_HaveGhostMengsk", 1);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+                PlayerSetRace(gv_pLAYER_01_USER, "Zerg");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+            }
+
+        }
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER_01_USER);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_pLAYER_01_USER);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: onDifficultyCasual
 //--------------------------------------------------------------------------------------------------
 bool gt_onDifficultyCasual_Func (bool testConds, bool runActions) {
@@ -1237,6 +1278,10 @@ void gt_TransferZergControlToPlayer_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup autoEC97AE3B_g;
+    int autoEC97AE3B_u;
+    unit autoEC97AE3B_var;
+
     // Actions
     if (!runActions) {
         return true;
@@ -1246,6 +1291,14 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
+    autoEC97AE3B_g = UnitGroup(null, gv_pLAYER_01_USER, null, UnitFilter(0, (1 << (c_targetFilterHasEnergy - 32)), (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoEC97AE3B_u = UnitGroupCount(autoEC97AE3B_g, c_unitCountAll);
+    for (;; autoEC97AE3B_u -= 1) {
+        autoEC97AE3B_var = UnitGroupUnitFromEnd(autoEC97AE3B_g, autoEC97AE3B_u);
+        if (autoEC97AE3B_var == null) { break; }
+        UnitSetPropertyFixed(autoEC97AE3B_var, c_unitPropEnergyPercent, 100.0);
+    }
+    TriggerExecute(gt_FactionSwapInit, true, true);
     TriggerExecute(gt_IntroQ, true, true);
     TriggerExecute(gt_StartGameStage1Q, true, false);
     return true;
@@ -7169,7 +7222,7 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_IntroCinematic, true, true);
         TriggerExecute(gt_IntroCinematicEnd, true, true);
     }
@@ -7442,7 +7495,7 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_MidSetup, true, true);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_MidCinematic, true, true);
         TriggerExecute(gt_MidCinematicEnd, true, true);
     }
@@ -8319,6 +8372,7 @@ void gt_VictoryExplosions_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_FactionSwapInit_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
