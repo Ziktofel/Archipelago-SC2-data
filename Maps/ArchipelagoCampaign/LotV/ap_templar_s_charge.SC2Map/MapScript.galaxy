@@ -6,9 +6,11 @@
 // 
 //==================================================================================================
 include "TriggerLibs/NativeLib"
+include "TriggerLibs/LibertyLib"
 include "TriggerLibs/VoidLib"
 include "TriggerLibs/VoidCampaignLib"
 include "TriggerLibs/VoidCampaignMissionLib"
+include "Lib15EF4C78"
 include "Lib30B9E51A"
 include "Lib5BD4895D"
 include "LibABFE498B"
@@ -19,9 +21,11 @@ include "aiCD4D0112"
 //--------------------------------------------------------------------------------------------------
 void InitLibs () {
     libNtve_InitLib();
+    libLbty_InitLib();
     libLotv_InitLib();
     libVoiC_InitLib();
     libVCMI_InitLib();
+    lib15EF4C78_InitLib();
     lib30B9E51A_InitLib();
     lib5BD4895D_InitLib();
     libABFE498B_InitLib();
@@ -170,6 +174,7 @@ void gf_IntroWaitForNexus (unit lp_neuxs);
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
 //--------------------------------------------------------------------------------------------------
+trigger gt_FactionSwapInit;
 trigger gt_onDifficultyCasual;
 trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
@@ -617,6 +622,10 @@ void gf_MovePlatform (int lp_nextLocation, fixed lp_direction) {
     Wait(1.75, c_timeGame);
     libVCMI_gf_SetWorkerRallyPointsPlayersNexuses(gv_pLAYER_01_USER);
     TriggerExecute(gt_EnableButtons, true, false);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+        CreepModify(gv_platformLocations[lp_nextLocation].lv_centerPoint, 8.0, true, false);
+    }
+
     autoB914CE5F_g = lv_enemyGroundUnits;
     autoB914CE5F_u = UnitGroupCount(autoB914CE5F_g, c_unitCountAll);
     for (;; autoB914CE5F_u -= 1) {
@@ -767,6 +776,44 @@ bool auto_gf_IntroWaitForNexus_TriggerFunc (bool testConds, bool runActions) {
         Wait(0.15, c_timeGame);
     }
     return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Faction Swap Init
+//--------------------------------------------------------------------------------------------------
+bool gt_FactionSwapInit_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(9), "Prot", false);
+    }
+    else {
+        libABFE498B_gv_aP_Triggers_skipCutscenes = true;
+        lib15EF4C78_gf_RemoveUnusedStartingUnits(UnitGroupFromId(9), libABFE498B_gv_aP_Triggers_Option_overridePlayerRace, true);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            PlayerSetRace(gv_pLAYER_01_USER, "Terr");
+            lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_RAYNORS_RAIDERS);
+        }
+        else {
+            if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+                PlayerSetRace(gv_pLAYER_01_USER, "Zerg");
+                lib5BD4895D_gf_AP_Core_MapConfig_setPlayerFaction(gv_pLAYER_01_USER, lib5BD4895D_gv_aP_Core_Faction_KERRIGAN_SWARM);
+            }
+
+        }
+        libLbty_gf_OrderWorkerstoGatherNearbyResources(RegionEntireMap(), gv_pLAYER_01_USER);
+        lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(gv_pLAYER_01_USER);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FactionSwapInit_Init () {
+    gt_FactionSwapInit = TriggerCreate("gt_FactionSwapInit_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1020,6 +1067,13 @@ void gt_SoutheastHybridStatisChamber_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_Initialization_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unitgroup auto8C916162_g;
+    int auto8C916162_u;
+    unit auto8C916162_var;
+    unitgroup auto4691D24F_g;
+    int auto4691D24F_u;
+    unit auto4691D24F_var;
+
     // Actions
     if (!runActions) {
         return true;
@@ -1029,6 +1083,22 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init04MusicSound, true, false);
     TriggerExecute(gt_Init05Environment, true, false);
     TriggerExecute(gt_Init06Difficulties, true, false);
+    auto8C916162_g = UnitGroup("Bunker", gv_pLAYER_02_DOMINION, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto8C916162_u = UnitGroupCount(auto8C916162_g, c_unitCountAll);
+    for (;; auto8C916162_u -= 1) {
+        auto8C916162_var = UnitGroupUnitFromEnd(auto8C916162_g, auto8C916162_u);
+        if (auto8C916162_var == null) { break; }
+        UnitCargoCreate(auto8C916162_var, "Marine", libLotv_gf_DifficultyValueInt2(3, 3, 4, 4));
+    }
+    auto4691D24F_g = UnitGroup("Bunker", gv_pLAYER_02_DOMINION2, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto4691D24F_u = UnitGroupCount(auto4691D24F_g, c_unitCountAll);
+    for (;; auto4691D24F_u -= 1) {
+        auto4691D24F_var = UnitGroupUnitFromEnd(auto4691D24F_g, auto4691D24F_u);
+        if (auto4691D24F_var == null) { break; }
+        UnitCargoCreate(auto4691D24F_var, "Marine", libLotv_gf_DifficultyValueInt2(3, 3, 4, 4));
+    }
+    TriggerExecute(gt_FactionSwapInit, true, false);
+    gv_platformNexus = lib15EF4C78_gf_AP_Player_getPrimaryTownHall(gv_pLAYER_01_USER);
     TriggerExecute(gt_IntroQ, true, true);
     TriggerExecute(gt_StartGameQ, true, false);
     return true;
@@ -1110,12 +1180,6 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
     unitgroup auto8AEDB5D8_g;
     int auto8AEDB5D8_u;
     unit auto8AEDB5D8_var;
-    unitgroup auto8C916162_g;
-    int auto8C916162_u;
-    unit auto8C916162_var;
-    unitgroup auto4691D24F_g;
-    int auto4691D24F_u;
-    unit auto4691D24F_var;
 
     // Actions
     if (!runActions) {
@@ -1132,20 +1196,6 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         auto8AEDB5D8_var = UnitGroupUnitFromEnd(auto8AEDB5D8_g, auto8AEDB5D8_u);
         if (auto8AEDB5D8_var == null) { break; }
         UnitMagazineArm(auto8AEDB5D8_var, AbilityCommand("CarrierHangar", 0), 4);
-    }
-    auto8C916162_g = UnitGroup("Bunker", gv_pLAYER_02_DOMINION, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-    auto8C916162_u = UnitGroupCount(auto8C916162_g, c_unitCountAll);
-    for (;; auto8C916162_u -= 1) {
-        auto8C916162_var = UnitGroupUnitFromEnd(auto8C916162_g, auto8C916162_u);
-        if (auto8C916162_var == null) { break; }
-        UnitCargoCreate(auto8C916162_var, "Marine", libLotv_gf_DifficultyValueInt2(3, 3, 4, 4));
-    }
-    auto4691D24F_g = UnitGroup("Bunker", gv_pLAYER_02_DOMINION2, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-    auto4691D24F_u = UnitGroupCount(auto4691D24F_g, c_unitCountAll);
-    for (;; auto4691D24F_u -= 1) {
-        auto4691D24F_var = UnitGroupUnitFromEnd(auto4691D24F_g, auto4691D24F_u);
-        if (auto4691D24F_var == null) { break; }
-        UnitCargoCreate(auto4691D24F_var, "Marine", libLotv_gf_DifficultyValueInt2(3, 3, 4, 4));
     }
     gv_hybridCellUnits[1] = UnitFromId(1265);
     gv_hybridCellUnits[2] = UnitFromId(1263);
@@ -1596,7 +1646,18 @@ void gt_PlatformInit_Init () {
 // Trigger: Platforrm Dialog Setup
 //--------------------------------------------------------------------------------------------------
 bool gt_PlatforrmDialogSetup_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_primaryStructureGroup;
+    string lv_buttonImage;
+
     // Automatic Variable Declarations
+    string auto2134CCBD_val;
+    string autoF5984852_val;
+    string autoFE05DB36_val;
+
+    // Variable Initialization
+    lv_primaryStructureGroup = UnitGroupEmpty();
+
     // Conditions
     if (testConds) {
         if (!((libVCMI_gf_GameIsOver() == false))) {
@@ -1614,11 +1675,23 @@ bool gt_PlatforrmDialogSetup_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    auto2134CCBD_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto2134CCBD_val == "Neut") {
+        lv_buttonImage = "Assets\\Textures\\ui_research_button_protoss_normalpressed.dds";
+    }
+    else if (auto2134CCBD_val == "Terr") {
+        lv_buttonImage = "Assets\\Textures\\ui_research_button_protoss_normalpressed.dds";
+    }
+    else if (auto2134CCBD_val == "Zerg") {
+        lv_buttonImage = "Assets\\Textures\\ui_research_button_zerg_normalpressed.dds";
+    }
+    else {
+    }
     DialogCreate(420, 120, c_anchorTopRight, 50, 75, false);
     gv_movingPlatform.lv_dialog = DialogLastCreated();
     libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 29, 23, StringExternal("Param/Value/65E28230"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
     gv_movingPlatform.lv_leftButton = DialogControlLastCreated();
-    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_leftButton, "Assets\\Textures\\ui_research_button_protoss_normalpressed.dds", PlayerGroupAll());
+    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_leftButton, lv_buttonImage, PlayerGroupAll());
     libNtve_gf_SetDialogItemImageType(gv_movingPlatform.lv_leftButton, c_triggerImageTypeNineSlice, PlayerGroupAll());
     DialogControlSetEnabled(gv_movingPlatform.lv_leftButton, PlayerGroupAll(), false);
     libNtve_gf_SetDialogItemDesaturated(gv_movingPlatform.lv_leftButton, true, PlayerGroupAll());
@@ -1629,7 +1702,7 @@ bool gt_PlatforrmDialogSetup_Func (bool testConds, bool runActions) {
     DialogControlFadeTransparency(gv_movingPlatform.lv_leftIcon, PlayerGroupAll(), 0.0, 50.0);
     libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 100, 23, StringExternal("Param/Value/00C778D9"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
     gv_movingPlatform.lv_downButton = DialogControlLastCreated();
-    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_downButton, "Assets\\Textures\\ui_research_button_protoss_normalpressed.dds", PlayerGroupAll());
+    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_downButton, lv_buttonImage, PlayerGroupAll());
     libNtve_gf_SetDialogItemImageType(gv_movingPlatform.lv_downButton, c_triggerImageTypeNineSlice, PlayerGroupAll());
     DialogControlSetEnabled(gv_movingPlatform.lv_downButton, PlayerGroupAll(), false);
     libNtve_gf_SetDialogItemDesaturated(gv_movingPlatform.lv_downButton, true, PlayerGroupAll());
@@ -1640,14 +1713,14 @@ bool gt_PlatforrmDialogSetup_Func (bool testConds, bool runActions) {
     DialogControlFadeTransparency(gv_movingPlatform.lv_downIcon, PlayerGroupAll(), 0.0, 50.0);
     libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 170, 23, StringExternal("Param/Value/390F85F3"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
     gv_movingPlatform.lv_upButton = DialogControlLastCreated();
-    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_upButton, "Assets\\Textures\\ui_research_button_protoss_normalpressed.dds", PlayerGroupAll());
+    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_upButton, lv_buttonImage, PlayerGroupAll());
     libNtve_gf_SetDialogItemImageType(gv_movingPlatform.lv_upButton, c_triggerImageTypeNineSlice, PlayerGroupAll());
     libNtve_gf_CreateDialogItemImage(gv_movingPlatform.lv_dialog, 60, 60, c_anchorTopLeft, 180, 33, StringToText(""), "Assets\\Textures\\aicommand_scout1.dds", c_triggerImageTypeNormal, false, Color(100,100,100), c_triggerBlendModeAdd);
     gv_movingPlatform.lv_upIcon = DialogControlLastCreated();
     libNtve_gf_SetDialogItemRotation(gv_movingPlatform.lv_upIcon, 270, PlayerGroupAll());
     libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 241, 23, StringExternal("Param/Value/B8916A75"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
     gv_movingPlatform.lv_rightButton = DialogControlLastCreated();
-    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_rightButton, "Assets\\Textures\\ui_research_button_protoss_normalpressed.dds", PlayerGroupAll());
+    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_rightButton, lv_buttonImage, PlayerGroupAll());
     libNtve_gf_SetDialogItemImageType(gv_movingPlatform.lv_rightButton, c_triggerImageTypeNineSlice, PlayerGroupAll());
     DialogControlSetEnabled(gv_movingPlatform.lv_rightButton, PlayerGroupAll(), false);
     libNtve_gf_SetDialogItemDesaturated(gv_movingPlatform.lv_rightButton, true, PlayerGroupAll());
@@ -1656,13 +1729,43 @@ bool gt_PlatforrmDialogSetup_Func (bool testConds, bool runActions) {
     gv_movingPlatform.lv_rightIcon = DialogControlLastCreated();
     libNtve_gf_SetDialogItemRotation(gv_movingPlatform.lv_rightIcon, 0, PlayerGroupAll());
     DialogControlFadeTransparency(gv_movingPlatform.lv_rightIcon, PlayerGroupAll(), 0.0, 50.0);
-    libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 310, 23, StringExternal("Param/Value/62E288E2"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
+    autoF5984852_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoF5984852_val == "Neut") {
+        libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 310, 23, StringExternal("Param/Value/62E288E2"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
+    }
+    else if (autoF5984852_val == "Terr") {
+        libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 310, 23, StringExternal("Param/Value/40F072C1"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
+    }
+    else if (autoF5984852_val == "Zerg") {
+        libNtve_gf_CreateDialogItemButton(gv_movingPlatform.lv_dialog, 80, 80, c_anchorTopLeft, 310, 23, StringExternal("Param/Value/D3D5264A"), StringToText(""), "Assets\\Textures\\ui_research_button_protoss_normaloverpressedover.dds");
+    }
+    else {
+    }
     gv_movingPlatform.lv_townBellButton = DialogControlLastCreated();
-    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_townBellButton, "Assets\\Textures\\ui_research_button_protoss_normalpressed.dds", PlayerGroupAll());
+    libNtve_gf_SetDialogItemImage(gv_movingPlatform.lv_townBellButton, lv_buttonImage, PlayerGroupAll());
     libNtve_gf_SetDialogItemImageType(gv_movingPlatform.lv_townBellButton, c_triggerImageTypeNineSlice, PlayerGroupAll());
-    libNtve_gf_CreateDialogItemImage(gv_movingPlatform.lv_dialog, 60, 60, c_anchorTopLeft, 320, 33, StringToText(""), "Assets\\Textures\\btn-unit-protoss-probe.dds", c_triggerImageTypeNormal, false, Color(100,100,100), c_triggerBlendModeAdd);
+    autoFE05DB36_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoFE05DB36_val == "Neut") {
+        libNtve_gf_CreateDialogItemImage(gv_movingPlatform.lv_dialog, 60, 60, c_anchorTopLeft, 320, 33, StringToText(""), "Assets\\Textures\\btn-unit-protoss-probe.dds", c_triggerImageTypeNormal, false, Color(100,100,100), c_triggerBlendModeAdd);
+    }
+    else if (autoFE05DB36_val == "Terr") {
+        libNtve_gf_CreateDialogItemImage(gv_movingPlatform.lv_dialog, 60, 60, c_anchorTopLeft, 320, 33, StringToText(""), "Assets\\Textures\\btn-unit-terran-scv.dds", c_triggerImageTypeNormal, false, Color(100,100,100), c_triggerBlendModeAdd);
+    }
+    else if (autoFE05DB36_val == "Zerg") {
+        libNtve_gf_CreateDialogItemImage(gv_movingPlatform.lv_dialog, 60, 60, c_anchorTopLeft, 320, 33, StringToText(""), "Assets\\Textures\\btn-unit-zerg-drone.dds", c_triggerImageTypeNormal, false, Color(100,100,100), c_triggerBlendModeAdd);
+    }
+    else {
+    }
     gv_movingPlatform.lv_recallProbesIcon = DialogControlLastCreated();
-    gv_platformNexus = UnitGroupUnit(UnitGroup("Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
+    lv_primaryStructureGroup = UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_CommandCenter", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_PlanetaryFortress", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_CommandCenterFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_PlanetaryFortressFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Hive", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Lair", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Hatchery", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    gv_platformNexus = UnitGroupUnit(lv_primaryStructureGroup, 1);
     if ((UnitIsAlive(gv_platformNexus) == false)) {
         TriggerExecute(gt_PlatformNexusDies, true, false);
     }
@@ -1719,6 +1822,9 @@ bool gt_PlatformButtonPressed_Func (bool testConds, bool runActions) {
 
     if ((EventDialogControl() == gv_movingPlatform.lv_townBellButton)) {
         lv_probeGroup = UnitGroup("AP_Probe", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_platformNexus), 15.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
+        UnitGroupAddUnitGroup(lv_probeGroup, UnitGroup("AP_SCV", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_platformNexus), 15.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0));
+        UnitGroupAddUnitGroup(lv_probeGroup, UnitGroup("AP_SISCV", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_platformNexus), 15.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0));
+        UnitGroupAddUnitGroup(lv_probeGroup, UnitGroup("AP_Drone", gv_pLAYER_01_USER, RegionCircle(UnitGetPosition(gv_platformNexus), 15.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0));
         if ((UnitGroupCount(lv_probeGroup, c_unitCountAlive) == 0)) {
             return true;
         }
@@ -1953,13 +2059,16 @@ void gt_RevealButtonsQ_Init () {
 // Trigger: Change Owner of Assimilator if Empty
 //--------------------------------------------------------------------------------------------------
 bool gt_ChangeOwnerofAssimilatorifEmpty_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_geyserStructureGroup;
+
     // Automatic Variable Declarations
-    unitgroup auto27D91F20_g;
-    int auto27D91F20_u;
-    unit auto27D91F20_var;
     unitgroup auto51A0BC80_g;
     int auto51A0BC80_u;
     unit auto51A0BC80_var;
+
+    // Variable Initialization
+    lv_geyserStructureGroup = UnitGroupEmpty();
 
     // Conditions
     if (testConds) {
@@ -1981,29 +2090,21 @@ bool gt_ChangeOwnerofAssimilatorifEmpty_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    if ((TechTreeUpgradeCount(gv_pLAYER_01_USER, "SOAAutoAssimilator", c_techCountCompleteOnly) == 1)) {
-        auto27D91F20_g = UnitGroup("AutomatedAssimilator", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-        auto27D91F20_u = UnitGroupCount(auto27D91F20_g, c_unitCountAll);
-        for (;; auto27D91F20_u -= 1) {
-            auto27D91F20_var = UnitGroupUnitFromEnd(auto27D91F20_g, auto27D91F20_u);
-            if (auto27D91F20_var == null) { break; }
-            if ((libNtve_gf_UnitGetPropertyResources(auto27D91F20_var, c_unitPropCurrent) == 0) && (DistanceBetweenPoints(UnitGetPosition(auto27D91F20_var), UnitGetPosition(gv_primaryNexus)) >= 20.0)) {
-                UnitSetOwner(auto27D91F20_var, gv_pLAYER_01_USER2, false);
-            }
-
+    lv_geyserStructureGroup = UnitGroup("AP_Assimilator", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    UnitGroupAddUnitGroup(lv_geyserStructureGroup, UnitGroup("AP_AutomatedAssimilator", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_geyserStructureGroup, UnitGroup("AP_Refinery", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_geyserStructureGroup, UnitGroup("AP_AutomatedRefinery", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_geyserStructureGroup, UnitGroup("AP_Extractor", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_geyserStructureGroup, UnitGroup("AP_AutomatedExtractor", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    auto51A0BC80_g = lv_geyserStructureGroup;
+    auto51A0BC80_u = UnitGroupCount(auto51A0BC80_g, c_unitCountAll);
+    for (;; auto51A0BC80_u -= 1) {
+        auto51A0BC80_var = UnitGroupUnitFromEnd(auto51A0BC80_g, auto51A0BC80_u);
+        if (auto51A0BC80_var == null) { break; }
+        if ((libNtve_gf_UnitGetPropertyResources(auto51A0BC80_var, c_unitPropCurrent) == 0) && (DistanceBetweenPoints(UnitGetPosition(auto51A0BC80_var), UnitGetPosition(gv_primaryNexus)) >= 20.0)) {
+            UnitSetOwner(auto51A0BC80_var, gv_pLAYER_01_USER2, false);
         }
-    }
-    else {
-        auto51A0BC80_g = UnitGroup("Assimilator", gv_pLAYER_01_USER, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
-        auto51A0BC80_u = UnitGroupCount(auto51A0BC80_g, c_unitCountAll);
-        for (;; auto51A0BC80_u -= 1) {
-            auto51A0BC80_var = UnitGroupUnitFromEnd(auto51A0BC80_g, auto51A0BC80_u);
-            if (auto51A0BC80_var == null) { break; }
-            if ((libNtve_gf_UnitGetPropertyResources(auto51A0BC80_var, c_unitPropCurrent) == 0) && (DistanceBetweenPoints(UnitGetPosition(auto51A0BC80_var), UnitGetPosition(gv_primaryNexus)) >= 20.0)) {
-                UnitSetOwner(auto51A0BC80_var, gv_pLAYER_01_USER2, false);
-            }
 
-        }
     }
     return true;
 }
@@ -2105,7 +2206,13 @@ void gt_RecallProbesEffectsExit_Init () {
 // Trigger: Platform Nexus Dies
 //--------------------------------------------------------------------------------------------------
 bool gt_PlatformNexusDies_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    unitgroup lv_primaryStructureGroup;
+
     // Automatic Variable Declarations
+    // Variable Initialization
+    lv_primaryStructureGroup = UnitGroupEmpty();
+
     // Conditions
     if (testConds) {
         if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
@@ -2126,7 +2233,15 @@ bool gt_PlatformNexusDies_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    gv_platformNexus = UnitGroupUnit(UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
+    lv_primaryStructureGroup = UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_CommandCenter", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_PlanetaryFortress", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_CommandCenterFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_PlanetaryFortressFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Hive", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Lair", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Hatchery", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    gv_platformNexus = UnitGroupUnit(lv_primaryStructureGroup, 1);
     if ((UnitIsAlive(gv_platformNexus) == true)) {
         return true;
     }
@@ -2135,10 +2250,18 @@ bool gt_PlatformNexusDies_Func (bool testConds, bool runActions) {
     libNtve_gf_SetDialogItemDesaturated(gv_movingPlatform.lv_townBellButton, true, PlayerGroupAll());
     DialogControlFadeTransparency(gv_movingPlatform.lv_townBellButton, PlayerGroupAll(), 0.0, 50.0);
     DialogControlFadeTransparency(gv_movingPlatform.lv_recallProbesIcon, PlayerGroupAll(), 0.0, 50.0);
-    while (!((UnitGroupCount(UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1))) {
+    while (!(((UnitGroupCount(UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) || (UnitGroupCount(UnitGroup("AP_CommandCenter", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) || (UnitGroupCount(UnitGroup("AP_CommandCenterFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) || (UnitGroupCount(UnitGroup("AP_PlanetaryFortress", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) || (UnitGroupCount(UnitGroup("AP_PlanetaryFortressFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) || (UnitGroupCount(UnitGroup("AP_Hive", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) || (UnitGroupCount(UnitGroup("AP_Lair", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) || (UnitGroupCount(UnitGroup("AP_Hatchery", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterUnderConstruction - 32)) | (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1)))) {
         Wait(1.0, c_timeAI);
     }
-    gv_platformNexus = UnitGroupUnit(UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), 1);
+    lv_primaryStructureGroup = UnitGroup("AP_Nexus", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_CommandCenter", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_PlanetaryFortress", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_CommandCenterFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_PlanetaryFortressFlying", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Hive", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Lair", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    UnitGroupAddUnitGroup(lv_primaryStructureGroup, UnitGroup("AP_Hatchery", gv_pLAYER_01_USER, RegionFromId(1), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+    gv_platformNexus = UnitGroupUnit(lv_primaryStructureGroup, 1);
     TriggerExecute(gt_EnableButtons, true, false);
     return true;
 }
@@ -3818,7 +3941,7 @@ bool gt_IntroQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     TriggerExecute(gt_IntroSetup, true, true);
-    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
+    if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
         TriggerExecute(gt_IntroCinematic, true, true);
         TriggerExecute(gt_IntroCinematicEnd, true, true);
     }
@@ -4434,6 +4557,7 @@ void gt_VictoryCleanup_Init () {
 // Trigger Initialization
 //--------------------------------------------------------------------------------------------------
 void InitTriggers () {
+    gt_FactionSwapInit_Init();
     gt_onDifficultyCasual_Init();
     gt_onDifficultyNormal_Init();
     gt_onDifficultyHard_Init();
