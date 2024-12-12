@@ -81,6 +81,17 @@ bool libA472B13C_gf_AP_HotS_CanPlayerAutoHarvest (int lp_player) {
     }
 }
 
+void libA472B13C_gf_updateDamageMultipliers () {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((TechTreeUpgradeCount(1, "InCinematic", c_techCountCompleteOnly) == 1)) {
+        libSwaC_gf_DifficultySetting(2);
+    }
+    else {
+        libSwaC_gf_DifficultySetting(PlayerDifficulty(1));
+    }
+}
+
 // Triggers
 //--------------------------------------------------------------------------------------------------
 // Trigger: AP_HotS_Constructor
@@ -205,12 +216,56 @@ void libA472B13C_gt_AP_Player_onKerriganRevived_Init () {
     TriggerAddEventUnitRevive(libA472B13C_gt_AP_Player_onKerriganRevived, null);
 }
 
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDamageMultiplierEnabled
+//--------------------------------------------------------------------------------------------------
+bool libA472B13C_gt_onDamageMultiplierEnabled_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    libA472B13C_gf_updateDamageMultipliers();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void libA472B13C_gt_onDamageMultiplierEnabled_Init () {
+    libA472B13C_gt_onDamageMultiplierEnabled = TriggerCreate("libA472B13C_gt_onDamageMultiplierEnabled_Func");
+    TriggerAddEventGeneric(libA472B13C_gt_onDamageMultiplierEnabled, "AP_Triggers_DifficultyDamageModifierEnabledEvent");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDamageMultiplierDisabled
+//--------------------------------------------------------------------------------------------------
+bool libA472B13C_gt_onDamageMultiplierDisabled_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UserDataSetFixed("DifficultySettings", "Casual", "DamageTakenRatio", 1, 1.0);
+    UserDataSetFixed("DifficultySettings", "Brutal", "DamageTakenRatio", 1, 1.0);
+    libA472B13C_gf_updateDamageMultipliers();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void libA472B13C_gt_onDamageMultiplierDisabled_Init () {
+    libA472B13C_gt_onDamageMultiplierDisabled = TriggerCreate("libA472B13C_gt_onDamageMultiplierDisabled_Func");
+    TriggerAddEventGeneric(libA472B13C_gt_onDamageMultiplierDisabled, "AP_Triggers_DifficultyDamageModifierDisabledEvent");
+}
+
 void libA472B13C_InitTriggers () {
     libA472B13C_gt_AP_HotS_Constructor_Init();
     libA472B13C_gt_onPrimaryTownHallInit_Init();
     libA472B13C_gt_onPrimaryTownHallSet_Init();
     libA472B13C_gt_onPrimaryTownHallAfterDeathFound_Init();
     libA472B13C_gt_AP_Player_onKerriganRevived_Init();
+    libA472B13C_gt_onDamageMultiplierEnabled_Init();
+    libA472B13C_gt_onDamageMultiplierDisabled_Init();
 }
 
 //--------------------------------------------------------------------------------------------------

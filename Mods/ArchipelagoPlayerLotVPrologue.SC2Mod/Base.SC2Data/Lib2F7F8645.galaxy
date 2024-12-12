@@ -1,4 +1,5 @@
 include "TriggerLibs/NativeLib"
+include "LibA3DDD02B"
 include "Lib15EF4C78"
 
 include "Lib2F7F8645_h"
@@ -9,7 +10,20 @@ include "Lib2F7F8645_h"
 // External Library Initialization
 void lib2F7F8645_InitLibraries () {
     libNtve_InitVariables();
+    libA3DDD02B_InitVariables();
     lib15EF4C78_InitVariables();
+}
+
+// Functions
+void lib2F7F8645_gf_updateDamageMultipliers () {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((TechTreeUpgradeCount(1, "InCinematic", c_techCountCompleteOnly) == 1)) {
+        libA3DDD02B_gf_DifficultySetting(2);
+    }
+    else {
+        libA3DDD02B_gf_DifficultySetting(PlayerDifficulty(1));
+    }
 }
 
 // Triggers
@@ -33,8 +47,52 @@ void lib2F7F8645_gt_AP_Player_LotVPrologueConstructor_Init () {
     lib2F7F8645_gt_AP_Player_LotVPrologueConstructor = TriggerCreate("lib2F7F8645_gt_AP_Player_LotVPrologueConstructor_Func");
 }
 
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDamageMultiplierEnabled
+//--------------------------------------------------------------------------------------------------
+bool lib2F7F8645_gt_onDamageMultiplierEnabled_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    lib2F7F8645_gf_updateDamageMultipliers();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib2F7F8645_gt_onDamageMultiplierEnabled_Init () {
+    lib2F7F8645_gt_onDamageMultiplierEnabled = TriggerCreate("lib2F7F8645_gt_onDamageMultiplierEnabled_Func");
+    TriggerAddEventGeneric(lib2F7F8645_gt_onDamageMultiplierEnabled, "AP_Triggers_DifficultyDamageModifierEnabledEvent");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDamageMultiplierDisabled
+//--------------------------------------------------------------------------------------------------
+bool lib2F7F8645_gt_onDamageMultiplierDisabled_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UserDataSetFixed("DifficultySettings", "Casual", "DamageTakenRatio", 1, 1.0);
+    UserDataSetFixed("DifficultySettings", "Brutal", "DamageTakenRatio", 1, 1.0);
+    lib2F7F8645_gf_updateDamageMultipliers();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void lib2F7F8645_gt_onDamageMultiplierDisabled_Init () {
+    lib2F7F8645_gt_onDamageMultiplierDisabled = TriggerCreate("lib2F7F8645_gt_onDamageMultiplierDisabled_Func");
+    TriggerAddEventGeneric(lib2F7F8645_gt_onDamageMultiplierDisabled, "AP_Triggers_DifficultyDamageModifierDisabledEvent");
+}
+
 void lib2F7F8645_InitTriggers () {
     lib2F7F8645_gt_AP_Player_LotVPrologueConstructor_Init();
+    lib2F7F8645_gt_onDamageMultiplierEnabled_Init();
+    lib2F7F8645_gt_onDamageMultiplierDisabled_Init();
 }
 
 //--------------------------------------------------------------------------------------------------

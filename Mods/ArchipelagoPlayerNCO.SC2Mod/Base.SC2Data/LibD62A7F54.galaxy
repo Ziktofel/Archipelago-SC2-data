@@ -39,6 +39,19 @@ void libD62A7F54_gf_killFlashing () {
     TriggerEnable(libNCUI_gt_NU_HealthWatchBreathLoop, false);
 }
 
+void libD62A7F54_gf_updateDamageMultipliers () {
+    // Variable Declarations
+    int lv_difficulty;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_difficulty = 2;
+
+    // Implementation
+    lv_difficulty = PlayerDifficulty(1);
+    libCMMI_gf_DifficultySetting(lv_difficulty);
+}
+
 // Triggers
 //--------------------------------------------------------------------------------------------------
 // Trigger: AP_Player_NCOConstructor
@@ -146,11 +159,55 @@ void libD62A7F54_gt_DominationRemoveStealthAI_Init () {
     TriggerAddEventUnitAbility(libD62A7F54_gt_DominationRemoveStealthAI, null, AbilityCommand("AP_NovaHelmetDomination", 0), c_unitAbilStageComplete, false);
 }
 
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDamageMultiplierEnabled
+//--------------------------------------------------------------------------------------------------
+bool libD62A7F54_gt_onDamageMultiplierEnabled_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    libD62A7F54_gf_updateDamageMultipliers();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void libD62A7F54_gt_onDamageMultiplierEnabled_Init () {
+    libD62A7F54_gt_onDamageMultiplierEnabled = TriggerCreate("libD62A7F54_gt_onDamageMultiplierEnabled_Func");
+    TriggerAddEventGeneric(libD62A7F54_gt_onDamageMultiplierEnabled, "AP_Triggers_DifficultyDamageModifierEnabledEvent");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: onDamageMultiplierDisabled
+//--------------------------------------------------------------------------------------------------
+bool libD62A7F54_gt_onDamageMultiplierDisabled_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UserDataSetFixed("DifficultySettings", "Casual", "DamageTakenRatio", 1, 1.0);
+    UserDataSetFixed("DifficultySettings", "Brutal", "DamageTakenRatio", 1, 1.0);
+    libD62A7F54_gf_updateDamageMultipliers();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void libD62A7F54_gt_onDamageMultiplierDisabled_Init () {
+    libD62A7F54_gt_onDamageMultiplierDisabled = TriggerCreate("libD62A7F54_gt_onDamageMultiplierDisabled_Func");
+    TriggerAddEventGeneric(libD62A7F54_gt_onDamageMultiplierDisabled, "AP_Triggers_DifficultyDamageModifierDisabledEvent");
+}
+
 void libD62A7F54_InitTriggers () {
     libD62A7F54_gt_AP_Player_NCOConstructor_Init();
     libD62A7F54_gt_AP_Player_NCO_FlashingKiller_Init();
     libD62A7F54_gt_AP_Player_NCO_SetupNovaPresentForAll_Init();
     libD62A7F54_gt_DominationRemoveStealthAI_Init();
+    libD62A7F54_gt_onDamageMultiplierEnabled_Init();
+    libD62A7F54_gt_onDamageMultiplierDisabled_Init();
 }
 
 //--------------------------------------------------------------------------------------------------
