@@ -7704,17 +7704,25 @@
         <On Terms="WeaponStart.*.AttackStart; AnimPlaying Birth" Send="AnimClear Birth"/>
         <On Terms="Abil.attack.ReadyStop" Target="AP_ArchonAttackBeam" Send="Destroy"/>
         <On Terms="Abil.attack.ReadyStart" Send="AnimGroupApply Ready"/>
-        <On Terms="WeaponStart.*.AttackStart; WeaponTargetElevation GE 20.000000" Send="AnimBracketStart Attack Attack,Superior"/>
-        <On Terms="WeaponStart.*.AttackStart; WeaponTargetElevation LE -20.000000" Send="AnimBracketStart Attack Attack,Inferior"/>
-        <On Terms="WeaponStart.*.AttackStart" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="WeaponStart.AP_PsionicShockwave.AttackStart; WeaponTargetElevation GE 20.000000" Send="AnimBracketStart Attack Attack,Superior"/>
+        <On Terms="WeaponStart.AP_PsionicShockwave.AttackStart; WeaponTargetElevation LE -20.000000" Send="AnimBracketStart Attack Attack,Inferior"/>
+        <On Terms="WeaponStart.AP_PsionicShockwave.AttackStart" Send="AnimBracketStart Attack Attack"/>
         <On Terms="WeaponStop.*.AttackStop" Send="AnimBracketStop Attack"/>
         <On Terms="Abil.attack.ReadyStop" Send="AnimGroupRemove Ready"/>
         <On Terms="Abil.AP_HighArchonPsiStormArchon.SourceCastStart" Send="AnimPlay A Spell,A"/>
+        <On Terms="Abil.Ap_ArchonSiphon.SourceCastStart" Send="AnimBracketStart AP_ArchonSiphon Spell,A Spell,Channel Stand,Work,End"/>
+        <On Terms="Abil.Ap_ArchonSiphon.SourceChannelStop" Send="AnimBracketStop AP_ArchonSiphon"/>
+        <On Terms="UnitMovementUpdate.*.Walk" Send="AnimClear AP_ArchonSiphon"/>
+        <On Terms="Abil.Ap_ArchonSiphon.SourceCancel" Send="AnimClear AP_ArchonSiphon"/>
+        <On Terms="WeaponStart.AP_PsionicShockwaveUpgrade.AttackStart; WeaponTargetElevation GE 20.000000" Send="AnimBracketStart Attack Attack,Superior,01"/>
+        <On Terms="WeaponStart.AP_PsionicShockwaveUpgrade.AttackStart; WeaponTargetElevation LE -20.000000" Send="AnimBracketStart Attack Attack,Inferior,01"/>
+        <On Terms="WeaponStart.AP_PsionicShockwaveUpgrade.AttackStart" Send="AnimBracketStart Attack Attack,01"/>
         <Model value="Archon"/>
         <BuildModel value="Archon"/>
         <DeathArray index="Normal" ModelLink="ArchonDeath" SoundLink="Archon_Explode"/>
         <DeathArray index="UnderConstruction" ModelLink="ProtossMediumUnitDeath" SoundLink="Archon_Explode"/>
         <DeathCustoms ModelLink="HallucinationDeath" SoundLink="Sentry_HallucinationDeathLarge" Name="Hallucination"/>
+        <DeathActorModel value="AP_ArchonDeathModel"/>
         <PlacementModel value="Archon"/>
         <PortraitModel value="ArchonPortrait"/>
         <BarOffset value="120"/>
@@ -42456,4 +42464,146 @@
         <On Terms="ActorCreation" Send="SetScale 0.100000"/>
         <HostSiteOps Ops="SOpAttachTarget"/>
     </CActorModel>
+    <CActorSiteOpLocalOffset id="AP_SOpArchonWeaponUpgradeOffset">
+        <EditorCategories value=""/>
+        <LocalOffset value="0.000000,0.000000,0.200000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorAction id="AP_ArchonAttackUpgrade" parent="GenericAttack" effectAttack="AP_PsionicShockwaveDamageUpgrade">
+        <LaunchAssets Sound="AP_Archon_AttackLaunchUpgrade"/>
+        <BeamScope value="Caster"/>
+        <ImpactSiteOps Ops="SOpAttachCenter"/>
+        <ImpactMap index="None" Model="AP_KhaydarinBeamAttackImpact" Sound="Archon_AttackImpact"/>
+        <ShieldFlashType value="Full"/>
+        <ActionFlags index="ImpactMonitorsTeleports" value="1"/>
+    </CActorAction>
+    <CActorBeamSimple id="AP_ArchonAttackUpgradeBeam" parent="BeamSimpleAnimationStyleOneShot">
+        <Macros value="ActionTargetTeleportDestroy"/>
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death ContentPlayOnce"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death ContentPlayOnce 2.000000 AsTimeScale"/>
+        <Model value="AP_ArchonAttackUpgradeBeam"/>
+        <Scale value="1.200000"/>
+    </CActorBeamSimple>
+    <CActorModel id="AP_ArchonFloatModel" parent="ModelAddition">
+        <EditorCategories value=""/>
+        <On Terms="Behavior.AP_ArchonFloat.On" Send="Create"/>
+        <On Terms="Behavior.AP_ArchonFloat.Off" Send="Destroy"/>
+        <On Terms="UnitBirth.AP_Archon.EditorPlaced" Send="Create"/>
+        <On Terms="ActorCreation" Send="SetTintColor {64,64,255 1.200000}"/>
+        <On Terms="ActorCreation" Send="AnimSetTimeScaleGlobal 0.200000 BSD"/>
+        <HostSiteOps Ops="AP_SOpArchonFloatOffset AP_SOpArchonFloatRotation"/>
+        <Model value="AP_FenixWhirlwindModel"/>
+        <Scale value="0.500000"/>
+    </CActorModel>
+    <CActorBeamSimple id="AP_ArchonSiphonBeam" parent="BeamSimpleAnimationStyleContinuous">
+        <Inherits index="Visibility" value="1"/>
+        <EditorCategories value=""/>
+        <Supporter Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <Remove Terms="ActorOrphan" Send="AnimBracketStop BSD"/>
+        <Remove Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="AnimPlay AP_ArchonSiphonBeam Birth 0 -1.000000 -1.000000 2.000000 AsTimeScale"/>
+        <On Terms="AnimDone; AnimName AP_ArchonSiphonBeam; HasStatus destroy" Send="Destroy"/>
+        <On Terms="Effect.AP_ArchonSiphonPersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_ArchonSiphonPersistent.Stop" Send="StatusSet destroy 1"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.250000 AP_ArchonSiphon"/>
+        <On Terms="TimerExpired; TimerName AP_ArchonSiphon; !HasStatus destroy" Send="AnimPlay AP_ArchonSiphon Birth 0 -1.000000 -1.000000 2.000000 AsTimeScale"/>
+        <On Terms="TimerExpired; TimerName AP_ArchonSiphon; !HasStatus destroy" Send="TimerSet 0.250000 AP_ArchonSiphon"/>
+        <On Terms="ActorCreation" Send="SetTintColor {64,255,255 1.500000}"/>
+        <Model value="AP_DarkArchonMindControlBeam"/>
+        <HostLaunch>
+            <Subject value="_Unit"/>
+            <Scope value="Target"/>
+            <Actor value="Find"/>
+            <Effect value="AP_ArchonSiphonPersistent"/>
+        </HostLaunch>
+        <HostLaunchSiteOps Ops="SOpAttachCenter"/>
+        <HostImpact>
+            <Subject value="_Unit"/>
+            <Scope value="Caster"/>
+            <Actor value="Find"/>
+            <Effect value="AP_ArchonSiphonPersistent"/>
+        </HostImpact>
+        <HostImpactSiteOps Ops="SOpAttachCenter AP_SOpArchonSiphonOffset"/>
+    </CActorBeamSimple>
+    <CActorModel id="AP_ArchonSiphonModel" parent="ModelAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_ArchonSiphonModify.Start" Send="Create"/>
+        <Host Subject="_Unit" Scope="Caster"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <Model value="ProtossShieldFull"/>
+        <Scale value="1.500000"/>
+    </CActorModel>
+    <CActorSound id="AP_ArchonSiphonSound" parent="SoundContinuous">
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_ArchonSiphonPersistent.Start" Send="Create"/>
+        <On Terms="Effect.AP_ArchonSiphonPersistent.Stop" Send="Destroy"/>
+        <Host Subject="_Unit"/>
+        <Sound value="AP_ArchonSiphon"/>
+    </CActorSound>
+    <CActorSiteOpLocalOffset id="AP_SOpArchonFloatOffset">
+        <EditorCategories value=""/>
+        <LocalOffset value="0.000000,0.000000,0.500000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteOpLocalOffset id="AP_SOpArchonSiphonOffset">
+        <EditorCategories value=""/>
+        <LocalOffset value="0.000000,-1.300000,0.300000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteOpRotationExplicit id="AP_SOpArchonFloatRotation">
+        <EditorCategories value=""/>
+        <Forward value="0.000000,-1.000000,0.000000"/>
+        <Up value="0.000000,0.000000,-1.000000"/>
+        <IsLocal value="1"/>
+    </CActorSiteOpRotationExplicit>
+    <CActorModel id="AP_ArchonAttackUpgradeImpact" parent="ModelAnimationStyleOneShot">
+        <AcceptedHostedPropTransfers index="BaseModelScale" value="0"/>
+        <AcceptedHostedPropTransfers index="Scale" value="0"/>
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_PsionicShockwaveDamageUpgrade.Start; At Target" Send="Create"/>
+        <HostSiteOps Ops="AP_SOpArchonWeaponUpgradeOffset"/>
+        <Model value="AP_AdeptSoulMissileImpact"/>
+        <Scale value="1.500000,1.500000,1.000000"/>
+    </CActorModel>
+    <CActorAction id="AP_ArchonSuicide" parent="GenericAttack" effectAttack="AP_ArchonSuicideDamage">
+        <DamageMap index="None" Sound="AP_Nova_PlasmaBlast_Impact"/>
+        <ImpactSiteOps Ops="SOpAttachCenter"/>
+        <ShieldFlashType value="Full"/>
+    </CActorAction>
+    <CActorModel id="AP_ArchonSuicideImpact" parent="ModelAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_ArchonSuicideImpact.Start; At Target" Send="Create"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.062500 AP_ArchonSuicideForce"/>
+        <On Terms="TimerExpired; TimerName AP_ArchonSuicideForce" Send="Create AP_ArchonSuicideForce"/>
+        <Model value="AP_ArchonSuicideImpact"/>
+        <Scale value="0.100000,0.100000,1.000000"/>
+    </CActorModel>
+    <CActorForceSphere id="AP_ArchonSuicideForce">
+        <Duration value="8.000000"/>
+        <Magnitude value="40.000000,7.500000"/>
+        <Radius value="2.000000"/>
+    </CActorForceSphere>
+    <CActorSound id="AP_ArchonSuicideLaunchSound" parent="SoundOneShot">
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_ArchonSuicideLaunch.Start; At Caster" Send="Create"/>
+        <Sound value="AP_ArchonSuicideLaunchSound"/>
+    </CActorSound>
+    <CActorMissile id="AP_ArchonSuicideMissile" parent="GenericAttackMissile" unitName="AP_ArchonSuicideMissile">
+        <EditorCategories value=""/>
+        <Remove Terms="UnitBirth" Send="AnimBracketStart Lifetime Birth Stand"/>
+        <On Terms="UnitBirth" Send="AnimBracketStart Lifetime Stand,Work,Start Stand,Work Stand,Work,End"/>
+        <Model value="Archon"/>
+    </CActorMissile>
+    <CActorModel id="AP_ArchonDeathModel" parent="UnitDeathModel">
+        <On Terms="Effect.AP_ArchonSuicideLaunch.Start" Send="SetVisibility"/>
+    </CActorModel>
+    <CActorModel id="AP_ArchonSuicideImpact2" parent="ModelAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <Remove Terms="ActorOrphan" Send="AnimBracketStop BSD"/>
+        <Remove Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <On Terms="ActorCreation" Send="AnimPlay AP_ArchonSuicide Death"/>
+        <On Terms="AnimDone; AnimName AP_ArchonSuicide" Send="Destroy"/>
+        <On Terms="Effect.AP_ArchonSuicideImpact.Start; At Target" Send="Create"/>
+        <Model value="ArchonDeath"/>
+    </CActorModel>
+    <CActorRange id="AP_ArchonSiphonRange" parent="RangeAbil" abil="Ap_ArchonSiphon"/>
 </Catalog>
