@@ -139,6 +139,7 @@ timer gv_s3_TramTimer;
 unitgroup gv_s3_TramAttackGroup;
 unitgroup gv_s3_TramEngineGroup;
 int gv_s3_TramEnginesDestroyed;
+bool gv_s4_ArchangelWantsToLand;
 int gv_s4_ArchangelBossBar;
 fixed gv_s4_Archangel_CURRENT_HEALTH;
 fixed gv_s4_Archangel_MAX_HEALTH;
@@ -268,6 +269,7 @@ void gf_ReviveRaynor ();
 void gf_TramAttackAir (int lp_number, string lp_unitType, region lp_originRegion);
 void gf_TramAttackAirDumb (int lp_number, string lp_unitType, region lp_originRegion);
 void gf_TramAttackDropship (int lp_numberUnit01, int lp_numberUnit02, string lp_cargoUnitType01, string lp_cargoUnitType02, region lp_originRegion, point lp_dropPoint);
+void gf_ArchangelLandSafeguard (int lp_stage);
 void gf_ShuffleBarrageLocations ();
 void gf_ResetBarrageLocations ();
 void gf_DoMissileBarrage (point lp_targetPoint);
@@ -801,6 +803,32 @@ bool auto_gf_TramAttackDropship_TriggerFunc (bool testConds, bool runActions) {
         }
 
     }
+    return true;
+}
+
+trigger auto_gf_ArchangelLandSafeguard_Trigger = null;
+int auto_gf_ArchangelLandSafeguard_lp_stage;
+
+void gf_ArchangelLandSafeguard (int lp_stage) {
+    auto_gf_ArchangelLandSafeguard_lp_stage = lp_stage;
+
+    if (auto_gf_ArchangelLandSafeguard_Trigger == null) {
+        auto_gf_ArchangelLandSafeguard_Trigger = TriggerCreate("auto_gf_ArchangelLandSafeguard_TriggerFunc");
+    }
+
+    TriggerExecute(auto_gf_ArchangelLandSafeguard_Trigger, false, false);
+}
+
+bool auto_gf_ArchangelLandSafeguard_TriggerFunc (bool testConds, bool runActions) {
+    int lp_stage = auto_gf_ArchangelLandSafeguard_lp_stage;
+
+    // Automatic Variable Declarations
+    // Implementation
+    Wait(60.0, c_timeGame);
+    if ((gv_s4_ArchangelWantsToLand == true) && (gv_s4_ArchangelStage == lp_stage)) {
+        UnitKill(gv_kerrigan22);
+    }
+
     return true;
 }
 
@@ -9142,7 +9170,9 @@ bool gt_ArchangelBombingRun_Func (bool testConds, bool runActions) {
     }
     else {
     }
+    gv_s4_ArchangelWantsToLand = true;
     gv_s4_ArchangelStage += 1;
+    gf_ArchangelLandSafeguard(gv_s4_ArchangelStage);
     return true;
 }
 
@@ -9180,6 +9210,7 @@ bool gt_ArchangelLands_Func (bool testConds, bool runActions) {
     }
 
     gv_s4_ArchangelFlying = false;
+    gv_s4_ArchangelWantsToLand = false;
     UnitSetPropertyFixed(gv_kerrigan22, c_unitPropMovementSpeed, 0.0);
     libNtve_gf_MakeUnitInvulnerable(gv_kerrigan22, false);
     UnitSetState(gv_kerrigan22, c_unitStateHighlightable, true);
