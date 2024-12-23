@@ -13521,6 +13521,7 @@
         <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death ContentPlayOnce"/>
         <On Terms="ActorOrphan" Send="Destroy"/>
         <On Terms="AnimBracketState.*.AfterClosing; AnimName BSD" Send="Destroy"/>
+        <On Terms="ActorCreation; ValidateUnit AP_SourceIsInterceptorTaldarim" Send="SetTintColor 255,40,20"/>
         <On Terms="ActorCreation; ValidateUnit AP_NoDarkProtoss" Send="ModelSwap DarkInterceptorAttackBeam"/>
         <Model value="InterceptorAttackBeam"/>
     </CActorBeamSimple>
@@ -22656,6 +22657,16 @@
         <On Terms="AbilTrain.AP_StargateTrainRedirect.Cancel" Target="AP_PhoenixTaldarimWarpInStargate" Send="Destroy"/>
         <On Terms="AbilTrain.AP_StargateTrain.Finish" Target="AP_PhoenixTaldarimWarpInStargate" Send="Destroy"/>
         <On Terms="AbilTrain.AP_StargateTrainRedirect.Finish" Target="AP_PhoenixTaldarimWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Start; AbilTrainProduced AP_TempestTaldarim; !ValidateUnit HasNoPower" Send="Create AP_TempestTaldarimWarpInStargate"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Start; AbilTrainProduced AP_TempestTaldarim; !ValidateUnit HasNoPower" Send="Create AP_TempestTaldarimWarpInStargate"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Start; AbilTrainProduced AP_TempestTaldarim" Send="StatusSet WarpingIn 19"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Start; AbilTrainProduced AP_TempestTaldarim" Send="StatusSet WarpingIn 19"/>
+        <On Terms="BehaviorLevel.PowerUserQueue.Stop; Level 0; IsStatus WarpingIn 19" Send="Create AP_TempestTaldarimWarpInStargate"/>
+        <On Terms="BehaviorLevel.PowerUserQueue.Start; Level 0" Target="AP_TempestTaldarimWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Cancel" Target="AP_TempestTaldarimWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Cancel" Target="AP_TempestTaldarimWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrain.Finish" Target="AP_TempestTaldarimWarpInStargate" Send="Destroy"/>
+        <On Terms="AbilTrain.AP_StargateTrainRedirect.Finish" Target="AP_TempestTaldarimWarpInStargate" Send="Destroy"/>
         <On Terms="Upgrade.AP_DarkProtoss.Add" Send="ModelSwap StargateTaldarim 255 PreventAllDynamicTextureTransfers"/>
         <On Terms="UnitBirth; ValidateUnit AP_NoDarkProtoss" Send="ModelSwap StargateTaldarim 255 PreventAllDynamicTextureTransfers"/>
         <On Terms="UnitDeathCustomize; ValidateUnit AP_NoDarkProtoss" Send="DeathCustomize DarkProtoss"/>
@@ -22768,6 +22779,14 @@
         <On Terms="Behavior.AP_SOASuperChrono.Off" Send="AnimSetTimeScale BSD 1.000000"/>
     </CActorModel>
     <CActorModel id="AP_TempestPurifierWarpInStargate" parent="ModelAddition">
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <On Terms="UnitDeathCustomize" Send="Destroy"/>
+        <On Terms="ActorCreation; ValidateUnit AP_IsChronoSurged" Send="AnimSetTimeScale BSD 0.200000"/>
+        <On Terms="Behavior.AP_SOASuperChrono.On" Send="AnimSetTimeScale BSD 0.200000"/>
+        <On Terms="Behavior.AP_SOASuperChrono.Off" Send="AnimSetTimeScale BSD 1.000000"/>
+    </CActorModel>
+    <CActorModel id="AP_TempestTaldarimWarpInStargate" parent="ModelAddition">
+        <Model value="Tempest_Taldarim_WarpInStargate"/>
         <HostSiteOps Ops="SOpAttachCenter"/>
         <On Terms="UnitDeathCustomize" Send="Destroy"/>
         <On Terms="ActorCreation; ValidateUnit AP_IsChronoSurged" Send="AnimSetTimeScale BSD 0.200000"/>
@@ -23486,6 +23505,7 @@
         <HostOffsetSiteOps Ops="SOpAttachWeaponSoft"/>
     </CActorSiteOpHostedOffset>
     <CActorRange id="AP_SOAMothershipBlinkRange" parent="RangeAbil" abil="AP_SOAMothershipBlink"/>
+    <CActorRange id="AP_SkylancerBlinkRange" parent="RangeAbil" abil="AP_SkylancerBlink"/>
     <CActorModel id="AP_ProtossGuideVisualQuadRedLaunch" parent="GuideVisualQuadModel">
         <Model value="ProtossGuideVisualQuadRedLaunch"/>
         <ModelFlags index="AutomateGlobalLoops" value="1"/>
@@ -23537,6 +23557,7 @@
     <CActorModel id="AP_SOAMothershipBlinkStrikeIn" parent="ModelAnimationStyleOneShot">
         <On Terms="Effect.AP_SOAMothershipBlinkStrikeTeleport.Start" Send="Create"/>
         <On Terms="Effect.AP_SOAMothershipBlinkTeleport.Start" Send="Create"/>
+        <On Terms="ActorCreation; ValidateCreationEffect AP_CasterIsTempestTaldarim" Send="SetScale 0.5"/>
         <On Terms="ActorCreation" Send="AnimSetTimeScale BSD 2.000000"/>
         <Host Subject="_Unit"/>
         <HostSiteOps Ops="SOpAttachOrigin"/>
@@ -23545,6 +23566,7 @@
     <CActorModel id="AP_SOAMothershipBlinkStrikeOut" parent="ModelAnimationStyleOneShot">
         <On Terms="Effect.AP_SOAMothershipBlinkStrikeCP.Start" Send="Create"/>
         <On Terms="Effect.AP_SOAMothershipBlinkCP.Start" Send="Create"/>
+        <On Terms="ActorCreation; ValidateCreationEffect AP_CasterIsTempestTaldarim" Send="SetScale 0.5"/>
         <On Terms="ActorCreation" Send="AnimSetTimeScale BSD 2.000000"/>
         <Host Subject="_Unit"/>
         <HostSiteOps Ops="SOpAttachOrigin"/>
@@ -35347,15 +35369,67 @@
         <SoundArray index="Movement" value="Carrier_Movement"/>
         <Aliases value="_UnitHuge"/>
     </CActorUnit>
+    <CActorUnit id="AP_TempestTaldarim" parent="GenericUnitStandard" unitName="AP_TempestTaldarim">
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <On Terms="Abil.AP_CarrierHangar.Launch" Send="AnimPlay Cover Cover 0 0.500000 0.500000 3.000000 AsDuration"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_Tempest_Land"/>
+        <On Terms="Behavior.AP_HyperjumpTeleportOut.On" Send="SetTintColor 0,192,255 6.000000 OneShot HyperjumpingTint"/>
+        <On Terms="Behavior.AP_HyperjumpTeleportOut.On" Send="SetOpacity 0.100000 0.600000 HyperjumpingOpacity"/>
+        <On Terms="Behavior.AP_HyperjumpTeleport.On" Send="ClearTintColor 0.000000 HyperjumpingTint"/>
+        <On Terms="Behavior.AP_HyperjumpTeleport.On" Send="ClearOpacity 0.000000 HyperjumpingOpacity"/>
+        <On Terms="Behavior.AP_HyperjumpTeleport.On" Send="ModelSwap Tempest_Taldarim_Placement"/>
+        <On Terms="Behavior.AP_HyperjumpTeleportOut.On" Send="Create AP_CarrierHyperjumpTeleportOut"/>
+        <On Terms="Behavior.AP_HyperjumpTeleportIn.On" Send="Create AP_CarrierHyperjumpTeleportIn"/>
+        <On Terms="Effect.AP_SOAMothershipBlinkCP.Start" Send="SetOpacity 0.050000 0.375000"/>
+        <On Terms="Effect.AP_SOAMothershipBlinkTeleport.Stop" Send="SetOpacity 1.000000 0.625000"/>
+        <On Terms="Behavior.WarpInEffect.On" Send="ModelSwap Tempest_Taldarim_WarpInStargate"/>
+        <On Terms="Behavior.WarpInEffect.On" Send="$Spell"/>
+        <On Terms="AnimDone; AnimName Spell" Send="ModelSwap Tempest_Taldarim"/>
+        <On Terms="Behavior.AP_HyperjumpTeleport.Off" Send="ModelSwap Tempest_Taldarim_WarpInStargate"/>
+        <On Terms="Behavior.AP_HyperjumpTeleport.Off" Send="$Spell"/>
+        <Baselines index="Walk" BlendIn="1.500000" BlendOut="2.000000"/>
+        <PortraitModel value="Tempest_Taldarim_Portrait"/>
+        <Model value="Tempest_Taldarim"/>
+        <BuildModel value="AP_TempestTaldarimWarpIn"/>
+        <PlacementModel value="AP_TempestTaldarimPlacement"/>
+        <DeathArray index="Normal" ModelLink="Tempest_Taldarim_Death" SoundLink=""/>
+        <AnimBlendTime value="0.750000"/>
+        <BarWidth value="156"/>
+        <BarOffset value="60"/>
+        <NameOffset value="110"/>
+        <UnitIcon value="AP\Assets\Textures\btn-unit-alarak-tempest-taldarim.dds"/>
+        <HeroIcon value="AP\Assets\Textures\btn-unit-alarak-tempest-taldarim.dds"/>
+        <WireframeShield>
+            <Image value="AP\Assets\Textures\Wireframe-protoss-tempest-taldarim-Shield1.dds"/>
+            <Image value="AP\Assets\Textures\Wireframe-protoss-tempest-taldarim-Shield2.dds"/>
+            <Image value="AP\Assets\Textures\Wireframe-protoss-tempest-taldarim-Shield3.dds"/>
+        </WireframeShield>
+        <GroupIcon>
+            <Image value="AP\Assets\Textures\Wireframe-protoss-tempest-taldarim.dds"/>
+        </GroupIcon>
+        <Wireframe>
+            <Image value="AP\Assets\Textures\Wireframe-protoss-tempest-taldarim.dds"/>
+        </Wireframe>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-protoss-airarmorlevel0.dds"/>
+        <HostSiteOps Ops="SOpBankerCarrier"/>
+        <SoundArray index="Ready" value="Tempest_Ready"/>
+        <SoundArray index="Help" value="Tempest_Help"/>
+        <SoundArray index="What" value="Tempest_What"/>
+        <SoundArray index="Yes" value="Tempest_Yes"/>
+        <SoundArray index="Attack" value="Tempest_Attack"/>
+        <SoundArray index="Pissed" value="Tempest_Pissed"/>
+        <SoundArray index="Movement" value="Tempest_Movement"/>
+        <Aliases value="_UnitHuge"/>
+    </CActorUnit>
     <CActorModel id="AP_CarrierHyperjumpTeleportIn" parent="ModelAnimationStyleOneShotNoOrphan">
         <Model value="AP_AirUnits_TeleportIn_COOP"/>
     </CActorModel>
     <CActorModel id="AP_CarrierHyperjumpTeleportOut" parent="ModelAnimationStyleOneShotNoOrphan">
         <Model value="AP_AirUnits_TeleportOut_COOP"/>
     </CActorModel>
-    <CActorModel id="AP_CarrierTaldarimLaserAttackAreaEffect" parent="ModelAnimationStyleOneShot">
+    <CActorModel id="AP_TempestTaldarimLaserAttackAreaEffect" parent="ModelAnimationStyleOneShot">
         <Model value="AP_HighArchonPsiStormImpact"/>
-        <On Terms="Effect.AP_CarrierTaldarimLaserDamageArea.Start" Send="Create"/>
+        <On Terms="Effect.AP_TempestTaldarimLaserDamageArea.Start" Send="Create"/>
         <On Terms="ActorCreation" Send="AnimPlay Attack Attack"/>
         <On Terms="ActorCreation" Send="TimerSet 0.550000 DelayDestroy"/>
         <On Terms="ActorCreation" Send="SetScale 1.000000"/>
@@ -35364,30 +35438,30 @@
         <On Terms="TimerExpired; TimerName DelayShrink" Send="SetScale 0.400000"/>
         <HostSiteOps Ops="SOpShadow"/>
     </CActorModel>
-    <CActorAction id="AP_CarrierTaldarimLaserAttack" parent="GenericAttackBase">
+    <CActorAction id="AP_TempestTaldarimLaserAttack" parent="GenericAttackBase">
         <On Terms="ActorCreation" Send="SetTintColor 255,70,70"/>
-        <On Terms="Effect.AP_CarrierTaldarimLaserDamage.Start; At Caster; FromEffectTreeDescendant" Send="ActionDamage"/>
-        <On Terms="Effect.AP_CarrierTaldarimLaserCP.Start; At Caster" Send="Create"/>
-        <On Terms="Effect.AP_CarrierTaldarimLaserCP1BonusRange.Start; At Caster" Send="Create"/>
-        <On Terms="Effect.AP_CarrierTaldarimLaserCP2BonusRange.Start; At Caster" Send="Create"/>
-        <On Terms="Effect.AP_CarrierTaldarimLaserCP3BonusRange.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_TempestTaldarimLaserDamage.Start; At Caster; FromEffectTreeDescendant" Send="ActionDamage"/>
+        <On Terms="Effect.AP_TempestTaldarimLaserCP.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_TempestTaldarimLaserCP1BonusRange.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_TempestTaldarimLaserCP2BonusRange.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_TempestTaldarimLaserCP3BonusRange.Start; At Caster" Send="Create"/>
         <LaunchAssets Model="" Sound="AP_SiegeBreaker_SiegedAttackLaunch"/>
         <BeamScope value="Caster"/>
         <ShieldFlashType value="Header"/>
     </CActorAction>
-    <CActorBeamSimple id="AP_CarrierTaldarimLaserAttackBeam" parent="GenericAttackBeam">
-        <On Terms="Effect.AP_CarrierTaldarimLaserDamageArea.Start; EffectExecuteIndex 12" Send="RefSet ::HostImpact AP_CarrierTaldarimLaserAttackBeamImpactSite"/>
+    <CActorBeamSimple id="AP_TempestTaldarimLaserAttackBeam" parent="GenericAttackBeam">
+        <On Terms="Effect.AP_TempestTaldarimLaserDamageArea.Start; EffectExecuteIndex 12" Send="RefSet ::HostImpact AP_TempestTaldarimLaserAttackBeamImpactSite"/>
         <On Terms="ActorCreation" Send="SetScale 3.400000,1.000000,1.000000"/>
         <On Terms="ActorCreation" Send="TimerSet 0.550000 DelayDestroy"/>
         <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
         <Model value="AP_KhaydarinBeamAttackBeam"/>
     </CActorBeamSimple>
-    <CActorSite id="AP_CarrierTaldarimLaserAttackBeamImpactSite">
-        <On Terms="Effect.AP_CarrierTaldarimLaserDamageArea.Start; EffectExecuteIndex 12; At Caster" Send="Create"/>
+    <CActorSite id="AP_TempestTaldarimLaserAttackBeamImpactSite">
+        <On Terms="Effect.AP_TempestTaldarimLaserDamageArea.Start; EffectExecuteIndex 12; At Caster" Send="Create"/>
         <HostSiteOps Ops="SOpTargetPoint SOpShadow SOpHeightLaunch"/>
     </CActorSite>
-    <CActorModel id="AP_CarrierTaldarimLaserAttackDamageReaction" parent="ModelAnimationStyleOneShot">
-        <On Terms="Effect.AP_CarrierTaldarimLaserDamage.Start; At Target" Send="Create"/>
+    <CActorModel id="AP_TempestTaldarimLaserAttackDamageReaction" parent="ModelAnimationStyleOneShot">
+        <On Terms="Effect.AP_TempestTaldarimLaserDamage.Start; At Target" Send="Create"/>
         <Host Subject="_Unit"/>
         <HostSiteOps Ops="SOpAttachHead SOpForwardCasterCenter"/>
         <Model value="AP_HighArchonPsiStormImpact"/>
@@ -42692,4 +42766,18 @@
         <Model value="ArchonDeath"/>
     </CActorModel>
     <CActorRange id="AP_ArchonSiphonRange" parent="RangeAbil" abil="Ap_ArchonSiphon"/>
+    <CActorAction id="AP_InterceptorTaldarimAirAttack" parent="GenericAttack" effectImpact="AP_InterceptorTaldarimAirDamage" effectLaunch="AP_InterceptorTaldarimAirLM">
+        <LaunchAttachQuery Methods="AMFilterWeapon AP_InterceptorTaldarimAirPattern"/>
+        <LaunchAssets Sound="AP_Reaver_AttackLaunch"/>
+        <Missile value="AP_InterceptorTaldarimAirMissile"/>
+        <ImpactSiteOps Ops="SOpAttachHarness SOpAttachVolumeStandard SOpForwardLaunchGuide"/>
+        <ImpactMap index="None" Sound="AP_Reaver_ScarabExplode"/>
+        <ImpactPhysics Name="Explosion" MatchKeys="Basic" Physics="AP_ScarabExplosionForce"/>
+        <ShieldFlashType value="Header"/>
+    </CActorAction>
+    <CActorMissile id="AP_InterceptorTaldarimAirMissile" parent="GenericAttackMissileWithDeathAnim" unitName="AP_InterceptorTaldarimAirMissile">
+        <On Terms="ActorCreation" Send="SetTintColor 255,40,20"/>
+        <Model value="AP_InterceptorTaldarimAirMissile"/>
+        <Macros value="GlobalLoopMacro"/>
+    </CActorMissile>
 </Catalog>
