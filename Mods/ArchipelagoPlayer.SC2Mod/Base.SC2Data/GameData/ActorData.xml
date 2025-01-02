@@ -39515,11 +39515,10 @@
     </CActorRange>
     <CActorSound id="AP_ThorMengskSiegeSound" parent="SoundOneShot">
         <On Terms="Abil.AP_ThorMengskSiege.Start; !ValidateUnit AP_HaveMultiTaskMAFServosThor" Send="Create"/>
-        <On Terms="Abil.AP_ThorMengskUnsiegeAPMode.Start; !ValidateUnit AP_HaveMultiTaskMAFServosThor" Send="Create"/>
     </CActorSound>
     <CActorSound id="AP_ThorMengskSiegeFastSound" parent="SoundOneShot">
         <On Terms="Abil.AP_ThorMengskSiege.Start; ValidateUnit AP_HaveMultiTaskMAFServosThor" Send="Create"/>
-        <On Terms="Abil.AP_ThorMengskUnsiegeAPMode.Start; ValidateUnit AP_HaveMultiTaskMAFServosThor" Send="Create"/>
+        <On Terms="Abil.AP_ThorMengskWreckage.Start" Send="Create"/>
     </CActorSound>
     <CActorModel id="AP_ThorMengskSiegeTargetedLargeAoESearchIndicator">
         <Inherits index="TeamColor" value="1"/>
@@ -39533,6 +39532,13 @@
         <Model value="AP_ThorMengskSiegeTargetedSearchIndicator"/>
         <Scale value="1.500000"/>
     </CActorModel>
+    <CActorSimple id="AP_ThorMengskRebornSoundTimer">
+        <On Terms="Abil.AP_ThorMengskReborn.Start" Send="Create"/>
+        <On Terms="Abil.AP_ThorMengskRebornFree.Start" Send="Create"/>
+        <On Terms="ActorCreation" Send="TimerSet 9 DelayDestroy"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Create AP_ThorMengskUnsiegeSound"/>
+        <On Terms="TimerExpired; TimerName DelayDestroy" Send="Destroy"/>
+    </CActorSimple>
     <CActorSound id="AP_ThorMengskUnsiegeSound" parent="SoundOneShot">
         <On Terms="Abil.AP_ThorMengskUnsiege.Start; !ValidateUnit AP_HaveMultiTaskMAFServosThor" Send="Create"/>
         <On Terms="Abil.AP_ThorMengskUnsiegeAPMode.Start; !ValidateUnit AP_HaveMultiTaskMAFServosThor" Send="Create"/>
@@ -39567,6 +39573,10 @@
         <On Terms="AbilMorph.*.Start; MorphTo AP_ThorMengsk; MorphFrom AP_ThorMengskAP" Send="AnimBracketStop Morph"/>
         <On Terms="AbilMorph.*.Start; MorphTo AP_ThorMengskAP; MorphFrom AP_ThorMengsk; !ValidatePlayer AP_HaveMultiTaskMAFServosThor" Send="Create AP_250mmStrikeCannonsUnMorph"/>
         <On Terms="AbilMorph.*.Start; MorphTo AP_ThorMengsk; MorphFrom AP_ThorMengskAP; !ValidatePlayer AP_HaveMultiTaskMAFServosThor" Send="Create AP_250mmStrikeCannonsMorph"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_ThorMengsk; MorphFrom AP_ThorMengskWreckage" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengsk; MorphTo AP_ThorMengskWreckage" Send="Destroy"/>
+        <On Terms="AbilMorph.*.Finish; MorphTo AP_ThorMengskAP; MorphFrom AP_ThorMengskWreckage" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengskAP; MorphTo AP_ThorMengskWreckage" Send="Destroy"/>
         <DeathArray index="Normal" ModelLink="AP_ThorMengskDeath"/>
     </CActorUnit>
     <CActorUnit id="AP_ThorMengskSieged" parent="AP_ThorMengskBase" unitName="AP_ThorMengskSieged">
@@ -39749,6 +39759,99 @@
         <On Terms="ActorCreation; !Selected" Send="SetVisibility"/>
         <Icon value="Assets\Textures\RadarIcon2.dds"/>
     </CActorRange>
+    <CActorUnit id="AP_ThorMengskRebornMorphModel" parent="GenericUnitBase" unitName="AP_ThorMengskRebornMorphModel">
+        <StatusBarOn index="Custom" value="1"/>
+        <CustomUnitStatusFrame value="AP_Coop_UnitStatus_Mengsk/MengskThor_StatusFrame"/>
+        <UnitFlags index="SuppressDefaultStatusBar" value="1"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengsk; MorphTo AP_ThorMengskWreckage" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengsk; MorphTo AP_ThorMengskWreckage" Send="AnimPlay Morph Work,Stand,Start PlayForever,NonLooping"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengskWreckage; MorphTo AP_ThorMengsk" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengskWreckage; MorphTo AP_ThorMengsk" Send="AnimPlay Morph Work,Stand,End PlayForever,NonLooping"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_ThorMengskWreckage; MorphTo AP_ThorMengsk" Send="Destroy"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_ThorMengsk; MorphTo AP_ThorMengskWreckage" Send="Destroy"/>
+        <Model value="AP_ThorMengsk"/>
+        <Baselines index="Stand" AnimProps=""/>
+        <DeathArray index="Normal" ModelLink="AP_ThorMengsk" SoundLink="Thor_Explode"/>
+        <PortraitModel value="ThorPortrait"/>
+        <HeroIcon value="Assets\Textures\btn-unit-terran-thormengsk.dds"/>
+        <UnitIcon value="Assets\Textures\btn-unit-terran-thormengsk.dds"/>
+        <Wireframe>
+            <Image value="AP\Assets\Textures\Wireframe-Terran-ThorWreckage.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorUnit id="AP_ThorMengskSiegedRebornMorphModel" parent="GenericUnitBase" unitName="AP_ThorMengskSiegedRebornMorphModel">
+        <StatusBarOn index="Custom" value="1"/>
+        <CustomUnitStatusFrame value="AP_Coop_UnitStatus_Mengsk/MengskThor_StatusFrame"/>
+        <UnitFlags index="SuppressDefaultStatusBar" value="1"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengskSieged; MorphTo AP_ThorMengskWreckage" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengskSieged; MorphTo AP_ThorMengskWreckage" Send="AnimBracketStart Work IGNORE Work,Stand IGNORE Instant"/>
+        <On Terms="AbilMorph.*.Finish; MorphFrom AP_ThorMengskSieged; MorphTo AP_ThorMengskWreckage" Send="Destroy"/>
+        <Model value="AP_ThorMengsk"/>
+        <Baselines index="Stand" AnimProps=""/>
+        <DeathArray index="Normal" ModelLink="AP_ThorMengsk" SoundLink="Thor_Explode"/>
+        <PortraitModel value="ThorPortrait"/>
+        <HeroIcon value="Assets\Textures\btn-unit-terran-thormengsk.dds"/>
+        <UnitIcon value="Assets\Textures\btn-unit-terran-thormengsk.dds"/>
+        <Wireframe>
+            <Image value="AP\Assets\Textures\Wireframe-Terran-ThorWreckage.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorUnit id="AP_ThorMengskWreckage" parent="GenericUnitMorph" unitName="AP_ThorMengskWreckage">
+        <StatusBarOn index="Custom" value="1"/>
+        <CustomUnitStatusFrame value="AP_Coop_UnitStatus_Mengsk/MengskThor_StatusFrame"/>
+        <UnitFlags index="SuppressDefaultStatusBar" value="1"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart Work IGNORE Work,Stand IGNORE Instant"/>
+        <On Terms="ActorCreation" Send="Create AP_ThorWrecakgeLoopSound"/>
+        <On Terms="ActorDestruction" Target="AP_ThorWrecakgeLoopSound" Send="Destroy"/>
+        <Model value="AP_ThorMengsk"/>
+        <Baselines index="Stand" AnimProps=""/>
+        <DeathArray index="Normal" ModelLink="ThorMengskDeath" SoundLink="Thor_Explode"/>
+        <PortraitModel value="ThorPortrait"/>
+        <StandAnimTurnTime value="5"/>
+        <WalkAnimMoveSpeed value="1.75"/>
+        <BarOffset value="170"/>
+        <BarWidth value="160"/>
+        <GroupSoundArray index="What" value="ThorGroupWhat"/>
+        <GroupSoundArray index="Yes" value="ThorGroupYes"/>
+        <GroupSoundArray index="Attack" value="ThorGroupAttack"/>
+        <GroupSoundArray index="Board" value="ThorGroupBoard"/>
+        <HeroIcon value="Assets\Textures\btn-unit-terran-thormengsk.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-terran-vehicleplatinglevel0.dds"/>
+        <SoundArray index="Birth" value="ThorBirth"/>
+        <SoundArray index="Ready" value="Thor_Ready"/>
+        <SoundArray index="Help" value="Thor_Help"/>
+        <SoundArray index="What" value="Thor_What"/>
+        <SoundArray index="Yes" value="Thor_Yes"/>
+        <SoundArray index="Attack" value="Thor_Attack"/>
+        <SoundArray index="Pissed" value="Thor_Pissed"/>
+        <SoundArray index="Movement" value="Thor_Movement"/>
+        <SoundArray index="Turning" value="ThorTurning"/>
+        <SoundArray index="Board" value="ThorBoard"/>
+        <SoundArray index="Click" value="ThorClick"/>
+        <SoundArray index="ClickError" value="ThorClickError"/>
+        <SoundArray index="Highlight" value="ThorHighlight"/>
+        <UnitIcon value="Assets\Textures\btn-unit-terran-thormengsk.dds"/>
+        <Wireframe>
+            <Image value="AP\Assets\Textures\Wireframe-Terran-ThorWreckage.dds"/>
+        </Wireframe>
+    </CActorUnit>
+    <CActorSound id="AP_ThorWrecakgeLoopSound" parent="SoundContinuous">
+        <Sound value="AP_Thor_ImmortalityProtocolWeldLoop"/>
+    </CActorSound>
+    <CActorModel id="AP_ThorWrecakgeOverlayModel" parent="ModelAnimationStyleContinuous">
+        <On Terms="AbilMorph.AP_ThorMengskAPWreckage.Start; !ScopeContains AP_ThorWrecakgeOverlayModel" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; !ScopeContains AP_ThorWrecakgeOverlayModel; MorphTo AP_ThorMengskWreckage" Send="Create"/>
+        <On Terms="AbilMorph.*.Start; MorphFrom AP_ThorMengskWreckage" Send="Destroy"/>
+        <On Terms="ActorCreation" Target="_Unit" Send="SetTintColor 127,127,127 0.5 OneShot AP_ThorWrecakgeOverlayModel"/>
+        <On Terms="ActorDestruction" Target="_Unit" Send="ClearTintColor 3 AP_ThorWrecakgeOverlayModel"/>
+        <Model value="RavenScramblerMissileBehavior"/>
+        <HostSiteOps Ops="SOpAttachCenter" HoldRotation="1"/>
+        <Host Subject="_Selectable"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <Inherits index="Visibility" value="1"/>
+        <AutoScaleFactor value="1.000000"/>
+    </CActorModel>
     <CActorUnit id="BroodLord">
         <!-- Override -->
         <!-- Part of infinite Broodling fix -->
