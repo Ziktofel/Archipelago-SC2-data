@@ -34889,17 +34889,16 @@
         <Baselines index="Walk" BlendIn="1.500000" BlendOut="2.000000"/>
         <PortraitModel value="AP_VoidRayAiurPortrait"/>
         <BuildModel value="AP_VoidRayAiurWarpIn"/>
-        <PlacementModel value="AP_VoidRayPlacement"/>
+        <PlacementModel value="AP_VoidRayAiurPlacement"/>
         <DeathArray index="Normal" ModelLink="AP_VoidRayAiurDeath" SoundLink="VoidRay_Explode"/>
         <AnimBlendTime value="0.500000"/>
         <On Terms="UnitBirth.AP_VoidRayAiur" Send="SetTintColor {192,192,64 5.000000}"/>
         <On Terms="UnitRevive.AP_VoidRayAiur" Send="SetTintColor {192,192,64 5.000000}"/>
         <On Terms="WeaponStart.*.AttackStart" Send="AnimBracketStart Attack Attack Stand,Channel Attack,End"/>
-        <On Terms="WeaponStart.*.AttackStart" Send="StatusIncrement WeaponTracker"/>
-        <On Terms="WeaponStop.*.AttackStop; ValidateUnit AP_NotQuadAndNotDoubleDamage" Send="AnimBracketStop Attack"/>
-        <On Terms="WeaponStop.*.AttackStop" Send="StatusDecrement WeaponTracker"/>
-        <On Terms="Behavior.AP_VoidRayPhase2.Off; !HasStatus WeaponTracker; !ValidateUnit AP_QuadDamage" Send="AnimBracketStop Attack"/>
-        <On Terms="Behavior.AP_VoidRayPhase3.Off; !HasStatus WeaponTracker" Send="AnimBracketStop Attack"/>
+        <On Terms="WeaponStart.*.AttackStart" Send="Create AP_VoidRayAiurCenterBeam"/>
+        <On Terms="WeaponStop.*.AttackStop" Send="AnimBracketStop Attack"/>
+        <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRayAiurCenterBeam" Send="Destroy"/>
+        <On Terms="Signal.*.UnitRemoved" Target="AP_VoidRayAiurCenterBeam" Send="Destroy Immediate"/>
         <On Terms="Behavior.Hallucination.On" Send="Create HallucinationBirthSoundLarge"/>
         <On Terms="UnitDeathCustomize; ValidateUnit IsHallucination" Send="DeathCustomize Hallucination"/>
         <On Terms="Behavior.PowerUserWarpable.On" Send="ClearTintColor 0.000000 Creation"/>
@@ -34944,6 +34943,34 @@
         <RollInArc value="110.000000"/>
         <RollOutDuration value="1.600000"/>
     </CActorSiteOpBankerUnit>
+    <CActorBeamSimple id="AP_VoidRayAiurChronoBeam" parent="BeamSimpleAnimationStyleContinuous">
+        <On Terms="Effect.AP_VoidRayAiurChronoBeamChargeChain.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayAiurChronoBeamChargeChain.Stop; At Caster" Send="AnimBracketStop BSD"/>
+        <Model value="OracleStasisTrapBuildBeam"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <HostLaunch Subject="_Unit" Scope="Caster"/>
+        <HostLaunchSiteOps Ops="SOpAttachWeapon"/>
+        <HostImpact Subject="_Unit" Scope="Target"/>
+        <HostImpactSiteOps Ops="SOpAttachCenter"/>
+    </CActorBeamSimple>
+    <CActorBeamSimple id="AP_VoidRayAiurCenterBeam" parent="ModelAnimationStyleContinuous">
+        <Terms value="Cap 1"/>
+        <Model value="RipFieldAttackBeam"/>
+        <HostLaunchSiteOps Ops="SOpAttachCenter"/>
+        <HostImpactSiteOps Ops="SOpAttachWeapon"/>
+        <HostLaunch Subject="_Selectable"/>
+        <HostImpact Subject="_Selectable"/>
+        <Scale value="0.500000"/>
+    </CActorBeamSimple>
+    <CActorSound id="AP_VoidRayAiurChronoBeamStart_ActorSound" parent="SoundOneShot">
+        <On Terms="WeaponStart.AP_VoidRayAiurChronoBeam.AttackStart" Send="Create"/>
+        <Sound value="Oracle_StasisTrap_Start"/>
+    </CActorSound>
+    <CActorSound id="AP_VoidRayAiurChronoBeam_ActorSound" parent="SoundContinuous">
+        <On Terms="Effect.AP_VoidRayAiurChronoBeamChargeChain.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_VoidRayAiurChronoBeamChargeChain.Stop; At Caster" Send="Destroy"/>
+        <Sound value="Oracle_StasisWardBeam_Loop"/>
+    </CActorSound>
     <!-- Void Ray Charge Beams -->
     <CActorModel id="AP_VoidRayChargeBase">
         <Model value="VoidRayChargeBase"/>
@@ -35069,7 +35096,7 @@
         <!-- center beam -->
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRayPurifierCenterBeam"/>
         <On Terms="WeaponStop.*.AttackStop" Target="AP_VoidRayPurifierCenterBeam" Send="Destroy"/>
-        <On Terms="Signal.*.UnitRemoved" Target="AP_VoidRayVoidCenterBeam" Send="Destroy Immediate"/>
+        <On Terms="Signal.*.UnitRemoved" Target="AP_VoidRayPurifierCenterBeam" Send="Destroy Immediate"/>
         <!-- sounds -->
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 0" Send="Create AP_VoidRaySound1"/>
         <On Terms="WeaponStart.*.AttackStart; IsStatus WeaponEnhanced 1" Send="Create AP_VoidRaySound2"/>
@@ -42692,4 +42719,63 @@
         <Model value="ArchonDeath"/>
     </CActorModel>
     <CActorRange id="AP_ArchonSiphonRange" parent="RangeAbil" abil="Ap_ArchonSiphon"/>
+    <CActorModel id="AP_FenixWarbringerColossusSlowModel" parent="ModelAnimationStyleContinuous">
+        <!-- TODO -->
+        <!-- <On Terms="Behavior.FenixWarbringerColossusIceFlatAmount.On" Send="Create"/> -->
+        <!-- <On Terms="Behavior.FenixWarbringerColossusIceFlatAmountHeroic.On" Send="Create"/> -->
+        <!-- <On Terms="Behavior.FenixWarbringerColossusIceFlatAmount.Off" Send="AnimBracketStop BSD"/> -->
+        <!-- <On Terms="Behavior.FenixWarbringerColossusIceFlatAmountHeroic.Off" Send="AnimBracketStop BSD"/> -->
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <AutoScaleFactor value="1.000000"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <Model value="AP_FenixWarbringerColossusSlowModel"/>
+    </CActorModel>
+    <CActorModel id="AP_FenixWarbringerColossusSlowModelStructure" parent="ModelAnimationStyleContinuous">
+        <!-- TODO -->
+        <!-- <On Terms="Behavior.FenixWarbringerColossusIceFlatAmountStructureStun.On" Send="Create"/> -->
+        <!-- <On Terms="Behavior.FenixWarbringerColossusIceFlatAmountStructureStun.Off" Send="AnimBracketStop BSD"/> -->
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <AutoScaleFactor value="1.000000"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <Model value="AP_FenixWarbringerColossusSlowModelStructure"/>
+    </CActorModel>
+    <CActorModel id="AP_VoidRayAiurStackingSlowModel" parent="ModelAnimationStyleContinuous">
+        <On Terms="Behavior.AP_VoidRayAiurStackingSlow.On" Send="Create"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHasGT21ChronoBeamStacks" Send="SetOpacity 1.000000"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHas19To21ChronoBeamStacks" Send="SetOpacity 0.875000"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHas16To18ChronoBeamStacks" Send="SetOpacity 0.750000"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHas13To15ChronoBeamStacks" Send="SetOpacity 0.625000"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHas10To12ChronoBeamStacks" Send="SetOpacity 0.500000"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHas7To9ChronoBeamStacks" Send="SetOpacity 0.375000"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHas4To6ChronoBeamStacks" Send="SetOpacity 0.250000"/>
+        <On Terms="BehaviorLevel.AP_VoidRayAiurStackingSlow.Start; ValidateUnit AP_TargetHasLE3ChronoBeamStacks" Send="SetOpacity 0.125000"/>
+        <On Terms="Behavior.AP_VoidRayAiurStackingSlow.Off" Send="AnimBracketStop BSD"/>
+        <Host Subject="_Selectable"/>
+        <HostSiteOps Ops="SOpAttachCenter"/>
+        <Inherits index="BaseModelScale" value="1"/>
+        <Inherits index="Scale" value="1"/>
+        <AutoScaleFactor value="1.000000"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+        <Model value="AP_FenixWarbringerColossusSlowModelStructure"/>
+    </CActorModel>
+    <CActorSound id="AP_VoidRayAiurChronoShearImpactSound" parent="SoundOneShot">
+        <On Terms="Behavior.AP_VoidRayAiurChronoShear.On" Send="Create"/>
+        <On Terms="Behavior.AP_VoidRayAiurChronoShearStructure.On" Send="Create"/>
+        <Sound value="AP_SOATimeFreeze_Strike"/>
+    </CActorSound>
+    <CActorModelMaterial id="AP_GlazeChronoShear" parent="GlazeParent">
+        <Terms value="Cap 1"/>
+        <On Terms="Behavior.AP_VoidRayAiurChronoShear.On" Send="Create"/>
+        <On Terms="ActorCreation" Send="ModelMaterialApplyTo ::Main"/>
+        <On Terms="Behavior.AP_VoidRayAiurChronoShear.Off" Send="ModelMaterialRemoveFrom ::Main"/>
+        <On Terms="Behavior.AP_VoidRayAiurChronoShear.Off" Send="Destroy"/>
+        <Model value="GlazeTimeStop"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModelMaterial>
 </Catalog>
