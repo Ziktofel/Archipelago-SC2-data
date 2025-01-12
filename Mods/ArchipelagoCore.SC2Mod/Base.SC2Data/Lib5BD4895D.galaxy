@@ -299,6 +299,27 @@ bool auto_lib5BD4895D_gf_AP_Core_rainbowController_TriggerFunc (bool testConds, 
     return true;
 }
 
+void lib5BD4895D_gf_AP_Core_Trade_setTradeUnit (unit lp_unit) {
+    // Automatic Variable Declarations
+    // Implementation
+    lib5BD4895D_gv_aP_Core_tradeUnit = lp_unit;
+    lib5BD4895D_gf_AP_Core_Trade_updateTradeCharges();
+}
+
+void lib5BD4895D_gf_AP_Core_Trade_changeTradeCharges (int lp_amount) {
+    // Automatic Variable Declarations
+    // Implementation
+    lib5BD4895D_gv_aP_Core_tradeChargeCount = MaxI((lib5BD4895D_gv_aP_Core_tradeChargeCount + lp_amount), 0);
+    lib5BD4895D_gf_AP_Core_Trade_updateTradeCharges();
+}
+
+void lib5BD4895D_gf_AP_Core_Trade_updateTradeCharges () {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetBehaviorCount(lib5BD4895D_gv_aP_Core_tradeUnit, lib5BD4895D_gv_aP_Core_tradeChargeBehavior, lib5BD4895D_gv_aP_Core_tradeUnit, lib5BD4895D_gv_aP_Core_tradeChargeCount);
+    lib5BD4895D_gv_aP_Core_tradeChargeCount = MinI(lib5BD4895D_gv_aP_Core_tradeChargeCount, UnitBehaviorCount(lib5BD4895D_gv_aP_Core_tradeUnit, lib5BD4895D_gv_aP_Core_tradeChargeBehavior));
+}
+
 int lib5BD4895D_gf_AP_Core_getPlayerColorByIndex (int lp_colorIndex) {
     // Automatic Variable Declarations
     // Implementation
@@ -1895,6 +1916,7 @@ bool lib5BD4895D_gt_AP_Core_tradeSendSuccess_Func (bool testConds, bool runActio
             autoE5F28EA7_var = UnitGroupUnitFromEnd(autoE5F28EA7_g, autoE5F28EA7_u);
             if (autoE5F28EA7_var == null) { break; }
             UnitRemove(autoE5F28EA7_var);
+            lib5BD4895D_gf_AP_Core_Trade_changeTradeCharges(1);
         }
         UnitIssueOrder(lib5BD4895D_gv_aP_Core_tradeUnit, Order(AbilityCommand("stop", 0)), c_orderQueueReplace);
     }
@@ -1944,6 +1966,7 @@ bool lib5BD4895D_gt_AP_Core_tradeReceiveSuccess_Func (bool testConds, bool runAc
         }
         PlayerModifyPropertyInt(UnitGetOwner(lib5BD4895D_gv_aP_Core_tradeUnit), c_playerPropMinerals, c_playerPropOperSubtract, (lv_mineralCost * lv_totalCount));
         PlayerModifyPropertyInt(UnitGetOwner(lib5BD4895D_gv_aP_Core_tradeUnit), c_playerPropVespene, c_playerPropOperSubtract, (lv_vespeneCost * lv_totalCount));
+        lib5BD4895D_gf_AP_Core_Trade_changeTradeCharges((0 - lv_totalCount));
         if ((lv_totalCount == 0)) {
             lib5BD4895D_gf_sendchatmessage(EventPlayer(), (lib5BD4895D_gv_aP_Core_tradeFlavorName + " failed: No units were found. Trade cost refunded."));
         }
