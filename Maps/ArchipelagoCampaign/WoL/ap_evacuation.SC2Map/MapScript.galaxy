@@ -35,6 +35,8 @@ const int gv_LOCATION_ID_EAST_CHRYSALIS = 3;
 const int gv_LOCATION_ID_REACH_HANSON = 4;
 const int gv_LOCATION_ID_SECRET_RESOURCE_STASH = 5;
 const int gv_LOCATION_ID_FLAWLESS = 6;
+const int gv_LOCATION_ID_WEST_BASE = 7;
+const int gv_LOCATION_ID_EAST_BASE = 8;
 const int gv_p1_USER = 1;
 
 //--------------------------------------------------------------------------------------------------
@@ -47,6 +49,8 @@ const int ge_PRESET_MissionPhase_Escort = 1;
 // Global Variables
 //--------------------------------------------------------------------------------------------------
 int gv_objectiveFindTheSecretResourceStash;
+int gv_objectiveDestroyWestBase;
+int gv_objectiveDestroyEastBase;
 int gv_p2_ZERG_ORANGE_NW;
 int gv_p3_ZERG_LIGHTBLUE_SE;
 int gv_p4_COLONISTS;
@@ -128,6 +132,8 @@ bool gv_victoryCinematicCompleted;
 
 void InitGlobals () {
     gv_objectiveFindTheSecretResourceStash = c_invalidObjectiveId;
+    gv_objectiveDestroyWestBase = c_invalidObjectiveId;
+    gv_objectiveDestroyEastBase = c_invalidObjectiveId;
     gv_p2_ZERG_ORANGE_NW = 2;
     gv_p3_ZERG_LIGHTBLUE_SE = 3;
     gv_p4_COLONISTS = 4;
@@ -192,9 +198,12 @@ trigger gt_onDifficultyNormal;
 trigger gt_onDifficultyHard;
 trigger gt_onDifficultyBrutal;
 trigger gt_ObjectiveFindSecretresourceStashCreate;
+trigger gt_ObjectiveDestroyBasesCreate;
 trigger gt_ObjectiveFindSecretresourceStashComplete;
 trigger gt_FindSecretResourceStashImpl;
 trigger gt_FindSecretResourceStashbylanding;
+trigger gt_MasteryWestBaseDestroyed;
+trigger gt_MasteryEastBaseDestroyed;
 trigger gt_FirstChysalis;
 trigger gt_SecondChysalis;
 trigger gt_ThirdChysalis;
@@ -709,6 +718,48 @@ void gt_ObjectiveFindSecretresourceStashCreate_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Bases Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyBasesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_category;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_category = lib5BD4895D_ge_APObjectiveCategory_Mastery;
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/98F73E2A"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveDestroyWestBase = ObjectiveLastCreated();
+    ObjectiveCreate(StringExternal("Param/Value/3023A115"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveDestroyEastBase = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyWestBase, lv_category, true);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveDestroyEastBase, lv_category, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyWestBase, gv_LOCATION_ID_WEST_BASE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyEastBase, gv_LOCATION_ID_EAST_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyWestBase, true);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyEastBase, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyBasesCreate_Init () {
+    gt_ObjectiveDestroyBasesCreate = TriggerCreate("gt_ObjectiveDestroyBasesCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Objective Find Secret resource Stash Complete
 //--------------------------------------------------------------------------------------------------
 bool gt_ObjectiveFindSecretresourceStashComplete_Func (bool testConds, bool runActions) {
@@ -809,6 +860,98 @@ bool gt_FindSecretResourceStashbylanding_Func (bool testConds, bool runActions) 
 void gt_FindSecretResourceStashbylanding_Init () {
     gt_FindSecretResourceStashbylanding = TriggerCreate("gt_FindSecretResourceStashbylanding_Func");
     TriggerAddEventGeneric(gt_FindSecretResourceStashbylanding, lib15EF4C78_gv_aP_PLAYER_TRANSFORMER_LAND_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mastery West Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryWestBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!(((UnitFilterMatch(EventUnit(), gv_p2_ZERG_ORANGE_NW, UnitFilter((1 << c_targetFilterStructure), 0, 0, 0)) == true) || (UnitFilterMatch(EventUnit(), gv_p5_ZERG_TACTICALPHASE, UnitFilter((1 << c_targetFilterStructure), 0, 0, 0)) == true)))) {
+            return false;
+        }
+
+        if (!((((UnitCount(null, gv_p2_ZERG_ORANGE_NW, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0), 0) + UnitCount(null, gv_p5_ZERG_TACTICALPHASE, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0), 0)) == 0) || (((UnitCount(null, gv_p2_ZERG_ORANGE_NW, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0), 0) + UnitCount(null, gv_p5_ZERG_TACTICALPHASE, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0), 0)) <= 1) && ((UnitFilterMatch(EventUnit(), gv_p2_ZERG_ORANGE_NW, UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0)) == true) || (UnitFilterMatch(EventUnit(), gv_p5_ZERG_TACTICALPHASE, UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0)) == true)))))) {
+            return false;
+        }
+
+        if (!(((UnitCount(null, gv_p2_ZERG_ORANGE_NW, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, 0, 0), 0) + UnitCount(null, gv_p5_ZERG_TACTICALPHASE, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, 0, 0), 0)) <= 3))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyBasesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_WEST_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyWestBase);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryWestBaseDestroyed_Init () {
+    gt_MasteryWestBaseDestroyed = TriggerCreate("gt_MasteryWestBaseDestroyed_Func");
+    TriggerAddEventUnitDied(gt_MasteryWestBaseDestroyed, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Mastery East Base Destroyed
+//--------------------------------------------------------------------------------------------------
+bool gt_MasteryEastBaseDestroyed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((gv_inCinematic == false))) {
+            return false;
+        }
+
+        if (!((UnitFilterMatch(EventUnit(), gv_p3_ZERG_LIGHTBLUE_SE, UnitFilter((1 << c_targetFilterStructure), 0, 0, 0)) == true))) {
+            return false;
+        }
+
+        if (!(((UnitCount(null, gv_p3_ZERG_LIGHTBLUE_SE, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0), 0) == 0) || ((UnitCount(null, gv_p3_ZERG_LIGHTBLUE_SE, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0), 0) <= 1) && (UnitFilterMatch(EventUnit(), gv_p3_ZERG_LIGHTBLUE_SE, UnitFilter((1 << c_targetFilterPreventReveal), 0, 0, 0)) == true))))) {
+            return false;
+        }
+
+        if (!((UnitCount(null, gv_p3_ZERG_LIGHTBLUE_SE, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, 0, 0), 0) <= 3))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyBasesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_EAST_BASE);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyEastBase);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_MasteryEastBaseDestroyed_Init () {
+    gt_MasteryEastBaseDestroyed = TriggerCreate("gt_MasteryEastBaseDestroyed_Func");
+    TriggerAddEventUnitDied(gt_MasteryEastBaseDestroyed, null);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2105,6 +2248,7 @@ bool gt_SwitchtoEscortPhase_Func (bool testConds, bool runActions) {
             UnitIssueOrder(auto338F5CC8_var, OrderTargetingUnit(AbilityCommand("AP_SCVHarvest", 0), libNtve_gf_ClosestUnitToPoint(UnitGetPosition(auto338F5CC8_var), UnitGroup("MineralField", 0, RegionCircle(UnitGetPosition(auto338F5CC8_var), 12.0), UnitFilter(0, 0, 0, (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0))), c_orderQueueReplace);
         }
     }
+    TriggerExecute(gt_ObjectiveDestroyBasesCreate, true, false);
     lib15EF4C78_gf_ZerglingRespawnSetPrimaryHatchery(gv_p1_USER, UnitFromId(236));
     lib15EF4C78_gf_AP_Player_clearZerglingRespawnChargesFromPlayer(gv_p1_USER);
     if ((TechTreeUpgradeCount(gv_p1_USER, "AP_FastDelivery", c_techCountCompleteOnly) >= 1)) {
@@ -7193,9 +7337,12 @@ void InitTriggers () {
     gt_onDifficultyHard_Init();
     gt_onDifficultyBrutal_Init();
     gt_ObjectiveFindSecretresourceStashCreate_Init();
+    gt_ObjectiveDestroyBasesCreate_Init();
     gt_ObjectiveFindSecretresourceStashComplete_Init();
     gt_FindSecretResourceStashImpl_Init();
     gt_FindSecretResourceStashbylanding_Init();
+    gt_MasteryWestBaseDestroyed_Init();
+    gt_MasteryEastBaseDestroyed_Init();
     gt_FirstChysalis_Init();
     gt_SecondChysalis_Init();
     gt_ThirdChysalis_Init();
