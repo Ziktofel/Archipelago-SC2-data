@@ -18570,6 +18570,9 @@
         <DeathCustoms Name="RagdollOverkillDOI" InheritsFrom="RagdollBasic"/>
         <DeathCustoms Name="RagdollMidair" InheritsFrom="RagdollBasic"/>
         <PlacementModel value="Probe"/>
+        <PlacementSound value="Protoss_BuildingPlacementSmall"/>
+        <BuildModel value="Probe"/>
+        <PlacementActorModel value="AP_ProbeWarpinCursor"/>
         <PortraitModel value="ProbePortrait"/>
         <BarOffset value="40"/>
         <BarWidth value="42"/>
@@ -43758,4 +43761,133 @@
         <Up value="0.000000,0.000000,1.000000"/>
         <IsLocal value="1"/>
     </CActorSiteOpRotationExplicit>
+    <CActorUnit id="AP_ElderProbe" parent="AP_Probe" unitName="AP_ElderProbe">
+        <Remove Terms="UnitBirth.AP_Probe" Send="Create SoundEmitter AP_Probe_Ambience"/>
+        <Remove Terms="UnitBirth.AP_Probe" Send="Create"/>
+        <Remove Terms="UnitRevive.AP_Probe" Send="Create"/>
+        <Remove Terms="UnitRevive.AP_Probe" Send="RefSet ::HostTurretBody _Selectable"/>
+        <Remove Terms="UnitConstruction.AP_Probe.Start" Send="Create"/>
+        <Remove Terms="UnitConstruction.AP_Probe.Finish" Send="AnimPlay ConstructionDeath Stand,Birth,Death FullMatch"/>
+        <On Terms="UnitBirth.AP_ElderProbe" Send="Create"/>
+        <On Terms="UnitRevive.AP_ElderProbe" Send="Create"/>
+        <On Terms="UnitRevive.AP_ElderProbe" Send="RefSet ::HostTurretBody _Selectable"/>
+        <On Terms="UnitConstruction.AP_ElderProbe.Start" Send="Create"/>
+        <On Terms="UnitConstruction.AP_ElderProbe.Finish" Send="AnimPlay ConstructionDeath Stand,Birth,Death FullMatch"/>
+        <Model value="AP_ElderProbe"/>
+        <BuildModel value="AP_ElderProbe"/>
+        <DeathArray index="Normal" ModelLink="AP_ElderProbeDeath"/>
+        <PlacementModel value="AP_ElderProbe"/>
+        <PortraitModel value="Probe_Remastered_Portrait"/>
+        <GroupIcon>
+            <Image index="0" value="AP\Assets\Textures\wireframe-protoss-elderprobe.dds.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-unit-collection-probe-remastered.dds"/>
+        <UnitIcon value="Assets\Textures\btn-unit-collection-probe-remastered.dds"/>
+        <Wireframe>
+            <Image index="0" value="AP\Assets\Textures\wireframe-protoss-elderprobe.dds.dds"/>
+        </Wireframe>
+        <WireframeShield>
+            <Image index="0" value="AP\Assets\Textures\wireframe-protoss-elderprobe-shield01.dds"/>
+            <Image index="1" value="AP\Assets\Textures\wireframe-protoss-elderprobe-shield02.dds"/>
+            <Image index="2" value="AP\Assets\Textures\wireframe-protoss-elderprobe-shield03.dds"/>
+        </WireframeShield>
+        <PlacementSound value="Protoss_BuildingPlacementSmall"/>
+        <PlacementActorModel value="AP_ElderProbeWarpinCursor"/>
+    </CActorUnit>
+    <CActorModel id="AP_ProbeWarpinCursor" parent="PlacementModel">
+        <Remove Terms="ActorCreation" Send="$Stand PlayForever"/>
+        <On Terms="ActorCreation" Send="AnimPlay Stand GLstand PlayForever"/>
+        <On Terms="ActorCreation" Send="SetOpacity 0.500000"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.000000 Scan"/>
+        <On Terms="TimerExpired; TimerName Scan" Send="TimerSet 0.031250 Scan"/>
+        <On Terms="TimerExpired; TimerName Scan; IsStatus Red 0; !ValidatePosition AP_ProbeCanWarpin {} ::Self" Send="StatusIncrement Red"/>
+        <On Terms="TimerExpired; TimerName Scan; IsStatus Red 1; ValidatePosition AP_ProbeCanWarpin {} ::Self" Send="StatusDecrement Red"/>
+        <On Terms="StatusDecrement.*.Red" Send="SetTintColor {0,64,255 2.000000} 0.000000 OneShot AP_Cursor 151.000000"/>
+        <On Terms="StatusDecrement.*.Red" Send="SetTintColor {0,64,255 4.000000} 1.000000 Bounce AP_Cursor 151.000000"/>
+        <On Terms="StatusIncrement.*.Red" Send="SetTintColor {255,0,0 0.500000} 0.000000 OneShot AP_Cursor 151.000000"/>
+        <On Terms="StatusIncrement.*.Red" Send="SetTintColor {255,0,0 1.500000} 1.000000 Bounce AP_Cursor 151.000000"/>
+        <On Terms="ActorCreation" Send="StatusSet Red 1"/>
+        <On Terms="ActorCreation" Send="StatusDecrement Red"/>
+    </CActorModel>
+    <CActorSound id="AP_ElderProbeWarpinSound" parent="SoundOneShot">
+        <Sound value="Probe_Ready"/>
+    </CActorSound>
+    <CActorModel id="AP_ProbeWarpin" parent="ModelAdditionNoAnims">
+        <Inherits index="Opacity" value="0"/>
+        <Inherits index="TimeScale" value="0"/>
+        <On Terms="ActorCreation" Send="AnimPlay BSD Birth 0 -1.000000 -1.000000 0.700000 AsTimeScale"/>
+        <On Terms="UnitBirth.AP_Probe.EditorPlaced" Send="Create"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.000000 Start"/>
+        <On Terms="Signal.*.WarpIn" Target="_Unit" Send="SetOpacity"/>
+        <On Terms="TimerExpired; TimerName Start" Send="Signal WarpIn"/>
+        <On Terms="Signal.*.WarpIn" Send="TimerSet 5.000000 WarpIn"/>
+        <On Terms="Signal.*.WarpIn" Send="TimerSet 2.000000 Opacity"/>
+        <On Terms="TimerExpired; TimerName Opacity" Target="_Unit" Send="SetOpacity 1.000000 3.000000"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="AnimSetCompletion BSD 30.000000"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="SetOpacity 0.000000 2.000000"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="TimerSet 2.000000 Destroy"/>
+        <On Terms="TimerExpired; TimerName Destroy" Send="Destroy"/>
+        <On Terms="Signal.*.WarpIn" Target="_Unit" Send="AnimSetTimeScaleGlobal 0.001000 AP_WarpIn"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Target="_Unit" Send="AnimSetTimeScaleGlobal 1.000000 AP_WarpIn"/>
+        <On Terms="Behavior.AP_ProbeWarpin.On" Send="Create"/>
+        <On Terms="Signal.*.WarpIn" Send="Create WarpTrainStart"/>
+        <On Terms="Signal.*.WarpIn" Send="Create WarpTrainLoop"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Target="WarpTrainLoop" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="Create WarpTrainStop"/>
+        <On Terms="UnitConstruction.AP_Probe.Start" Send="Create"/>
+        <HostSiteOps Ops="SOpAttachHardPoint AP_ProbeWarpinOffset"/>
+        <Scale value="0.500000,0.500000,0.600000"/>
+    </CActorModel>
+    <CActorModel id="AP_ElderProbeWarpin" parent="ModelAdditionNoAnims">
+        <Inherits index="Opacity" value="0"/>
+        <Inherits index="TimeScale" value="0"/>
+        <On Terms="ActorCreation" Send="AnimPlay BSD Birth 0 -1.000000 -1.000000 0.700000 AsTimeScale"/>
+        <On Terms="UnitBirth.AP_ElderProbe.EditorPlaced" Send="Create"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.000000 Start"/>
+        <On Terms="Signal.*.WarpIn" Target="_Unit" Send="SetOpacity"/>
+        <On Terms="TimerExpired; TimerName Start" Send="Signal WarpIn"/>
+        <On Terms="Signal.*.WarpIn" Send="TimerSet 5.000000 WarpIn"/>
+        <On Terms="Signal.*.WarpIn" Send="TimerSet 2.000000 Opacity"/>
+        <On Terms="TimerExpired; TimerName Opacity" Target="_Unit" Send="SetOpacity 1.000000 3.000000"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="AnimSetCompletion BSD 40.000000"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="SetOpacity 0.000000 2.000000"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="TimerSet 2.000000 Destroy"/>
+        <On Terms="Signal.*.WarpIn" Target="_Unit" Send="AnimSetTimeScaleGlobal 0.001000 AP_WarpIn"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Target="_Unit" Send="AnimSetTimeScaleGlobal 1.000000 AP_WarpIn"/>
+        <On Terms="Behavior.AP_ElderProbeWarpin.On" Send="Create"/>
+        <On Terms="Signal.*.WarpIn" Send="Create WarpTrainStart"/>
+        <On Terms="Signal.*.WarpIn" Send="Create WarpTrainLoop"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Target="WarpTrainLoop" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="Create WarpTrainStop"/>
+        <On Terms="TimerExpired; TimerName Destroy" Send="Destroy"/>
+        <On Terms="TimerExpired; TimerName WarpIn" Send="Create AP_ElderProbeWarpinSound"/>
+        <HostSiteOps Ops="SOpAttachHardPoint AP_ProbeWarpinOffset"/>
+        <Model value="AP_ProbeWarpin"/>
+        <Scale value="0.700000,0.600000,0.600000"/>
+    </CActorModel>
+    <CActorModel id="AP_ElderProbeWarpinAttachment" parent="ModelAdditionNoAnims">
+        <On Terms="ActorCreation" Send="AnimPlay BSD GLstand PlayForever"/>
+    </CActorModel>
+    <CActorModel id="AP_ElderProbeWarpinCursor" parent="PlacementModel">
+        <Remove Terms="ActorCreation" Send="$Stand PlayForever"/>
+        <On Terms="ActorCreation" Send="AnimPlay Stand GLstand PlayForever"/>
+        <On Terms="ActorCreation" Send="SetOpacity 0.500000"/>
+        <On Terms="ActorCreation" Send="AttachModelOffset AP_ElderProbeWarpinAttachment AP_ElderProbeWarpinCursor {Origin 0} 1.000000,1.000000,0.000000 {} SOpTipabilityFloorScope"/>
+        <On Terms="ActorCreation" Send="AttachModelOffset AP_ElderProbeWarpinAttachment AP_ElderProbeWarpinCursor {Origin 0} -1.000000,1.000000,0.000000 {} SOpTipabilityFloorScope"/>
+        <On Terms="ActorCreation" Send="AttachModelOffset AP_ElderProbeWarpinAttachment AP_ElderProbeWarpinCursor {Origin 0} 1.000000,-1.000000,0.000000 {} SOpTipabilityFloorScope"/>
+        <On Terms="ActorCreation" Send="AttachModelOffset AP_ElderProbeWarpinAttachment AP_ElderProbeWarpinCursor {Origin 0} -1.000000,-1.000000,0.000000 {} SOpTipabilityFloorScope"/>
+        <On Terms="ActorCreation" Send="TimerSet 0.000000 Scan"/>
+        <On Terms="TimerExpired; TimerName Scan" Send="TimerSet 0.031250 Scan"/>
+        <On Terms="TimerExpired; TimerName Scan; IsStatus Red 0; !ValidatePosition AP_ProbeCanWarpin {} ::Self" Send="StatusIncrement Red"/>
+        <On Terms="TimerExpired; TimerName Scan; IsStatus Red 1; ValidatePosition AP_ProbeCanWarpin {} ::Self" Send="StatusDecrement Red"/>
+        <On Terms="StatusDecrement.*.Red" Send="SetTintColor {0,64,255 2.000000} 0.000000 OneShot AP_Cursor 151.000000"/>
+        <On Terms="StatusDecrement.*.Red" Send="SetTintColor {0,64,255 4.000000} 1.000000 Bounce AP_Cursor 151.000000"/>
+        <On Terms="StatusIncrement.*.Red" Send="SetTintColor {255,0,0 0.500000} 0.000000 OneShot AP_Cursor 151.000000"/>
+        <On Terms="StatusIncrement.*.Red" Send="SetTintColor {255,0,0 1.500000} 1.000000 Bounce AP_Cursor 151.000000"/>
+        <On Terms="ActorCreation" Send="StatusSet Red 1"/>
+        <On Terms="ActorCreation" Send="StatusDecrement Red"/>
+    </CActorModel>
+    <CActorSiteOpLocalOffset id="AP_ProbeWarpinOffset">
+        <LocalOffset value="0.000000,0.500000,-0.500000"/>
+    </CActorSiteOpLocalOffset>
 </Catalog>
