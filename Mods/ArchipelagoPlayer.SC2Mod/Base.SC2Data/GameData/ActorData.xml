@@ -42993,6 +42993,7 @@
         <ModelFlags index="AutomateGlobalLoops" value="1"/>
     </CActorModelMaterial>
     <CActorModel id="AP_DropshipSCBW@DeathRagdoll" parent="UnitDeathRagdollFlier">
+        <Model value="AP_DropshipSCBW@DeathRagdoll"/>
         <On Terms="ActorCreation" Send="Create AP_DropshipSCBW@DeathRagdollDetonationForce"/>
     </CActorModel>
     <CActorForceSphere id="AP_DropshipSCBW@DeathRagdollDetonationForce" parent="AP_DeathRagdollDetonationForce">
@@ -43013,6 +43014,10 @@
         <On Terms="UnitBirth.AP_InfestedBombardier" Send="TerrainSquibActivateGroup RippleStandard"/>
         <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_SwarmHost_Land"/>
         <On Terms="UnitMovementUpdate.*.Walk; AnimPlaying Birth" Send="AnimClear Birth"/>
+        <On Terms="UnitDeath" Send="Create AP_DropshipSCBW@DeathRagdoll"/>
+        <On Terms="UnitDeath" Send="Create AP_DropshipSCBW@DeathRagdollDetonationForce"/>
+        <On Terms="Abil.AP_InfBombardierLaunchCargo.SourceCastStart" Send="AnimBracketStart Attack Attack"/>
+        <On Terms="Abil.AP_InfBombardierLaunchCargo.SourceCastStop" Send="AnimBracketStop Attack"/>
         <Model value="AP_InfestedBombardier"/>
         <BuildModel value="AP_InfestedBombardier"/>
         <HighlightTooltip value="Unit/Name/AP_InfestedBombardier"/>
@@ -43083,6 +43088,7 @@
         <Inherits index="WarpGroup" value="0"/>
         <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
         <On Terms="ActorCreation" Send="AnimPlay Land Land PlayForever"/>
+        <On Terms="ActorCreation" Send="Create AP_InfestedBombardierStinkyCloud"/>
         <HostSiteOps Ops="SOpAttachWeapon01 AP_SOpInfestedBombardierChassisOffset"/>
         <Scale value="0.800000"/>
         <ModelFlags index="IgnoreTipabilityWithHostOrSiteOps" value="1"/>
@@ -43103,6 +43109,8 @@
         <!-- <Inherits index="TintColor" value="0"/> -->
         <Inherits index="Visibility" value="0"/>
         <Inherits index="WarpGroup" value="0"/>
+        <On Terms="Abil.AP_InfBombardierLaunchCargo.SourcePrepStart" Send="AnimPlay Charge Attack"/>
+        <On Terms="Abil.AP_InfBombardierLaunchCargo.SourcePrepStart" Send="AnimSetTimeScale Charge 2.50000"/>
         <HostSiteOps Ops="SOpAttachWeapon03 AP_SOpInfestedBombardierCannonOffset AP_SOpInfestedBombardierCannonRotation"/>
         <Scale value="0.600000,0.600000,1.000000"/>
         <ModelFlags index="IgnoreTipabilityWithHostOrSiteOps" value="1"/>
@@ -43131,6 +43139,22 @@
         <HostSiteOps Ops="SOpAttachWeapon01 AP_SOpInfestedBombardierGribbliesOffset AP_SOpInfestedBombardierGribbliesRotation"/>
         <ModelFlags index="IgnoreTipabilityWithHostOrSiteOps" value="1"/>
     </CActorModel>
+    <CActorModel id="AP_InfestedBombardierStinkyCloud" parent="ModelAddition">
+        <Inherits index="BaseModelScale" value="0"/>
+        <Inherits index="CastShadows" value="0"/>
+        <Inherits index="CloakEffect" value="0"/>
+        <Inherits index="CreepEngulfment" value="0"/>
+        <Inherits index="Decal" value="0"/>
+        <Inherits index="Opacity" value="0"/>
+        <Inherits index="Scale" value="0"/>
+        <!-- <Inherits index="TeamColor" value="0"/> -->
+        <Inherits index="TimeScale" value="0"/>
+        <!-- <Inherits index="TintColor" value="0"/> -->
+        <Inherits index="Visibility" value="0"/>
+        <Inherits index="WarpGroup" value="0"/>
+        <ModelFlags index="IgnoreTipabilityWithHostOrSiteOps" value="1"/>
+        <Model value="CorruptionModel"/>
+    </CActorModel>
     <CActorSiteOpLocalOffset id="AP_SOpInfestedBombardierGribbliesOffset">
         <LocalOffset value="0.000000,-0.200000,0.00000"/>
     </CActorSiteOpLocalOffset>
@@ -43139,4 +43163,27 @@
         <Up value="0.000000,0.000000,1.000000"/>
         <IsLocal value="1"/>
     </CActorSiteOpRotationExplicit>
+    <CActorMissile id="AP_InfBombardierCargoPod" parent="GenericAttackMissile" unitName="AP_InfBombardierCargoPod">
+        <On Terms="ActorCreation" Send="Create AP_ZergDropPod_Drop"/>
+        <On Terms="ActorCreation" Send="$Spell NonLooping 0.000000 0.000000"/>
+        <Model value="AP_ZergDropPod"/>
+    </CActorMissile>
+    <CActorModel id="AP_InfBombardierCargoPodImpact">
+        <Inherits index="Visibility" value="0"/>
+        <FogVisibility value="Visible"/>
+        <On Terms="Effect.AP_InfBombardierCargoPodCreateImpactModel.Start; At Target" Send="Create"/>
+        <On Terms="ActorCreation" Send="$Stand NonLooping 0.000000 0.000000"/>
+        <On Terms="ActorCreation" Send="Create AP_ZergDropPodImpact"/>
+        <On Terms="ActorCreation" Send="TimerSet 5.0 DelayExpire"/>
+        <On Terms="TimerExpired; TimerName DelayExpire" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpAttachCenter SOpShadow" HoldPosition="1" HoldRotation="1"/>
+        <Model value="AP_ZergDropPod"/>
+    </CActorModel>
+    <CActorAction id="AP_InfBombardierCargoPodLaunch" parent="GenericAttack" effectImpact="AP_InfBombardierCargoPodCreateImpactModel" effectLaunch="AP_InfBombardierCargoPodLaunch">
+        <LaunchAssets Sound="AP_SporeCannon_AttackLaunch"/>
+        <LaunchSiteOps Ops="SOpAttachWeapon SOpMoveUpByDot5 SOpMoveBy2"/>
+    </CActorAction>
+    <CActorRange id="AP_InfBombardierLaunchCargo_Range" parent="RangeAbil" abil="AP_InfBombardierLaunchCargo">
+        <Abil Link="AP_InfBombardierLaunchCargo"/>
+    </CActorRange>
 </Catalog>
