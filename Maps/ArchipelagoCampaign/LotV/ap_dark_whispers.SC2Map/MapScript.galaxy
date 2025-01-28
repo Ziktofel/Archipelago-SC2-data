@@ -41,6 +41,7 @@ const int gv_LOCATION_ID_FIRST_PRISONER_GROUP = 1;
 const int gv_LOCATION_ID_SECOND_PRISONER_GROUP = 2;
 const int gv_LOCATION_ID_FIRST_PYLON = 3;
 const int gv_LOCATION_ID_SECOND_PYLON = 4;
+const int gv_LOCATION_ID_SECOND_PYLON2 = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_MOEBIUS_S01 = 2;
 const int gv_pLAYER_03_MOEBIUS_S02 = 3;
@@ -87,6 +88,7 @@ int gv_objectiveFreeCaptiveProtoss03;
 int gv_objectiveReactorMustSurvive;
 int gv_objectivePylonContainmentUnits;
 int gv_objectivePylonContainmentUnitsCount;
+int gv_objectiveZergBaseDestroyed;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -121,6 +123,7 @@ void InitGlobals () {
     gv_objectiveFreeCaptiveProtoss03 = c_invalidObjectiveId;
     gv_objectiveReactorMustSurvive = c_invalidObjectiveId;
     gv_objectivePylonContainmentUnits = c_invalidObjectiveId;
+    gv_objectiveZergBaseDestroyed = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -252,6 +255,8 @@ trigger gt_ObjectivePylonContainmentUnitsCreate;
 trigger gt_ObjectivePylonContainmentUnitsUpdate;
 trigger gt_ObjectivePylonContainmentUnitsCompleteQ;
 trigger gt_ObjectivePylonContainmentUnitsFailed;
+trigger gt_ObjectiveDestroyZergBaseCreate;
+trigger gt_ObjectiveDestroyZergBaseComplete;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1465,6 +1470,8 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     Wait(10.0, c_timeAI);
     TriggerExecute(gt_KerriganIntroQ, true, true);
     TriggerExecute(gt_TipMissionHelpQ, true, false);
+    Wait(10.0, c_timeGame);
+    TriggerExecute(gt_ObjectiveDestroyZergBaseCreate, true, false);
     return true;
 }
 
@@ -5955,6 +5962,89 @@ void gt_ObjectivePylonContainmentUnitsFailed_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Zerg Base Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyZergBaseCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/E2E8A2E9"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveZergBaseDestroyed = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveZergBaseDestroyed, lib5BD4895D_ge_APObjectiveCategory_Mastery, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveZergBaseDestroyed, gv_LOCATION_ID_SECOND_PYLON2);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveZergBaseDestroyed, true);
+    Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyZergBaseCreate_Init () {
+    gt_ObjectiveDestroyZergBaseCreate = TriggerCreate("gt_ObjectiveDestroyZergBaseCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Zerg Base Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyZergBaseComplete_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_remaining;
+
+    // Automatic Variable Declarations
+    unitgroup autoC95404DF_g;
+    int autoC95404DF_u;
+    unit autoC95404DF_var;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    autoC95404DF_g = libNtve_gf_UnitsInRegionWithAllianceToPlayerMatchingCondition(null, "", "", gv_pLAYER_05_KERRIGAN_S01, c_unitAllianceAlly, RegionEntireMap(), UnitFilter((1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoC95404DF_u = UnitGroupCount(autoC95404DF_g, c_unitCountAll);
+    for (;; autoC95404DF_u -= 1) {
+        autoC95404DF_var = UnitGroupUnitFromEnd(autoC95404DF_g, autoC95404DF_u);
+        if (autoC95404DF_var == null) { break; }
+        lv_remaining = (lv_remaining + 1);
+    }
+    if ((lv_remaining > 0)) {
+        return false;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyZergBaseCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveZergBaseDestroyed);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SECOND_PYLON2);
+    Wait(libA3DDD02B_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyZergBaseComplete_Init () {
+    gt_ObjectiveDestroyZergBaseComplete = TriggerCreate("gt_ObjectiveDestroyZergBaseComplete_Func");
+    TriggerAddEventTimePeriodic(gt_ObjectiveDestroyZergBaseComplete, 2.0, c_timeGame);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Q
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroQ_Func (bool testConds, bool runActions) {
@@ -7098,6 +7188,8 @@ void InitTriggers () {
     gt_ObjectivePylonContainmentUnitsUpdate_Init();
     gt_ObjectivePylonContainmentUnitsCompleteQ_Init();
     gt_ObjectivePylonContainmentUnitsFailed_Init();
+    gt_ObjectiveDestroyZergBaseCreate_Init();
+    gt_ObjectiveDestroyZergBaseComplete_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
