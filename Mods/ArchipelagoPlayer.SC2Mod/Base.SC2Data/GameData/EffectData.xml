@@ -24054,12 +24054,16 @@
         <EditorCategories value="Race:Zerg"/>
         <LaunchLocation Value="CasterUnit"/>
         <ImpactLocation Value="TargetPoint"/>
+        <Flags index="2D" value="1"/>
         <Flags index="Placement" value="1"/>
         <Flags index="PlacementIgnoreBlockers" value="1"/>
-        <Flags index="PlacementIgnoreCliffTest" value="1"/>
+        <PlacementRange value="1"/>
         <Movers Link="AP_InfBullfrogLaunch"/>
-        <ImpactEffect value="AP_InfestedBullfrogLeapingRB"/>
+        <ImpactEffect value="AP_BullfrogFinishJumpSet"/>
+        <FinishEffect value="AP_BullfrogFinishJumpSet"/>
         <DeathType value="Unknown"/>
+        <ValidatorArray value="Pathable"/>
+        <ValidatorArray value="AP_InRangeOfLeapTargetPoint"/>
     </CEffectLaunchMissile>
     <CEffectApplyBehavior id="AP_InfestedBullfrogLeapingAB">
         <EditorCategories value="Race:Zerg"/>
@@ -24075,15 +24079,19 @@
         <EditorCategories value="Race:Zerg"/>
         <LaunchLocation Value="CasterUnit"/>
         <ImpactLocation Value="TargetPoint"/>
+        <Flags index="2D" value="1"/>
         <Flags index="Placement" value="1"/>
         <Flags index="PlacementIgnoreBlockers" value="1"/>
-        <Flags index="PlacementIgnoreCliffTest" value="1"/>
+        <PlacementRange value="1"/>
         <Movers Link="AP_InfBullfrogLaunchAggressive"/>
         <ImpactEffect value="AP_InfBullfrogLeapImpactSet"/>
+        <FinishEffect value="AP_BullfrogFinishJumpSet"/>
         <DeathType value="Unknown"/>
+        <ValidatorArray value="Pathable"/>
+        <ValidatorArray value="AP_InRangeOfLeapTargetPoint"/>
     </CEffectLaunchMissile>
     <CEffectSet id="AP_InfBullfrogLeapImpactSet">
-        <EffectArray value="AP_InfestedBullfrogLeapingRB"/>
+        <EffectArray value="AP_BullfrogFinishJumpSet"/>
         <EffectArray value="AP_InfBullfrogImpactMutagenSelfAB"/>
         <EffectArray value="AP_InfBullfrogLandingIterateCargo"/>
         <EffectArray value="AP_InfBullfrogLandingSearch"/>
@@ -24135,7 +24143,7 @@
         <ResponseFlags index="Flee" value="1"/>
         <Kind value="Splash"/>
         <KindSplash value="Splash"/>
-        <Amount value="20"/>
+        <Amount value="50"/>
         <SearchFlags index="CallForHelp" value="1"/>
     </CEffectDamage>
     <CEffectApplyBehavior id="AP_InfBullfrogImpactStunAB">
@@ -24148,8 +24156,69 @@
         <WhichLocation Value="TargetPoint"/>
         <CreateFlags index="Placement" value="0"/>
         <SpawnOwner Value="Caster"/>
-        <SpawnEffect value="AP_BroodlingTimedLife"/>
+        <SpawnEffect value="AP_InfBullfrogBroodlingSpawnSet"/>
         <SpawnUnit value="AP_Broodling"/>
         <SpawnCount value="2"/>
     </CEffectCreateUnit>
+    <CEffectSet id="AP_InfBullfrogBroodlingSpawnSet">
+        <EffectArray value="AP_BroodlingTimedLife"/>
+        <EffectArray value="AP_InfBullfrogImpactMutagenAB"/>
+    </CEffectSet>
+    <CEffectCreateUnit id="AP_BullfrogLeapCreatePlaceholder">
+        <SpawnEffect value="AP_BullfrogLeapCreateCP"/>
+        <SpawnUnit value="AP_BullfrogPlaceholder"/>
+        <SpawnRange value="0"/>
+        <WhichLocation Value="TargetPoint"/>
+        <CreateFlags index="Birth" value="0"/>
+        <CreateFlags index="ProvideFood" value="0"/>
+        <CreateFlags index="UseFood" value="0"/>
+    </CEffectCreateUnit>
+    <CEffectCreatePersistent id="AP_BullfrogLeapCreateCP">
+        <Flags index="Channeled" value="1"/>
+        <InitialEffect value="AP_BullfrogLeapCreateTimeOutAB"/>
+        <PeriodCount value="1"/>
+        <PeriodicValidator value="NotDead"/>
+        <PeriodicEffectArray value="AP_InfBullfrogLeapSet"/>
+        <PeriodicPeriodArray value="0"/>
+    </CEffectCreatePersistent>
+    <CEffectApplyBehavior id="AP_BullfrogLeapCreateTimeOutAB">
+        <EditorCategories value="Race:Zerg"/>
+        <WhichUnit Effect="AP_BullfrogLeapCreateCP" Value="TargetOuter"/>
+        <Behavior value="AP_BullfrogLeapCreateTimeOut"/>
+        <Count value="5"/>
+    </CEffectApplyBehavior>
+    <CEffectCreateUnit id="AP_BullfrogLeapUnloadCreatePlaceholder">
+        <SpawnEffect value="AP_BullfrogLeapUnloadCreateCP"/>
+        <SpawnUnit value="AP_BullfrogPlaceholder"/>
+        <SpawnRange value="0"/>
+        <WhichLocation Value="TargetPoint"/>
+        <CreateFlags index="Birth" value="0"/>
+        <CreateFlags index="ProvideFood" value="0"/>
+        <CreateFlags index="UseFood" value="0"/>
+    </CEffectCreateUnit>
+    <CEffectCreatePersistent id="AP_BullfrogLeapUnloadCreateCP">
+        <Flags index="Channeled" value="1"/>
+        <InitialEffect value="AP_BullfrogLeapUnloadCreateTimeOutAB"/>
+        <PeriodCount value="1"/>
+        <PeriodicValidator value="NotDead"/>
+        <PeriodicEffectArray value="AP_InfBullfrogLeapUnloadSet"/>
+        <PeriodicPeriodArray value="0"/>
+    </CEffectCreatePersistent>
+    <CEffectApplyBehavior id="AP_BullfrogLeapUnloadCreateTimeOutAB">
+        <EditorCategories value="Race:Zerg"/>
+        <WhichUnit Effect="AP_BullfrogLeapUnloadCreateCP" Value="TargetOuter"/>
+        <Behavior value="AP_BullfrogLeapCreateTimeOut"/>
+        <Count value="5"/>
+    </CEffectApplyBehavior>
+    <CEffectSet id="AP_BullfrogFinishJumpSet">
+        <EffectArray value="AP_InfestedBullfrogLeapingRB"/>
+        <EffectArray value="AP_RemoveBullfrogPlaceholder"/>
+    </CEffectSet>
+    <CEffectDamage id="AP_RemoveBullfrogPlaceholder">
+        <ImpactLocation Value="TargetUnit"/>
+        <Flags index="Kill" value="1"/>
+        <Flags index="NoKillCredit" value="1"/>
+        <Death value="Remove"/>
+        <Visibility value="Hidden"/>
+    </CEffectDamage>
 </Catalog>
