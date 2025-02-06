@@ -39,6 +39,7 @@ const int gv_pLAYER_02_ZERG2 = 3;
 const int gv_pLAYER_02_ZERG22 = 4;
 const int gv_pLAYER_02_ZERG222 = 5;
 const int gv_pLAYER_02_ZERG2222 = 6;
+const int gv_pLAYER_02_ZERG2223 = 7;
 const int gv_LOCATION_ID_CENTER_INFESTED_COMMAND_CENTER = 1;
 const int gv_LOCATION_ID_NORTH_INFESTED_COMMAND_CENTER = 2;
 const int gv_LOCATION_ID_REPEL_ZAGARA = 3;
@@ -98,6 +99,8 @@ actor gv_banelingEggIndicator;
 int gv_eggTextTag;
 actor gv_eggActor;
 unitgroup gv_militaryUnits;
+unit gv_firstHighTemplar;
+unit gv_secondHighTemplar;
 int gv_timesZagaraDefeated;
 fixed gv_zagaraReviveTime;
 bool gv_zagaraAlive;
@@ -248,6 +251,7 @@ trigger gt_ZagaraPathInitHard;
 trigger gt_FirstAttackZagaraTauntQ;
 trigger gt_FirstAttackZagaraEntersBase;
 trigger gt_FirstAttackBanelingDefense;
+trigger gt_FirstAttackProtossWarpIn;
 trigger gt_FirstAttackBanelingDefenseQ;
 trigger gt_FirstAttackReinforcements;
 trigger gt_ZerglingBriefSelect;
@@ -678,12 +682,6 @@ bool auto_gf_FeralBanelingAttack_TriggerFunc (bool testConds, bool runActions) {
     auto8B79B5C0_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
     if (auto8B79B5C0_val == "Neut") {
         UnitCreate(1, "BanelingBurrowed", 0, gv_pLAYER_02_ZERG2222, RegionRandomPoint(lp_sPAWN_REGION), libNtve_gf_RandomAngle());
-    }
-    else if (auto8B79B5C0_val == "Terr") {
-        UnitCreate(1, "AP_TrooperMengsk", 0, gv_pLAYER_02_ZERG2222, RegionRandomPoint(lp_sPAWN_REGION), libNtve_gf_RandomAngle());
-    }
-    else if (auto8B79B5C0_val == "Prot") {
-        UnitCreate(1, "AP_Supplicant", 0, gv_pLAYER_02_ZERG2222, RegionRandomPoint(lp_sPAWN_REGION), libNtve_gf_RandomAngle());
     }
     else {
     }
@@ -2633,7 +2631,17 @@ bool gt_BanelingEggQ_Func (bool testConds, bool runActions) {
 
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Char01|Line00049", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00118", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Expedition03|Line00047", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char03|Line00054", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        }
+        else {
+            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00118", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        }
+    }
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     UIAlertUnit("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/C7620A1C"), null, UnitFromId(1810));
     TriggerQueueExit();
@@ -2679,14 +2687,24 @@ bool gt_BanelingEggCompleteQ_Func (bool testConds, bool runActions) {
     TriggerQueueEnter();
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
     libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00012", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
-    if ((gv_eggsCollected < 100)) {
-        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00043", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Expedition03|Line00047", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     }
     else {
-        if ((UnitIsAlive(gv_kerrigan) == true)) {
-            libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Char01|Line00013", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char03|Line00005", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
         }
+        else {
+            if ((gv_eggsCollected < 100)) {
+                libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00043", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+            }
+            else {
+                if ((UnitIsAlive(gv_kerrigan) == true)) {
+                    libSwaC_gf_SendTransmissionCampaign(gv_kerrigan, "zMission_Char01|Line00013", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+                }
 
+            }
+        }
     }
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     TriggerQueueExit();
@@ -3011,7 +3029,12 @@ bool gt_FirstAttackZagaraTauntQ_Func (bool testConds, bool runActions) {
     TriggerQueueEnter();
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "ZChar01MusicEvent1_ZagaraTaunts", c_soundtrackCueAny, c_soundtrackIndexAny, false);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libSwaC_gf_SendTransmissionCampaign(gv_zagara, "zMission_Char01|Line00017", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        libSwaC_gf_SendTransmissionCampaign(gv_zagara, "zMission_Char01|Line00126", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
+    else {
+        libSwaC_gf_SendTransmissionCampaign(gv_zagara, "zMission_Char01|Line00017", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
     libSwaC_gf_SendTransmissionCampaign(gv_zagara, "zMission_Char01|Line00019", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     TriggerQueueExit();
@@ -3097,6 +3120,16 @@ bool gt_FirstAttackBanelingDefense_Func (bool testConds, bool runActions) {
     int autoB67C14F2_i;
     int auto764CF606_n;
     int auto764CF606_i;
+    string auto933DBBB0_val;
+    int auto91204617_n;
+    int auto91204617_i;
+    int auto006FB536_n;
+    int auto006FB536_i;
+    int auto38C4E7FD_n;
+    int auto38C4E7FD_i;
+    unitgroup auto9C36CE21_g;
+    int auto9C36CE21_u;
+    unit auto9C36CE21_var;
 
     // Conditions
     if (testConds) {
@@ -3136,6 +3169,48 @@ bool gt_FirstAttackBanelingDefense_Func (bool testConds, bool runActions) {
     for (auto764CF606_i = 1; auto764CF606_i <= auto764CF606_n; auto764CF606_i += 1) {
         gf_FeralBanelingAttack(RegionFromId(45), RegionFromId(41));
     }
+    auto933DBBB0_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto933DBBB0_val == "Terr") {
+        auto91204617_n = libHots_gf_DifficultyValueInt2(7, 7, 5);
+        for (auto91204617_i = 1; auto91204617_i <= auto91204617_n; auto91204617_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_TrooperMengsk", 0, 8, PointFromId(858477623));
+        }
+        UnitGroupAddUnitGroup(gv_feralBanelingGroup, UnitLastCreatedGroup());
+        libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Terran, PointFromId(858477623), UnitLastCreatedGroup(), false, 1);
+        auto006FB536_n = libHots_gf_DifficultyValueInt2(6, 6, 5);
+        for (auto006FB536_i = 1; auto006FB536_i <= auto006FB536_n; auto006FB536_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_TrooperMengsk", 0, 8, PointFromId(489142786));
+        }
+        libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Terran, PointFromId(489142786), UnitLastCreatedGroup(), true, 1);
+        UnitGroupIssueOrder(gv_feralBanelingGroup, OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(41))), c_orderQueueReplace);
+    }
+    else if (auto933DBBB0_val == "Prot") {
+        UnitIssueOrder(UnitFromId(2140995672), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 11), RegionRandomPoint(RegionCircle(PointFromId(489142786), 1.0))), c_orderQueueReplace);
+        Wait(0.25, c_timeGame);
+        UnitIssueOrder(UnitFromId(2140995672), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 11), RegionRandomPoint(RegionCircle(PointFromId(489142786), 1.0))), c_orderQueueReplace);
+        Wait(0.25, c_timeGame);
+        auto38C4E7FD_n = libHots_gf_DifficultyValueInt2(3, 3, 2);
+        for (auto38C4E7FD_i = 1; auto38C4E7FD_i <= auto38C4E7FD_n; auto38C4E7FD_i += 1) {
+            UnitIssueOrder(UnitFromId(2140995672), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 12), RegionRandomPoint(RegionCircle(PointFromId(858477623), 1.0))), c_orderQueueReplace);
+            Wait(0.25, c_timeGame);
+        }
+        Wait(2.2, c_timeGame);
+        auto9C36CE21_g = gv_feralBanelingGroup;
+        auto9C36CE21_u = UnitGroupCount(auto9C36CE21_g, c_unitCountAll);
+        for (;; auto9C36CE21_u -= 1) {
+            auto9C36CE21_var = UnitGroupUnitFromEnd(auto9C36CE21_g, auto9C36CE21_u);
+            if (auto9C36CE21_var == null) { break; }
+            UnitSetPropertyFixed(auto9C36CE21_var, c_unitPropEnergyPercent, 100.0);
+            libNtve_gf_ShareVisionofUnit(auto9C36CE21_var, true, 1);
+        }
+        UnitGroupIssueOrder(gv_feralBanelingGroup, OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(41))), c_orderQueueReplace);
+        UnitIssueOrder(gv_firstHighTemplar, OrderTargetingUnit(AbilityCommand("AP_Feedback", 0), gv_zagara), c_orderQueueReplace);
+        Wait(1.8, c_timeGame);
+        UnitGroupIssueOrder(gv_feralBanelingGroup, OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(41))), c_orderQueueReplace);
+        UnitIssueOrder(gv_secondHighTemplar, OrderTargetingPoint(AbilityCommand("AP_HighArchonPsiStorm", 0), UnitGetPosition(gv_zagara)), c_orderQueueReplace);
+    }
+    else {
+    }
     return true;
 }
 
@@ -3143,6 +3218,35 @@ bool gt_FirstAttackBanelingDefense_Func (bool testConds, bool runActions) {
 void gt_FirstAttackBanelingDefense_Init () {
     gt_FirstAttackBanelingDefense = TriggerCreate("gt_FirstAttackBanelingDefense_Func");
     TriggerAddEventUnitRegion(gt_FirstAttackBanelingDefense, null, RegionFromId(41), true);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: First Attack - Protoss Warp In
+//--------------------------------------------------------------------------------------------------
+bool gt_FirstAttackProtossWarpIn_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    if ((gv_firstHighTemplar == null) && (UnitGetType(EventUnitCreatedUnit()) == "AP_HighArchonTemplar")) {
+        gv_firstHighTemplar = EventUnitCreatedUnit();
+    }
+    else {
+        if ((UnitGetType(EventUnitCreatedUnit()) == "AP_HighArchonTemplar")) {
+            gv_secondHighTemplar = EventUnitCreatedUnit();
+        }
+
+    }
+    UnitGroupAdd(gv_feralBanelingGroup, EventUnitCreatedUnit());
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_FirstAttackProtossWarpIn_Init () {
+    gt_FirstAttackProtossWarpIn = TriggerCreate("gt_FirstAttackProtossWarpIn_Func");
+    TriggerAddEventUnitCreated(gt_FirstAttackProtossWarpIn, UnitRefFromUnit(UnitFromId(2140995672)), "SuperWarpGateTrain", null);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -3175,7 +3279,17 @@ bool gt_FirstAttackBanelingDefenseQ_Func (bool testConds, bool runActions) {
     UIAlertPoint("Trigger", gv_pLAYER_01_USER, StringExternal("Param/Value/26BD98AC"), null, RegionGetCenter(RegionFromId(39)));
     libSwaC_gf_PingMinimapCampaign(PlayerGroupAll(), RegionGetCenter(RegionFromId(39)), 2.0, Color(100.00, 0.00, 0.00));
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00109", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Hybrid03|Line00074", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char02|Line00054", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        }
+        else {
+            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00109", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        }
+    }
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     TriggerQueueExit();
     return true;
@@ -3203,6 +3317,13 @@ bool gt_FirstAttackReinforcements_Func (bool testConds, bool runActions) {
     int autoC92AF17C_n;
     int autoC92AF17C_i;
     string auto5DBA2BEC_val;
+    string auto44A07E02_val;
+    int auto8ECB3004_n;
+    int auto8ECB3004_i;
+    int autoF1E6F6EC_n;
+    int autoF1E6F6EC_i;
+    int auto7760654F_n;
+    int auto7760654F_i;
 
     // Variable Initialization
 
@@ -3238,6 +3359,7 @@ bool gt_FirstAttackReinforcements_Func (bool testConds, bool runActions) {
     for (;; auto9D0D67C2_u -= 1) {
         auto9D0D67C2_var = UnitGroupUnitFromEnd(auto9D0D67C2_g, auto9D0D67C2_u);
         if (auto9D0D67C2_var == null) { break; }
+        UnitSetPropertyFixed(auto9D0D67C2_var, c_unitPropEnergyPercent, 100.0);
         libNtve_gf_RescueUnit(auto9D0D67C2_var, gv_pLAYER_01_USER, true);
         if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) {
             libNtve_gf_ReplaceUnit(auto9D0D67C2_var, "AP_Baneling", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
@@ -3252,12 +3374,6 @@ bool gt_FirstAttackReinforcements_Func (bool testConds, bool runActions) {
             UnitCreate(1, "AP_ZerglingBurrowed", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(46)), libNtve_gf_RandomAngle());
             UnitIssueOrder(UnitLastCreated(), Order(AbilityCommand("AP_BurrowZerglingUp", 0)), c_orderQueueReplace);
         }
-        else if (autoCA8CEF9B_val == "Terr") {
-            UnitCreate(1, "AP_TrooperMengsk", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(46)), libNtve_gf_RandomAngle());
-        }
-        else if (autoCA8CEF9B_val == "Prot") {
-            UnitCreate(1, "AP_Supplicant", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(46)), libNtve_gf_RandomAngle());
-        }
         else {
         }
         Wait(0.25, c_timeGame);
@@ -3269,15 +3385,35 @@ bool gt_FirstAttackReinforcements_Func (bool testConds, bool runActions) {
             UnitCreate(1, "AP_Baneling", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(46)), libNtve_gf_RandomAngle());
             UnitIssueOrder(UnitLastCreated(), Order(AbilityCommand("AP_BurrowBanelingUp", 0)), c_orderQueueReplace);
         }
-        else if (auto5DBA2BEC_val == "Terr") {
-            UnitCreate(1, "AP_TrooperMengskImproved", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(46)), libNtve_gf_RandomAngle());
-        }
-        else if (auto5DBA2BEC_val == "Prot") {
-            UnitCreate(1, "AP_Supplicant", 0, gv_pLAYER_01_USER, RegionRandomPoint(RegionFromId(46)), libNtve_gf_RandomAngle());
-        }
         else {
         }
         Wait(0.25, c_timeGame);
+    }
+    auto44A07E02_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto44A07E02_val == "Prot") {
+        UnitIssueOrder(UnitFromId(2140995672), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 12), PointFromId(858477623)), c_orderQueueReplace);
+        UnitIssueOrder(UnitFromId(2140995672), OrderTargetingPoint(AbilityCommand("SuperWarpGateTrain", 12), PointFromId(858477623)), c_orderQueueReplace);
+    }
+    else if (auto44A07E02_val == "Terr") {
+        auto8ECB3004_n = libHots_gf_DifficultyValueInt2(4, 4, 3);
+        for (auto8ECB3004_i = 1; auto8ECB3004_i <= auto8ECB3004_n; auto8ECB3004_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_TrooperMengsk", 0, 8, PointFromId(858477623));
+        }
+        UnitGroupAddUnitGroup(gv_feralBanelingGroup, UnitLastCreatedGroup());
+        libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Terran, PointFromId(858477623), UnitLastCreatedGroup(), false, 1);
+        autoF1E6F6EC_n = libHots_gf_DifficultyValueInt2(3, 3, 3);
+        for (autoF1E6F6EC_i = 1; autoF1E6F6EC_i <= autoF1E6F6EC_n; autoF1E6F6EC_i += 1) {
+            libNtve_gf_CreateUnitsAtPoint2(1, "AP_TrooperMengskImproved", 0, 8, PointFromId(489142786));
+        }
+        UnitGroupAddUnitGroup(gv_feralBanelingGroup, UnitLastCreatedGroup());
+        libSwaC_gf_CreateDropPod(libSwaC_ge_DropPodRace_Terran, PointFromId(489142786), UnitLastCreatedGroup(), true, 1);
+        libNtve_gf_RescueUnit2(gv_feralBanelingGroup, 1, true);
+        auto7760654F_n = libHots_gf_DifficultyValueInt2(4, 4, 3);
+        for (auto7760654F_i = 1; auto7760654F_i <= auto7760654F_n; auto7760654F_i += 1) {
+            gf_FeralBanelingAttack(RegionFromId(45), RegionFromId(41));
+        }
+    }
+    else {
     }
     TransmissionWait(gv_zagaraFirstDeath, 0.0);
     Wait(6.0, c_timeGame);
@@ -3439,7 +3575,17 @@ bool gt_AbathurTeachesBanelingsQ_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     TriggerQueueEnter();
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00097", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        libSwaC_gf_SendTransmissionCampaign(null, "zMission_Expedition01|Line00029", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char02|Line00042", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        }
+        else {
+            libSwaC_gf_SendTransmissionCampaign(null, "zMission_Char01|Line00097", c_transmissionDurationAdd, 0.0, true, libSwaC_ge_CampaignTransmissionPortraitOptioins_HidePortraitAfter, libSwaC_ge_CampaignTransmissionCueSoundOptions_DefaultCueSoundBehavior);
+        }
+    }
     libSwaC_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
     TriggerQueueExit();
     return true;
@@ -7218,6 +7364,7 @@ void InitTriggers () {
     gt_FirstAttackZagaraTauntQ_Init();
     gt_FirstAttackZagaraEntersBase_Init();
     gt_FirstAttackBanelingDefense_Init();
+    gt_FirstAttackProtossWarpIn_Init();
     gt_FirstAttackBanelingDefenseQ_Init();
     gt_FirstAttackReinforcements_Init();
     gt_ZerglingBriefSelect_Init();
