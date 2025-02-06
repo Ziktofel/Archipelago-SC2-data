@@ -24362,9 +24362,20 @@
         <On Terms="Effect.AP_AlarakTheStrongestSurviveStealLife.Start" Send="StatusSet TakeLife 1"/>
         <On Terms="Effect.AP_AlarakTheStrongestSurviveStealLife.Stop" Send="StatusSet TakeLife 0"/>
         <On Terms="UnitDeathCustomize; IsStatus TakeLife 1" Send="DeathCustomize Shadow"/>
+        <On Terms="UnitDeathCustomize; IsStatus AP_SupplicantDeath 1" Send="DeathCustomize Taldarim"/>
+        <On Terms="Effect.AP_SupplicantSacrificeSet.Start; At Target" Send="StatusSet AP_SupplicantDeath 1"/>
+        <On Terms="Effect.AP_SupplicantSacrificeSet.Start; At Target" Send="TimerSet 0.125000 death"/>
+        <On Terms="TimerExpired; TimerName death" Send="StatusSet AP_SupplicantDeath 0"/>
         <BuildModel value="AP_Supplicant_WarpIn"/>
         <DeathArray index="Normal" ModelLink="AP_Supplicant_Death" SoundLink="AP_Supplicant_DeathFX"/>
         <DeathCustoms ModelLink="AP_Supplicant_Sacrifice_Death" Name="Shadow"/>
+        <DeathCustoms>
+            <ActorModel value="AP_SupplicantDeathModel"/>
+            <AnimProps value="Death"/>
+            <ModelLink value="AP_SupplicantDeath"/>
+            <SoundLink value="AP_Supplicant_DeathFX"/>
+            <Name value="Taldarim"/>
+        </DeathCustoms>
         <PlacementModel value="AP_Supplicant_PlacementModel"/>
         <PlacementSound value="Protoss_BuildingPlacementSmall"/>
         <PortraitModel value="AP_Supplicant_Portrait"/>
@@ -44101,4 +44112,41 @@
         <EditorCategories value=""/>
         <LocalOffset value="0.000000,0.000000,0.500000"/>
     </CActorSiteOpLocalOffset>
+    <CActorModel id="AP_SupplicantDeathModel" parent="UnitDeathModel">
+        <HostSiteOps Ops="SOpMoveUpByDot5"/>
+        <Scale value="1.500000"/>
+    </CActorModel>
+    <CActorAction id="AP_SupplicantSacrifice" parent="GenericAttack" effectAttack="AP_SupplicantSacrificeSet">
+        <LaunchSiteOps Ops="SOpAttachCenter"/>
+        <Beam value=""/>
+        <ImpactSiteOps Ops="SOpAttachCenter"/>
+        <ImpactMap index="None" Sound="AP_ColossusTaldarim_Missile_AttackLaunch"/>
+        <ShieldFlashType value="None"/>
+    </CActorAction>
+    <CActorBeamSimple id="AP_SupplicantSacrificeBeam2" parent="BeamSimpleAnimationStyleOneShot">
+        <On Terms="Effect.AP_SupplicantSacrificeSet.Start; At Caster" Send="Create"/>
+        <HostLaunch Subject="_Unit" Scope="Caster" Actor="Find"/>
+        <HostLaunchSiteOps Ops="SOpAttachCenter"/>
+        <HostImpact Subject="_Unit" Scope="Target" Actor="Find"/>
+        <HostImpactSiteOps Ops="SOpAttachCenter"/>
+    </CActorBeamSimple>
+    <CActorSimple id="AP_SupplicantSacrificeGlaze">
+        <On Terms="ActorCreation" Target="_Unit" Send="ModelMaterialApply AP_SupplicantSacrificeGlazeMaterial"/>
+        <On Terms="ActorDestruction" Target="_Unit" Send="ModelMaterialRemove AP_SupplicantSacrificeGlazeMaterial"/>
+        <On Terms="Behavior.AP_SupplicantSacrifice.On" Send="Create"/>
+        <On Terms="Behavior.AP_SupplicantSacrifice.Off" Send="Destroy"/>
+        <On Terms="UnitBirth.AP_Supplicant.EditorPlaced; PassChance 50.000000" Send="Create"/>
+    </CActorSimple>
+    <CActorModelMaterial id="AP_SupplicantSacrificeGlazeMaterial" parent="GlazeParent" buff="">
+        <On index="0" Terms="ActorCreation" Send="AnimPlay Lifetime Birth PlayForever,ForceLooping -1.000000 -1.000000 0.020000 AsTimeScale"/>
+        <On index="2" Terms="ActorCreation; ScopeContains _NoGlaze" Send="Destroy"/>
+        <On index="3" Terms="ActorCreation" Send="TimerSet"/>
+        <On Terms="TimerExpired" Send="TimerSet 1.000000"/>
+        <On Terms="TimerExpired" Send="AnimSetCompletion Lifetime 70.000000"/>
+        <ModelFlags index="AutomateGlobalLoops" value="1"/>
+    </CActorModelMaterial>
+    <CActorRange id="AP_SupplicantSacrificeRange" parent="RangeAbil" abil="AP_SupplicantSacrifice">
+        <Flags index="SuppressSaveLoad" value="0"/>
+        <Range value="8.000000"/>
+    </CActorRange>
 </Catalog>
