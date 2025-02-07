@@ -54,6 +54,12 @@ void InitLibs () {
 // Constants
 //--------------------------------------------------------------------------------------------------
 const int gv_LOCATION_ID_XANTHOS = 1;
+const int gv_lOCATION_ID_XANTHOS_RAILGUN = 2;
+const int gv_lOCATION_ID_XANTHOS_FLAMETHROWER = 3;
+const int gv_lOCATION_ID_XANTHOS_FIGHTER_BAY = 4;
+const int gv_lOCATION_ID_XANTHOS_MISSILE_PODS = 5;
+const int gv_lOCATION_ID_PROTECT_HYPERION = 6;
+const int gv_lOCATION_ID_DESTROY_ORBITALS = 7;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DEFENDERSWEST = 2;
 const int gv_pLAYER_03_DEFENDERSEAST = 3;
@@ -80,6 +86,7 @@ string gv_mapMusicTrack6;
 unit gv_nova;
 playergroup gv_defendersPlayerGroup;
 unit[6] gv_dominionGorgons;
+bool[5] gv_xanthosSubsystemsDestroyed;
 int gv_interruptibleTransmission;
 int gv_xanthosAttackRunNumber;
 unit gv_xanthos;
@@ -107,6 +114,13 @@ int gv_objectiveProtectFleet;
 int gv_objectiveProtectFleetCount;
 int gv_objectiveDestroyXanthos;
 int gv_objectiveKillDavis;
+int gv_objectiveDestroyXanthosSubsystems;
+int[5] gv_xanthosSubsystemLocations;
+int gv_objectiveProtectHyperion;
+timer gv_hyperionTimer;
+int gv_objectiveDestroyOrbitalCommands;
+unit[5] gv_orbitalCommand;
+int gv_orbitalCommandDestroyed;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -133,6 +147,10 @@ void InitGlobals () {
     gv_objectiveProtectFleetCount = 5;
     gv_objectiveDestroyXanthos = c_invalidObjectiveId;
     gv_objectiveKillDavis = c_invalidObjectiveId;
+    gv_objectiveDestroyXanthosSubsystems = c_invalidObjectiveId;
+    gv_objectiveProtectHyperion = c_invalidObjectiveId;
+    gv_hyperionTimer = TimerCreate();
+    gv_objectiveDestroyOrbitalCommands = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -258,6 +276,16 @@ trigger gt_ObjectiveDestroyXanthosFailed;
 trigger gt_ObjectiveKillDavisCreate;
 trigger gt_ObjectiveKillDavisComplete;
 trigger gt_ObjectiveKillDavisFailed;
+trigger gt_ObjectiveDestroyXanthosSubsystemsCreate;
+trigger gt_ObjectiveDestroyXanthosSubsystemsUpdate;
+trigger gt_ObjectiveDestroyXanthosSubsystemsComplete;
+trigger gt_ObjectiveProtectHyperionCreate;
+trigger gt_ObjectiveProtectHyperionAttackStart;
+trigger gt_ObjectiveProtectHyperionFailed;
+trigger gt_ObjectiveProtectHyperionComplete;
+trigger gt_ObjectiveDestroyOrbitalCommandsCreate;
+trigger gt_ObjectiveDestroyOrbitalCommandsUpdate;
+trigger gt_ObjectiveDestroyOrbitalCommandsComplete;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1957,6 +1985,7 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     TimerStart(gv_xanthosTimer, gv_xanthosRepairTime, false, c_timeAI);
     gf_SendDefenderWave(1, 1);
     Wait(60.0, c_timeAI);
+    TriggerExecute(gt_ObjectiveDestroyOrbitalCommandsCreate, true, true);
     gf_SendDefenderWave(1, 2);
     return true;
 }
@@ -2157,6 +2186,7 @@ bool gt_XanthosBeginAttack_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    TriggerExecute(gt_ObjectiveDestroyXanthosSubsystemsCreate, true, false);
     gv_xanthosAttackRunNumber += 1;
     TriggerEnable(gt_XanthosTurretDestroyed, true);
     if ((gv_xanthosMinimapPing != c_invalidPingId)) {
@@ -2374,6 +2404,8 @@ void gt_XanthosAttackQ_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_XanthosTurretDestroyed_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    unit auto1C46CC1A_val;
+
     // Conditions
     if (testConds) {
         if (!((libNCMI_gf_GameIsOver() == false))) {
@@ -2399,6 +2431,22 @@ bool gt_XanthosTurretDestroyed_Func (bool testConds, bool runActions) {
     }
 
     UnitSetPropertyFixed(EventPlayerEffectUsedUnit(c_effectUnitSource), c_unitPropLife, 1.0);
+    auto1C46CC1A_val = EventPlayerEffectUsedUnit(c_effectUnitSource);
+    if (auto1C46CC1A_val == gv_xanthosTurretUnits[1]) {
+        gv_xanthosSubsystemsDestroyed[0] = true;
+    }
+    else if (auto1C46CC1A_val == gv_xanthosTurretUnits[2]) {
+        gv_xanthosSubsystemsDestroyed[1] = true;
+    }
+    else if (auto1C46CC1A_val == gv_xanthosTurretUnits[3]) {
+        gv_xanthosSubsystemsDestroyed[2] = true;
+    }
+    else if (auto1C46CC1A_val == gv_xanthosTurretUnits[4]) {
+        gv_xanthosSubsystemsDestroyed[3] = true;
+    }
+    else {
+    }
+    TriggerExecute(gt_ObjectiveDestroyXanthosSubsystemsUpdate, true, false);
     if ((gf_AllActiveTurretsDisabled() == true)) {
         TriggerEnable(TriggerGetCurrent(), false);
         TriggerExecute(gt_XanthosJumpsToSafety, true, false);
@@ -3465,6 +3513,7 @@ bool gt_SendHyperionRetaliation_Func (bool testConds, bool runActions) {
     UnitSetPosition(gv_hyperion, PointFromName((lv_startLane + "-" + IntToString(lv_startIndex))), false);
     UnitSetFacing(gv_hyperion, PointGetFacing(PointFromName((lv_startLane + "-" + IntToString(lv_startIndex)))), 0.0);
     UnitIssueOrder(gv_hyperion, Order(AbilityCommand("NovaHyperionJump", 1)), c_orderQueueReplace);
+    TriggerExecute(gt_ObjectiveProtectHyperionAttackStart, true, false);
     AIAttackWaveUseUnit(gv_pLAYER_07_DOMINION, gv_hyperion);
     AIAttackWaveSetGatherPoint(gv_pLAYER_07_DOMINION, PointFromName((lv_startLane + "-" + IntToString(lv_startIndex))));
     AIAttackWaveSetTargetPoint(gv_pLAYER_07_DOMINION, PointFromName((lv_startLane + "-" + IntToString((lv_startIndex + lv_waypointCount)))));
@@ -3587,6 +3636,12 @@ bool gt_HyperionFallsBack_Func (bool testConds, bool runActions) {
         return true;
     }
 
+    if ((UnitBehaviorDuration(EventUnit(), "NovaHyperionTimedLife") <= 0.1)) {
+        TriggerExecute(gt_ObjectiveProtectHyperionComplete, true, false);
+    }
+    else {
+        TriggerExecute(gt_ObjectiveProtectHyperionFailed, true, false);
+    }
     TriggerEnable(TriggerGetCurrent(), false);
     PathDestroy(gv_hyperionMinimapPathDisplay);
     TriggerExecute(gt_HyperionFallsBackQ, true, false);
@@ -5949,6 +6004,399 @@ void gt_ObjectiveKillDavisFailed_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Xanthos Subsystems Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyXanthosSubsystemsCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    gv_xanthosSubsystemLocations[0] = gv_lOCATION_ID_XANTHOS_FLAMETHROWER;
+    gv_xanthosSubsystemLocations[1] = gv_lOCATION_ID_XANTHOS_RAILGUN;
+    gv_xanthosSubsystemLocations[2] = gv_lOCATION_ID_XANTHOS_FIGHTER_BAY;
+    gv_xanthosSubsystemLocations[3] = gv_lOCATION_ID_XANTHOS_MISSILE_PODS;
+    ObjectiveCreate(StringExternal("Param/Value/9485C4D8"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveDestroyXanthosSubsystems = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyXanthosSubsystems, lib5BD4895D_ge_APObjectiveCategory_Extra, "", 0, 4, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyXanthosSubsystems, gv_lOCATION_ID_XANTHOS_RAILGUN);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyXanthosSubsystems, gv_lOCATION_ID_XANTHOS_FLAMETHROWER);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyXanthosSubsystems, gv_lOCATION_ID_XANTHOS_FIGHTER_BAY);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyXanthosSubsystems, gv_lOCATION_ID_XANTHOS_MISSILE_PODS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyXanthosSubsystems, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyXanthosSubsystemsCreate_Init () {
+    gt_ObjectiveDestroyXanthosSubsystemsCreate = TriggerCreate("gt_ObjectiveDestroyXanthosSubsystemsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Xanthos Subsystems Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyXanthosSubsystemsUpdate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_index;
+    int lv_count;
+
+    // Automatic Variable Declarations
+    const int autoA805EE47_ae = 3;
+    const int autoA805EE47_ai = 1;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveDestroyXanthosSubsystemsCreate, true, false);
+    lv_index = 0;
+    for ( ; ( (autoA805EE47_ai >= 0 && lv_index <= autoA805EE47_ae) || (autoA805EE47_ai < 0 && lv_index >= autoA805EE47_ae) ) ; lv_index += autoA805EE47_ai ) {
+        if ((gv_xanthosSubsystemsDestroyed[lv_index] == true)) {
+            lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_xanthosSubsystemLocations[lv_index]);
+            lv_count = (lv_count + 1);
+        }
+
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyXanthosSubsystems, lv_count);
+    if ((lv_count >= 4)) {
+        TriggerExecute(gt_ObjectiveDestroyXanthosSubsystemsComplete, true, false);
+    }
+    else {
+        Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyXanthosSubsystemsUpdate_Init () {
+    gt_ObjectiveDestroyXanthosSubsystemsUpdate = TriggerCreate("gt_ObjectiveDestroyXanthosSubsystemsUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Xanthos Subsystems Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyXanthosSubsystemsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    TriggerExecute(gt_ObjectiveDestroyXanthosSubsystemsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyXanthosSubsystems);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyXanthosSubsystemsComplete_Init () {
+    gt_ObjectiveDestroyXanthosSubsystemsComplete = TriggerCreate("gt_ObjectiveDestroyXanthosSubsystemsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Protect Hyperion Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveProtectHyperionCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/ECFFBC1A"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveProtectHyperion = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer(gv_objectiveProtectHyperion, lib5BD4895D_ge_APObjectiveCategory_Challenge, gv_hyperionTimer, true);
+    TimerStart(gv_hyperionTimer, 150.0, false, c_timeGame);
+    TimerPause(gv_hyperionTimer, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveProtectHyperion, gv_lOCATION_ID_DESTROY_ORBITALS);
+    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(gv_objectiveProtectHyperion);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveProtectHyperion, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveProtectHyperionCreate_Init () {
+    gt_ObjectiveProtectHyperionCreate = TriggerCreate("gt_ObjectiveProtectHyperionCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Protect Hyperion Attack Start
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveProtectHyperionAttackStart_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveProtectHyperionCreate, true, false);
+    TimerStart(gv_hyperionTimer, 150.0, false, c_timeGame);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveProtectHyperionAttackStart_Init () {
+    gt_ObjectiveProtectHyperionAttackStart = TriggerCreate("gt_ObjectiveProtectHyperionAttackStart_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Protect Hyperion Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveProtectHyperionFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveProtectHyperionCreate, true, false);
+    TimerPause(gv_hyperionTimer, true);
+    ObjectiveSetName(gv_objectiveProtectHyperion, StringExternal("Param/Value/B7FD3FF2"));
+    Wait(5.0, c_timeReal);
+    ObjectiveSetName(gv_objectiveProtectHyperion, StringExternal("Param/Value/D6BBF9C3"));
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveProtectHyperionFailed_Init () {
+    gt_ObjectiveProtectHyperionFailed = TriggerCreate("gt_ObjectiveProtectHyperionFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Protect Hyperion Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveProtectHyperionComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_ObjectiveProtectHyperionAttackStart, false);
+    TriggerEnable(gt_ObjectiveProtectHyperionFailed, false);
+    TriggerExecute(gt_ObjectiveProtectHyperionCreate, true, false);
+    libNtve_gf_StopTimer(gv_hyperionTimer);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_PROTECT_HYPERION);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveProtectHyperion);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveProtectHyperionComplete_Init () {
+    gt_ObjectiveProtectHyperionComplete = TriggerCreate("gt_ObjectiveProtectHyperionComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Orbital Commands Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyOrbitalCommandsCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/B8165260"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveDestroyOrbitalCommands = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyOrbitalCommands, lib5BD4895D_ge_APObjectiveCategory_Challenge, "", 0, 4, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyOrbitalCommands, gv_lOCATION_ID_DESTROY_ORBITALS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyOrbitalCommands, true);
+    gv_orbitalCommand[0] = UnitFromId(585353207);
+    gv_orbitalCommand[1] = UnitFromId(1934222978);
+    gv_orbitalCommand[2] = UnitFromId(60);
+    gv_orbitalCommand[3] = UnitFromId(376981515);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyOrbitalCommandsCreate_Init () {
+    gt_ObjectiveDestroyOrbitalCommandsCreate = TriggerCreate("gt_ObjectiveDestroyOrbitalCommandsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Orbital Commands Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyOrbitalCommandsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+
+        if (!(((EventUnit() == gv_orbitalCommand[0]) || (EventUnit() == gv_orbitalCommand[1]) || (EventUnit() == gv_orbitalCommand[2]) || (EventUnit() == gv_orbitalCommand[3])))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveDestroyOrbitalCommandsCreate, true, false);
+    gv_orbitalCommandDestroyed = (gv_orbitalCommandDestroyed + 1);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyOrbitalCommands, gv_orbitalCommandDestroyed);
+    if ((gv_orbitalCommandDestroyed >= 4)) {
+        TriggerExecute(gt_ObjectiveDestroyOrbitalCommandsComplete, true, false);
+    }
+    else {
+        Wait(libNCMI_gv_campaignObjectiveDelay, c_timeReal);
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyOrbitalCommandsUpdate_Init () {
+    gt_ObjectiveDestroyOrbitalCommandsUpdate = TriggerCreate("gt_ObjectiveDestroyOrbitalCommandsUpdate_Func");
+    TriggerAddEventUnitDied(gt_ObjectiveDestroyOrbitalCommandsUpdate, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Orbital Commands Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyOrbitalCommandsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyOrbitalCommandsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyOrbitalCommands);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_DESTROY_ORBITALS);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyOrbitalCommandsComplete_Init () {
+    gt_ObjectiveDestroyOrbitalCommandsComplete = TriggerCreate("gt_ObjectiveDestroyOrbitalCommandsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Q
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroQ_Func (bool testConds, bool runActions) {
@@ -6759,6 +7207,16 @@ void InitTriggers () {
     gt_ObjectiveKillDavisCreate_Init();
     gt_ObjectiveKillDavisComplete_Init();
     gt_ObjectiveKillDavisFailed_Init();
+    gt_ObjectiveDestroyXanthosSubsystemsCreate_Init();
+    gt_ObjectiveDestroyXanthosSubsystemsUpdate_Init();
+    gt_ObjectiveDestroyXanthosSubsystemsComplete_Init();
+    gt_ObjectiveProtectHyperionCreate_Init();
+    gt_ObjectiveProtectHyperionAttackStart_Init();
+    gt_ObjectiveProtectHyperionFailed_Init();
+    gt_ObjectiveProtectHyperionComplete_Init();
+    gt_ObjectiveDestroyOrbitalCommandsCreate_Init();
+    gt_ObjectiveDestroyOrbitalCommandsUpdate_Init();
+    gt_ObjectiveDestroyOrbitalCommandsComplete_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
