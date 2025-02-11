@@ -2639,6 +2639,7 @@
         <ExpireEffect value="AP_SILiberatorTargetMorphPersistent"/>
         <PeriodCount value="1"/>
         <PeriodicPeriodArray value="4"/>
+        <FinalOffset value="0,-13,0"/>
         <AINotifyEffect value="AP_SILiberatorTargetMorphSearchArea"/>
     </CEffectCreatePersistent>
     <CEffectCreatePersistent id="AP_LiberatorMengskTargetMorphDelayPersistent">
@@ -2682,10 +2683,13 @@
         <EditorCategories value="Race:Terran"/>
         <Flags index="PersistUntilDestroyed" value="1"/>
         <FinalEffect value="AP_SILiberatorInterruptedMorphDelayPersistent"/>
-        <PeriodicValidator value="AP_LiberatorMorphValidatorCombine"/>
         <PeriodicEffectArray value="AP_SILiberatorTargetMorphSearchArea"/>
         <PeriodicPeriodArray value="0.25"/>
         <AINotifyEffect value="AP_SILiberatorTargetMorphSearchArea"/>
+        <WhichLocation Value="CasterUnitOrPoint"/>
+        <OffsetVectorStartLocation Value="CasterUnitOrPoint"/>
+        <PeriodicOffsetArray value="0,-10.5,0"/>
+        <PeriodicValidator value="AP_SILiberatorAGMorphValidatorCombine"/>
     </CEffectCreatePersistent>
     <CEffectCreatePersistent id="AP_LiberatorMengskTargetMorphPersistent">
         <EditorCategories value="Race:Terran"/>
@@ -2708,7 +2712,7 @@
     <CEffectEnumArea id="AP_SILiberatorTargetMorphSearchArea">
         <EditorCategories value="Race:Terran"/>
         <SearchFilters value="Visible;Missile,Stasis,Dead,Hidden,Invulnerable"/>
-        <AreaArray Radius="5" Effect="AP_LiberatorTargetMorphSearchAB"/>
+        <AreaArray Radius="0" RectangleWidth="2.5" RectangleHeight="20" Effect="AP_LiberatorTargetMorphSearchAB"/>
     </CEffectEnumArea>
     <CEffectModifyUnit id="AP_LiberatorTurretFace">
         <ValidatorArray value="IsNotDisguisedChangeling"/>
@@ -24195,4 +24199,80 @@
         </VitalArray>
         <ModifyFlags index="SetVitals" value="1"/>
     </CEffectModifyUnit>
+    <CEffectDamage id="AP_SILiberatorAGDamage2">
+        <!-- keep original around, but keep naming scheme -->
+        <EditorCategories value=""/>
+        <ResponseFlags index="Acquire" value="1"/>
+        <ResponseFlags index="Flee" value="1"/>
+        <AttributeBonus index="Armored" value="20"/>
+        <Flags index="Notification" value="1"/>
+        <Amount value="40"/>
+        <Death value="Blast"/>
+        <AreaArray Arc="29.9926" Radius="0.5" Fraction="0.5"/>
+        <AreaArray Arc="59.9963" Radius="1" Fraction="0.25"/>
+        <ExcludeArray Value="Target"/>
+        <SearchFilters value="Ground;Player,Ally,Neutral,Structure,Missile,Item,Stasis,Hidden,Invulnerable"/>
+    </CEffectDamage>
+    <CEffectSet id="AP_SILiberatorAGImpact">
+        <EditorCategories value=""/>
+        <EffectArray value="AP_SILiberatorAGDamage2"/>
+        <EffectArray value="AP_UnitKnockbackBy1"/>
+    </CEffectSet>
+    <CEffectLaunchMissile id="AP_SILiberatorAGLaunch">
+        <ValidatorArray index="0" value="AP_LiberatorAGTargets"/>
+        <EditorCategories value=""/>
+        <ImpactEffect value="AP_SILiberatorAGImpact"/>
+        <Flags index="Return" value="1"/>
+        <AmmoUnit value="AP_SILiberatorAGMissile"/>
+        <ReturnMovers Link="AP_SILiberatorAGReturn"/>
+        <Movers Link="AP_SILiberatorAG"/>
+    </CEffectLaunchMissile>
+    <CEffectCreateUnit id="AP_UnitKnockbackBy1">
+        <ValidatorArray value="AP_NotMassive"/>
+        <ValidatorArray value="AP_NotHeroic"/>
+        <ValidatorArray value="AP_TargetIsNotUnstoppable"/>
+        <CreateFlags index="Birth" value="0"/>
+        <CreateFlags index="DropOff" value="0"/>
+        <CreateFlags index="PlacementIgnoreBlockers" value="1"/>
+        <CreateFlags index="Precursor" value="1"/>
+        <CreateFlags index="ProvideFood" value="0"/>
+        <CreateFlags index="TechComplete" value="0"/>
+        <CreateFlags index="UseFood" value="0"/>
+        <CreateFlags index="NormalizeSpawnOffset" value="0"/>
+        <SpawnOwner Value="Neutral"/>
+        <SpawnEffect value="AP_UnitKnockbackBy1CreatePHSet"/>
+        <SpawnRange value="3"/>
+        <SpawnOffset value="0,2"/>
+        <TypeFallbackUnit Value="Target"/>
+    </CEffectCreateUnit>
+    <CEffectApplyBehavior id="AP_UnitKnockbackBy1AB">
+        <WhichUnit Effect="AP_UnitKnockbackBy1"/>
+        <Behavior value="UnitKnockback"/>
+    </CEffectApplyBehavior>
+    <CEffectSet id="AP_UnitKnockbackBy1CreatePHSet">
+        <EffectArray value="PrecursorUnitKnockbackAB"/>
+        <EffectArray value="AP_UnitKnockbackBy1AB"/>
+        <EffectArray value="AP_UnitKnockbackBy1PHLM"/>
+    </CEffectSet>
+    <CEffectCreatePersistent id="AP_UnitKnockbackBy1ImpactCP">
+        <WhichLocation Value="CasterUnit"/>
+        <PeriodCount value="1"/>
+        <PeriodicEffectArray value="AP_UnitKnockbackBy1RB"/>
+        <PeriodicPeriodArray value="0.0625"/>
+    </CEffectCreatePersistent>
+    <CEffectLaunchMissile id="AP_UnitKnockbackBy1PHLM">
+        <ValidatorArray index="0" value="AP_UnitKnockbackBy1NotDead"/>
+        <LaunchLocation Effect="AP_UnitKnockbackBy1" Value="TargetUnit"/>
+        <ImpactLocation Value="TargetPoint"/>
+        <ImpactEffect value="AP_UnitKnockbackBy1ImpactCP"/>
+        <Flags index="2D" value="1"/>
+        <Movers Link="AP_UnitKnockback"/>
+        <DeathType value="Unknown"/>
+        <ImpactOffset value="0,1,0"/>
+    </CEffectLaunchMissile>
+    <CEffectRemoveBehavior id="AP_UnitKnockbackBy1RB">
+        <WhichUnit Effect="AP_UnitKnockbackBy1"/>
+        <BehaviorLink value="UnitKnockback"/>
+        <Count value="1"/>
+    </CEffectRemoveBehavior>
 </Catalog>
