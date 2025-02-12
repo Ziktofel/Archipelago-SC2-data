@@ -6377,7 +6377,6 @@ bool gt_HoldOutFinishedEarly_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gv_killedAllTerrans = true;
-    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_ALL_BEFORE_REINFORCEMENTS);
     TriggerStop(gt_CreateTimerWindowReinforcements);
     TriggerExecute(gt_SetLightingandSoundtrackEarlyFinish, true, false);
     TriggerExecute(gt_HoldOutTimerFinished, true, false);
@@ -10216,7 +10215,7 @@ bool gt_ObjectiveKillAllCreate_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    gv_terranRemainingCount = (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_DOMINION_RIGHT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) + UnitGroupCount(UnitGroup(null, gv_pLAYER_07_DOMINION_LEFT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionCenter, c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionLeft, c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionRight, c_unitCountAlive));
+    gv_terranRemainingCount = (UnitCount(null, gv_pLAYER_03_DOMINION_MAIN, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0)+UnitCount(null, gv_pLAYER_04_DOMINION_RIGHT, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0)+UnitCount(null, gv_pLAYER_07_DOMINION_LEFT, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     ObjectiveCreate(StringExternal("Param/Value/D2FF43C7"), StringToText(""), c_objectiveStateHidden, false);
     gv_objectiveKillAll = ObjectiveLastCreated();
     lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveKillAll, lv_category, "remaining", gv_terranRemainingCount, 0, true);
@@ -10252,7 +10251,7 @@ bool gt_ObjectiveKillAllUpdate_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    gv_terranRemainingCount = (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_DOMINION_RIGHT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) + UnitGroupCount(UnitGroup(null, gv_pLAYER_07_DOMINION_LEFT, RegionPlayableMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile) | (1 << c_targetFilterUncommandable), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionCenter, c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionLeft, c_unitCountAlive) + UnitGroupCount(gv_rescue_DominionRight, c_unitCountAlive));
+    gv_terranRemainingCount = (UnitCount(null, gv_pLAYER_03_DOMINION_MAIN, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0)+UnitCount(null, gv_pLAYER_04_DOMINION_RIGHT, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0)+UnitCount(null, gv_pLAYER_07_DOMINION_LEFT, RegionEntireMap(), UnitFilter((1 << c_targetFilterStructure) | (1 << c_targetFilterPreventDefeat), 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
     lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveKillAll, gv_terranRemainingCount);
     if ((gv_terranRemainingCount <= 0)) {
         TriggerEnable(TriggerGetCurrent(), false);
@@ -10287,8 +10286,10 @@ bool gt_ObjectiveKillAllComplete_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_ObjectiveKillAllFailed, false);
     TriggerExecute(gt_ObjectiveKillAllCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillAll);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_KILL_ALL_BEFORE_REINFORCEMENTS);
     if ((TriggerIsEnabled(gt_HoldOutFinishedEarly) == true)) {
         gv_nightDropped = true;
         TriggerExecute(gt_HoldOutFinishedEarly, true, false);
@@ -10321,6 +10322,7 @@ bool gt_ObjectiveKillAllFailed_Func (bool testConds, bool runActions) {
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_ObjectiveKillAllComplete, false);
     TriggerExecute(gt_ObjectiveKillAllCreate, true, false);
     lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveKillAll);
     Wait(libSwaC_gv_campaignObjectiveDelay, c_timeReal);
