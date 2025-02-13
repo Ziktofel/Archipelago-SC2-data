@@ -39,9 +39,11 @@ void InitLibs () {
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
-const int gv_LOCATION_ID_SOUTH_SOLARITE = 1;
-const int gv_LOCATION_ID_NORTH_SOLARITE = 2;
-const int gv_LOCATION_ID_NORTHWEST_SOLARITE = 3;
+const int gv_lOCATION_ID_SOUTH_SOLARITE = 1;
+const int gv_lOCATION_ID_NORTH_SOLARITE = 2;
+const int gv_lOCATION_ID_NORTHWEST_SOLARITE = 3;
+const int gv_lOCATION_ID_RESCUE_SENTRIES = 4;
+const int gv_lOCATION_ID_DESTROY_GATEWAYS = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TALDARIM = 2;
 const int gv_pLAYER_03_TALDARIM = 3;
@@ -88,6 +90,8 @@ int gv_objectiveReachTheTechVault;
 int gv_objectiveFindRawSolarite;
 int gv_objectiveFindRawSolariteProgress;
 int gv_objectiveFindRawSolariteProgressMax;
+int gv_objectiveRescueSentries;
+int gv_objectiveDestroyGateways;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -121,6 +125,8 @@ void InitGlobals () {
     gv_objectiveReachTheTechVault = c_invalidObjectiveId;
     gv_objectiveFindRawSolarite = c_invalidObjectiveId;
     gv_objectiveFindRawSolariteProgressMax = 3;
+    gv_objectiveRescueSentries = c_invalidObjectiveId;
+    gv_objectiveDestroyGateways = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -232,6 +238,12 @@ trigger gt_ObjectiveFindRawSolariteComplete;
 trigger gt_ObjectiveFindRawSolariteUpdate;
 trigger gt_ObjectiveFindRawSolariteDeactivate;
 trigger gt_ObjectiveFindRawSolariteFailed;
+trigger gt_ObjectiveRescueSentriesCreate;
+trigger gt_ObjectiveRescueSentriesUpdate;
+trigger gt_ObjectiveRescueSentriesComplete;
+trigger gt_ObjectiveDestroyGatewaysCreate;
+trigger gt_ObjectiveDestroyGatewaysUpdate;
+trigger gt_ObjectiveDestroyGatewaysComplete;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1508,6 +1520,8 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueExit();
+    Wait(20.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveDestroyGatewaysCreate, true, false);
     return true;
 }
 
@@ -2540,6 +2554,7 @@ bool gt_SentryIntroQ_Func (bool testConds, bool runActions) {
     UnitRemove(lv_invisiblePylon);
     AISetGroupScriptControlled(gv_sentryIntroAttackWaveGroup, false);
     AISetGroupSuicide(gv_sentryIntroAttackWaveGroup, true);
+    TriggerExecute(gt_ObjectiveRescueSentriesCreate, true, false);
     if ((gv_sentryIntroWarpedIn == false)) {
         TriggerEnable(gt_SentryUnlockedQ, true);
     }
@@ -2859,20 +2874,24 @@ bool gt_TrackSentryStasis_Func (bool testConds, bool runActions) {
 
     if ((gv_sentryStasisActivated[2] == true) && (gv_sentryStasisActivated[3] == true) && (gv_sentryStasisActivated[4] == true)) {
         TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveRescueSentriesComplete, true, false);
         return true;
     }
 
     if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(26), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) && (gv_sentryStasisActivated[2] == false)) {
         gv_sentryStasisActivated[2] = true;
         gf_RescueSentryUnits(RegionFromId(26), PointFromId(747), true);
+        TriggerExecute(gt_ObjectiveRescueSentriesUpdate, true, false);
     }
     else if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(28), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) && (gv_sentryStasisActivated[3] == false)) {
         gv_sentryStasisActivated[3] = true;
         gf_RescueSentryUnits(RegionFromId(28), PointFromId(748), true);
+        TriggerExecute(gt_ObjectiveRescueSentriesUpdate, true, false);
     }
     else if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_01_USER, RegionFromId(32), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) >= 1) && (gv_sentryStasisActivated[4] == false)) {
         gv_sentryStasisActivated[4] = true;
         gf_RescueSentryUnits(RegionFromId(32), PointFromId(748), true);
+        TriggerExecute(gt_ObjectiveRescueSentriesUpdate, true, false);
     }
     return true;
 }
@@ -4062,7 +4081,7 @@ bool gt_PickupRawSolarite1_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gf_RawSolaritePickupQ(UnitFromId(274));
-    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_SOUTH_SOLARITE);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_SOUTH_SOLARITE);
     return true;
 }
 
@@ -4103,7 +4122,7 @@ bool gt_PickupRawSolarite2_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gf_RawSolaritePickupQ(UnitFromId(98));
-    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTH_SOLARITE);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_NORTH_SOLARITE);
     return true;
 }
 
@@ -4144,7 +4163,7 @@ bool gt_PickupRawSolarite3_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     gf_RawSolaritePickupQ(UnitFromId(425));
-    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_LOCATION_ID_NORTHWEST_SOLARITE);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_NORTHWEST_SOLARITE);
     return true;
 }
 
@@ -4513,6 +4532,11 @@ bool gt_StatTaldarimGatewaysDestroyed_Func (bool testConds, bool runActions) {
     }
 
     gv_taldarimGatewaysDestroyed += 1;
+    TriggerExecute(gt_ObjectiveDestroyGatewaysUpdate, true, true);
+    if ((gv_taldarimGatewaysDestroyed >= 6)) {
+        TriggerExecute(gt_ObjectiveDestroyGatewaysComplete, true, false);
+    }
+
     if ((gv_taldarimGatewaysDestroyed >= 6) && (gv_gatewayAchievementUnlocked == false) && (libLotv_gf_DifficultyValueInt2(0, 1, 1, 1) == 1)) {
         gv_gatewayAchievementUnlocked = true;
         TriggerExecute(gt_AchievementTaldarimGatewaysDestroyed, true, false);
@@ -5074,9 +5098,9 @@ bool gt_ObjectiveFindRawSolariteCreate_Func (bool testConds, bool runActions) {
     ObjectiveSetName(gv_objectiveFindRawSolarite, libVoiC_gf_MissionObjectiveName("PPurifier01Bonus01"));
     ObjectiveShow(gv_objectiveFindRawSolarite, PlayerGroupAll(), false);
     lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveFindRawSolarite, lv_category, "", gv_objectiveFindRawSolariteProgress, libVoiC_gf_MissionObjectiveItemCount("PPurifier01Bonus01"), true);
-    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_LOCATION_ID_SOUTH_SOLARITE);
-    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_LOCATION_ID_NORTH_SOLARITE);
-    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_LOCATION_ID_NORTHWEST_SOLARITE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_lOCATION_ID_SOUTH_SOLARITE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_lOCATION_ID_NORTH_SOLARITE);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveFindRawSolarite, gv_lOCATION_ID_NORTHWEST_SOLARITE);
     lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveFindRawSolarite, true);
     Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
     return true;
@@ -5146,7 +5170,7 @@ bool gt_ObjectiveFindRawSolariteDeactivate_Func (bool testConds, bool runActions
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_SOUTH_SOLARITE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTH_SOLARITE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_LOCATION_ID_NORTHWEST_SOLARITE] == false)))) {
+        if (!(((lib5BD4895D_gv_aP_Core_locationCollectable[gv_lOCATION_ID_SOUTH_SOLARITE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_lOCATION_ID_NORTH_SOLARITE] == false) && (lib5BD4895D_gv_aP_Core_locationCollectable[gv_lOCATION_ID_NORTHWEST_SOLARITE] == false)))) {
             return false;
         }
     }
@@ -5205,6 +5229,240 @@ bool gt_ObjectiveFindRawSolariteFailed_Func (bool testConds, bool runActions) {
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveFindRawSolariteFailed_Init () {
     gt_ObjectiveFindRawSolariteFailed = TriggerCreate("gt_ObjectiveFindRawSolariteFailed_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Rescue Sentries Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRescueSentriesCreate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    text lv_unitRescuedName;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_unitRescuedName = StringExternal("Param/Value/DDD5D5AA");
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Terr")) {
+        lv_unitRescuedName = StringExternal("Param/Value/693E67E5");
+    }
+    else {
+        if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg")) {
+            lv_unitRescuedName = StringExternal("Param/Value/BC4B9206");
+        }
+
+    }
+    ObjectiveCreate((StringExternal("Param/Value/F24B3D95") + lv_unitRescuedName), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveRescueSentries = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveRescueSentries, lib5BD4895D_ge_APObjectiveCategory_Extra, "Groups", 1, 4, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveRescueSentries, gv_lOCATION_ID_RESCUE_SENTRIES);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveRescueSentries, true);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRescueSentriesCreate_Init () {
+    gt_ObjectiveRescueSentriesCreate = TriggerCreate("gt_ObjectiveRescueSentriesCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Rescue Sentries Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRescueSentriesUpdate_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    int lv_sentriesRescuedCount;
+    int lv_index;
+
+    // Automatic Variable Declarations
+    const int autoBD84C82B_ae = 4;
+    const int autoBD84C82B_ai = 1;
+
+    // Variable Initialization
+
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    while (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    TriggerExecute(gt_ObjectiveRescueSentriesCreate, true, false);
+    lv_index = 2;
+    for ( ; ( (autoBD84C82B_ai >= 0 && lv_index <= autoBD84C82B_ae) || (autoBD84C82B_ai < 0 && lv_index >= autoBD84C82B_ae) ) ; lv_index += autoBD84C82B_ai ) {
+        if ((gv_sentryStasisActivated[lv_index] == true)) {
+            lv_sentriesRescuedCount += 1;
+        }
+
+    }
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueSentries, (lv_sentriesRescuedCount + 1));
+    if ((lv_sentriesRescuedCount >= 4)) {
+        TriggerEnable(TriggerGetCurrent(), false);
+        TriggerExecute(gt_ObjectiveRescueSentriesComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRescueSentriesUpdate_Init () {
+    gt_ObjectiveRescueSentriesUpdate = TriggerCreate("gt_ObjectiveRescueSentriesUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Rescue Sentries Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveRescueSentriesComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+            return false;
+        }
+
+        if (!((libVCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveRescueSentriesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveRescueSentries);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveRescueSentries, 4);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_RESCUE_SENTRIES);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveRescueSentriesComplete_Init () {
+    gt_ObjectiveRescueSentriesComplete = TriggerCreate("gt_ObjectiveRescueSentriesComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Gateways Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyGatewaysCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    ObjectiveCreate(StringExternal("Param/Value/899BB785"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveDestroyGateways = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveDestroyGateways, lib5BD4895D_ge_APObjectiveCategory_Challenge, "", gv_taldarimGatewaysDestroyed, 6, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveDestroyGateways, gv_lOCATION_ID_DESTROY_GATEWAYS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveDestroyGateways, true);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyGatewaysCreate_Init () {
+    gt_ObjectiveDestroyGatewaysCreate = TriggerCreate("gt_ObjectiveDestroyGatewaysCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Gateways Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyGatewaysUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    while (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    TriggerExecute(gt_ObjectiveDestroyGatewaysCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveDestroyGateways, gv_taldarimGatewaysDestroyed);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyGatewaysUpdate_Init () {
+    gt_ObjectiveDestroyGatewaysUpdate = TriggerCreate("gt_ObjectiveDestroyGatewaysUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Destroy Gateways Complete 
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveDestroyGatewaysComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+            return false;
+        }
+
+        if (!((libVCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveDestroyGatewaysCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveDestroyGateways);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_DESTROY_GATEWAYS);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveDestroyGatewaysComplete_Init () {
+    gt_ObjectiveDestroyGatewaysComplete = TriggerCreate("gt_ObjectiveDestroyGatewaysComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5973,6 +6231,12 @@ void InitTriggers () {
     gt_ObjectiveFindRawSolariteUpdate_Init();
     gt_ObjectiveFindRawSolariteDeactivate_Init();
     gt_ObjectiveFindRawSolariteFailed_Init();
+    gt_ObjectiveRescueSentriesCreate_Init();
+    gt_ObjectiveRescueSentriesUpdate_Init();
+    gt_ObjectiveRescueSentriesComplete_Init();
+    gt_ObjectiveDestroyGatewaysCreate_Init();
+    gt_ObjectiveDestroyGatewaysUpdate_Init();
+    gt_ObjectiveDestroyGatewaysComplete_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();

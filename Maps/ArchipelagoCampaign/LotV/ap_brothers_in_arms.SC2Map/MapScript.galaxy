@@ -38,6 +38,9 @@ void InitLibs () {
 const int gv_LOCATION_ID_MID_SCIENCE_FACILITY = 1;
 const int gv_LOCATION_ID_NORTH_SCIENCE_FACILITY = 2;
 const int gv_LOCATION_ID_SOUTH_SCIENCE_FACILITY = 3;
+const int gv_lOCATION_ID_FORWARD_BASES_RAYNOR = 4;
+const int gv_lOCATION_ID_FORWARD_BASES_VALERIAN = 5;
+const int gv_lOCATION_ID_SPEEDRUN = 6;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
@@ -135,6 +138,12 @@ int gv_objectiveRecoverKeystone;
 int gv_objectiveRaynorCCMustSurvive;
 int gv_objectiveValerianCCMustSurvive;
 int gv_objectiveSecureResearchFacilities;
+int gv_objectiveSecureForwardBasesRaynor;
+int gv_objectiveSecureForwardBasesValerian;
+int gv_objectiveProtectBases;
+int gv_objectiveKillStructures;
+int gv_objectiveSpeedrun;
+timer gv_objectiveSpeedrunTimer;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -171,6 +180,12 @@ void InitGlobals () {
     gv_objectiveRaynorCCMustSurvive = c_invalidObjectiveId;
     gv_objectiveValerianCCMustSurvive = c_invalidObjectiveId;
     gv_objectiveSecureResearchFacilities = c_invalidObjectiveId;
+    gv_objectiveSecureForwardBasesRaynor = c_invalidObjectiveId;
+    gv_objectiveSecureForwardBasesValerian = c_invalidObjectiveId;
+    gv_objectiveProtectBases = c_invalidObjectiveId;
+    gv_objectiveKillStructures = c_invalidObjectiveId;
+    gv_objectiveSpeedrun = c_invalidObjectiveId;
+    gv_objectiveSpeedrunTimer = TimerCreate();
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -284,6 +299,13 @@ trigger gt_ObjectiveValeriansCommandCenterMustSurviveFailed;
 trigger gt_ObjectiveSecureResearchFacilitiesCreate;
 trigger gt_ObjectiveSecureResearchFacilitiesComplete;
 trigger gt_ObjectiveSecureResearchFacilitiesUpdate;
+trigger gt_ObjectiveSecureForwardBasesCreate;
+trigger gt_ObjectiveSecureForwardBasesUpdate;
+trigger gt_ObjectiveSecureForwardBasesRaynorComplete;
+trigger gt_ObjectiveSecureForwardBasesValerianComplete;
+trigger gt_ObjectiveSpeedrunCreate;
+trigger gt_ObjectiveSpeedrunFailed;
+trigger gt_ObjectiveSpeedrunComplete;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1532,6 +1554,8 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_RaynorIntroQ, true, false);
     Wait(20.0, c_timeReal);
     TriggerExecute(gt_ValerianIntroQ, true, false);
+    Wait(20.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveSpeedrunCreate, true, false);
     return true;
 }
 
@@ -3264,6 +3288,7 @@ bool gt_ActivateBulliesRaynorForward1_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     gv_raynorProgressCount += 1;
     TriggerExecute(gt_RaynorForward1Q, true, false);
+    TriggerExecute(gt_ObjectiveSecureForwardBasesUpdate, true, false);
     libNtve_gf_CreateUnitsWithDefaultFacing(6, "Marine", 0, gv_pLAYER_02_DOMINION, PointFromId(195));
     UnitGroupAddUnitGroup(lv_dropGroup1, UnitLastCreatedGroup());
     libVCMI_gf_CreateDropPod(libVCMI_ge_DropPodRace_Terran, PointFromId(195), lv_dropGroup1, false, gv_pLAYER_02_DOMINION);
@@ -3319,6 +3344,7 @@ bool gt_ActivateBulliesRaynorForward2_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     gv_raynorProgressCount += 1;
     TriggerExecute(gt_RaynorForward2Q, true, false);
+    TriggerExecute(gt_ObjectiveSecureForwardBasesUpdate, true, false);
     libNtve_gf_CreateUnitsWithDefaultFacing(6, "Marine", 0, gv_pLAYER_02_DOMINION, PointFromId(806));
     UnitGroupAddUnitGroup(lv_dropGroup1, UnitLastCreatedGroup());
     libVCMI_gf_CreateDropPod(libVCMI_ge_DropPodRace_Terran, PointFromId(806), lv_dropGroup1, false, gv_pLAYER_02_DOMINION);
@@ -3644,6 +3670,7 @@ bool gt_ActivateBulliesValerianForward1_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     gv_valerianProgressCount += 1;
     TriggerExecute(gt_ValerianForward1Q, true, false);
+    TriggerExecute(gt_ObjectiveSecureForwardBasesUpdate, true, false);
     libNtve_gf_CreateUnitsWithDefaultFacing(6, "Marine", 0, gv_pLAYER_02_DOMINION2, PointFromId(877));
     UnitGroupAddUnitGroup(lv_dropGroup1, UnitLastCreatedGroup());
     libVCMI_gf_CreateDropPod(libVCMI_ge_DropPodRace_Terran, PointFromId(877), lv_dropGroup1, false, gv_pLAYER_02_DOMINION2);
@@ -3699,6 +3726,7 @@ bool gt_ActivateBulliesValerianForward2_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     gv_valerianProgressCount += 1;
     TriggerExecute(gt_ValerianForward2Q, true, false);
+    TriggerExecute(gt_ObjectiveSecureForwardBasesUpdate, true, false);
     libNtve_gf_CreateUnitsWithDefaultFacing(3, "Marine", 0, gv_pLAYER_02_DOMINION2, PointFromId(886));
     UnitGroupAddUnitGroup(lv_dropGroup1, UnitLastCreatedGroup());
     libNtve_gf_CreateUnitsWithDefaultFacing(2, "Marauder", 0, gv_pLAYER_02_DOMINION2, PointFromId(886));
@@ -5088,6 +5116,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     TriggerEnable(TriggerGetCurrent(), false);
     lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(lib5BD4895D_gv_aP_Core_locationVictory);
     libVCMI_gf_GameOver(libVCMI_ge_CampaignMissionGameResultType_Victory);
+    TriggerExecute(gt_ObjectiveSpeedrunComplete, true, false);
     TriggerExecute(gt_ObjectiveRecovertheKeystoneComplete, true, false);
     TriggerExecute(gt_ObjectiveRaynorsCommandCenterMustSurviveComplete, true, false);
     TriggerExecute(gt_ObjectiveValeriansCommandCenterMustSurviveComplete, true, false);
@@ -5277,6 +5306,9 @@ bool gt_AchievementMentalBreakdownandMastery_Func (bool testConds, bool runActio
     if ((gv_masteryDisruptedStructureKills >= 55) && (libLotv_gf_DifficultyValueInt2(0, 0, 1, 1) == 1) && (gv_masteryAchievementFlagged == false)) {
         gv_masteryAchievementFlagged = true;
         libVoiC_gf_CampaignAwardAchievement("Mastery_Korhal02", gv_pLAYER_01_USER);
+    }
+
+    if ((gv_masteryDisruptedStructureKills >= 55)) {
     }
 
     return true;
@@ -5715,6 +5747,241 @@ bool gt_ObjectiveSecureResearchFacilitiesUpdate_Func (bool testConds, bool runAc
 //--------------------------------------------------------------------------------------------------
 void gt_ObjectiveSecureResearchFacilitiesUpdate_Init () {
     gt_ObjectiveSecureResearchFacilitiesUpdate = TriggerCreate("gt_ObjectiveSecureResearchFacilitiesUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Secure Forward Bases Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSecureForwardBasesCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    ObjectiveCreate(StringExternal("Param/Value/FED1B1A9"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveSecureForwardBasesRaynor = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveSecureForwardBasesRaynor, lib5BD4895D_ge_APObjectiveCategory_Extra, "", gv_raynorProgressCount, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSecureForwardBasesRaynor, gv_lOCATION_ID_FORWARD_BASES_RAYNOR);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSecureForwardBasesRaynor, true);
+    ObjectiveCreate(StringExternal("Param/Value/7CEFF0AB"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveSecureForwardBasesValerian = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveSecureForwardBasesValerian, lib5BD4895D_ge_APObjectiveCategory_Extra, "", gv_valerianProgressCount, 2, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSecureForwardBasesValerian, gv_lOCATION_ID_FORWARD_BASES_VALERIAN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSecureForwardBasesValerian, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSecureForwardBasesCreate_Init () {
+    gt_ObjectiveSecureForwardBasesCreate = TriggerCreate("gt_ObjectiveSecureForwardBasesCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Secure Forward Bases Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSecureForwardBasesUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveSecureForwardBasesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSecureForwardBasesRaynor, gv_raynorProgressCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSecureForwardBasesValerian, gv_valerianProgressCount);
+    if ((gv_raynorProgressCount >= 2)) {
+        TriggerExecute(gt_ObjectiveSecureForwardBasesRaynorComplete, true, false);
+    }
+
+    if ((gv_valerianProgressCount >= 2)) {
+        TriggerExecute(gt_ObjectiveSecureForwardBasesValerianComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSecureForwardBasesUpdate_Init () {
+    gt_ObjectiveSecureForwardBasesUpdate = TriggerCreate("gt_ObjectiveSecureForwardBasesUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Secure Forward Bases Raynor Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSecureForwardBasesRaynorComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveSecureForwardBasesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSecureForwardBasesRaynor, gv_raynorProgressCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSecureForwardBasesRaynor);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_FORWARD_BASES_RAYNOR);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSecureForwardBasesRaynorComplete_Init () {
+    gt_ObjectiveSecureForwardBasesRaynorComplete = TriggerCreate("gt_ObjectiveSecureForwardBasesRaynorComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Secure Forward Bases Valerian Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSecureForwardBasesValerianComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveSecureForwardBasesCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveSecureForwardBasesValerian, gv_valerianProgressCount);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSecureForwardBasesValerian);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_FORWARD_BASES_VALERIAN);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSecureForwardBasesValerianComplete_Init () {
+    gt_ObjectiveSecureForwardBasesValerianComplete = TriggerCreate("gt_ObjectiveSecureForwardBasesValerianComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libNtve_gf_PlayerInCinematicMode(gv_pLAYER_01_USER) == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    TimerStart(gv_objectiveSpeedrunTimer, (900.0 - GameGetMissionTime()), false, c_timeGame);
+    ObjectiveCreate(StringExternal("Param/Value/0D08BF76"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveSpeedrun = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer(gv_objectiveSpeedrun, lib5BD4895D_ge_APObjectiveCategory_Challenge, gv_objectiveSpeedrunTimer, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSpeedrun, gv_lOCATION_ID_SPEEDRUN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSpeedrun, true);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunCreate_Init () {
+    gt_ObjectiveSpeedrunCreate = TriggerCreate("gt_ObjectiveSpeedrunCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Failed
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunFailed_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveSpeedrunCreate, true, false);
+    TriggerEnable(gt_ObjectiveSpeedrunComplete, false);
+    TimerPause(gv_objectiveSpeedrunTimer, true);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveSpeedrun);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunFailed_Init () {
+    gt_ObjectiveSpeedrunFailed = TriggerCreate("gt_ObjectiveSpeedrunFailed_Func");
+    TriggerAddEventTimer(gt_ObjectiveSpeedrunFailed, gv_objectiveSpeedrunTimer);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((TimerGetRemaining(gv_objectiveSpeedrunTimer) > 0.0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_ObjectiveSpeedrunFailed, false);
+    TriggerExecute(gt_ObjectiveSpeedrunCreate, true, false);
+    TimerPause(gv_objectiveSpeedrunTimer, true);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSpeedrun);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_SPEEDRUN);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunComplete_Init () {
+    gt_ObjectiveSpeedrunComplete = TriggerCreate("gt_ObjectiveSpeedrunComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -6615,6 +6882,13 @@ void InitTriggers () {
     gt_ObjectiveSecureResearchFacilitiesCreate_Init();
     gt_ObjectiveSecureResearchFacilitiesComplete_Init();
     gt_ObjectiveSecureResearchFacilitiesUpdate_Init();
+    gt_ObjectiveSecureForwardBasesCreate_Init();
+    gt_ObjectiveSecureForwardBasesUpdate_Init();
+    gt_ObjectiveSecureForwardBasesRaynorComplete_Init();
+    gt_ObjectiveSecureForwardBasesValerianComplete_Init();
+    gt_ObjectiveSpeedrunCreate_Init();
+    gt_ObjectiveSpeedrunFailed_Init();
+    gt_ObjectiveSpeedrunComplete_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
