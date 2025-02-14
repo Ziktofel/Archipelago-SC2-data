@@ -44,6 +44,7 @@ const int gv_LOCATION_ID_FABRICATION_MATRIX = 1;
 const int gv_LOCATION_ID_ASSAULT_CLUSTER = 2;
 const int gv_LOCATION_ID_HULL_BREACH = 3;
 const int gv_LOCATION_ID_CORE_CRITICAL = 4;
+const int gv_lOCATION_ID_KILL_BRUTALISK = 5;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_ZERG_GREEN = 2;
 const int gv_pLAYER_03_ZERG_RED = 3;
@@ -88,6 +89,7 @@ int gv_alliedNexusesLost;
 int gv_armadaUnitsHitBySOA;
 bool gv_achievement_UsedSpearofAdunAbilities;
 int gv_objectiveKeystoneMustSurvive;
+int gv_objectiveKillBrutalisk;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -136,6 +138,7 @@ void InitGlobals () {
     }
     gv_armadaUnitGroup = UnitGroupEmpty();
     gv_objectiveKeystoneMustSurvive = c_invalidObjectiveId;
+    gv_objectiveKillBrutalisk = c_invalidObjectiveId;
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -279,6 +282,8 @@ trigger gt_TipReadyQ;
 trigger gt_ObjectiveKeystoneMustSurviveCreate;
 trigger gt_ObjectiveKeystoneMustSurviveComplete;
 trigger gt_ObjectiveKeystoneMustSurviveFailed;
+trigger gt_ObjectiveKillBrutalliskCreate;
+trigger gt_ObjectiveKillBrutaliskComplete;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1869,6 +1874,8 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     TriggerQueueExit();
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_TipReadyQ, true, false);
+    Wait(30.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveKillBrutalliskCreate, true, false);
     return true;
 }
 
@@ -6527,6 +6534,74 @@ void gt_ObjectiveKeystoneMustSurviveFailed_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Brutallisk Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillBrutalliskCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    ObjectiveCreate(StringExternal("Param/Value/DD787D3A"), StringToText(""), c_objectiveStateActive, false);
+    gv_objectiveKillBrutalisk = ObjectiveLastCreated();
+    ObjectiveShow(gv_objectiveKillBrutalisk, PlayerGroupAll(), false);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveSimple(gv_objectiveKillBrutalisk, lib5BD4895D_ge_APObjectiveCategory_Mastery, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillBrutalisk, gv_lOCATION_ID_KILL_BRUTALISK);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillBrutalisk, true);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillBrutalliskCreate_Init () {
+    gt_ObjectiveKillBrutalliskCreate = TriggerCreate("gt_ObjectiveKillBrutalliskCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Brutalisk Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillBrutaliskComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveKillBrutalliskCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillBrutalisk);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_KILL_BRUTALISK);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillBrutaliskComplete_Init () {
+    gt_ObjectiveKillBrutaliskComplete = TriggerCreate("gt_ObjectiveKillBrutaliskComplete_Func");
+    TriggerAddEventUnitDied(gt_ObjectiveKillBrutaliskComplete, UnitRefFromUnit(UnitFromId(77)));
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Q
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroQ_Func (bool testConds, bool runActions) {
@@ -7553,6 +7628,8 @@ void InitTriggers () {
     gt_ObjectiveKeystoneMustSurviveCreate_Init();
     gt_ObjectiveKeystoneMustSurviveComplete_Init();
     gt_ObjectiveKeystoneMustSurviveFailed_Init();
+    gt_ObjectiveKillBrutalliskCreate_Init();
+    gt_ObjectiveKillBrutaliskComplete_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
