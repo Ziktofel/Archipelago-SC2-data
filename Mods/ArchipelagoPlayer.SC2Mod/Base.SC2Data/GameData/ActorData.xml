@@ -4455,10 +4455,12 @@
     </CActorModel>
     <CActorSound id="AP_Medivac_IgniteAfterburners" parent="SoundOneShot">
         <On Terms="Behavior.AP_MedivacSpeedBoost.On" Send="Create"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="Create"/>
         <Sound value="Medivac_IgniteAfterburners"/>
     </CActorSound>
     <CActorSound id="AP_Medivac_IgniteAfterburners2" parent="SoundOneShot">
         <On Terms="Behavior.AP_MedivacSpeedBoost.On" Send="Create"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="Create"/>
         <Sound value="Medivac_IgniteAfterburners2"/>
     </CActorSound>
     <CActorUnit id="AP_Wraith" parent="GenericUnitBase" unitName="AP_Wraith">
@@ -20370,12 +20372,15 @@
     <CActorModel id="AP_WildMutationBuff" parent="ModelAnimationStyleContinuous">
         <On Terms="Behavior.AP_WildMutation.On" Send="Create"/>
         <On Terms="Behavior.AP_WildMutation.Off" Send="AnimBracketStop BSD"/>
+        <On Terms="Behavior.AP_InfBullfrogImpactMutagen.On" Send="Create"/>
+        <On Terms="Behavior.AP_InfBullfrogImpactMutagen.Off" Send="AnimBracketStop BSD"/>
         <Host Subject="_Unit"/>
         <HostSiteOps Ops="SOpAttachCenter"/>
         <AutoScaleFactor value="1.000000"/>
     </CActorModel>
     <CActorModel id="AP_WildMutationImpact" parent="ModelAnimationStyleOneShot">
         <On Terms="Behavior.AP_WildMutation.On; !ValidateUnit IsFlying" Send="Create"/>
+        <On Terms="Behavior.AP_InfBullfrogImpactMutagen.On; !ValidateUnit IsFlying" Send="Create"/>
         <Host Subject="_Unit"/>
         <HostSiteOps Ops="SOpAttachOriginStationary"/>
         <AutoScaleFactor value="1.000000"/>
@@ -20395,10 +20400,12 @@
     </CActorModel>
     <CActorSound id="AP_WildMutationStartSound" parent="SoundOneShot">
         <On Terms="Behavior.AP_WildMutation.On" Send="Create"/>
+        <On Terms="Behavior.AP_InfBullfrogImpactMutagen.On" Send="Create"/>
         <Sound value="AP_Kerrigan_Mutate_On"/>
     </CActorSound>
     <CActorSound id="AP_WildMutationStopSound" parent="SoundOneShot">
         <On Terms="Behavior.AP_WildMutation.Off" Send="Create"/>
+        <On Terms="Behavior.AP_InfBullfrogImpactMutagen.Off" Send="Create"/>
         <Sound value="AP_Kerrigan_Mutate_Off"/>
     </CActorSound>
     <CActorUnit id="AP_KerriganInfestBroodling" parent="GenericUnitStandard" unitName="AP_KerriganInfestBroodling">
@@ -36661,6 +36668,7 @@
     </CActorSound>
     <CActorModel id="AP_HunterlingLeapImpactModel" parent="ModelAnimationStyleOneShot">
         <On Terms="Effect.AP_LeapHunterlingImpactSearchSet.Start; At Caster" Send="Create"/>
+        <On Terms="Effect.AP_InfBullfrogLandingSearch.Start; At Caster" Send="Create"/>
         <HostSiteOps Ops="SOpShadow" HoldRotation="1"/>
         <Model value="AP_SiegeTank_BlackOps_JumpJets_Land"/>
     </CActorModel>
@@ -44389,4 +44397,214 @@
         <HostSiteOps Ops="SOpAttachWeapon AP_SOpInfestedLiberatorTentacleTipRotation AP_SOpInfestedLiberatorTentacleTipOffset"/>
         <SiteFlags index="RequiresManualKill" value="1"/>
     </CActorSite>
+    <CActorModel id="AP_DropshipSCBW@DeathRagdoll" parent="UnitDeathRagdollFlier">
+        <Model value="AP_DropshipSCBW@DeathRagdoll"/>
+        <On Terms="ActorCreation" Send="Create AP_DropshipSCBW@DeathRagdollDetonationForce"/>
+    </CActorModel>
+    <CActorForceSphere id="AP_DropshipSCBW@DeathRagdollDetonationForce" parent="AP_DeathRagdollDetonationForce">
+        <Magnitude value="10.000000,5.000000"/>
+        <Radius value="1.250000,0.250000"/>
+    </CActorForceSphere>
+    <CActorUnit id="AP_InfestedBullfrog" parent="GenericUnitBase" unitName="AP_InfestedBullfrog">
+        <Aliases value="_UnitLarge"/>
+        <Macros value="ZergBurrowStandardAnimMacro"/>
+        <Macros value="ZergMediumBurrowEffects"/>
+        <Macros value="UnloadDropAnim"/>
+        <Macros value="TerrainSquibAnimations"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart Ready Spell,Alternate,Start Spell,Alternate Spell,Alternate,End"/>
+        <On Terms="ActorCreation" Send="Create AP_InfestedBullfrogChassis"/>
+        <On Terms="ActorCreation" Send="Create AP_InfestedBullfrogGribblies"/>
+        <On Terms="UnitMovementUpdate.*.Walk" Send="AnimClear Birth"/>
+        <On Terms="UnitBirth.AP_InfestedBullfrog" Send="TerrainSquibActivateGroup RippleStandard"/>
+        <On Terms="UnitHeightUpdate.*.Land" Send="Create AP_SwarmHost_Land"/>
+        <On Terms="UnitMovementUpdate.*.Walk; AnimPlaying Birth" Send="AnimClear Birth"/>
+        <On Terms="UnitDeath" Send="Create AP_DropshipSCBW@DeathRagdoll"/>
+        <On Terms="UnitDeath" Send="Create AP_DropshipSCBW@DeathRagdollDetonationForce"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="AnimPlay LaunchFlail Burrow PlayForever,ForceLooping"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.Off" Send="AnimClear LaunchFlail"/>
+        <Model value="AP_InfestedBullfrog"/>
+        <BuildModel value="AP_InfestedBullfrog"/>
+        <HighlightTooltip value="Unit/Name/AP_InfestedBullfrog"/>
+        <DeathArray index="Normal" ModelLink="SwarmHostDeath" SoundLink="BroodLord_Explode"/>
+        <DeathArray index="Disintegrate" ModelLink="SwarmHostDeathAcid" SoundLink="Uni_DeathFXAcid"/>
+        <DeathArray index="Fire" ModelLink="SwarmHostDeathFire" SoundLink="Uni_DeathFXFire"/>
+        <DeathCustoms ModelLink="ZergLargeUnitDeathLow" Name="AntiGravZerg"/>
+        <PlacementModel value="AP_InfestedBullfrog"/>
+        <PlacementSound value="Zerg_BuildingPlacement"/>
+        <PortraitModel value="SwarmHost_Webby_Collection_Portrait"/>
+        <TerrainSquibs>
+            <GroupName value="RippleStandard"/>
+            <MovementDistance value="0.500000,1.000000"/>
+            <IdlePeriod value="0.500000,1.000000"/>
+            <RangeUp value="0.500000"/>
+            <RangeDown value="0.500000"/>
+            <AttachQuery Methods="AMFilterTargetSetB0"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleMedium"/>
+        </TerrainSquibs>
+        <TerrainSquibs>
+            <GroupName value="RippleStandard"/>
+            <MovementDistance value="0.500000,1.000000"/>
+            <IdlePeriod value="0.500000,1.000000"/>
+            <RangeUp value="1.000000"/>
+            <RangeDown value="1.000000"/>
+            <AttachQuery Methods="AMFilterCenter"/>
+            <Visuals TerrainPhysicsMaterial="Water" ActorModel="TerrainSquibHarnessContinuous" ModelLink="WaterRippleLargeSilent"/>
+        </TerrainSquibs>
+        <WalkAnimMoveSpeed value="0.707"/>
+        <BarOffset value="60"/>
+        <BarWidth value="100"/>
+        <GroupIcon>
+            <Image value="AP\Assets\Textures\wireframe-zerg-bullfrog.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-swarmhost.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
+        <NameOffset value="80"/>
+        <ShieldArmorIcon value="Assets\Textures\btn-upgrade-zerg-swarmfrenzy.dds"/>
+        <SoundArray index="Ready" value="SwarmHost_Ready"/>
+        <SoundArray index="What" value="SwarmHost_What"/>
+        <SoundArray index="Yes" value="SwarmHost_Yes"/>
+        <SoundArray index="Attack" value="SwarmHost_Attack"/>
+        <StatusColors index="Shields">
+            <ColorArray index="0" value="255,0,128,0"/>
+        </StatusColors>
+        <UnitIcon value="AP\Assets\Textures\btn-unit-zerg-bullfrog.dds"/>
+        <VitalColors index="Shields">
+            <ColorArray value="255,0,128,0"/>
+        </VitalColors>
+        <VitalNames index="Shields" value="Vital/ZergShields"/>
+        <Wireframe>
+            <Image value="AP\Assets\Textures\wireframe-zerg-bullfrog.dds"/>
+        </Wireframe>
+        <WireframeShieldColor value="255,0,128,0"/>
+    </CActorUnit>
+    <CActorModel id="AP_InfestedBullfrogChassis" parent="ModelAddition">
+        <Inherits index="BaseModelScale" value="0"/>
+        <Inherits index="CastShadows" value="0"/>
+        <Inherits index="CreepEngulfment" value="0"/>
+        <Inherits index="Decal" value="0"/>
+        <Inherits index="Opacity" value="0"/>
+        <Inherits index="Scale" value="0"/>
+        <Inherits index="TimeScale" value="0"/>
+        <Inherits index="WarpGroup" value="0"/>
+        <Remove Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <On Terms="ActorCreation" Send="AnimPlay Land Land PlayForever"/>
+        <On Terms="ActorCreation" Send="Create AP_InfestedBullfrogStinkyCloud"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="Create AP_InfBullfrogJumpJetFarLeft"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="Create AP_InfBullfrogJumpJetMidLeft"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="Create AP_InfBullfrogJumpJetMidRight"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="Create AP_InfBullfrogJumpJetFarRight"/>
+        <HostSiteOps Ops="SOpAttachWeapon03 AP_SOpInfestedBullfrogChassisOffset"/>
+        <Scale value="0.800000"/>
+        <ModelFlags index="IgnoreTipabilityWithHostOrSiteOps" value="1"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+    </CActorModel>
+    <CActorSiteOpLocalOffset id="AP_SOpInfestedBullfrogChassisOffset">
+        <LocalOffset value="0.000000,0.000000,-0.200000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorModel id="AP_InfestedBullfrogGribblies" parent="ModelAddition">
+        <Inherits index="BaseModelScale" value="0"/>
+        <Inherits index="CastShadows" value="0"/>
+        <Inherits index="CreepEngulfment" value="0"/>
+        <Inherits index="Decal" value="0"/>
+        <Inherits index="Opacity" value="0"/>
+        <Inherits index="Scale" value="0"/>
+        <Inherits index="TimeScale" value="0"/>
+        <Inherits index="WarpGroup" value="0"/>
+        <HostSiteOps Ops="SOpAttachWeapon01 AP_SOpInfestedBullfrogGribbliesOffset AP_SOpInfestedBullfrogGribbliesRotation"/>
+        <ModelFlags index="IgnoreTipabilityWithHostOrSiteOps" value="1"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+    </CActorModel>
+    <CActorModel id="AP_InfestedBullfrogStinkyCloud" parent="ModelAddition">
+        <Inherits index="BaseModelScale" value="0"/>
+        <Inherits index="CastShadows" value="0"/>
+        <Inherits index="CreepEngulfment" value="0"/>
+        <Inherits index="Decal" value="0"/>
+        <Inherits index="Opacity" value="0"/>
+        <Inherits index="Scale" value="0"/>
+        <Inherits index="TimeScale" value="0"/>
+        <Inherits index="WarpGroup" value="0"/>
+        <ModelFlags index="IgnoreTipabilityWithHostOrSiteOps" value="1"/>
+        <Model value="CorruptionModel"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+    </CActorModel>
+    <CActorSiteOpLocalOffset id="AP_SOpInfestedBullfrogGribbliesOffset">
+        <LocalOffset value="0.000000,-0.200000,0.00000"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteOpRotationExplicit id="AP_SOpInfestedBullfrogGribbliesRotation">
+        <Forward value="0.000000,1.000000,1.000000"/>
+        <Up value="0.000000,0.000000,1.000000"/>
+        <IsLocal value="1"/>
+    </CActorSiteOpRotationExplicit>
+    <CActorRange id="AP_InfBullfrogLeap_Range" parent="RangeAbil" abil="AP_InfBullfrogLeap">
+        <Abil Link="AP_InfBullfrogLeap"/>
+    </CActorRange>
+    <CActorRange id="AP_InfBullfrogLeapUnload_Range" parent="RangeAbil" abil="AP_InfBullfrogLeapUnload">
+        <Abil Link="AP_InfBullfrogLeapUnload"/>
+    </CActorRange>
+    <CActorModel id="AP_InfBullfrogJumpJetBase" parent="ModelAddition">
+        <Model value="AP_FirebatAttackLaunch"/>
+        <On Terms="ActorCreation" Send="AnimBracketStart BSD Birth Stand Death"/>
+        <On Terms="ActorCreation" Send="SetScale 0.5,0.25,1"/>
+        <On Terms="ActorOrphan" Send="Destroy"/>
+        <On Terms="AnimBracketState.*.AfterClosing; !AnimBracketExitReason ModelSwap; AnimName BSD" Send="Destroy"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.On" Send="Destroy"/>
+        <On Terms="Behavior.AP_InfestedBullfrogLeaping.Off" Send="Destroy"/>
+    </CActorModel>
+    <CActorSiteOpRotator id="AP_InfBullfrogJumpJetRotation">
+        <HoldRotation value="1"/>
+        <LocalAxis value="1.000000,0.000000,0.000000"/>
+        <InitialAngle value="90.000000"/>
+    </CActorSiteOpRotator>
+    <CActorSiteOpLocalOffset id="AP_InfBullfrogJumpJetOffsetFarLeft">
+        <LocalOffset value="0.86,0.68,0.17"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteOpLocalOffset id="AP_InfBullfrogJumpJetOffsetMidLeft">
+        <LocalOffset value="0.46,0.37,0.47"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteOpLocalOffset id="AP_InfBullfrogJumpJetOffsetMidRight">
+        <LocalOffset value="-0.46,0.37,0.47"/>
+    </CActorSiteOpLocalOffset>
+    <CActorSiteOpLocalOffset id="AP_InfBullfrogJumpJetOffsetFarRight">
+        <LocalOffset value="-0.86,0.68,0.17"/>
+    </CActorSiteOpLocalOffset>
+    <CActorModel id="AP_InfBullfrogJumpJetFarLeft" parent="AP_InfBullfrogJumpJetBase">
+        <HostSiteOps Ops="SOpAttachCenter AP_InfBullfrogJumpJetOffsetFarLeft AP_InfBullfrogJumpJetRotation"/>
+    </CActorModel>
+    <CActorModel id="AP_InfBullfrogJumpJetMidLeft" parent="AP_InfBullfrogJumpJetBase">
+        <HostSiteOps Ops="SOpAttachCenter AP_InfBullfrogJumpJetOffsetMidLeft AP_InfBullfrogJumpJetRotation"/>
+    </CActorModel>
+    <CActorModel id="AP_InfBullfrogJumpJetMidRight" parent="AP_InfBullfrogJumpJetBase">
+        <HostSiteOps Ops="SOpAttachCenter AP_InfBullfrogJumpJetOffsetMidRight AP_InfBullfrogJumpJetRotation"/>
+    </CActorModel>
+    <CActorModel id="AP_InfBullfrogJumpJetFarRight" parent="AP_InfBullfrogJumpJetBase">
+        <HostSiteOps Ops="SOpAttachCenter AP_InfBullfrogJumpJetOffsetFarRight AP_InfBullfrogJumpJetRotation"/>
+    </CActorModel>
+    <CActorUnit id="AP_SICocoonInfestedBullfrog" parent="AP_SICocoonInfested" unitName="AP_SICocoonInfestedBullfrog">
+        <Aliases value="_UnitSmall"/>
+        <ModelFlags index="OutlineEmitter" value="1"/>
+        <PortraitModel value="AP_CocoonPortrait"/>
+        <BarOffset value="50"/>
+        <BarWidth value="40"/>
+        <GroupIcon>
+            <Image value="Assets\Textures\Wireframe-Zerg-RavagersEgg.dds"/>
+        </GroupIcon>
+        <HeroIcon value="Assets\Textures\btn-unit-zerg-egg.dds"/>
+        <LifeArmorIcon value="Assets\Textures\btn-upgrade-zerg-groundcarapace-level0.dds"/>
+        <UnitIcon value="Assets\Textures\btn-unit-zerg-egg.dds"/>
+        <Wireframe>
+            <Image value="Assets\Textures\Wireframe-Zerg-RavagersEgg.dds"/>
+        </Wireframe>
+        <StatusBarOn index="Progress" value="1"/>
+        <StatusBarOn index="Duration" value="1"/>
+        <HighlightTooltip value="Unit/Name/AP_SICocoon"/>
+    </CActorUnit>
+    <CActorUnit id="AP_BullfrogPlaceholder" parent="GenericUnitStandard" unitName="AP_BullfrogPlaceholder">
+        <Model value="Invisible"/>
+        <StatusBarFlags index="Shields" value="0"/>
+        <StatusBarFlags index="Life" value="0"/>
+        <StatusBarFlags index="Energy" value="0"/>
+        <StatusBarFlags index="Cargo" value="0"/>
+        <StatusBarFlags index="Progress" value="0"/>
+    </CActorUnit>
+    <CActorSplat id="AP_BullfrogLeapUnloadCursorSplat" parent="ZergCursorSplat" abil="AP_InfBullfrogLeapUnload"/>
 </Catalog>
