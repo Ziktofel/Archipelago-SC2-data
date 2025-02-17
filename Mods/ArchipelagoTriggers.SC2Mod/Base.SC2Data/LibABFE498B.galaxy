@@ -619,7 +619,7 @@ void libABFE498B_gf_AP_Triggers_unlockTerranLaboratory (int lp_player, int lp_bi
         libABFE498B_gf_AP_Triggers_Terran_unlockRogueForces, // 12
         libABFE498B_gf_AP_Triggers_Terran_unlockMechanicalKnowHow, // 13
         libABFE498B_gf_AP_Triggers_Terran_unlockMercenaryMunitions, // 14
-        libABFE498B_gf_AP_Triggers_Terran_unlockFastDelivery, // 15
+        ap_triggers_PlayerConsumer_sig, // 15 // fast delivery moved
         libABFE498B_gf_AP_Triggers_Terran_unlockRapidReinforcement, // 16
         libABFE498B_gf_AP_Triggers_Terran_unlockFusionCoreFusionReactor, // 17
         libABFE498B_gf_AP_Triggers_Terran_unlockPsiDisrupterZerg, // 18
@@ -770,7 +770,7 @@ void libABFE498B_gf_AP_Triggers_unlockTerranProgressiveUpgrades2 (int lp_player,
         libABFE498B_gf_AP_Triggers_Terran_unlockBattlecruiserProgressiveMissilePods, // 2
         libABFE498B_gf_AP_Triggers_Terran_unlockDiamondbackProgressiveTriLithiumPowerCell, // 4
         libABFE498B_gf_AP_Triggers_Terran_unlockSiegeTankProgressiveTransportHook, // 6
-        ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 8
+        libABFE498B_gf_AP_Triggers_Terran_unlockProgressiveFastDelivery, // 8
         ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 10
         ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 12
         ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 14
@@ -1264,9 +1264,9 @@ void libABFE498B_gf_AP_Triggers_unlockZergEvolutionPit (int lp_player, int lp_bi
         libABFE498B_gf_AP_Triggers_Zerg_MacroscopicRecuperation, // 13
         libABFE498B_gf_AP_Triggers_Zerg_BioMechanicalStockpiling, // 14
         libABFE498B_gf_AP_Triggers_Zerg_unlockZergBroodlingPacking, // 15
-        ap_triggers_PlayerConsumer_sig, // 16
-        ap_triggers_PlayerConsumer_sig, // 17
-        ap_triggers_PlayerConsumer_sig, // 18
+        libABFE498B_gf_AP_Triggers_Zerg_CellDivision, // 16
+        libABFE498B_gf_AP_Triggers_Zerg_SelfSufficient, // 17
+        libABFE498B_gf_AP_Triggers_Zerg_UnrestrictedMutation, // 18
         ap_triggers_PlayerConsumer_sig, // 19
         ap_triggers_PlayerConsumer_sig, // 20
         ap_triggers_PlayerConsumer_sig, // 21
@@ -1291,7 +1291,7 @@ void libABFE498B_gf_AP_Triggers_unlockZergProgressiveUpgrades (int lp_player, in
         libABFE498B_gf_AP_Triggers_Zerg_ProgressiveAutomatedMitosis, // 0
         libABFE498B_gf_AP_Triggers_Zerg_ProgressiveFungalSnare, // 2
         libABFE498B_gf_AP_Triggers_Zerg_AberrationProgressiveBanelingLaunch, // 4
-        ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 6
+        libABFE498B_gf_AP_Triggers_Zerg_ProgressiveEvolutionaryLeap, // 6
         ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 8
         ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 10
         ap_triggers_PlayerUpgradeLevelBiConsumer_sig, // 12
@@ -4828,21 +4828,29 @@ void libABFE498B_gf_AP_Triggers_Terran_unlockMercenaryMunitions (int lp_player) 
     libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_MercenaryMunitions", 1);
 }
 
-void libABFE498B_gf_AP_Triggers_Terran_unlockFastDelivery (int lp_player) {
+void libABFE498B_gf_AP_Triggers_Terran_unlockProgressiveFastDelivery (int lp_player, int lp_level) {
     // Variable Declarations
     int lv_index;
-    int lv_upgradeLevels;
+    int lv_upgradeLevel2;
+    int lv_upgradeLevel;
 
     // Automatic Variable Declarations
     // Variable Initialization
 
     // Implementation
-    lv_upgradeLevels = TechTreeUpgradeCount(lp_player, "AP_FastDelivery", c_techCountQueuedOrBetter);
-    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_FastDelivery", 1);
-    if ((lv_upgradeLevels == 0)) {
-        lib15EF4C78_gf_AP_Player_ClearMercenaryCooldowns(lp_player);
+    lv_upgradeLevel = TechTreeUpgradeCount(lp_player, "AP_FastDeliveryLevel1", c_techCountQueuedOrBetter);
+    lv_upgradeLevel2 = TechTreeUpgradeCount(lp_player, "AP_FastDelivery", c_techCountQueuedOrBetter);
+    if ((lp_level >= 1) && (lv_upgradeLevel == 0)) {
+        libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_FastDeliveryLevel1", 1);
+        lib15EF4C78_gf_AP_Player_ClearMercenaryCooldownsTerran(lp_player);
     }
+    else {
+        if ((lp_level >= 2) && (lv_upgradeLevel2 == 0)) {
+            libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_FastDelivery", 1);
+            lib15EF4C78_gf_AP_Player_ClearMercenaryCooldownsTerran(lp_player);
+        }
 
+    }
 }
 
 void libABFE498B_gf_AP_Triggers_Terran_unlockRapidReinforcement (int lp_player) {
@@ -4864,8 +4872,11 @@ void libABFE498B_gf_AP_Triggers_Terran_unlockRapidReinforcement (int lp_player) 
     if ((lv_upgradeLevels == 0)) {
         lv_index = 0;
         for ( ; ( (auto270CB00B_ai >= 0 && lv_index <= auto270CB00B_ae) || (auto270CB00B_ai < 0 && lv_index >= auto270CB00B_ae) ) ; lv_index += auto270CB00B_ai ) {
-            lv_cooldownLink = lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index];
-            PlayerAddCooldown(lp_player, lv_cooldownLink, -60.0);
+            if (((lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_INFANTRY) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_VEHICLE) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_STARSHIP))) {
+                lv_cooldownLink = lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index];
+                PlayerAddCooldown(lp_player, lv_cooldownLink, -60.0);
+            }
+
         }
     }
 
@@ -7039,6 +7050,55 @@ void libABFE498B_gf_AP_Triggers_Zerg_unlockZergBroodlingPacking (int lp_player) 
     // Automatic Variable Declarations
     // Implementation
     libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_ZergBroodlingPacking", 1);
+}
+
+void libABFE498B_gf_AP_Triggers_Zerg_ProgressiveEvolutionaryLeap (int lp_player, int lp_level) {
+    // Variable Declarations
+    int lv_index;
+    fixed lv_timeDifference;
+
+    // Automatic Variable Declarations
+    const int autoB3E284BB_ae = lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE;
+    const int autoB3E284BB_ai = 1;
+
+    // Variable Initialization
+
+    // Implementation
+    if ((lp_level == 1) && (TechTreeUpgradeCount(lp_player, "AP_EvolutionaryLeapLevel1", c_techCountCompleteOnly) == 0)) {
+        libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_EvolutionaryLeapLevel1", 1);
+        lv_index = 0;
+        for ( ; ( (autoB3E284BB_ai >= 0 && lv_index <= autoB3E284BB_ae) || (autoB3E284BB_ai < 0 && lv_index >= autoB3E284BB_ae) ) ; lv_index += autoB3E284BB_ai ) {
+            if (((lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_BROODWAR) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_INFESTED) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_SCTWO))) {
+                lv_timeDifference = libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, lib15EF4C78_gv_aP_Player_MercAbility[lv_index], "InfoArray[" + IntToString(lib15EF4C78_gv_aP_Player_MercAbilityInfoArrayIndex[lv_index]) + "].Cooldown.TimeStart", lp_player);
+                PlayerAddCooldown(lp_player, lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index], (0.0 - lv_timeDifference));
+            }
+
+        }
+        if ((lp_level == 2) && (TechTreeUpgradeCount(lp_player, "AP_EvolutionaryLeapLevel2", c_techCountCompleteOnly) == 0)) {
+            libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_EvolutionaryLeapLevel2", 1);
+            lib15EF4C78_gf_AP_Player_ClearMercenaryCooldownsZerg(lp_player);
+        }
+
+    }
+
+}
+
+void libABFE498B_gf_AP_Triggers_Zerg_SelfSufficient (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_SelfSufficient", 1);
+}
+
+void libABFE498B_gf_AP_Triggers_Zerg_CellDivision (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_CellDivision", 1);
+}
+
+void libABFE498B_gf_AP_Triggers_Zerg_UnrestrictedMutation (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_UnrestrictedMutation", 1);
 }
 
 void libABFE498B_gf_AP_Triggers_Zerg_KerriganKinteticBlast (int lp_player) {
