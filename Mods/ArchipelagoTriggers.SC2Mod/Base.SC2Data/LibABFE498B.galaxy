@@ -9578,6 +9578,64 @@ void libABFE498B_gf_AP_Triggers_giveBuildingSpeed (int lp_player, int lp_level) 
     libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_BuildingFastBuild100Stack", lv__100stacks);
 }
 
+void libABFE498B_gf_AP_Triggers_giveResearchSpeed (int lp_player, int lp_level) {
+    // Variable Declarations
+    int lv__1stacks;
+    int lv__100stacks;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv__1stacks = ModI(lp_level, 100);
+    lv__100stacks = (lp_level / 100);
+
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_WeaponArmorResearchSpeedup", lv__1stacks);
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_WeaponArmorResearchSpeedup100Stack", lv__100stacks);
+}
+
+void libABFE498B_gf_AP_Triggers_giveResearchCost (int lp_player, int lp_level) {
+    // Variable Declarations
+    int lv__1stacks;
+    int lv__100stacks;
+    string lv_userDataInstance;
+    string lv_researchAbility;
+    int lv_researchIndex;
+    int lv_researchMinerals;
+    int lv_researchVespene;
+
+    // Automatic Variable Declarations
+    string autoF6D28D58_userType;
+    int autoF6D28D58_i;
+
+    // Variable Initialization
+    lv__1stacks = ModI(lp_level, 100);
+    lv__100stacks = (lp_level / 100);
+
+    // Implementation
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_WeaponArmorResearchCost", lv__1stacks);
+    libNtve_gf_SetUpgradeLevelForPlayer(lp_player, "AP_WeaponArmorResearchCost100Stack", lv__100stacks);
+    autoF6D28D58_userType = "AP_WeaponArmorUpgradeResearch";
+    autoF6D28D58_i = 1;
+    for ( ; autoF6D28D58_i <= UserDataInstanceCount(autoF6D28D58_userType) ; autoF6D28D58_i += 1 ) {
+        lv_userDataInstance = UserDataInstance(autoF6D28D58_userType, autoF6D28D58_i);
+        lv_researchAbility = UserDataGetGameLink("AP_WeaponArmorUpgradeResearch", lv_userDataInstance, "Ability", 1);
+        lv_researchIndex = UserDataGetInt("AP_WeaponArmorUpgradeResearch", lv_userDataInstance, "ResearchIndex", 1);
+        if ((lv_researchAbility != null)) {
+            lv_researchMinerals = CatalogFieldValueGetAsInt(c_gameCatalogAbil, lv_researchAbility, "InfoArray[" + IntToString(lv_researchIndex) + "].Resource[" + IntToString(c_resourceTypeMinerals) + "]", lp_player);
+            lv_researchVespene = CatalogFieldValueGetAsInt(c_gameCatalogAbil, lv_researchAbility, "InfoArray[" + IntToString(lv_researchIndex) + "].Resource[" + IntToString(c_resourceTypeVespene) + "]", lp_player);
+            if ((lv_researchMinerals < 0)) {
+                CatalogFieldValueSet(c_gameCatalogAbil, lv_researchAbility, "InfoArray[" + IntToString(lv_researchIndex) + "].Resource[" + IntToString(c_resourceTypeMinerals) + "]", lp_player, "0");
+            }
+
+            if ((lv_researchVespene < 0)) {
+                CatalogFieldValueSet(c_gameCatalogAbil, lv_researchAbility, "InfoArray[" + IntToString(lv_researchIndex) + "].Resource[" + IntToString(c_resourceTypeVespene) + "]", lp_player, "0");
+            }
+
+        }
+
+    }
+}
+
 void libABFE498B_gf_AP_Triggers_replaceUpgrade (int lp_player, string lp_oldUpgrade, string lp_newUpgrade) {
     // Automatic Variable Declarations
     // Implementation
@@ -10029,12 +10087,16 @@ bool libABFE498B_gt_AP_Triggers_giveMiscTech_Func (bool testConds, bool runActio
     // Variable Declarations
     int lv_currentPlayer;
     string lv_buildingSpeedValue;
+    string lv_researchSpeedValue;
+    string lv_researchCostValue;
 
     // Automatic Variable Declarations
     playergroup autoA7A687E2_g;
 
     // Variable Initialization
     lv_buildingSpeedValue = "";
+    lv_researchSpeedValue = "";
+    lv_researchCostValue = "";
 
     // Actions
     if (!runActions) {
@@ -10042,12 +10104,16 @@ bool libABFE498B_gt_AP_Triggers_giveMiscTech_Func (bool testConds, bool runActio
     }
 
     lv_buildingSpeedValue = StringWord(EventChatMessage(false), 2);
+    lv_researchSpeedValue = StringWord(EventChatMessage(false), 3);
+    lv_researchCostValue = StringWord(EventChatMessage(false), 4);
     autoA7A687E2_g = lib5BD4895D_gv_aP_Core_affectedPlayers;
     lv_currentPlayer = -1;
     while (true) {
         lv_currentPlayer = PlayerGroupNextPlayer(autoA7A687E2_g, lv_currentPlayer);
         if (lv_currentPlayer < 0) { break; }
         libABFE498B_gf_AP_Triggers_giveBuildingSpeed(lv_currentPlayer, StringToInt(lv_buildingSpeedValue));
+        libABFE498B_gf_AP_Triggers_giveResearchSpeed(lv_currentPlayer, StringToInt(lv_researchSpeedValue));
+        libABFE498B_gf_AP_Triggers_giveResearchCost(lv_currentPlayer, StringToInt(lv_researchCostValue));
     }
     return true;
 }
