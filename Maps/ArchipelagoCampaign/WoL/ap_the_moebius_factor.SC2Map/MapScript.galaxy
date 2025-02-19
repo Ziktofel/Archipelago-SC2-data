@@ -1103,7 +1103,7 @@ bool gt_CreateMedivacIntro_Func (bool testConds, bool runActions) {
     libNtve_gf_AddUnitGroupToUnitGroup(UnitCargoLastCreatedGroup(), gv_medivacUnits);
     UnitIssueOrder(gv_medivac02, OrderTargetingPoint(AbilityCommand("AP_MedivacTransport", 2), PointFromId(1117)), c_orderQueueReplace);
     UnitIssueOrder(gv_medivac02, Order(AbilityCommand("move", 2)), c_orderQueueAddToEnd);
-    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+    if (((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Zerg"))) {
         Wait(3.0, c_timeGame);
         TriggerExecute(gt_ScourgishInquisition1, true, false);
         TriggerExecute(gt_ScourgishInquisition2, true, false);
@@ -1123,11 +1123,17 @@ void gt_CreateMedivacIntro_Init () {
 bool gt_ScourgishInquisition1_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unitgroup lv_scourgeGroup;
+    unit lv_bullfrog;
+    unit lv_marine;
+    unit lv_medic;
 
     // Automatic Variable Declarations
     unitgroup auto23A2AC8A_g;
     int auto23A2AC8A_u;
     unit auto23A2AC8A_var;
+    unitgroup auto1AA7BB48_g;
+    int auto1AA7BB48_u;
+    unit auto1AA7BB48_var;
     unitgroup auto158B9EA8_g;
     int auto158B9EA8_u;
     unit auto158B9EA8_var;
@@ -1161,15 +1167,44 @@ bool gt_ScourgishInquisition1_Func (bool testConds, bool runActions) {
         libNtve_gf_ChangeUnitDamage(auto23A2AC8A_var, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_Minimal);
     }
     UnitGroupIssueOrder(lv_scourgeGroup, OrderTargetingUnit(AbilityCommand("attack", 0), gv_medivac01), c_orderQueueReplace);
-    while (!((UnitIsAlive(gv_medivac01) == false))) {
-        Wait(0.5, c_timeGame);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        while (!((UnitIsAlive(gv_medivac01) == false))) {
+            Wait(0.5, c_timeGame);
+        }
+        auto158B9EA8_g = lv_scourgeGroup;
+        auto158B9EA8_u = UnitGroupCount(auto158B9EA8_g, c_unitCountAll);
+        for (;; auto158B9EA8_u -= 1) {
+            auto158B9EA8_var = UnitGroupUnitFromEnd(auto158B9EA8_g, auto158B9EA8_u);
+            if (auto158B9EA8_var == null) { break; }
+            UnitKill(auto158B9EA8_var);
+        }
     }
-    auto158B9EA8_g = lv_scourgeGroup;
-    auto158B9EA8_u = UnitGroupCount(auto158B9EA8_g, c_unitCountAll);
-    for (;; auto158B9EA8_u -= 1) {
-        auto158B9EA8_var = UnitGroupUnitFromEnd(auto158B9EA8_g, auto158B9EA8_u);
-        if (auto158B9EA8_var == null) { break; }
-        UnitKill(auto158B9EA8_var);
+    else {
+        UnitBehaviorAdd(gv_medivac01, "AP_MedivacDontDie", gv_medivac01, 1);
+        while (!((UnitGetPropertyFixed(gv_medivac01, c_unitPropLife, c_unitPropCurrent) < 2.0))) {
+            Wait(0.5, c_timeGame);
+        }
+        auto1AA7BB48_g = lv_scourgeGroup;
+        auto1AA7BB48_u = UnitGroupCount(auto1AA7BB48_g, c_unitCountAll);
+        for (;; auto1AA7BB48_u -= 1) {
+            auto1AA7BB48_var = UnitGroupUnitFromEnd(auto1AA7BB48_g, auto1AA7BB48_u);
+            if (auto1AA7BB48_var == null) { break; }
+            UnitKill(auto1AA7BB48_var);
+        }
+        UnitCreate(1, "AP_InfestedBullfrog", 0, gv_p06_MOEBIUS_SEC_FORCE, PointWithOffsetPolar(UnitGetPosition(gv_medivac01), 8.0, UnitGetFacing(gv_medivac01)), UnitGetFacing(gv_medivac01));
+        lv_bullfrog = UnitLastCreated();
+        UnitCargoCreate(lv_bullfrog, "AP_SIInfestedMarine", 1);
+        lv_marine = UnitCargoLastCreated();
+        UnitCargoCreate(lv_bullfrog, "AP_InfestedMedic", 1);
+        lv_medic = UnitCargoLastCreated();
+        UnitCreateEffectUnit(gv_medivac01, "AP_MedivacLaunch", lv_bullfrog);
+        Wait(5.0, c_timeGame);
+        UnitSetOwner(lv_bullfrog, gv_p01_USER, true);
+        UnitIssueOrder(lv_bullfrog, OrderTargetingUnit(AbilityCommand("AP_InfBullfrogTransport", 2), lv_bullfrog), c_orderQueueReplace);
+        Wait(0.0, c_timeGame);
+        UnitIssueOrder(lv_marine, OrderTargetingPoint(AbilityCommand("move", 0), PointWithOffset(UnitGetPosition(lv_bullfrog), -3.0, 0.0)), c_orderQueueReplace);
+        Wait(1.0, c_timeGame);
+        UnitIssueOrder(lv_medic, OrderTargetingPoint(AbilityCommand("move", 0), PointWithOffset(UnitGetPosition(lv_bullfrog), -2.0, 0.0)), c_orderQueueReplace);
     }
     return true;
 }
@@ -1185,14 +1220,20 @@ void gt_ScourgishInquisition1_Init () {
 bool gt_ScourgishInquisition2_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unitgroup lv_scourgeGroup;
+    unit lv_bullfrog;
+    unit lv_marine;
+    unit lv_medic;
 
     // Automatic Variable Declarations
     unitgroup autoF2D10299_g;
     int autoF2D10299_u;
     unit autoF2D10299_var;
-    unitgroup auto30EC0504_g;
-    int auto30EC0504_u;
-    unit auto30EC0504_var;
+    unitgroup auto82E576E6_g;
+    int auto82E576E6_u;
+    unit auto82E576E6_var;
+    unitgroup auto085D0ED5_g;
+    int auto085D0ED5_u;
+    unit auto085D0ED5_var;
 
     // Variable Initialization
     lv_scourgeGroup = UnitGroupEmpty();
@@ -1223,15 +1264,44 @@ bool gt_ScourgishInquisition2_Func (bool testConds, bool runActions) {
         libNtve_gf_ChangeUnitDamage(autoF2D10299_var, libNtve_ge_UnitDamageTakenDealt_Damage_Take, libNtve_ge_UnitDamageChangeOption_Minimal);
     }
     UnitGroupIssueOrder(lv_scourgeGroup, OrderTargetingUnit(AbilityCommand("attack", 0), gv_medivac02), c_orderQueueReplace);
-    while (!((UnitIsAlive(gv_medivac02) == false))) {
-        Wait(0.5, c_timeGame);
+    if ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) {
+        while (!((UnitIsAlive(gv_medivac02) == false))) {
+            Wait(0.5, c_timeGame);
+        }
+        auto085D0ED5_g = lv_scourgeGroup;
+        auto085D0ED5_u = UnitGroupCount(auto085D0ED5_g, c_unitCountAll);
+        for (;; auto085D0ED5_u -= 1) {
+            auto085D0ED5_var = UnitGroupUnitFromEnd(auto085D0ED5_g, auto085D0ED5_u);
+            if (auto085D0ED5_var == null) { break; }
+            UnitKill(auto085D0ED5_var);
+        }
     }
-    auto30EC0504_g = lv_scourgeGroup;
-    auto30EC0504_u = UnitGroupCount(auto30EC0504_g, c_unitCountAll);
-    for (;; auto30EC0504_u -= 1) {
-        auto30EC0504_var = UnitGroupUnitFromEnd(auto30EC0504_g, auto30EC0504_u);
-        if (auto30EC0504_var == null) { break; }
-        UnitKill(auto30EC0504_var);
+    else {
+        UnitBehaviorAdd(gv_medivac02, "AP_MedivacDontDie", gv_medivac02, 1);
+        while (!((UnitGetPropertyFixed(gv_medivac02, c_unitPropLife, c_unitPropCurrent) < 2.0))) {
+            Wait(0.5, c_timeGame);
+        }
+        auto82E576E6_g = lv_scourgeGroup;
+        auto82E576E6_u = UnitGroupCount(auto82E576E6_g, c_unitCountAll);
+        for (;; auto82E576E6_u -= 1) {
+            auto82E576E6_var = UnitGroupUnitFromEnd(auto82E576E6_g, auto82E576E6_u);
+            if (auto82E576E6_var == null) { break; }
+            UnitKill(auto82E576E6_var);
+        }
+        UnitCreate(1, "AP_InfestedBullfrog", c_unitCreateIgnorePlacement, gv_p06_MOEBIUS_SEC_FORCE, PointWithOffsetPolar(UnitGetPosition(gv_medivac02), 8.0, UnitGetFacing(gv_medivac02)), UnitGetFacing(gv_medivac02));
+        lv_bullfrog = UnitLastCreated();
+        UnitCargoCreate(lv_bullfrog, "AP_SIInfestedMarine", 1);
+        lv_marine = UnitCargoLastCreated();
+        UnitCargoCreate(lv_bullfrog, "AP_InfestedMedic", 1);
+        lv_medic = UnitCargoLastCreated();
+        UnitCreateEffectUnit(gv_medivac02, "AP_MedivacLaunch", lv_bullfrog);
+        Wait(5.0, c_timeGame);
+        UnitSetOwner(lv_bullfrog, gv_p01_USER, true);
+        UnitIssueOrder(lv_bullfrog, OrderTargetingUnit(AbilityCommand("AP_InfBullfrogTransport", 2), lv_bullfrog), c_orderQueueReplace);
+        Wait(0.0, c_timeGame);
+        UnitIssueOrder(lv_marine, OrderTargetingPoint(AbilityCommand("move", 0), PointWithOffset(UnitGetPosition(lv_bullfrog), -3.0, 0.0)), c_orderQueueReplace);
+        Wait(1.0, c_timeGame);
+        UnitIssueOrder(lv_medic, OrderTargetingPoint(AbilityCommand("move", 0), PointWithOffset(UnitGetPosition(lv_bullfrog), -2.0, 0.0)), c_orderQueueReplace);
     }
     return true;
 }
