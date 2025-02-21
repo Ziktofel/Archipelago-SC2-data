@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Catalog>
+    <CActorUnit id="AP_InfestedBullfrog">
+        <On Terms="Signal.*.Launch" Send="AnimBracketStart AP_Work Burrow IGNORE Unburrow OpeningPlayForever,Instant"/>
+        <On Terms="Signal.*.Launch" Send="SetVisibility"/>
+        <On Terms="Effect.AP_MedivacImpact.Start; At Target" Send="Signal Impact"/>
+        <On Terms="Signal.*.Impact" Send="SetVisibility 1"/>
+        <On Terms="Signal.*.Impact" Send="TimerSet 2.000000 Impact"/>
+        <On Terms="TimerExpired; TimerName Impact" Send="AnimBracketStop AP_Work"/>
+        <On Terms="TimerExpired; TimerName Impact" Send="Create BurrowUpLarge"/>
+        <On Terms="Effect.AP_MedivacLaunch.Start; At Target" Send="Signal Launch"/>
+    </CActorUnit>
+    <CActorModel id="AP_InfestedBullfrogChassis">
+        <Inherits index="Opacity" value="1"/>
+    </CActorModel>
+    <CActorModel id="AP_InfestedBullfrogGribblies">
+        <Inherits index="Opacity" value="1"/>
+    </CActorModel>
+    <CActorUnit id="AP_Medivac">
+        <On Terms="TimerExpired; TimerName Crash" Send="Signal Crash"/>
+        <On Terms="Signal.*.Crash" Send="HostSiteOpsRemove ::Host SOpBankerMedivac"/>
+        <On Terms="Signal.*.Dropship" Send="ModelSwap AP_InfestedBullfrogChassis"/>
+        <On Terms="Effect.AP_MedivacLaunch.Start; IsStatus Crash 0" Send="Signal Crash"/>
+        <On Terms="Signal.*.Crash" Send="HostSiteOpsAdd ::Host AP_MedivacRotator"/>
+        <On Terms="Signal.*.Crash" Send="StatusSet Crash 1"/>
+    </CActorUnit>
+    <CActorAction id="AP_MedivacLaunch" parent="GenericAttack" effectImpact="AP_MedivacImpact" effectLaunch="AP_MedivacLaunch">
+        <LaunchAttachQuery Methods="AMFilterCenter"/>
+        <LaunchAssets Model="AP_ThorMengskHandGunAttackImpact" Sound="AP_SiegeBreaker_AttackImpact"/>
+        <Missile value="AP_Medivac"/>
+        <ImpactSiteOps Ops="SOpAttachCenter"/>
+        <!--ImpactMap index="None" Model="SiegeTankSiegedAttackImpact" Sound="SiegeTank_SiegedAttackImpact"/-->
+        <ShieldFlashType value="None"/>
+    </CActorAction>
+    <CActorModel id="AP_MedivacLaunchAttachment" parent="ModelAddition">
+        <On Terms="Effect.AP_MedivacLaunch.Start; At Caster" Send="Create"/>
+        <HostSiteOps Ops="SOpAttachTarget"/>
+        <Model value="FireMedium"/>
+    </CActorModel>
+    <CActorModel id="AP_BullfrogAttachment" parent="ModelAddition">
+        <On Terms="Effect.AP_MedivacImpact.Start; At Target" Send="Create"/>
+        <On Terms="ActorCreation" Send="TimerSet 3.000000"/>
+        <On Terms="TimerExpired" Send="AnimBracketStop BSD"/>
+        <HostSiteOps Ops="SOpAttachTarget"/>
+        <Model value="FireMedium"/>
+    </CActorModel>
+    <CActorModel id="AP_MedivacLaunchImpact" parent="ModelAnimationStyleOneShot">
+        <EditorCategories value=""/>
+        <On Terms="Effect.AP_MedivacImpact.Start; At Effect" Send="Create"/>
+        <On Terms="ActorCreation" Send="Create AP_MedivacLaunchImpactSound"/>
+        <Model value="SiegeTankSiegedAttackImpact"/>
+        <Scale value="1.000000,1.000000,0.500000"/>
+    </CActorModel>
+    <CActorSound id="AP_MedivacLaunchImpactSound" parent="SoundOneShot">
+        <Sound value="SiegeTank_AttackImpact"/>
+    </CActorSound>
+    <CActorSiteOpRotator id="AP_MedivacRotator">
+        <LocalAxis value="0.000000,1.000000,0.000000"/>
+        <Rate value="200.000000"/>
+    </CActorSiteOpRotator>
+</Catalog>
