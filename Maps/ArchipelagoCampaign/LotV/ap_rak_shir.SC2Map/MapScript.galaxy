@@ -45,6 +45,9 @@ void InitLibs () {
 const int gv_LOCATION_ID_NORTH_SLAYN_ELEMENTAL = 1;
 const int gv_LOCATION_ID_SOUTHWEST_SLAYN_ELEMENTAL = 2;
 const int gv_LOCATION_ID_EAST_SLAYN_ELEMENTAL = 3;
+const int gv_lOCATION_ID_RESOURCE_PICKUPS = 4;
+const int gv_lOCATION_ID_KILL_NEXUS = 5;
+const int gv_lOCATION_ID_SPEEDRUN = 6;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_TALDARIM = 2;
 const int gv_pLAYER_03_TALDARIM = 3;
@@ -54,6 +57,7 @@ const int gv_pLAYER_07_ALARAK = 7;
 const int gv_pLAYER_08_MALASH = 8;
 const int gv_pLAYER_09_ELEMENTAL = 9;
 const int gv_tugOfWar_WaypointMax = 22;
+const int gv_resourcePickupsMax = 8;
 
 //--------------------------------------------------------------------------------------------------
 // Global Preset Declarations
@@ -114,6 +118,11 @@ int gv_objectiveAlarakMustSurvive;
 int gv_objectiveKillSlaynElementals;
 int gv_objectiveElementalsKilledCount;
 int gv_objectiveElementalsMax;
+int gv_objectiveResourcePickups;
+int gv_resourcePickupsCollected;
+int gv_objectiveKillNexus;
+int gv_objectiveSpeedrun;
+timer gv_speedrunTimer;
 unitgroup gv_cinematicHiddenUnits;
 unitgroup gv_cinematicPausedUnits;
 unitgroup gv_cinematicTempUnits;
@@ -156,6 +165,10 @@ void InitGlobals () {
     gv_objectiveAlarakMustSurvive = c_invalidObjectiveId;
     gv_objectiveKillSlaynElementals = c_invalidObjectiveId;
     gv_objectiveElementalsMax = 3;
+    gv_objectiveResourcePickups = c_invalidObjectiveId;
+    gv_objectiveKillNexus = c_invalidObjectiveId;
+    gv_objectiveSpeedrun = c_invalidObjectiveId;
+    gv_speedrunTimer = TimerCreate();
     gv_cinematicHiddenUnits = UnitGroupEmpty();
     gv_cinematicPausedUnits = UnitGroupEmpty();
     gv_cinematicTempUnits = UnitGroupEmpty();
@@ -268,6 +281,15 @@ trigger gt_ObjectiveKillSlaynElementalsComplete;
 trigger gt_ObjectiveKillSlaynElementalsUpdate;
 trigger gt_ObjectiveKillSlaynElementalsFailed;
 trigger gt_ObjectiveKillSlaynElementalsDeactivate;
+trigger gt_ObjectiveResourcePickupsCreate;
+trigger gt_ObjectiveResourcePickupsUpdate;
+trigger gt_ObjectiveResourcePickupsComplete;
+trigger gt_ObjectiveKillNexusCreate;
+trigger gt_ObjectiveKillNexusUpdate;
+trigger gt_ObjectiveKillNexusComplete;
+trigger gt_ObjectiveSpeedrunCreate;
+trigger gt_ObjectiveSpeedrunFail;
+trigger gt_ObjectiveSpeedrunComplete;
 trigger gt_IntroQ;
 trigger gt_IntroSetup;
 trigger gt_IntroCinematic;
@@ -1617,6 +1639,12 @@ bool gt_StartGameQ_Func (bool testConds, bool runActions) {
     TriggerQueueExit();
     Wait(2.0, c_timeGame);
     TriggerExecute(gt_TipReadyQ, true, false);
+    Wait(10.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveSpeedrunCreate, true, false);
+    Wait(30.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveResourcePickupsCreate, true, false);
+    Wait(30.0, c_timeReal);
+    TriggerExecute(gt_ObjectiveKillNexusCreate, true, false);
     return true;
 }
 
@@ -3878,6 +3906,7 @@ bool gt_VictorySequence_Func (bool testConds, bool runActions) {
     libNtve_gf_PauseUnit(gv_tugOfWarBubbleUnit, true);
     Wait(2.0, c_timeReal);
     TriggerExecute(gt_ObjectiveKillMalashComplete, true, false);
+    TriggerExecute(gt_ObjectiveSpeedrunComplete, true, false);
     TriggerExecute(gt_ObjectiveAlarakMustSurviveComplete, true, true);
     libVCMI_gf_RunMissionVictorySequence(gt_VictoryQ);
     return true;
@@ -4141,6 +4170,7 @@ bool gt_StatAchievementEnemyNexusesDestroyed_Func (bool testConds, bool runActio
     }
 
     gv_nexusesDestroyed += 1;
+    TriggerExecute(gt_ObjectiveKillNexusUpdate, true, false);
     if ((gv_nexusesDestroyed == 3) && (libLotv_gf_DifficultyValueInt2(0, 1, 1, 1) == 1)) {
         TriggerEnable(TriggerGetCurrent(), false);
         libVoiC_gf_CampaignAwardAchievement("PTaldarim02_3", gv_pLAYER_01_USER);
@@ -4661,6 +4691,310 @@ bool gt_ObjectiveKillSlaynElementalsDeactivate_Func (bool testConds, bool runAct
 void gt_ObjectiveKillSlaynElementalsDeactivate_Init () {
     gt_ObjectiveKillSlaynElementalsDeactivate = TriggerCreate("gt_ObjectiveKillSlaynElementalsDeactivate_Func");
     TriggerAddEventGeneric(gt_ObjectiveKillSlaynElementalsDeactivate, lib5BD4895D_gv_aP_Core_LOAD_FINISHED_EVENT);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Resource Pickups Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveResourcePickupsCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    libVCMI_gf_PingMinimapCampaign(PlayerGroupSingle(gv_pLAYER_01_USER), PointFromId(957002224), 5.0, Color(100.00, 0.00, 0.00));
+    ObjectiveCreate(StringExternal("Param/Value/3EA19308"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveResourcePickups = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveResourcePickups, lib5BD4895D_ge_APObjectiveCategory_Extra, "", gv_resourcePickupsCollected, gv_resourcePickupsMax, true);
+    lib5BD4895D_gf_AP_Core_addObjectiveExtraLine(gv_objectiveResourcePickups);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveResourcePickups, gv_lOCATION_ID_RESOURCE_PICKUPS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveResourcePickups, true);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveResourcePickupsCreate_Init () {
+    gt_ObjectiveResourcePickupsCreate = TriggerCreate("gt_ObjectiveResourcePickupsCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Resource Pickups Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveResourcePickupsUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerExecute(gt_ObjectiveResourcePickupsCreate, true, false);
+    gv_resourcePickupsCollected += 1;
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveResourcePickups, gv_resourcePickupsCollected);
+    if ((gv_resourcePickupsCollected >= gv_resourcePickupsMax)) {
+        TriggerExecute(gt_ObjectiveResourcePickupsComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveResourcePickupsUpdate_Init () {
+    gt_ObjectiveResourcePickupsUpdate = TriggerCreate("gt_ObjectiveResourcePickupsUpdate_Func");
+    TriggerAddEventUnitAbility(gt_ObjectiveResourcePickupsUpdate, null, AbilityCommand("PickupMinerals100", 0), c_unitAbilStageExecute, false);
+    TriggerAddEventUnitAbility(gt_ObjectiveResourcePickupsUpdate, null, AbilityCommand("PickupGas100", 0), c_unitAbilStageExecute, false);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Resource Pickups Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveResourcePickupsComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libVCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveResourcePickupsCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveResourcePickups);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_RESOURCE_PICKUPS);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveResourcePickupsComplete_Init () {
+    gt_ObjectiveResourcePickupsComplete = TriggerCreate("gt_ObjectiveResourcePickupsComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Nexus Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillNexusCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    ObjectiveCreate(StringExternal("Param/Value/05F728F0"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveKillNexus = ObjectiveLastCreated();
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithCounter(gv_objectiveKillNexus, lib5BD4895D_ge_APObjectiveCategory_Challenge, "", gv_nexusesDestroyed, 3, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveKillNexus, gv_lOCATION_ID_KILL_NEXUS);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveKillNexus, true);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillNexusCreate_Init () {
+    gt_ObjectiveKillNexusCreate = TriggerCreate("gt_ObjectiveKillNexusCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Nexus Update
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillNexusUpdate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    TriggerExecute(gt_ObjectiveKillNexusCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCounter(gv_objectiveKillNexus, gv_nexusesDestroyed);
+    if ((gv_nexusesDestroyed >= 3)) {
+        TriggerExecute(gt_ObjectiveKillNexusComplete, true, false);
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillNexusUpdate_Init () {
+    gt_ObjectiveKillNexusUpdate = TriggerCreate("gt_ObjectiveKillNexusUpdate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Kill Nexus Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveKillNexusComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((libVCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerExecute(gt_ObjectiveKillNexusCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveKillNexus);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_KILL_NEXUS);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveKillNexusComplete_Init () {
+    gt_ObjectiveKillNexusComplete = TriggerCreate("gt_ObjectiveKillNexusComplete_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Create
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunCreate_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    while (!((libVCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+        Wait(1.0, c_timeGame);
+    }
+    ObjectiveCreate(StringExternal("Param/Value/276D5D0A"), StringToText(""), c_objectiveStateHidden, false);
+    gv_objectiveSpeedrun = ObjectiveLastCreated();
+    TimerStart(gv_speedrunTimer, (900.0 - GameGetMissionTime()), false, c_timeGame);
+    lib5BD4895D_gf_AP_Core_addCategoryObjectiveWithTimer(gv_objectiveSpeedrun, lib5BD4895D_ge_APObjectiveCategory_Mastery, gv_speedrunTimer, true);
+    lib5BD4895D_gf_AP_Core_associateObjectiveWithLocation(gv_objectiveSpeedrun, gv_lOCATION_ID_SPEEDRUN);
+    lib5BD4895D_gf_AP_Core_setObjectiveVisibility(gv_objectiveSpeedrun, true);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunCreate_Init () {
+    gt_ObjectiveSpeedrunCreate = TriggerCreate("gt_ObjectiveSpeedrunCreate_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Fail
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunFail_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((libVCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_ObjectiveSpeedrunComplete, false);
+    TriggerExecute(gt_ObjectiveSpeedrunCreate, true, false);
+    lib5BD4895D_gf_AP_Core_setObjectiveFailed(gv_objectiveSpeedrun);
+    Wait(libVCMI_gv_campaignObjectiveDelay, c_timeReal);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunFail_Init () {
+    gt_ObjectiveSpeedrunFail = TriggerCreate("gt_ObjectiveSpeedrunFail_Func");
+    TriggerAddEventTimer(gt_ObjectiveSpeedrunFail, gv_speedrunTimer);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Objective Speedrun Complete
+//--------------------------------------------------------------------------------------------------
+bool gt_ObjectiveSpeedrunComplete_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((TimerGetDuration(gv_speedrunTimer) >= 1.0))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerEnable(TriggerGetCurrent(), false);
+    TriggerEnable(gt_ObjectiveSpeedrunFail, false);
+    TriggerExecute(gt_ObjectiveSpeedrunCreate, true, false);
+    TimerPause(gv_speedrunTimer, true);
+    lib5BD4895D_gf_AP_Core_setObjectiveCompleted(gv_objectiveSpeedrun);
+    lib5BD4895D_gf_AP_Core_collectLocationUpdateObjective(gv_lOCATION_ID_SPEEDRUN);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ObjectiveSpeedrunComplete_Init () {
+    gt_ObjectiveSpeedrunComplete = TriggerCreate("gt_ObjectiveSpeedrunComplete_Func");
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -5646,6 +5980,15 @@ void InitTriggers () {
     gt_ObjectiveKillSlaynElementalsUpdate_Init();
     gt_ObjectiveKillSlaynElementalsFailed_Init();
     gt_ObjectiveKillSlaynElementalsDeactivate_Init();
+    gt_ObjectiveResourcePickupsCreate_Init();
+    gt_ObjectiveResourcePickupsUpdate_Init();
+    gt_ObjectiveResourcePickupsComplete_Init();
+    gt_ObjectiveKillNexusCreate_Init();
+    gt_ObjectiveKillNexusUpdate_Init();
+    gt_ObjectiveKillNexusComplete_Init();
+    gt_ObjectiveSpeedrunCreate_Init();
+    gt_ObjectiveSpeedrunFail_Init();
+    gt_ObjectiveSpeedrunComplete_Init();
     gt_IntroQ_Init();
     gt_IntroSetup_Init();
     gt_IntroCinematic_Init();
