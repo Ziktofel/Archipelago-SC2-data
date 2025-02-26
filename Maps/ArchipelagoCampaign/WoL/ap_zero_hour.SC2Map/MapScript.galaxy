@@ -102,6 +102,8 @@ bool gv_inCinematic;
 unit gv_nydusWormP02;
 unit gv_nydusWormP03;
 unit gv_nydusWormP04;
+bool gv_developerCheats;
+int gv_aP_ReinforcementsTriggered;
 timer gv_dropPodExpansion1;
 timer gv_dropPodExpansion2;
 timer gv_dropPodExpansion3;
@@ -222,6 +224,8 @@ trigger gt_Init04Music;
 trigger gt_Init05Environment;
 trigger gt_Init06Difficulties;
 trigger gt_Init07Help;
+trigger gt_DEBUGAllyControl;
+trigger gt_DEBUGStrandedForces;
 trigger gt_IntroSequence;
 trigger gt_StartGame;
 trigger gt_BurrowAmbushGlobalTrigger;
@@ -276,6 +280,7 @@ trigger gt_AIGiveMinerals;
 trigger gt_AIGiveGas;
 trigger gt_PlayerIsInCombat;
 trigger gt_PlayerIsInCombatIndicatorDiminish;
+trigger gt_TransmissionIntroQ;
 trigger gt_TransmissionCallForRetreatQ;
 trigger gt_TransmissionFirstZergWaveIncomingQ;
 trigger gt_TransmissionTychusIncomingAirUnitsQ;
@@ -601,6 +606,9 @@ bool gt_Init02Players_Func (bool testConds, bool runActions) {
     PlayerModifyPropertyInt(gv_pLAYER04_ZERG, c_playerPropVespene, c_playerPropOperSetTo, 5000);
     PlayerModifyPropertyInt(gv_pLAYER05_ZERG_NOAI, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
     PlayerModifyPropertyInt(gv_pLAYER05_ZERG_NOAI, c_playerPropVespene, c_playerPropOperSetTo, 5000);
+    PlayerModifyPropertyInt(gv_pLAYER06_REBELS, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
+    PlayerModifyPropertyInt(gv_pLAYER06_REBELS, c_playerPropVespene, c_playerPropOperSetTo, 5000);
+    PlayerModifyPropertyInt(gv_pLAYER06_REBELS, c_playerPropSuppliesMade, c_playerPropOperSetTo, 5000);
     PlayerSetColorIndex(gv_pLAYER03_ZERG, 4, true);
     PlayerSetColorIndex(gv_pLAYER04_ZERG, 4, true);
     PlayerSetState(gv_pLAYER05_ZERG_NOAI, c_playerStateDisplayInLeaderPanel, false);
@@ -608,6 +616,9 @@ bool gt_Init02Players_Func (bool testConds, bool runActions) {
     PlayerSetState(gv_pLAYER07_HYPERION, c_playerStateDisplayInLeaderPanel, false);
     PlayerSetState(gv_pLAYER08_TAUREN, c_playerStateDisplayInLeaderPanel, false);
     PlayerSetState(gv_pLAYER09_COLONISTS, c_playerStateDisplayInLeaderPanel, false);
+    VisRevealArea(gv_pLAYER06_REBELS, RegionFromId(72), 0.0, false);
+    VisRevealArea(gv_pLAYER06_REBELS, RegionFromId(3), 0.0, false);
+    VisRevealArea(gv_pLAYER06_REBELS, RegionFromId(71), 0.0, false);
     return true;
 }
 
@@ -837,6 +848,76 @@ void gt_Init07Help_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: DEBUG - Ally Control
+//--------------------------------------------------------------------------------------------------
+bool gt_DEBUGAllyControl_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((gv_developerCheats == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerDebugOutput(1, StringExternal("Param/Value/8ACBD00E"), true);
+    libNtve_gf_SetAlliance(gv_pLAYER01_USER, gv_pLAYER06_REBELS, libNtve_ge_AllianceSetting_AllyWithSharedVisionControlAndSpending);
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_DEBUGAllyControl_Init () {
+    gt_DEBUGAllyControl = TriggerCreate("gt_DEBUGAllyControl_Func");
+    TriggerAddEventChatMessage(gt_DEBUGAllyControl, 1, "control", true);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: DEBUG - Stranded Forces
+//--------------------------------------------------------------------------------------------------
+bool gt_DEBUGStrandedForces_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    int auto27E72277_val;
+
+    // Conditions
+    if (testConds) {
+        if (!((gv_developerCheats == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerDebugOutput(1, StringExternal("Param/Value/33D1A4C2"), true);
+    gv_aP_ReinforcementsTriggered += 1;
+    auto27E72277_val = gv_aP_ReinforcementsTriggered;
+    if (auto27E72277_val == 1) {
+        TriggerExecute(gt_RebelMarines01Intro, true, false);
+    }
+    else if (auto27E72277_val == 2) {
+        TriggerExecute(gt_RebelMarines02Intro, true, false);
+    }
+    else if (auto27E72277_val == 3) {
+        TriggerExecute(gt_RebelMarines03Intro, true, false);
+    }
+    else {
+    }
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_DEBUGStrandedForces_Init () {
+    gt_DEBUGStrandedForces = TriggerCreate("gt_DEBUGStrandedForces_Func");
+    TriggerAddEventChatMessage(gt_DEBUGStrandedForces, 1, "rf", true);
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Intro Sequence
 //--------------------------------------------------------------------------------------------------
 bool gt_IntroSequence_Func (bool testConds, bool runActions) {
@@ -896,7 +977,12 @@ bool gt_StartGame_Func (bool testConds, bool runActions) {
     CreepSetSpeed(c_creepSpeedGrowth, 1000.0);
     TriggerExecute(gt_StrandedRebelMarinesTiming, true, false);
     Wait(3.0, c_timeReal);
+    if ((gv_developerCheats == true)) {
+        TriggerDebugOutput(1, StringExternal("Param/Value/8590699D"), true);
+    }
+
     TriggerExecute(gt_ObjectiveHoldOutCreateQ, true, false);
+    TriggerExecute(gt_TransmissionIntroQ, true, false);
     Wait(3.0, c_timeReal);
     CreepSetSpeed(c_creepSpeedGrowth, 100.0);
     Wait(3.0, c_timeGame);
@@ -1438,7 +1524,7 @@ bool gt_SalvageBunkersDisableRetreatTransmission_Func (bool testConds, bool runA
 //--------------------------------------------------------------------------------------------------
 void gt_SalvageBunkersDisableRetreatTransmission_Init () {
     gt_SalvageBunkersDisableRetreatTransmission = TriggerCreate("gt_SalvageBunkersDisableRetreatTransmission_Func");
-    TriggerAddEventUnitAbility(gt_SalvageBunkersDisableRetreatTransmission, null, AbilityCommand("SalvageBunkerRefund", 0), c_unitAbilStageComplete, false);
+    TriggerAddEventUnitAbility(gt_SalvageBunkersDisableRetreatTransmission, null, AbilityCommand("AP_SalvageBunkerRefund", 0), c_unitAbilStageComplete, false);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1928,13 +2014,28 @@ void gt_StrandedRebelMarinesTiming_Init () {
 bool gt_RebelMarines01Intro_Func (bool testConds, bool runActions) {
     // Variable Declarations
     unit lv_dropship;
+    text lv_text;
+    unitgroup lv_warpGates;
 
     // Automatic Variable Declarations
+    string auto7FBA8388_val;
     unitgroup auto3AF44449_g;
     int auto3AF44449_u;
     unit auto3AF44449_var;
+    const int auto347E14DF_n = 2;
+    int auto347E14DF_i;
+    unitgroup auto3D34B935_g;
+    int auto3D34B935_u;
+    unit auto3D34B935_var;
+    unitgroup autoA6923C2D_g;
+    int autoA6923C2D_u;
+    unit autoA6923C2D_var;
+    unitgroup autoA6F500DF_g;
+    int autoA6F500DF_u;
+    unit autoA6F500DF_var;
 
     // Variable Initialization
+    lv_warpGates = UnitGroupEmpty();
 
     // Conditions
     if (testConds) {
@@ -1958,44 +2059,85 @@ bool gt_RebelMarines01Intro_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libNtve_gf_ShowHideUnit(gv_rebelMarinesBeacon01, true);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
-    UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(392)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
-    UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(395)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
-    UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(409)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
-    UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(410)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
-    UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(498)), c_orderQueueReplace);
-    Wait(2.0, c_timeGame);
-    auto3AF44449_g = gv_rebelMarines01;
-    auto3AF44449_u = UnitGroupCount(auto3AF44449_g, c_unitCountAll);
-    for (;; auto3AF44449_u -= 1) {
-        auto3AF44449_var = UnitGroupUnitFromEnd(auto3AF44449_g, auto3AF44449_u);
-        if (auto3AF44449_var == null) { break; }
-        libNtve_gf_ShareVisionofUnit(auto3AF44449_var, true, gv_pLAYER01_USER);
-        libNtve_gf_MakeUnitFacePoint(auto3AF44449_var, RegionGetCenter(RegionFromId(72)), 0.0);
+    auto7FBA8388_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto7FBA8388_val == "Prot") {
+        lv_text = StringExternal("Param/Value/9A4F963B");
+        lv_warpGates = UnitGroup("AP_WarpGate", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        for (auto347E14DF_i = 1; auto347E14DF_i <= auto347E14DF_n; auto347E14DF_i += 1) {
+            UnitGroupIssueOrder(lv_warpGates, OrderTargetingPoint(AbilityCommand("AP_WarpGateTrain", 6), UnitTypePlacementTestsFromPoint("AP_Adept", 6, PointFromId(409), 2.0, c_placementTestPowerMask | c_placementTestIgnoreBlockersMask | c_placementTestIgnoreInvisibleMask | c_placementTestCliffMask)), c_orderQueueReplace);
+            Wait(0.5, c_timeGame);
+        }
+        UnitGroupAddUnitGroup(gv_rebelMarines01, UnitGroup("AP_Adept", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        auto3D34B935_g = gv_rebelMarines01;
+        auto3D34B935_u = UnitGroupCount(auto3D34B935_g, c_unitCountAll);
+        for (;; auto3D34B935_u -= 1) {
+            auto3D34B935_var = UnitGroupUnitFromEnd(auto3D34B935_g, auto3D34B935_u);
+            if (auto3D34B935_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(auto3D34B935_var, true, gv_pLAYER01_USER);
+        }
+    }
+    else if (auto7FBA8388_val == "Zerg") {
+        lv_text = StringExternal("Param/Value/08551230");
+        libNtve_gf_CreateUnitsAtPoint2(4, "AP_MercZerglingBurrowed", 0, gv_pLAYER06_REBELS, PointFromId(409));
+        UnitGroupAddUnitGroup(gv_rebelMarines01, UnitLastCreatedGroup());
+        autoA6923C2D_g = gv_rebelMarines01;
+        autoA6923C2D_u = UnitGroupCount(autoA6923C2D_g, c_unitCountAll);
+        for (;; autoA6923C2D_u -= 1) {
+            autoA6923C2D_var = UnitGroupUnitFromEnd(autoA6923C2D_g, autoA6923C2D_u);
+            if (autoA6923C2D_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(autoA6923C2D_var, true, gv_pLAYER01_USER);
+            UnitIssueOrder(autoA6923C2D_var, Order(AbilityCommand("AP_BurrowMercZerglingUp", 0)), c_orderQueueReplace);
+        }
+        Wait(2.0, c_timeGame);
+        autoA6F500DF_g = gv_rebelMarines01;
+        autoA6F500DF_u = UnitGroupCount(autoA6F500DF_g, c_unitCountAll);
+        for (;; autoA6F500DF_u -= 1) {
+            autoA6F500DF_var = UnitGroupUnitFromEnd(autoA6F500DF_g, autoA6F500DF_u);
+            if (autoA6F500DF_var == null) { break; }
+            UnitIssueOrder(autoA6F500DF_var, OrderTargetingPoint(AbilityCommand("move", 1), PointWithOffset(PointFromId(499), RandomFixed(-1.0, 1.0), RandomFixed(-1.0, 1.0))), c_orderQueueReplace);
+        }
+    }
+    else {
+        lv_text = StringExternal("Param/Value/F80FA556");
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
+        UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(392)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
+        UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(395)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
+        UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(409)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
+        UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(410)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(499));
+        UnitGroupAdd(gv_rebelMarines01, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(498)), c_orderQueueReplace);
+        Wait(2.0, c_timeGame);
+        auto3AF44449_g = gv_rebelMarines01;
+        auto3AF44449_u = UnitGroupCount(auto3AF44449_g, c_unitCountAll);
+        for (;; auto3AF44449_u -= 1) {
+            auto3AF44449_var = UnitGroupUnitFromEnd(auto3AF44449_g, auto3AF44449_u);
+            if (auto3AF44449_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(auto3AF44449_var, true, gv_pLAYER01_USER);
+            libNtve_gf_MakeUnitFacePoint(auto3AF44449_var, RegionGetCenter(RegionFromId(72)), 0.0);
+        }
     }
     TriggerEnable(gt_RebelMarines01Rescued, true);
     TriggerEnable(gt_RebelMarines01Dead, true);
     TriggerExecute(gt_TransmissionRebelMarines01MaydayQ, true, true);
     if ((gv_rebelMarinesFound01 == false) && (libNtve_gf_UnitGroupIsDead(gv_rebelMarines01) == false)) {
         MinimapPing(PlayerGroupSingle(gv_pLAYER01_USER), RegionGetCenter(RegionFromId(72)), 6.0, Color(100.00, 100.00, 0.00));
-        UIAlertPoint("Trigger", gv_pLAYER01_USER, StringExternal("Param/Value/DC769176"), null, RegionGetCenter(RegionFromId(72)));
+        UIAlertPoint("Trigger", gv_pLAYER01_USER, lv_text, null, RegionGetCenter(RegionFromId(72)));
         libNtve_gf_CreatePingFacingAngle(PlayerGroupSingle(gv_pLAYER01_USER), "PingObjective", RegionGetCenter(RegionFromId(72)), ColorWithAlpha(100.00, 100.00, 0.00, 0.00), 0.0, 270.0);
         gv_rebelMarinesPing1 = PingLastCreated();
         PingSetScale(gv_rebelMarinesPing1, 0.85);
-        PingSetTooltip(gv_rebelMarinesPing1, StringExternal("Param/Value/51615F10"));
+        PingSetTooltip(gv_rebelMarinesPing1, lv_text);
     }
 
     return true;
@@ -2010,10 +2152,26 @@ void gt_RebelMarines01Intro_Init () {
 // Trigger: Rebel Marines 02 Intro
 //--------------------------------------------------------------------------------------------------
 bool gt_RebelMarines02Intro_Func (bool testConds, bool runActions) {
+    // Variable Declarations
+    text lv_text;
+    unitgroup lv_warpGates;
+
     // Automatic Variable Declarations
+    string auto01EBA989_val;
     unitgroup auto438DA7F7_g;
     int auto438DA7F7_u;
     unit auto438DA7F7_var;
+    const int auto4CAB33DD_n = 2;
+    int auto4CAB33DD_i;
+    unitgroup autoE8D964E7_g;
+    int autoE8D964E7_u;
+    unit autoE8D964E7_var;
+    unitgroup auto192AF5CA_g;
+    int auto192AF5CA_u;
+    unit auto192AF5CA_var;
+
+    // Variable Initialization
+    lv_warpGates = UnitGroupEmpty();
 
     // Conditions
     if (testConds) {
@@ -2039,41 +2197,79 @@ bool gt_RebelMarines02Intro_Func (bool testConds, bool runActions) {
     libNtve_gf_ShowHideUnit(gv_rebelMarinesBeacon02, true);
     UnitSetState(UnitFromId(795), c_unitStateTargetable, true);
     UnitSetState(UnitFromId(796), c_unitStateTargetable, true);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Medic", 0, gv_pLAYER06_REBELS, PointFromId(903));
-    UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
-    UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(1149)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(904));
-    UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(709)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(903));
-    UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(901)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(904));
-    UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(902)), c_orderQueueReplace);
-    Wait(2.0, c_timeGame);
-    auto438DA7F7_g = gv_rebelMarines02;
-    auto438DA7F7_u = UnitGroupCount(auto438DA7F7_g, c_unitCountAll);
-    for (;; auto438DA7F7_u -= 1) {
-        auto438DA7F7_var = UnitGroupUnitFromEnd(auto438DA7F7_g, auto438DA7F7_u);
-        if (auto438DA7F7_var == null) { break; }
-        libNtve_gf_ShareVisionofUnit(auto438DA7F7_var, true, gv_pLAYER01_USER);
-        libNtve_gf_MakeUnitFacePoint(auto438DA7F7_var, RegionGetCenter(RegionFromId(3)), 0.0);
+    auto01EBA989_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto01EBA989_val == "Prot") {
+        lv_text = StringExternal("Param/Value/64C2C72F");
+        lv_warpGates = UnitGroup("AP_WarpGate", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        for (auto4CAB33DD_i = 1; auto4CAB33DD_i <= auto4CAB33DD_n; auto4CAB33DD_i += 1) {
+            UnitGroupIssueOrder(lv_warpGates, OrderTargetingPoint(AbilityCommand("AP_WarpGateTrain", 17), UnitTypePlacementTestsFromPoint("AP_Dragoon", 6, PointFromId(901), 2.0, c_placementTestPowerMask | c_placementTestIgnoreBlockersMask | c_placementTestIgnoreInvisibleMask | c_placementTestCliffMask)), c_orderQueueReplace);
+            Wait(0.5, c_timeGame);
+        }
+        UnitGroupAddUnitGroup(gv_rebelMarines02, UnitGroup("AP_Dragoon", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        UnitGroupIssueOrder(lv_warpGates, OrderTargetingPoint(AbilityCommand("AP_WarpGateTrain", 5), UnitTypePlacementTestsFromPoint("AP_SentryAiur", 6, PointFromId(1149), 2.0, c_placementTestPowerMask | c_placementTestIgnoreBlockersMask | c_placementTestIgnoreInvisibleMask | c_placementTestCliffMask)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        UnitGroupAddUnitGroup(gv_rebelMarines02, UnitGroup("AP_SentryAiur", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        autoE8D964E7_g = gv_rebelMarines02;
+        autoE8D964E7_u = UnitGroupCount(autoE8D964E7_g, c_unitCountAll);
+        for (;; autoE8D964E7_u -= 1) {
+            autoE8D964E7_var = UnitGroupUnitFromEnd(autoE8D964E7_g, autoE8D964E7_u);
+            if (autoE8D964E7_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(autoE8D964E7_var, true, gv_pLAYER01_USER);
+        }
+    }
+    else if (auto01EBA989_val == "Zerg") {
+        lv_text = StringExternal("Param/Value/2E255EC2");
+        libNtve_gf_CreateUnitsAtPoint2(2, "AP_PygaliskBurrowed", 0, gv_pLAYER06_REBELS, PointFromId(709));
+        UnitGroupAddUnitGroup(gv_rebelMarines02, UnitLastCreatedGroup());
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_InfestedMedic", 0, gv_pLAYER06_REBELS, PointFromId(1149));
+        UnitGroupAddUnitGroup(gv_rebelMarines02, UnitLastCreatedGroup());
+        auto192AF5CA_g = gv_rebelMarines02;
+        auto192AF5CA_u = UnitGroupCount(auto192AF5CA_g, c_unitCountAll);
+        for (;; auto192AF5CA_u -= 1) {
+            auto192AF5CA_var = UnitGroupUnitFromEnd(auto192AF5CA_g, auto192AF5CA_u);
+            if (auto192AF5CA_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(auto192AF5CA_var, true, gv_pLAYER01_USER);
+            UnitIssueOrder(auto192AF5CA_var, Order(AbilityCommand("AP_BurrowPygaliskUp", 0)), c_orderQueueReplace);
+        }
+    }
+    else {
+        lv_text = StringExternal("Param/Value/88D7F5B7");
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Medic", 0, gv_pLAYER06_REBELS, PointFromId(903));
+        UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
+        UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(1149)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(904));
+        UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(709)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(903));
+        UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(901)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(904));
+        UnitGroupAdd(gv_rebelMarines02, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(902)), c_orderQueueReplace);
+        Wait(2.0, c_timeGame);
+        auto438DA7F7_g = gv_rebelMarines02;
+        auto438DA7F7_u = UnitGroupCount(auto438DA7F7_g, c_unitCountAll);
+        for (;; auto438DA7F7_u -= 1) {
+            auto438DA7F7_var = UnitGroupUnitFromEnd(auto438DA7F7_g, auto438DA7F7_u);
+            if (auto438DA7F7_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(auto438DA7F7_var, true, gv_pLAYER01_USER);
+            libNtve_gf_MakeUnitFacePoint(auto438DA7F7_var, RegionGetCenter(RegionFromId(3)), 0.0);
+        }
     }
     TriggerEnable(gt_RebelMarines02Rescued, true);
     TriggerEnable(gt_RebelMarines02Dead, true);
     TriggerExecute(gt_TransmissionRebelMarines02MaydayQ, true, true);
     if ((gv_rebelMarinesFound02 == false) && (libNtve_gf_UnitGroupIsDead(gv_rebelMarines02) == false)) {
         MinimapPing(PlayerGroupSingle(gv_pLAYER01_USER), RegionGetCenter(RegionFromId(3)), 6.0, Color(100.00, 100.00, 0.00));
-        UIAlertPoint("Trigger", gv_pLAYER01_USER, StringExternal("Param/Value/14F8338E"), null, RegionGetCenter(RegionFromId(3)));
+        UIAlertPoint("Trigger", gv_pLAYER01_USER, lv_text, null, RegionGetCenter(RegionFromId(3)));
         libNtve_gf_CreatePingFacingAngle(PlayerGroupSingle(gv_pLAYER01_USER), "PingObjective", RegionGetCenter(RegionFromId(3)), ColorWithAlpha(100.00, 100.00, 0.00, 0.00), 0.0, 270.0);
         gv_rebelMarinesPing2 = PingLastCreated();
         PingSetScale(gv_rebelMarinesPing2, 0.85);
-        PingSetTooltip(gv_rebelMarinesPing2, StringExternal("Param/Value/4FB8BA12"));
+        PingSetTooltip(gv_rebelMarinesPing2, lv_text);
     }
 
     return true;
@@ -2089,14 +2285,26 @@ void gt_RebelMarines02Intro_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_RebelMarines03Intro_Func (bool testConds, bool runActions) {
     // Variable Declarations
+    text lv_text;
     unit lv_dropship;
+    unitgroup lv_warpGates;
 
     // Automatic Variable Declarations
+    string auto35EE0790_val;
     unitgroup auto5D91C950_g;
     int auto5D91C950_u;
     unit auto5D91C950_var;
+    const int auto1EFCF474_n = 3;
+    int auto1EFCF474_i;
+    unitgroup autoE0744AEC_g;
+    int autoE0744AEC_u;
+    unit autoE0744AEC_var;
+    unitgroup auto513903B0_g;
+    int auto513903B0_u;
+    unit auto513903B0_var;
 
     // Variable Initialization
+    lv_warpGates = UnitGroupEmpty();
 
     // Conditions
     if (testConds) {
@@ -2120,49 +2328,87 @@ bool gt_RebelMarines03Intro_Func (bool testConds, bool runActions) {
 
     TriggerEnable(TriggerGetCurrent(), false);
     libNtve_gf_ShowHideUnit(gv_rebelMarinesBeacon03, true);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
-    UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(246)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
-    UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(307)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
-    UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(322)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
-    UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(347)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
-    UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(343)), c_orderQueueReplace);
-    Wait(0.5, c_timeGame);
-    libNtve_gf_CreateUnitsAtPoint2(1, "AP_Medic", 0, gv_pLAYER06_REBELS, PointFromId(215));
-    UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
-    UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
-    UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(348)), c_orderQueueReplace);
-    Wait(2.5, c_timeGame);
-    auto5D91C950_g = gv_rebelMarines03;
-    auto5D91C950_u = UnitGroupCount(auto5D91C950_g, c_unitCountAll);
-    for (;; auto5D91C950_u -= 1) {
-        auto5D91C950_var = UnitGroupUnitFromEnd(auto5D91C950_g, auto5D91C950_u);
-        if (auto5D91C950_var == null) { break; }
-        libNtve_gf_ShareVisionofUnit(auto5D91C950_var, true, gv_pLAYER01_USER);
-        libNtve_gf_MakeUnitFacePoint(auto5D91C950_var, RegionGetCenter(RegionFromId(71)), 0.0);
+    auto35EE0790_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto35EE0790_val == "Prot") {
+        lv_text = StringExternal("Param/Value/ED7B81DA");
+        lv_warpGates = UnitGroup("AP_WarpGate", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+        for (auto1EFCF474_i = 1; auto1EFCF474_i <= auto1EFCF474_n; auto1EFCF474_i += 1) {
+            UnitGroupIssueOrder(lv_warpGates, OrderTargetingPoint(AbilityCommand("AP_WarpGateTrain", 8), UnitTypePlacementTestsFromPoint("AP_ZealotPurifier", 6, PointFromId(322), 2.0, c_placementTestPowerMask | c_placementTestIgnoreBlockersMask | c_placementTestIgnoreInvisibleMask | c_placementTestCliffMask)), c_orderQueueReplace);
+            Wait(0.5, c_timeGame);
+        }
+        UnitGroupAddUnitGroup(gv_rebelMarines03, UnitGroup("AP_ZealotPurifier", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        UnitGroupIssueOrder(lv_warpGates, OrderTargetingPoint(AbilityCommand("AP_WarpGateTrain", 11), UnitTypePlacementTestsFromPoint("AP_StalkerPurifier", 6, PointFromId(322), 2.0, c_placementTestPowerMask | c_placementTestIgnoreBlockersMask | c_placementTestIgnoreInvisibleMask | c_placementTestCliffMask)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        UnitGroupAddUnitGroup(gv_rebelMarines03, UnitGroup("AP_StalkerPurifier", gv_pLAYER06_REBELS, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0));
+        autoE0744AEC_g = gv_rebelMarines03;
+        autoE0744AEC_u = UnitGroupCount(autoE0744AEC_g, c_unitCountAll);
+        for (;; autoE0744AEC_u -= 1) {
+            autoE0744AEC_var = UnitGroupUnitFromEnd(autoE0744AEC_g, autoE0744AEC_u);
+            if (autoE0744AEC_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(autoE0744AEC_var, true, gv_pLAYER01_USER);
+        }
+    }
+    else if (auto35EE0790_val == "Zerg") {
+        lv_text = StringExternal("Param/Value/CF3A2355");
+        libNtve_gf_CreateUnitsAtPoint2(2, "AP_MercRoachBurrowed", 0, gv_pLAYER06_REBELS, PointFromId(322));
+        UnitGroupAddUnitGroup(gv_rebelMarines03, UnitLastCreatedGroup());
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_QueenBurrowed", 0, gv_pLAYER06_REBELS, PointFromId(322));
+        UnitGroupAddUnitGroup(gv_rebelMarines03, UnitLastCreatedGroup());
+        auto513903B0_g = gv_rebelMarines03;
+        auto513903B0_u = UnitGroupCount(auto513903B0_g, c_unitCountAll);
+        for (;; auto513903B0_u -= 1) {
+            auto513903B0_var = UnitGroupUnitFromEnd(auto513903B0_g, auto513903B0_u);
+            if (auto513903B0_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(auto513903B0_var, true, gv_pLAYER01_USER);
+            UnitIssueOrder(auto513903B0_var, Order(AbilityCommand("AP_BurrowPygaliskUp", 0)), c_orderQueueReplace);
+        }
+    }
+    else {
+        lv_text = StringExternal("Param/Value/DE7163D2");
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
+        UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(246)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
+        UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(307)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
+        UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(322)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
+        UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(347)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Marine", 0, gv_pLAYER06_REBELS, PointFromId(215));
+        UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(343)), c_orderQueueReplace);
+        Wait(0.5, c_timeGame);
+        libNtve_gf_CreateUnitsAtPoint2(1, "AP_Medic", 0, gv_pLAYER06_REBELS, PointFromId(215));
+        UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
+        UnitGroupAdd(gv_rebelMarines03, UnitLastCreated());
+        UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("move", 0), PointFromId(348)), c_orderQueueReplace);
+        Wait(2.5, c_timeGame);
+        auto5D91C950_g = gv_rebelMarines03;
+        auto5D91C950_u = UnitGroupCount(auto5D91C950_g, c_unitCountAll);
+        for (;; auto5D91C950_u -= 1) {
+            auto5D91C950_var = UnitGroupUnitFromEnd(auto5D91C950_g, auto5D91C950_u);
+            if (auto5D91C950_var == null) { break; }
+            libNtve_gf_ShareVisionofUnit(auto5D91C950_var, true, gv_pLAYER01_USER);
+            libNtve_gf_MakeUnitFacePoint(auto5D91C950_var, RegionGetCenter(RegionFromId(71)), 0.0);
+        }
     }
     TriggerEnable(gt_RebelMarines03Rescued, true);
     TriggerEnable(gt_RebelMarines03Dead, true);
     TriggerExecute(gt_TransmissionRebelMarines03MaydayQ, true, true);
     if ((gv_rebelMarinesFound03 == false) && (libNtve_gf_UnitGroupIsDead(gv_rebelMarines03) == false)) {
         MinimapPing(PlayerGroupSingle(gv_pLAYER01_USER), RegionGetCenter(RegionFromId(71)), 6.0, Color(100.00, 100.00, 0.00));
-        UIAlertPoint("Trigger", gv_pLAYER01_USER, StringExternal("Param/Value/CAB93CB5"), null, RegionGetCenter(RegionFromId(71)));
+        UIAlertPoint("Trigger", gv_pLAYER01_USER, lv_text, null, RegionGetCenter(RegionFromId(71)));
         libNtve_gf_CreatePingFacingAngle(PlayerGroupSingle(gv_pLAYER01_USER), "PingObjective", RegionGetCenter(RegionFromId(71)), ColorWithAlpha(100.00, 100.00, 0.00, 0.00), 0.0, 270.0);
         gv_rebelMarinesPing3 = PingLastCreated();
         PingSetScale(gv_rebelMarinesPing3, 0.85);
-        PingSetTooltip(gv_rebelMarinesPing3, StringExternal("Param/Value/474B29B5"));
+        PingSetTooltip(gv_rebelMarinesPing3, lv_text);
     }
 
     return true;
@@ -3430,6 +3676,51 @@ void gt_PlayerIsInCombatIndicatorDiminish_Init () {
 }
 
 //--------------------------------------------------------------------------------------------------
+// Trigger: Transmission - Intro Q
+//--------------------------------------------------------------------------------------------------
+bool gt_TransmissionIntroQ_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    string autoEF08590F_val;
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    TriggerQueueEnter();
+    autoEF08590F_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoEF08590F_val == "Prot") {
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("TZeratul03Zeratul00035", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul03Zeratul00035", -1), c_transmissionDurationAdd, 0.0, true);
+        Wait(1.0, c_timeGame);
+        // Transmission - SoundLink("TZeratul04Selendis00006", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul04Selendis00006", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+    }
+    else if (autoEF08590F_val == "Zerg") {
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("ChallengescombinedQueen00119", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("ChallengescombinedQueen00119", -1), c_transmissionDurationAdd, 0.0, true);
+        Wait(1.0, c_timeGame);
+        // Transmission - SoundLink("AP_TransmissionKerriganIntro", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("KerriganPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionKerriganIntro", -1), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+    }
+    else {
+    }
+    TriggerQueueExit();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_TransmissionIntroQ_Init () {
+    gt_TransmissionIntroQ = TriggerCreate("gt_TransmissionIntroQ_Func");
+}
+
+//--------------------------------------------------------------------------------------------------
 // Trigger: Transmission - Call For Retreat Q
 //--------------------------------------------------------------------------------------------------
 bool gt_TransmissionCallForRetreatQ_Func (bool testConds, bool runActions) {
@@ -3495,19 +3786,44 @@ void gt_TransmissionCallForRetreatQ_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_TransmissionFirstZergWaveIncomingQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string auto25E8E5E8_val;
+
     // Actions
     if (!runActions) {
         return true;
     }
 
     TriggerEnable(TriggerGetCurrent(), false);
-    TriggerQueueEnter();
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TRaynor03Marine100008", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine100008", -1), c_transmissionDurationAdd, 0.0, true);
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    TriggerQueueExit();
+    auto25E8E5E8_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto25E8E5E8_val == "Prot") {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("TZeratul03Zeratul00034", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul03Zeratul00034", 0), c_transmissionDurationAdd, 0.0, true);
+        // Transmission - SoundLink("AP_TransmissionArtanisAttack", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("ArtanisPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionArtanisAttack", 0), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
+    else if (auto25E8E5E8_val == "Zerg") {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("AP_TransmissionKerriganAttack", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("KerriganPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionKerriganAttack", 0), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
+    else {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("TRaynor03Marine100008", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine100008", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
     return true;
 }
 
@@ -3521,6 +3837,8 @@ void gt_TransmissionFirstZergWaveIncomingQ_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_TransmissionTychusIncomingAirUnitsQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string autoB726CD70_val;
+
     // Actions
     if (!runActions) {
         return true;
@@ -3529,12 +3847,35 @@ bool gt_TransmissionTychusIncomingAirUnitsQ_Func (bool testConds, bool runAction
     TriggerEnable(TriggerGetCurrent(), false);
     Wait(220.0, c_timeGame);
     if ((libNtve_gf_DifficultyValueInt(0, 1, 1, 1) == 1) && (gv_gameOver == false) && (gv_inCinematic == false)) {
+        autoB726CD70_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoB726CD70_val == "Prot") {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("TZeratul01Zeratul00071", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul01Zeratul00071", 0), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerQueueExit();
+        }
+        else if (autoB726CD70_val == "Zerg") {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("AP_TransmissionIzshaFlyers", 0)
+            libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("QueenPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionIzshaFlyers", 0), 0.0, c_transmissionDurationAdd, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerQueueExit();
+        }
+        else {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("TRaynor03Tychus00013", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Tychus00013", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerQueueExit();
+        }
         TriggerQueueEnter();
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-        // Transmission - SoundLink("TRaynor03Tychus00013", 0)
-        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Tychus00013", -1), c_transmissionDurationAdd, 0.0, true);
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
         SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "TRaynor03MusicMain3", c_soundtrackCueAny, c_soundtrackIndexAny, false);
         TriggerQueueExit();
     }
@@ -3552,6 +3893,8 @@ void gt_TransmissionTychusIncomingAirUnitsQ_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_TransmissionRebelMarines01MaydayQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string auto7C1D4D17_val;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -3570,14 +3913,35 @@ bool gt_TransmissionRebelMarines01MaydayQ_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     if ((TriggerGetExecCount(gt_RebelMarines01Rescued) == 0)) {
-        TriggerQueueEnter();
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-        // Transmission - SoundLink("TRaynor03Marine700003", 0)
-        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine700003", -1), c_transmissionDurationAdd, 0.0, true);
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        auto7C1D4D17_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (auto7C1D4D17_val == "Prot") {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("TZeratul01Zeratul00052", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TZeratul01Zeratul00052", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerQueueExit();
+        }
+        else if (auto7C1D4D17_val == "Zerg") {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("ChallengescombinedQueen00133", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("ChallengescombinedQueen00133", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerQueueExit();
+        }
+        else {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("TRaynor03Marine700003", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine700003", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerQueueExit();
+        }
         TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
-        TriggerQueueExit();
     }
 
     return true;
@@ -3593,6 +3957,8 @@ void gt_TransmissionRebelMarines01MaydayQ_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_TransmissionRebelMarines02MaydayQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string auto1053F5B3_val;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -3611,14 +3977,37 @@ bool gt_TransmissionRebelMarines02MaydayQ_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     if ((TriggerGetExecCount(gt_RebelMarines02Rescued) == 0)) {
-        TriggerQueueEnter();
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-        // Transmission - SoundLink("TRaynor03Marine800001", 0)
-        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine800001", -1), c_transmissionDurationAdd, 0.0, true);
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        auto1053F5B3_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (auto1053F5B3_val == "Prot") {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("AP_TransmissionArtanisRescue2", 0)
+            libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("ArtanisPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionArtanisRescue2", 0), 0.0, c_transmissionDurationAdd, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+            TriggerQueueExit();
+        }
+        else if (auto1053F5B3_val == "Zerg") {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("AP_TransmissionKerriganRescue", 0)
+            libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("KerriganPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionKerriganRescue", 0), 0.0, c_transmissionDurationAdd, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+            TriggerQueueExit();
+        }
+        else {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("TRaynor03Marine800001", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine800001", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerQueueExit();
+        }
         TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
-        TriggerQueueExit();
     }
 
     return true;
@@ -3634,6 +4023,8 @@ void gt_TransmissionRebelMarines02MaydayQ_Init () {
 //--------------------------------------------------------------------------------------------------
 bool gt_TransmissionRebelMarines03MaydayQ_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
+    string autoD979280B_val;
+
     // Conditions
     if (testConds) {
         if (!((gv_gameOver == false))) {
@@ -3652,14 +4043,36 @@ bool gt_TransmissionRebelMarines03MaydayQ_Func (bool testConds, bool runActions)
 
     TriggerEnable(TriggerGetCurrent(), false);
     if ((TriggerGetExecCount(gt_RebelMarines03Rescued) == 0)) {
-        TriggerQueueEnter();
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-        // Transmission - SoundLink("TRaynor03Marine500005", 0)
-        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine500005", -1), c_transmissionDurationAdd, 0.0, true);
-        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
         TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
-        TriggerQueueExit();
+        autoD979280B_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+        if (autoD979280B_val == "Prot") {
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("AP_TransmissionArtanisRescue4", 0)
+            libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("ArtanisPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionArtanisRescue4", 0), 0.0, c_transmissionDurationAdd, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+        }
+        else if (autoD979280B_val == "Zerg") {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("AP_TransmissionKerriganRescue3", 0)
+            libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("KerriganPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionKerriganRescue3", 0), 0.0, c_transmissionDurationAdd, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+            TriggerQueueExit();
+        }
+        else {
+            TriggerQueueEnter();
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+            libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+            // Transmission - SoundLink("TRaynor03Marine500005", 0)
+            libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine500005", -1), c_transmissionDurationAdd, 0.0, true);
+            libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+            TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+            TriggerQueueExit();
+        }
     }
 
     return true;
@@ -3678,6 +4091,7 @@ bool gt_TransmissionRebelMarines01RescuedQ_Func (bool testConds, bool runActions
     unitgroup auto14DC20EB_g;
     int auto14DC20EB_u;
     unit auto14DC20EB_var;
+    string auto96F3FE87_val;
 
     // Conditions
     if (testConds) {
@@ -3706,13 +4120,31 @@ bool gt_TransmissionRebelMarines01RescuedQ_Func (bool testConds, bool runActions
     Wait(1.0, c_timeReal);
     UIAlertUnit("Trigger", gv_pLAYER01_USER, StringExternal("Param/Value/252F3104"), null, gv_rebelMarinesBeacon01);
     UnitGroupClear(gv_rebelMarines01);
-    TriggerQueueEnter();
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TRaynor03Marine700004", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine700004", -1), c_transmissionDurationAdd, 0.0, true);
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    TriggerQueueExit();
+    auto96F3FE87_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto96F3FE87_val == "Prot") {
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("AICommunication_ProtossAICommand_186", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("ArtanisPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionArtanisRescue", -1), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+    }
+    else if (auto96F3FE87_val == "Zerg") {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("AP_ZerglingSCR_Portrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionZerglingRescued", -1), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
+    else {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("TRaynor03Marine700004", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine700004", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
     return true;
 }
 
@@ -3729,6 +4161,7 @@ bool gt_TransmissionRebelMarines02RescuedQ_Func (bool testConds, bool runActions
     unitgroup auto2AB4C609_g;
     int auto2AB4C609_u;
     unit auto2AB4C609_var;
+    string autoF0B6815B_val;
 
     // Conditions
     if (testConds) {
@@ -3757,13 +4190,33 @@ bool gt_TransmissionRebelMarines02RescuedQ_Func (bool testConds, bool runActions
     Wait(1.0, c_timeReal);
     UIAlertUnit("Trigger", gv_pLAYER01_USER, StringExternal("Param/Value/28F3F94C"), null, gv_rebelMarinesBeacon02);
     UnitGroupClear(gv_rebelMarines02);
-    TriggerQueueEnter();
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TRaynor03Marine800002", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine800002", -1), c_transmissionDurationAdd, 0.0, true);
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    TriggerQueueExit();
+    autoF0B6815B_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (autoF0B6815B_val == "Prot") {
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("AP_TransmissionArtanisRescue3", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("ArtanisPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionArtanisRescue3", 0), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+    }
+    else if (autoF0B6815B_val == "Zerg") {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("AP_TransmissionKerriganRescue2", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("KerriganPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionKerriganRescue2", 0), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
+    else {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("TRaynor03Marine800002", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine800002", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
     return true;
 }
 
@@ -3780,6 +4233,7 @@ bool gt_TransmissionRebelMarines03RescuedQ_Func (bool testConds, bool runActions
     unitgroup auto419AAC42_g;
     int auto419AAC42_u;
     unit auto419AAC42_var;
+    string auto22B6F5AA_val;
 
     // Conditions
     if (testConds) {
@@ -3808,13 +4262,33 @@ bool gt_TransmissionRebelMarines03RescuedQ_Func (bool testConds, bool runActions
     Wait(1.0, c_timeReal);
     UIAlertUnit("Trigger", gv_pLAYER01_USER, StringExternal("Param/Value/6FEBAEC8"), null, gv_rebelMarinesBeacon03);
     UnitGroupClear(gv_rebelMarines03);
-    TriggerQueueEnter();
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
-    libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
-    // Transmission - SoundLink("TRaynor03Marine500016", 0)
-    libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine500016", -1), c_transmissionDurationAdd, 0.0, true);
-    libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
-    TriggerQueueExit();
+    auto22B6F5AA_val = libABFE498B_gv_aP_Triggers_Option_overridePlayerRace;
+    if (auto22B6F5AA_val == "Prot") {
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("AP_TransmissionArtanisRescue5", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("ArtanisPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionArtanisRescue5", 0), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerExecute(gt_ObjectiveRescueCreateQ, true, false);
+    }
+    else if (auto22B6F5AA_val == "Zerg") {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("AP_TransmissionKerriganRescue4", 0)
+        libNtve_gf_SendTransmissionSimple(TransmissionSourceFromModel("KerriganPortrait"), libNtve_gf_CinematicPortrait(libNtve_ge_CinematicPortraitPosition_CenterLeft), SoundLink("AP_TransmissionKerriganRescue4", 0), 0.0, c_transmissionDurationAdd, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
+    else {
+        TriggerQueueEnter();
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Speech);
+        libLbty_gf_PlayTransmissionCueSound(PlayerGroupAll());
+        // Transmission - SoundLink("TRaynor03Marine500016", 0)
+        libCamp_gf_SendTransmissionCampaign(null, SoundLink("TRaynor03Marine500016", -1), c_transmissionDurationAdd, 0.0, true);
+        libCamp_gf_SetAllSoundChannelVolumesCampaign(libNtve_ge_VolumeChannelMode_Game);
+        TriggerQueueExit();
+    }
     return true;
 }
 
@@ -6209,6 +6683,8 @@ void InitTriggers () {
     gt_Init05Environment_Init();
     gt_Init06Difficulties_Init();
     gt_Init07Help_Init();
+    gt_DEBUGAllyControl_Init();
+    gt_DEBUGStrandedForces_Init();
     gt_IntroSequence_Init();
     gt_StartGame_Init();
     gt_BurrowAmbushGlobalTrigger_Init();
@@ -6263,6 +6739,7 @@ void InitTriggers () {
     gt_AIGiveGas_Init();
     gt_PlayerIsInCombat_Init();
     gt_PlayerIsInCombatIndicatorDiminish_Init();
+    gt_TransmissionIntroQ_Init();
     gt_TransmissionCallForRetreatQ_Init();
     gt_TransmissionFirstZergWaveIncomingQ_Init();
     gt_TransmissionTychusIncomingAirUnitsQ_Init();
