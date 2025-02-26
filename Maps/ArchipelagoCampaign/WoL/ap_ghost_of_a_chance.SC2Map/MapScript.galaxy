@@ -8,6 +8,7 @@
 include "TriggerLibs/NativeLib"
 include "TriggerLibs/LibertyLib"
 include "TriggerLibs/CampaignLib"
+include "Lib15EF4C78"
 include "Lib88187CC2"
 include "Lib5BD4895D"
 include "LibABFE498B"
@@ -19,6 +20,7 @@ void InitLibs () {
     libNtve_InitLib();
     libLbty_InitLib();
     libCamp_InitLib();
+    lib15EF4C78_InitLib();
     lib88187CC2_InitLib();
     lib5BD4895D_InitLib();
     libABFE498B_InitLib();
@@ -473,6 +475,12 @@ bool gt_Initialization_Func (bool testConds, bool runActions) {
     TriggerExecute(gt_Init05Environment, true, true);
     TriggerExecute(gt_Init06Difficulties, true, true);
     TriggerExecute(gt_Init07Objectives, true, true);
+    if ((libABFE498B_gv_aP_Triggers_Option_grantStoryTech == true)) {
+        libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER01_USER, "AP_NovaWeaponCanisterRifle", 1);
+        libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER01_USER, "AP_NovaHelmetDominationVisor", 1);
+        libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER01_USER, "AP_NovaArmorStealthSuit", 1);
+    }
+
     TriggerExecute(gt_IntroSequence, true, false);
     return true;
 }
@@ -598,8 +606,15 @@ bool gt_Init03Units_Func (bool testConds, bool runActions) {
         ActorSend(gv_outhouse, "Destroy");
     }
 
-    gv_nova = UnitFromId(402);
-    UnitGroupAdd(gv_novaGroup, UnitFromId(402));
+    if ((libABFE498B_gv_aP_Triggers_Option_novaFallback == true)) {
+        gv_nova = UnitFromId(402);
+    }
+    else {
+        libNtve_gf_ReplaceUnit(UnitFromId(402), "AP_NovaHero", libNtve_ge_ReplaceUnitOptions_OldUnitsRelative);
+        gv_nova = libNtve_gf_LastReplacedUnit();
+        lib15EF4C78_gf_SetHeroPanelUnit(1, gv_nova, gv_pLAYER01_USER);
+    }
+    UnitGroupAdd(gv_novaGroup, gv_nova);
     UnitSetPropertyFixed(gv_nova, c_unitPropEnergyPercent, 100.0);
     gv_spectres = UnitGroup("Spectre", gv_pLAYER02_TOSH, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32))), 0);
     auto0F19746C_g = gv_spectres;
@@ -902,8 +917,22 @@ bool gt_ResetNova_Func (bool testConds, bool runActions) {
     libNtve_gf_ShowHideUnit(gv_nova, true);
     libNtve_gf_MakeUnitInvulnerable(gv_nova, false);
     UnitAbilityReset(gv_nova, AbilityCommand("NovaSnipe", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaWeaponCanisterRifleSnipe", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaWeaponHellfireShotgunBlast", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaWeaponPlasmaBlastNew", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaPsiStrike", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaWeaponBlazefireBladeShadowFury", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaApolloCloak", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaArmorBlinkSuitBlink", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_SuperStimpackNova", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaGadgetPulseGrenades", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaGadgetFlashBangGrenades", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaPersonalDefensiveMatrix", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaGadgetHolographicDecoy", 0), c_spendLocationAll);
     UnitIssueOrder(gv_nova, Order(AbilityCommand("ReleaseMinion", 0)), c_orderQueueAddToEnd);
+    UnitIssueOrder(gv_nova, Order(AbilityCommand("AP_NovaReleaseMinion", 0)), c_orderQueueAddToEnd);
     UnitAbilityReset(gv_nova, AbilityCommand("Domination", 0), c_spendLocationAll);
+    UnitAbilityReset(gv_nova, AbilityCommand("AP_NovaHelmetDomination", 0), c_spendLocationAll);
     return true;
 }
 
@@ -1033,6 +1062,7 @@ bool gt_NukeCameraShakeCount_Func (bool testConds, bool runActions) {
 void gt_NukeCameraShakeCount_Init () {
     gt_NukeCameraShakeCount = TriggerCreate("gt_NukeCameraShakeCount_Func");
     TriggerAddEventUnitAbility(gt_NukeCameraShakeCount, null, AbilityCommand("HeroNuclearStrike", 0), c_abilEffectStageFinish, false);
+    TriggerAddEventUnitAbility(gt_NukeCameraShakeCount, null, AbilityCommand("AP_HeroNuclearStrike", 0), c_abilEffectStageFinish, false);
 }
 
 //--------------------------------------------------------------------------------------------------
