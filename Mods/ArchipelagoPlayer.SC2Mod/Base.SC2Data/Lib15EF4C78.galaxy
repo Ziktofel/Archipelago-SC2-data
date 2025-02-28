@@ -238,7 +238,6 @@ void lib15EF4C78_InitVariables () {
     for (init_i = 0; init_i <= lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE; init_i += 1) {
         lib15EF4C78_gv_aP_Player_MercCooldownLinks[init_i] = "";
     }
-    lib15EF4C78_gv_aP_Player_MercInstantUses = 1;
 }
 
 // Custom Script
@@ -3386,6 +3385,28 @@ void lib15EF4C78_gf_ReplaceTownHall (unit lp_townHall, string lp_desiredFaction,
     }
 }
 
+int lib15EF4C78_gf_AP_Player_MercCompoundGetInstantUses (int lp_player) {
+    // Variable Declarations
+    int lv_usesTotal;
+    int lv_usesLeft;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    if ((TechTreeUpgradeCount(lp_player, "AP_FastDeliveryLevel1", c_techCountCompleteOnly) >= 1)) {
+        if ((TechTreeUpgradeCount(lp_player, "AP_FastDelivery", c_techCountCompleteOnly) >= 1)) {
+            lv_usesTotal = lib15EF4C78_gv_aP_Player_MercInstantUsesLevel2;
+        }
+        else {
+            lv_usesTotal = lib15EF4C78_gv_aP_Player_MercInstantUsesLevel1;
+        }
+    }
+
+    lv_usesLeft = (lv_usesTotal - lib15EF4C78_gv_aP_Player_MercInstantUsesUsed);
+    return lv_usesLeft;
+}
+
 void lib15EF4C78_gf_AP_Player_MercCompoundUpdateAvailableCount (int lp_player) {
     // Variable Declarations
     int lv_index;
@@ -3520,6 +3541,22 @@ void lib15EF4C78_gf_AP_Player_ResetMercenaryCooldownsTerranRespectStart (int lp_
         }
 
     }
+}
+
+void lib15EF4C78_gf_AP_Player_ResetMercenaryCooldownsSingle (int lp_player, int lp_paramIndex) {
+    // Variable Declarations
+    fixed lv_timeDifference;
+    int lv_index;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+    lv_timeDifference = (PlayerGetCooldown(1, "Abil/AP_MercCooldownDummy") - libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, "AP_MercCooldownDummy", "Cost[" + IntToString(0) + "].Cooldown.TimeStart", 1));
+
+    // Implementation
+    lv_index = lp_paramIndex;
+    libNtve_gf_PlayerRemoveCooldown(lp_player, lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index]);
+    PlayerAddCooldown(lp_player, lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index], libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, AbilityCommandGetAbility(lib15EF4C78_gv_aP_Player_MercAbilityCommands[lv_index]), "InfoArray[" + IntToString(AbilityCommandGetCommand(lib15EF4C78_gv_aP_Player_MercAbilityCommands[lv_index])) + "].Cooldown.TimeStart", lp_player));
+    PlayerAddCooldown(lp_player, lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index], lv_timeDifference);
 }
 
 void lib15EF4C78_gf_AP_Player_ClearMercenaryCooldowns (int lp_player) {
@@ -9058,6 +9095,8 @@ void lib15EF4C78_gt_AP_Player_MercCompoundUpdateCounts_Init () {
 bool lib15EF4C78_gt_AP_Player_MercCompoundOnMercUse_Func (bool testConds, bool runActions) {
     // Variable Declarations
     int lv_index;
+    int lv_player;
+    int lv_instantUsesLeft;
 
     // Automatic Variable Declarations
     const int auto40390B55_ae = lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE;
@@ -9070,21 +9109,28 @@ bool lib15EF4C78_gt_AP_Player_MercCompoundOnMercUse_Func (bool testConds, bool r
         return true;
     }
 
-    lib15EF4C78_gf_AP_Player_MercCompoundUpdateAvailableCount(EventPlayer());
-    if ((TechTreeUpgradeCount(1, "AP_FastDeliveryLevel1", c_techCountCompleteOnly) >= 1) && (TechTreeUpgradeCount(1, "AP_FastDelivery", c_techCountCompleteOnly) == 0) && (lib15EF4C78_gv_aP_Player_MercInstantUses > 0)) {
+    lv_player = EventPlayer();
+    lv_instantUsesLeft = lib15EF4C78_gf_AP_Player_MercCompoundGetInstantUses(lv_player);
+    if ((lv_instantUsesLeft > 0)) {
         lv_index = 0;
         for ( ; ( (auto40390B55_ai >= 0 && lv_index <= auto40390B55_ae) || (auto40390B55_ai < 0 && lv_index >= auto40390B55_ae) ) ; lv_index += auto40390B55_ai ) {
             if ((EventUnitAbility() == lib15EF4C78_gv_aP_Player_MercAbilityCommands[lv_index]) && ((lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_INFANTRY) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_VEHICLE) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_STARSHIP))) {
-                lib15EF4C78_gv_aP_Player_MercInstantUses = (lib15EF4C78_gv_aP_Player_MercInstantUses - 1);
-                if ((lib15EF4C78_gv_aP_Player_MercInstantUses == 0)) {
-                    lib15EF4C78_gf_AP_Player_ResetMercenaryCooldownsTerranRespectStart(1);
+                lv_instantUsesLeft -= 1;
+                libNtve_gf_SetUpgradeLevelForPlayer(lv_player, "AP_FastDeliveryCharges", lv_instantUsesLeft);
+                lib15EF4C78_gv_aP_Player_MercInstantUseIndex[lib15EF4C78_gv_aP_Player_MercInstantUsesUsed] = lv_index;
+                lib15EF4C78_gv_aP_Player_MercInstantUsesUsed += 1;
+                if ((lv_instantUsesLeft == 0)) {
+                    lib15EF4C78_gf_AP_Player_ResetMercenaryCooldownsTerranRespectStart(lv_player);
                 }
-
+                else {
+                    lib15EF4C78_gf_AP_Player_ResetMercenaryCooldownsSingle(lv_player, lv_index);
+                }
             }
 
         }
     }
 
+    lib15EF4C78_gf_AP_Player_MercCompoundUpdateAvailableCount(lv_player);
     return true;
 }
 
