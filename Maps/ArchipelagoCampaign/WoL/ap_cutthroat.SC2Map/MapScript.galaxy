@@ -92,6 +92,7 @@ int gv_contrabandRelicsFound;
 int gv_contrabandRelicsTotal;
 unitgroup gv_briefingHiddenUnits;
 bool gv_midCinematicCompleted;
+bool gv_midCinematicRunning;
 unitgroup gv_midHiddenUnitGroup;
 bool gv_victoryCinematicCompleted;
 unitgroup gv_victoryHiddenUnitGroup;
@@ -1109,7 +1110,7 @@ bool gt_ChangeOwnerofIntroStructures_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((gv_inCinematic == false))) {
+        if (!(((gv_inCinematic == false) || (gv_midCinematicRunning == true)))) {
             return false;
         }
 
@@ -1163,7 +1164,7 @@ bool gt_ChangeOwnerofPreplacedStructures_Func (bool testConds, bool runActions) 
             return false;
         }
 
-        if (!((gv_inCinematic == false))) {
+        if (!(((gv_inCinematic == false) || (gv_midCinematicRunning == true)))) {
             return false;
         }
 
@@ -1204,7 +1205,7 @@ bool gt_ChangeOwnerofDropshipUnits_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((gv_inCinematic == false))) {
+        if (!(((gv_inCinematic == false) || (gv_midCinematicRunning == true)))) {
             return false;
         }
 
@@ -1247,7 +1248,7 @@ bool gt_ChangeOwnerofSCVs_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((gv_inCinematic == false))) {
+        if (!(((gv_inCinematic == false) || (gv_midCinematicRunning == true)))) {
             return false;
         }
 
@@ -5576,6 +5577,7 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerQueueEnter();
+    gv_midCinematicRunning = true;
     if ((libABFE498B_gv_aP_Triggers_skipCutscenes == false)) {
         TriggerExecute(gt_MidSetup, true, true);
         TriggerExecute(gt_MidCinematic, true, true);
@@ -5583,6 +5585,7 @@ bool gt_MidQ_Func (bool testConds, bool runActions) {
     }
 
     TriggerExecute(gt_MidCleanup, true, true);
+    gv_midCinematicRunning = false;
     TriggerQueueExit();
     return true;
 }
@@ -5750,7 +5753,12 @@ bool gt_MidCleanup_Func (bool testConds, bool runActions) {
         }
         else {
             UnitSetOwner(auto05A7AB37_var, gv_p01_USER, true);
-            UnitSetPropertyFixed(EventUnit(), c_unitPropLifePercent, 100.0);
+            lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit(auto05A7AB37_var);
+            UnitSetPropertyFixed(auto05A7AB37_var, c_unitPropLifePercent, 100.0);
+            if (((UnitGetType(auto05A7AB37_var) == "AP_SiegeBreakerSieged") || (UnitGetType(auto05A7AB37_var) == "AP_SiegeBreakerSiegedTransportable"))) {
+            }
+
+            UnitBehaviorAdd(auto05A7AB37_var, "AP_SiegeTankSiegeModeProgressiveRangeIncease", auto05A7AB37_var, 1);
         }
     }
     GameTimeOfDayPause(false);
