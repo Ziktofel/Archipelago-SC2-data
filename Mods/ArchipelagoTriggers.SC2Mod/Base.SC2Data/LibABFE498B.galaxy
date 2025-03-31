@@ -9743,6 +9743,71 @@ void libABFE498B_gf_AP_Triggers_giveResearchCost (int lp_player, int lp_level) {
     }
 }
 
+bool libABFE498B_gf_AP_Triggers_checkSoA (int lp_player, int lp_mode, bool lp_nobuildsection) {
+    // Variable Declarations
+    int lv_currentPlayer;
+
+    // Automatic Variable Declarations
+    // Variable Initialization
+
+    // Implementation
+    if ((lp_mode == 0) && (libABFE498B_gv_aP_Triggers_Option_SoAPresence > 0) && ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 3) || ((libABFE498B_gv_aP_Triggers_MapConfig_Mission_Protoss == libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS) && ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 1) || (libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2)) && ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot"))) || ((((libABFE498B_gv_aP_Triggers_MapConfig_Mission_Protoss == libABFE498B_gv_aP_Triggers_MapConfig_MISSION_PROTOSS_NOT_LOTV_MAIN) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) && (libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2))) && (((lp_nobuildsection == false) && (libABFE498B_gv_aP_Triggers_isBuild == true)) || (libABFE498B_gv_aP_Triggers_Option_SoAPresenceNoBuild == true))) {
+        return true;
+    }
+
+    if ((lp_mode == 1) && (libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts > 0) && ((libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 3) || ((libABFE498B_gv_aP_Triggers_MapConfig_Mission_Protoss == libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS) && ((libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 1) || (libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 2)) && ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot"))) || ((((libABFE498B_gv_aP_Triggers_MapConfig_Mission_Protoss == libABFE498B_gv_aP_Triggers_MapConfig_MISSION_PROTOSS_NOT_LOTV_MAIN) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) && (libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocasts == 2))) && (((lp_nobuildsection == false) && (libABFE498B_gv_aP_Triggers_isBuild == true)) || (libABFE498B_gv_aP_Triggers_Option_SoAPresenceAutocastsNoBuild == true))) {
+        return true;
+    }
+
+    return false;
+}
+
+void libABFE498B_gf_AP_Triggers_startNoBuild (int lp_player) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((libABFE498B_gf_AP_Triggers_checkSoA(lp_player, 0, true) == false)) {
+        lib15EF4C78_gf_ShowSpearofAdunUI(false, c_transitionDurationImmediate);
+    }
+
+    if ((libABFE498B_gf_AP_Triggers_checkSoA(lp_player, 1, true) == false)) {
+    }
+
+}
+
+void libABFE498B_gf_AP_Triggers_resetBase (int lp_player) {
+    // Automatic Variable Declarations
+    unitgroup autoF6FB042E_g;
+    int autoF6FB042E_u;
+    unit autoF6FB042E_var;
+
+    // Implementation
+    lib15EF4C78_gf_AP_Player_ResetMercenaryCooldowns(lp_player);
+    if ((libABFE498B_gf_AP_Triggers_checkSoA(lp_player, 0, false) == true)) {
+        TriggerExecute(libABFE498B_gt_AP_Triggers_InitSoA, true, true);
+        if ((libABFE498B_gf_AP_Triggers_checkSoA(lp_player, 0, true) == false)) {
+            lib15EF4C78_gf_AP_Player_ResetSoA(lp_player);
+            lib15EF4C78_gf_ShowSpearofAdunUI(true, c_transitionDurationDefault);
+        }
+
+    }
+
+    lib15EF4C78_gf_AP_Player_findPrimaryTownHall(lp_player);
+    autoF6FB042E_g = UnitGroup(null, lp_player, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoF6FB042E_u = UnitGroupCount(autoF6FB042E_g, c_unitCountAll);
+    for (;; autoF6FB042E_u -= 1) {
+        autoF6FB042E_var = UnitGroupUnitFromEnd(autoF6FB042E_g, autoF6FB042E_u);
+        if (autoF6FB042E_var == null) { break; }
+        lib15EF4C78_gf_AP_Player_ReapplyDefaultBehaviorsToUnit(autoF6FB042E_var);
+        if ((UnitGetType(autoF6FB042E_var) == "AP_OrbitalCommand")) {
+            UnitSetPropertyFixed(EventUnit(), c_unitPropEnergy, 50.0);
+        }
+
+    }
+    lib15EF4C78_gf_AP_Player_clearZerglingRespawnChargesFromPlayer(lp_player);
+    lib15EF4C78_gf_AP_Player_UtilTownHallAutoRally(lp_player);
+    lib15EF4C78_gf_StartingWorkersAutoHarvest(lp_player, RegionEntireMap(), null);
+}
+
 void libABFE498B_gf_AP_Triggers_replaceUpgrade (int lp_player, string lp_oldUpgrade, string lp_newUpgrade) {
     // Automatic Variable Declarations
     // Implementation
@@ -10375,11 +10440,19 @@ bool libABFE498B_gt_AP_Triggers_InitSoA_Func (bool testConds, bool runActions) {
 
     // Variable Initialization
 
+    // Conditions
+    if (testConds) {
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+    }
+
     // Actions
     if (!runActions) {
         return true;
     }
 
+    TriggerEnable(TriggerGetCurrent(), false);
     if ((libABFE498B_gv_aP_Triggers_Option_SoAPresence > 0) && ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 3) || ((libABFE498B_gv_aP_Triggers_MapConfig_Mission_Protoss == libABFE498B_gv_aP_Triggers_MapConfig_MISSION_LOTV_PROTOSS) && ((libABFE498B_gv_aP_Triggers_Option_SoAPresence == 1) || (libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2)) && ((libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut") || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot"))) || ((((libABFE498B_gv_aP_Triggers_MapConfig_Mission_Protoss == libABFE498B_gv_aP_Triggers_MapConfig_MISSION_PROTOSS_NOT_LOTV_MAIN) && (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Neut")) || (libABFE498B_gv_aP_Triggers_Option_overridePlayerRace == "Prot")) && (libABFE498B_gv_aP_Triggers_Option_SoAPresence == 2))) && ((libABFE498B_gv_aP_Triggers_isBuild == true) || (libABFE498B_gv_aP_Triggers_Option_SoAPresenceNoBuild == true))) {
         auto93509108_g = libABFE498B_gv_aP_Triggers_MapConfig_SoAControllingPlayers;
         lv_currentPlayer = -1;
