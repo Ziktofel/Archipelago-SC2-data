@@ -102,7 +102,7 @@ The client starts missions by running the map files in your StarCraft 2 installa
   * You can write a script to do this automatically or create a symlink to automatically keep your repo folder and Mods/ folder in sync.
   * Note that with a symlink or with your repo directly in the Mods/ folder, running `/download_data` can overwrite some local changes
 * **Maps** can only be run in a packaged format, so the folders must be built into an MPQ format first.
-  * This can be done locally with the `./build_release_package.sh` script, but it can only be run in linux environments and with the smpq package installed. On Windows this can be done with WSL (Windows Subsystem for Linux)
+  * This can be done locally with the `./build_release_package.sh` script, but it can only be run in linux environments and with the `smpq` package installed. On Windows this can be done with WSL (Windows Subsystem for Linux) with the `smpq` and `parallel` packages installed.
     * Files are output to the target/ directory. A symlink is even more useful here, as there is no risk of your local changes being overwritten by `/download_data`.
   * Otherwise, it is possible to push your changes and an automatic github action will run to compile the maps. Download them from the Actions tab of your github fork page.
 * Place the maps within the Maps/ folder of your StarCraft 2 installation
