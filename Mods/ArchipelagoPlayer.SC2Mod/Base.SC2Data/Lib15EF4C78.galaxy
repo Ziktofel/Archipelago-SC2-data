@@ -30,6 +30,9 @@ void lib15EF4C78_InitVariables () {
         lib15EF4C78_gv_nM_HeroReviveCDLink[init_i] = "";
     }
     lib15EF4C78_gv_kerriganPsiStrikeEnergyCost = libNtve_gf_CostOfAbility("AP_PsiStrikeBlink", "Energy");
+    for (init_i = 0; init_i <= lib15EF4C78_gv_aP_SOA_ABILITY_COUNT; init_i += 1) {
+        lib15EF4C78_gv_aP_SoAAbilityStrings[init_i] = "";
+    }
     lib15EF4C78_gv_pM_ScreenMode = c_uiModeConsole;
     for (init_i = 0; init_i <= 20; init_i += 1) {
         lib15EF4C78_gv_pM_SoACasterGroup[init_i] = UnitGroupEmpty();
@@ -675,6 +678,20 @@ void lib15EF4C78_gf_PauseUnpauseSpearofAdunCooldowns (int lp_player, bool lp_pau
     }
 }
 
+void lib15EF4C78_gf_PauseUnpauseSpearofAdunAutocasts (int lp_player, bool lp_pauseUnpause) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((lp_pauseUnpause == true)) {
+        if ((UnitHasBehavior2(lib15EF4C78_gv_pM_SoAAutonomousCaster[lp_player], "SOAAbilityDisable") == false)) {
+            UnitBehaviorAdd(lib15EF4C78_gv_pM_SoAAutonomousCaster[lp_player], "AP_SOAAbilityDisable", lib15EF4C78_gv_pM_SoAUnit[lp_player], 1);
+        }
+
+    }
+    else {
+        UnitBehaviorRemove(lib15EF4C78_gv_pM_SoAAutonomousCaster[lp_player], "AP_SOAAbilityDisable", 1);
+    }
+}
+
 void lib15EF4C78_gf_PM_SoACreateUnit (int lp_player) {
     // Automatic Variable Declarations
     // Implementation
@@ -694,13 +711,25 @@ void lib15EF4C78_gf_PM_SoACreateUnit (int lp_player) {
 }
 
 void lib15EF4C78_gf_AP_Player_CreateSoAUnit (int lp_player) {
+    // Variable Declarations
+    int lv_index;
+
     // Automatic Variable Declarations
+    const int auto2FD94C3F_ae = lib15EF4C78_gv_aP_SOA_ABILITY_COUNT;
+    const int auto2FD94C3F_ai = 1;
+
+    // Variable Initialization
+
     // Implementation
     lib15EF4C78_gf_PM_SoACreateUnit(lp_player);
     lib15EF4C78_gv_pM_SoAEnabledForPlayer[lp_player] = true;
     lib15EF4C78_gf_ShowSpearofAdunUI(true, c_transitionDurationDefault);
     lib15EF4C78_gf_PU_GPVisibilityAutoUpdate(true, c_transitionDurationDefault);
     TriggerExecute(lib15EF4C78_gt_PM_SoAStatusWatch, true, false);
+    lv_index = 0;
+    for ( ; ( (auto2FD94C3F_ai >= 0 && lv_index <= auto2FD94C3F_ae) || (auto2FD94C3F_ai < 0 && lv_index >= auto2FD94C3F_ae) ) ; lv_index += auto2FD94C3F_ai ) {
+        lib15EF4C78_gv_aP_SoAAbilityStrings[lv_index] = StringWord(lib15EF4C78_gv_aP_SOA_ABILITIES, lv_index);
+    }
 }
 
 void lib15EF4C78_gf_AP_Player_CreateSoAAutonomousCasterUnit (int lp_player) {
@@ -717,6 +746,30 @@ bool lib15EF4C78_gf_AP_Player_isSoaEnabledForPlayer (int lp_player) {
     // Automatic Variable Declarations
     // Implementation
     return lib15EF4C78_gv_pM_SoAEnabledForPlayer[lp_player];
+}
+
+void lib15EF4C78_gf_AP_Player_ResetSoA (int lp_player) {
+    // Variable Declarations
+    int lv_index;
+    string lv_abil;
+    string lv_cooldown;
+
+    // Automatic Variable Declarations
+    const int auto1FDA9E1B_ae = lib15EF4C78_gv_aP_SOA_ABILITY_COUNT;
+    const int auto1FDA9E1B_ai = 1;
+
+    // Variable Initialization
+    lv_cooldown = "";
+
+    // Implementation
+    lib15EF4C78_gf_SetSpearofAdunEnergy(lp_player, 0.0, lib15EF4C78_ge_SpearofAdunEnergyType_Percent);
+    lv_index = 0;
+    for ( ; ( (auto1FDA9E1B_ai >= 0 && lv_index <= auto1FDA9E1B_ae) || (auto1FDA9E1B_ai < 0 && lv_index >= auto1FDA9E1B_ae) ) ; lv_index += auto1FDA9E1B_ai ) {
+        lv_abil = (lib15EF4C78_gv_aP_SoAAbilityStrings[lv_index]);
+        lv_cooldown = CatalogFieldValueGet(c_gameCatalogAbil, lv_abil, "Cost[" + IntToString(0) + "].Cooldown.Link", lp_player);
+        libNtve_gf_UnitAbilityRemoveCooldown(lib15EF4C78_gv_pM_SoAUnit[lp_player], lv_abil, lv_cooldown);
+        UnitAbilityAddCooldown(lib15EF4C78_gv_pM_SoAUnit[lp_player], lv_abil, lv_cooldown, libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, lv_abil, "Cost[" + IntToString(0) + "].Cooldown.TimeUse", lp_player));
+    }
 }
 
 void lib15EF4C78_gf_SetScreenModeCampaign (int lp_mode, fixed lp_duration) {
@@ -1744,7 +1797,7 @@ void lib15EF4C78_gf_AP_Player_findPrimaryTownHall (int lp_player) {
         if (lv_currentBuilding == null) { break; }
         if ((UnitHasBehavior2(lv_currentBuilding, "AP_ZerglingRespawnPrimary") == true)) {
             lib15EF4C78_gv_aP_Player_PrimaryTownHall[lp_player] = lv_currentBuilding;
-            break;
+            return ;
         }
 
     }
@@ -1768,7 +1821,9 @@ void lib15EF4C78_gf_AP_Player_findPrimaryTownHall (int lp_player) {
         lv_currentBuilding = UnitGroupUnitFromEnd(auto49757CBE_g, auto49757CBE_u);
         if (lv_currentBuilding == null) { break; }
         lib15EF4C78_gv_aP_Player_PrimaryTownHall[lp_player] = lv_currentBuilding;
-        break;
+        UnitCreateEffectUnit(lv_currentBuilding, "AP_ZerglingRespawnPrimaryRemoveOthers", lv_currentBuilding);
+        UnitBehaviorAdd(lv_currentBuilding, "AP_ZerglingRespawnPrimary", lv_currentBuilding, 1);
+        return ;
     }
 }
 
@@ -3532,10 +3587,11 @@ void lib15EF4C78_gf_AP_Player_MercCompoundUpdateAvailableCount (int lp_player) {
 void lib15EF4C78_gf_AP_Player_ResetMercenaryCooldowns (int lp_player) {
     // Variable Declarations
     int lv_index;
+    bool lv_hasInstantUses;
 
     // Automatic Variable Declarations
-    const int autoDC54778B_ae = lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE;
-    const int autoDC54778B_ai = 1;
+    const int auto26E52026_ae = lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE;
+    const int auto26E52026_ai = 1;
 
     // Variable Initialization
 
@@ -3543,9 +3599,17 @@ void lib15EF4C78_gf_AP_Player_ResetMercenaryCooldowns (int lp_player) {
     libNtve_gf_PlayerRemoveCooldown(lp_player, CatalogFieldValueGet(c_gameCatalogAbil, "AP_MercCooldownDummy", "Cost[" + IntToString(0) + "].Cooldown.Link", lp_player));
     PlayerAddCooldown(lp_player, CatalogFieldValueGet(c_gameCatalogAbil, "AP_MercCooldownDummy", "Cost[" + IntToString(0) + "].Cooldown.Link", c_playerAny), libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, "AP_MercCooldownDummy", "Cost[" + IntToString(0) + "].Cooldown.TimeStart", lp_player));
     lib15EF4C78_gf_AP_Player_ClearMercenaryCooldowns(lp_player);
+    if ((lib15EF4C78_gf_AP_Player_MercCompoundGetInstantUses(lp_player) > 0)) {
+        lv_hasInstantUses = true;
+    }
+
     lv_index = 0;
-    for ( ; ( (autoDC54778B_ai >= 0 && lv_index <= autoDC54778B_ae) || (autoDC54778B_ai < 0 && lv_index >= autoDC54778B_ae) ) ; lv_index += autoDC54778B_ai ) {
-        PlayerAddCooldown(lp_player, lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index], libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, AbilityCommandGetAbility(lib15EF4C78_gv_aP_Player_MercAbilityCommands[lv_index]), "InfoArray[" + IntToString(AbilityCommandGetCommand(lib15EF4C78_gv_aP_Player_MercAbilityCommands[0])) + "].Cooldown.TimeStart", lp_player));
+    for ( ; ( (auto26E52026_ai >= 0 && lv_index <= auto26E52026_ae) || (auto26E52026_ai < 0 && lv_index >= auto26E52026_ae) ) ; lv_index += auto26E52026_ai ) {
+        if ((lv_hasInstantUses == true) && ((lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_INFANTRY) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_VEHICLE) || (lib15EF4C78_gv_aP_Player_MercType[lv_index] == lib15EF4C78_ge_AP_Player_MercenaryType_STARSHIP))) {
+        }
+        else {
+            PlayerAddCooldown(lp_player, lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index], libNtve_gf_CatalogFieldValueGetAsReal(c_gameCatalogAbil, AbilityCommandGetAbility(lib15EF4C78_gv_aP_Player_MercAbilityCommands[lv_index]), "InfoArray[" + IntToString(AbilityCommandGetCommand(lib15EF4C78_gv_aP_Player_MercAbilityCommands[lv_index])) + "].Cooldown.TimeStart", lp_player));
+        }
     }
 }
 
@@ -3643,6 +3707,26 @@ void lib15EF4C78_gf_AP_Player_ClearMercenaryCooldownsZerg (int lp_player) {
             libNtve_gf_PlayerRemoveCooldown(lp_player, lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index]);
         }
 
+    }
+}
+
+void lib15EF4C78_gf_AP_Player_AddMercenaryCooldown (int lp_player, fixed lp_addedCooldown) {
+    // Variable Declarations
+    int lv_index;
+    string lv_cooldownLink;
+
+    // Automatic Variable Declarations
+    const int auto51DBA9DC_ae = lib15EF4C78_gv_aP_Player_MERC_COOLDOWN_LINK_SIZE;
+    const int auto51DBA9DC_ai = 1;
+
+    // Variable Initialization
+    lv_cooldownLink = "";
+
+    // Implementation
+    lv_index = 0;
+    for ( ; ( (auto51DBA9DC_ai >= 0 && lv_index <= auto51DBA9DC_ae) || (auto51DBA9DC_ai < 0 && lv_index >= auto51DBA9DC_ae) ) ; lv_index += auto51DBA9DC_ai ) {
+        lv_cooldownLink = lib15EF4C78_gv_aP_Player_MercCooldownLinks[lv_index];
+        PlayerAddCooldown(lp_player, lv_cooldownLink, lp_addedCooldown);
     }
 }
 
