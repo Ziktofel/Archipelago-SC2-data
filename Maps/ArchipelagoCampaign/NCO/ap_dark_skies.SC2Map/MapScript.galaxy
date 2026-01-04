@@ -46,7 +46,7 @@ const int gv_LOCATION_ID_SCIENCE_FACILITY = 4;
 const int gv_pLAYER_01_USER = 1;
 const int gv_pLAYER_02_DOMINION = 2;
 const int gv_pLAYER_02_DOMINION2 = 3;
-const int gv_pLAYER_02_DOMINION3 = 4;
+const int gv_pLAYER_04_TAL_DARIM = 4;
 const int gv_pLAYER_02_DOMINION4 = 5;
 const int gv_pLAYER_02_DOMINION5 = 6;
 
@@ -159,9 +159,10 @@ void InitGlobals () {
 //--------------------------------------------------------------------------------------------------
 void gf_GorgonHyperjump (unit lp_gorgon, point lp_target);
 void gf_CreateArrowPings (int lp_lane, fixed lp_delay, fixed lp_direction);
-region gf_SpawnRegionforPosition (point lp_position);
 void gf_CreateAttackWavePing (unitgroup lp_waveUnitGroup, text lp_tooltip);
+region gf_SpawnRegionforPosition (point lp_position);
 void gf_TrackUnitforLeaderboard (unit lp_unit, int lp_lane);
+void gf_DecrementProtossUnitCounter ();
 
 //--------------------------------------------------------------------------------------------------
 // Trigger Variables
@@ -201,6 +202,7 @@ trigger gt_Mid2BaseKilled;
 trigger gt_Mid3BaseKilled;
 trigger gt_DeathFleetCounter;
 trigger gt_ProtossUnitDies;
+trigger gt_ProtossUnitMindControlled;
 trigger gt_ProtossUnitDominated;
 trigger gt_ProtossUnitReleased;
 trigger gt_JinaraDies1Q;
@@ -429,48 +431,6 @@ bool auto_gf_CreateArrowPings_TriggerFunc (bool testConds, bool runActions) {
     return true;
 }
 
-region gf_SpawnRegionforPosition (point lp_position) {
-    // Automatic Variable Declarations
-    // Implementation
-    if ((RegionContainsPoint(RegionFromId(42), lp_position) == true)) {
-        return RegionFromId(31);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(43), lp_position) == true)) {
-        return RegionFromId(32);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(44), lp_position) == true)) {
-        return RegionFromId(33);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(45), lp_position) == true)) {
-        return RegionFromId(34);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(46), lp_position) == true)) {
-        return RegionFromId(35);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(47), lp_position) == true)) {
-        return RegionFromId(36);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(50), lp_position) == true)) {
-        return RegionFromId(39);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(49), lp_position) == true)) {
-        return RegionFromId(38);
-    }
-
-    if ((RegionContainsPoint(RegionFromId(48), lp_position) == true)) {
-        return RegionFromId(37);
-    }
-
-    return RegionFromId(35);
-}
-
 trigger auto_gf_CreateAttackWavePing_Trigger = null;
 unitgroup auto_gf_CreateAttackWavePing_lp_waveUnitGroup;
 text auto_gf_CreateAttackWavePing_lp_tooltip;
@@ -537,6 +497,48 @@ bool auto_gf_CreateAttackWavePing_TriggerFunc (bool testConds, bool runActions) 
     return true;
 }
 
+region gf_SpawnRegionforPosition (point lp_position) {
+    // Automatic Variable Declarations
+    // Implementation
+    if ((RegionContainsPoint(RegionFromId(42), lp_position) == true)) {
+        return RegionFromId(31);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(43), lp_position) == true)) {
+        return RegionFromId(32);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(44), lp_position) == true)) {
+        return RegionFromId(33);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(45), lp_position) == true)) {
+        return RegionFromId(34);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(46), lp_position) == true)) {
+        return RegionFromId(35);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(47), lp_position) == true)) {
+        return RegionFromId(36);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(50), lp_position) == true)) {
+        return RegionFromId(39);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(49), lp_position) == true)) {
+        return RegionFromId(38);
+    }
+
+    if ((RegionContainsPoint(RegionFromId(48), lp_position) == true)) {
+        return RegionFromId(37);
+    }
+
+    return RegionFromId(35);
+}
+
 void gf_TrackUnitforLeaderboard (unit lp_unit, int lp_lane) {
     // Automatic Variable Declarations
     // Implementation
@@ -544,6 +546,26 @@ void gf_TrackUnitforLeaderboard (unit lp_unit, int lp_lane) {
     UnitGroupAdd(gv_enemyGroups[0], lp_unit);
     if ((lp_lane >= 1) && (lp_lane <= 3)) {
         UnitGroupAdd(gv_enemyGroups[lp_lane], lp_unit);
+    }
+
+}
+
+void gf_DecrementProtossUnitCounter () {
+    // Automatic Variable Declarations
+    // Implementation
+    gv_enemyUnitsRemaining -= 1;
+    gv_currentEnemyUnits -= 1;
+    if ((gv_enemyUnitsRemaining > 0)) {
+        BoardItemSetText(gv_deathFleetLeaderboard, 2, 1, IntToText(gv_enemyUnitsRemaining));
+    }
+
+    if ((gv_enemyUnitsRemaining <= 0)) {
+        TriggerEnable(gt_ProtossUnitDies, false);
+        TriggerEnable(gt_ProtossUnitDominated, false);
+        TriggerEnable(gt_ProtossUnitMindControlled, false);
+        TriggerEnable(gt_ProtossUnitReleased, false);
+        BoardItemSetText(gv_deathFleetLeaderboard, 2, 1, StringExternal("Param/Value/B3F7DA07"));
+        TriggerExecute(gt_VictoryDefeattheDeathFleetCompleted, true, false);
     }
 
 }
@@ -658,7 +680,7 @@ bool gt_Init01Technology_Func (bool testConds, bool runActions) {
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_02_DOMINION2, "TerranShipArmorsLevel1", 1);
     libNtve_gf_SetUpgradeLevelForPlayer(gv_pLAYER_02_DOMINION2, "TerranBuildingArmor", 1);
     CatalogFieldValueSet(c_gameCatalogAbil, "StarportTrain", "InfoArray[" + IntToString(3) + "].Time", gv_pLAYER_02_DOMINION, "30");
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "DarkProtoss", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "DarkProtoss", 1);
     return true;
 }
 
@@ -695,9 +717,9 @@ bool gt_Init02Players_Func (bool testConds, bool runActions) {
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION2, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION2, c_playerPropVespene, c_playerPropOperSetTo, 5000);
     PlayerSetState(gv_pLAYER_02_DOMINION2, c_playerStateFoodIgnored, true);
-    PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION3, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
-    PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION3, c_playerPropVespene, c_playerPropOperSetTo, 5000);
-    PlayerSetState(gv_pLAYER_02_DOMINION3, c_playerStateFoodIgnored, true);
+    PlayerModifyPropertyInt(gv_pLAYER_04_TAL_DARIM, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
+    PlayerModifyPropertyInt(gv_pLAYER_04_TAL_DARIM, c_playerPropVespene, c_playerPropOperSetTo, 5000);
+    PlayerSetState(gv_pLAYER_04_TAL_DARIM, c_playerStateFoodIgnored, true);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION4, c_playerPropMinerals, c_playerPropOperSetTo, 5000);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION4, c_playerPropVespene, c_playerPropOperSetTo, 5000);
     PlayerSetState(gv_pLAYER_02_DOMINION4, c_playerStateFoodIgnored, true);
@@ -836,15 +858,15 @@ bool gt_Init06Difficulties_Func (bool testConds, bool runActions) {
 
     gv_enemyUnitsRemaining = libNtve_gf_DifficultyValueInt(1750, 1750, 2250, 2500);
     if ((libNtve_gf_DifficultyValueInt(0, 0, 1, 1) == 1)) {
-        TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossAirWeaponsLevel1", 1);
-        TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossAirArmorsLevel1", 1);
-        TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossGroundWeaponsLevel1", 1);
-        TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossGroundArmorsLevel1", 1);
-        TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossShieldsLevel1", 1);
+        TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossAirWeaponsLevel1", 1);
+        TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossAirArmorsLevel1", 1);
+        TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossGroundWeaponsLevel1", 1);
+        TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossGroundArmorsLevel1", 1);
+        TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossShieldsLevel1", 1);
     }
 
     if ((libNtve_gf_DifficultyValueInt(0, 0, 0, 1) == 1)) {
-        TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ObserverGraviticBooster", 1);
+        TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ObserverGraviticBooster", 1);
     }
 
     return true;
@@ -1745,18 +1767,18 @@ bool gt_SummonGorgonLeft_Func (bool testConds, bool runActions) {
     lv_nukePoints[3] = PointFromId(1855756309);
     lv_nukePoints[4] = PointFromId(1880728590);
     lv_nukePoints[5] = PointFromId(434561813);
-    if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(67), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+    if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(67), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
         lv_spawnLocation = PointFromId(1125163957);
         lv_currentWaypoint = 0;
     }
     else {
-        if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(51), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+        if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(51), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
             lv_spawnLocation = PointFromId(403441445);
             lv_currentWaypoint = 1;
         }
         else {
             lv_currentWaypoint = 2;
-            if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+            if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(52), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
                 lv_spawnLocation = PointFromId(1979165915);
             }
             else {
@@ -1813,7 +1835,7 @@ bool gt_SummonGorgonLeft_Func (bool testConds, bool runActions) {
         if ((lv_jumpCheckReached == false)) {
             if ((libNtve_gf_UnitInRegion(lv_gorgon, RegionCircle(PointFromId(42862931), 2.0)) == true)) {
                 lv_jumpCheckReached = true;
-                if ((UnitIsAlive(UnitFromId(446)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(61), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(61), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > (2 * UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(60), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive)))) {
+                if ((UnitIsAlive(UnitFromId(446)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(61), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(61), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > (2 * UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(60), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive)))) {
                     lv_currentWaypoint = 4;
                     gf_GorgonHyperjump(lv_gorgon, lv_waypoint[3]);
                     if ((UnitIsAlive(lv_gorgon) == false)) {
@@ -1912,15 +1934,15 @@ bool gt_SummonGorgonMiddle_Func (bool testConds, bool runActions) {
     lv_nukePoints[3] = PointFromId(12081422);
     lv_nukePoints[4] = PointFromId(413750362);
     lv_nukePoints[5] = PointFromId(955374671);
-    if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(68), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+    if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(68), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
         lv_spawnLocation = PointFromId(782694821);
     }
     else {
-        if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(53), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+        if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(53), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
             lv_spawnLocation = PointFromId(489810957);
         }
         else {
-            if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(54), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+            if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(54), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
                 lv_spawnLocation = PointFromId(1135613313);
             }
             else {
@@ -1977,18 +1999,18 @@ bool gt_SummonGorgonMiddle_Func (bool testConds, bool runActions) {
         if ((lv_jumpCheck1Reached == false)) {
             if ((libNtve_gf_UnitInRegion(lv_gorgon, RegionCircle(PointFromId(974849459), 2.0)) == true)) {
                 lv_jumpCheck1Reached = true;
-                if ((UnitIsAlive(UnitFromId(434)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(57), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
+                if ((UnitIsAlive(UnitFromId(434)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(57), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
                     lv_waypoint = PointFromId(1733544732);
                     gf_GorgonHyperjump(lv_gorgon, PointFromId(2058338590));
                 }
                 else {
-                    if ((UnitIsAlive(UnitFromId(430)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(59), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
+                    if ((UnitIsAlive(UnitFromId(430)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(59), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
                         lv_waypoint = PointFromId(893641366);
                         gf_GorgonHyperjump(lv_gorgon, PointFromId(1176072038));
                         lv_jumpCheck2Reached = true;
                     }
                     else {
-                        if ((UnitIsAlive(UnitFromId(432)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(58), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
+                        if ((UnitIsAlive(UnitFromId(432)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(58), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
                             lv_waypoint = PointFromId(2065466641);
                             gf_GorgonHyperjump(lv_gorgon, PointFromId(1912722027));
                             lv_jumpCheck3Reached = true;
@@ -2003,12 +2025,12 @@ bool gt_SummonGorgonMiddle_Func (bool testConds, bool runActions) {
         if ((lv_jumpCheck2Reached == false)) {
             if ((libNtve_gf_UnitInRegion(lv_gorgon, RegionCircle(PointFromId(716450712), 2.0)) == true)) {
                 lv_jumpCheck2Reached = true;
-                if ((UnitIsAlive(UnitFromId(430)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(59), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
+                if ((UnitIsAlive(UnitFromId(430)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(59), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
                     lv_waypoint = PointFromId(893641366);
                     gf_GorgonHyperjump(lv_gorgon, PointFromId(1176072038));
                 }
                 else {
-                    if ((UnitIsAlive(UnitFromId(432)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(58), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
+                    if ((UnitIsAlive(UnitFromId(432)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(58), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
                         lv_waypoint = PointFromId(2065466641);
                         gf_GorgonHyperjump(lv_gorgon, PointFromId(1912722027));
                         lv_jumpCheck3Reached = true;
@@ -2022,7 +2044,7 @@ bool gt_SummonGorgonMiddle_Func (bool testConds, bool runActions) {
         if ((lv_jumpCheck3Reached == false)) {
             if ((libNtve_gf_UnitInRegion(lv_gorgon, RegionCircle(PointFromId(387578856), 2.0)) == true)) {
                 lv_jumpCheck3Reached = true;
-                if ((UnitIsAlive(UnitFromId(432)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(58), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
+                if ((UnitIsAlive(UnitFromId(432)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(58), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16)) {
                     lv_waypoint = PointFromId(2065466641);
                     gf_GorgonHyperjump(lv_gorgon, PointFromId(1912722027));
                 }
@@ -2037,14 +2059,14 @@ bool gt_SummonGorgonMiddle_Func (bool testConds, bool runActions) {
         }
 
         if ((lv_highMode == false)) {
-            if ((UnitGroupCount(UnitGroup("NovaMothership", gv_pLAYER_02_DOMINION3, RegionCircle(UnitGetPosition(lv_gorgon), 8.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)) {
+            if ((UnitGroupCount(UnitGroup("NovaMothership", gv_pLAYER_04_TAL_DARIM, RegionCircle(UnitGetPosition(lv_gorgon), 8.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 0)) {
                 lv_highMode = true;
                 UnitSetHeight(lv_gorgon, 8.0, 3.0);
             }
 
         }
         else {
-            if ((UnitGroupCount(UnitGroup("NovaMothership", gv_pLAYER_02_DOMINION3, RegionCircle(UnitGetPosition(lv_gorgon), 8.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0)) {
+            if ((UnitGroupCount(UnitGroup("NovaMothership", gv_pLAYER_04_TAL_DARIM, RegionCircle(UnitGetPosition(lv_gorgon), 8.0), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) == 0)) {
                 lv_highMode = false;
                 UnitSetHeight(lv_gorgon, 6.0, 3.0);
             }
@@ -2133,18 +2155,18 @@ bool gt_SummonGorgonRight_Func (bool testConds, bool runActions) {
     lv_nukePoints[3] = PointFromId(1542110139);
     lv_nukePoints[4] = PointFromId(1909278822);
     lv_nukePoints[5] = PointFromId(304243255);
-    if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+    if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(69), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
         lv_spawnLocation = PointFromId(856551277);
         lv_currentWaypoint = 0;
     }
     else {
-        if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(55), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+        if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(55), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
             lv_spawnLocation = PointFromId(1855747680);
             lv_currentWaypoint = 1;
         }
         else {
             lv_currentWaypoint = 2;
-            if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(56), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
+            if ((UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(56), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 1), c_unitCountAlive) > 0)) {
                 lv_spawnLocation = PointFromId(413678409);
             }
             else {
@@ -2201,7 +2223,7 @@ bool gt_SummonGorgonRight_Func (bool testConds, bool runActions) {
         if ((lv_jumpCheckReached == false)) {
             if ((libNtve_gf_UnitInRegion(lv_gorgon, RegionCircle(PointFromId(276584802), 2.0)) == true)) {
                 lv_jumpCheckReached = true;
-                if ((UnitIsAlive(UnitFromId(428)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > (2 * UnitGroupCount(UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive)))) {
+                if ((UnitIsAlive(UnitFromId(428)) == true) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > 16) && (UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(63), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive) > (2 * UnitGroupCount(UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionFromId(62), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0), c_unitCountAlive)))) {
                     lv_currentWaypoint = 4;
                     gf_GorgonHyperjump(lv_gorgon, lv_waypoint[3]);
                     if ((UnitIsAlive(lv_gorgon) == false)) {
@@ -2511,7 +2533,7 @@ bool gt_BaseKilledQ_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetOwner(libNtve_gf_KillingUnit()) == gv_pLAYER_02_DOMINION3))) {
+        if (!((UnitGetOwner(libNtve_gf_KillingUnit()) == gv_pLAYER_04_TAL_DARIM))) {
             return false;
         }
     }
@@ -2668,7 +2690,7 @@ bool gt_ProtossUnitDies_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_02_DOMINION3))) {
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_04_TAL_DARIM))) {
             return false;
         }
 
@@ -2686,20 +2708,7 @@ bool gt_ProtossUnitDies_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    gv_enemyUnitsRemaining -= 1;
-    gv_currentEnemyUnits -= 1;
-    if ((gv_enemyUnitsRemaining > 0)) {
-        BoardItemSetText(gv_deathFleetLeaderboard, 2, 1, IntToText(gv_enemyUnitsRemaining));
-    }
-
-    if ((gv_enemyUnitsRemaining <= 0)) {
-        TriggerEnable(TriggerGetCurrent(), false);
-        TriggerEnable(gt_ProtossUnitDominated, false);
-        TriggerEnable(gt_ProtossUnitReleased, false);
-        BoardItemSetText(gv_deathFleetLeaderboard, 2, 1, StringExternal("Param/Value/B3F7DA07"));
-        TriggerExecute(gt_VictoryDefeattheDeathFleetCompleted, true, false);
-    }
-
+    gf_DecrementProtossUnitCounter();
     return true;
 }
 
@@ -2707,6 +2716,53 @@ bool gt_ProtossUnitDies_Func (bool testConds, bool runActions) {
 void gt_ProtossUnitDies_Init () {
     gt_ProtossUnitDies = TriggerCreate("gt_ProtossUnitDies_Func");
     TriggerAddEventUnitDied(gt_ProtossUnitDies, null);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trigger: Protoss Unit Mind Controlled
+//--------------------------------------------------------------------------------------------------
+bool gt_ProtossUnitMindControlled_Func (bool testConds, bool runActions) {
+    // Automatic Variable Declarations
+    // Conditions
+    if (testConds) {
+        if (!((lib5BD4895D_gv_aP_Core_initFinished == true))) {
+            return false;
+        }
+
+        if (!((TriggerIsEnabled(TriggerGetCurrent()) == true))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_GameIsOver() == false))) {
+            return false;
+        }
+
+        if (!((libNCMI_gf_PlayerInCinematicModeCampaign() == false))) {
+            return false;
+        }
+
+        if (!((UnitGroupHasUnit(gv_enemyGroups[0], lib15EF4C78_gf_AP_Player_UnitMindControlledEventTarget()) == true))) {
+            return false;
+        }
+    }
+
+    // Actions
+    if (!runActions) {
+        return true;
+    }
+
+    UnitGroupRemove(gv_enemyGroups[0], EventUnitTargetUnit());
+    UnitGroupRemove(gv_enemyGroups[1], EventUnitTargetUnit());
+    UnitGroupRemove(gv_enemyGroups[2], EventUnitTargetUnit());
+    UnitGroupRemove(gv_enemyGroups[3], EventUnitTargetUnit());
+    gf_DecrementProtossUnitCounter();
+    return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+void gt_ProtossUnitMindControlled_Init () {
+    gt_ProtossUnitMindControlled = TriggerCreate("gt_ProtossUnitMindControlled_Func");
+    TriggerAddEventGeneric(gt_ProtossUnitMindControlled, lib15EF4C78_gv_aP_Player_UNIT_MIND_CONTROLLED_EVENT);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -2742,25 +2798,7 @@ bool gt_ProtossUnitDominated_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    gv_enemyUnitsRemaining -= 1;
-    gv_currentEnemyUnits -= 1;
-    UnitGroupRemove(gv_enemyGroups[0], EventUnitTargetUnit());
-    UnitGroupRemove(gv_enemyGroups[1], EventUnitTargetUnit());
-    UnitGroupRemove(gv_enemyGroups[2], EventUnitTargetUnit());
-    UnitGroupRemove(gv_enemyGroups[3], EventUnitTargetUnit());
     gv_currentDominatedUnit = EventUnitTargetUnit();
-    if ((gv_enemyUnitsRemaining > 0)) {
-        BoardItemSetText(gv_deathFleetLeaderboard, 2, 1, IntToText(gv_enemyUnitsRemaining));
-    }
-
-    if ((gv_enemyUnitsRemaining <= 0)) {
-        TriggerEnable(TriggerGetCurrent(), false);
-        TriggerEnable(gt_ProtossUnitDies, false);
-        TriggerEnable(gt_ProtossUnitReleased, false);
-        BoardItemSetText(gv_deathFleetLeaderboard, 2, 1, StringExternal("Param/Value/2D8D023B"));
-        TriggerExecute(gt_VictoryDefeattheDeathFleetCompleted, true, false);
-    }
-
     return true;
 }
 
@@ -2903,7 +2941,7 @@ bool gt_JinaraDies2_Func (bool testConds, bool runActions) {
     Wait(1.0, c_timeAI);
     gv_enemyUnitsRemaining = 0;
     Wait(0.0625, c_timeAI);
-    auto892ED817_g = UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto892ED817_g = UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto892ED817_u = UnitGroupCount(auto892ED817_g, c_unitCountAll);
     for (;; auto892ED817_u -= 1) {
         auto892ED817_var = UnitGroupUnitFromEnd(auto892ED817_g, auto892ED817_u);
@@ -2942,7 +2980,7 @@ bool gt_Observers_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    autoDCACEFD4_g = UnitGroup("Observer", gv_pLAYER_02_DOMINION3, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    autoDCACEFD4_g = UnitGroup("Observer", gv_pLAYER_04_TAL_DARIM, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     autoDCACEFD4_u = UnitGroupCount(autoDCACEFD4_g, c_unitCountAll);
     for (;; autoDCACEFD4_u -= 1) {
         autoDCACEFD4_var = UnitGroupUnitFromEnd(autoDCACEFD4_g, autoDCACEFD4_u);
@@ -2974,7 +3012,7 @@ bool gt_Observers_Func (bool testConds, bool runActions) {
 
             if ((gv_observerBullies[lv_i].lv_alive == false) && (TimerGetRemaining(gv_observerBullies[lv_i].lv_respawnTimer) < 0.1)) {
                 gv_observerBullies[lv_i].lv_alive = true;
-                libNtve_gf_CreateUnitsWithDefaultFacing(1, "Observer", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(gv_observerBullies[lv_i].lv_spawnRegion));
+                libNtve_gf_CreateUnitsWithDefaultFacing(1, "Observer", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(gv_observerBullies[lv_i].lv_spawnRegion));
                 gv_observerBullies[lv_i].lv_obvserver = UnitLastCreated();
                 UnitIssueOrder(gv_observerBullies[lv_i].lv_obvserver, OrderTargetingPoint(AbilityCommand("move", 0), gv_observerBullies[lv_i].lv_homePoint), c_orderQueueReplace);
                 TimerStart(gv_observerBullies[lv_i].lv_aggroTimer, 5.0, false, c_timeAI);
@@ -3333,7 +3371,7 @@ bool gt_GorgonsKills_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_02_DOMINION3))) {
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_04_TAL_DARIM))) {
             return false;
         }
 
@@ -3372,7 +3410,7 @@ bool gt_YamatoKills_Func (bool testConds, bool runActions) {
     // Automatic Variable Declarations
     // Conditions
     if (testConds) {
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_02_DOMINION3))) {
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_04_TAL_DARIM))) {
             return false;
         }
 
@@ -3419,7 +3457,7 @@ bool gt_NovaKills_Func (bool testConds, bool runActions) {
             return false;
         }
 
-        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_02_DOMINION3))) {
+        if (!((UnitGetOwner(EventUnit()) == gv_pLAYER_04_TAL_DARIM))) {
             return false;
         }
 
@@ -3534,12 +3572,12 @@ bool gt_AIUpgradeCasualNormal_Func (bool testConds, bool runActions) {
     }
 
     Wait(600.0, c_timeAI);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossAirWeaponsLevel1", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossGroundWeaponsLevel1", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossAirWeaponsLevel1", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossGroundWeaponsLevel1", 1);
     Wait(600.0, c_timeAI);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossAirArmorsLevel1", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossGroundArmorsLevel1", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossShieldsLevel1", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossAirArmorsLevel1", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossGroundArmorsLevel1", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossShieldsLevel1", 1);
     return true;
 }
 
@@ -3559,12 +3597,12 @@ bool gt_AIUpgradeHardBrutal_Func (bool testConds, bool runActions) {
     }
 
     Wait(600.0, c_timeAI);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossAirWeaponsLevel2", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossGroundWeaponsLevel2", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossAirWeaponsLevel2", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossGroundWeaponsLevel2", 1);
     Wait(600.0, c_timeAI);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossAirArmorsLevel2", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossGroundArmorsLevel2", 1);
-    TechTreeUpgradeAddLevel(gv_pLAYER_02_DOMINION3, "ProtossShieldsLevel2", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossAirArmorsLevel2", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossGroundArmorsLevel2", 1);
+    TechTreeUpgradeAddLevel(gv_pLAYER_04_TAL_DARIM, "ProtossShieldsLevel2", 1);
     return true;
 }
 
@@ -3598,8 +3636,8 @@ bool gt_AIGiveResources_Func (bool testConds, bool runActions) {
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION, c_playerPropVespene, c_playerPropOperSetTo, 10000);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION2, c_playerPropMinerals, c_playerPropOperSetTo, 10000);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION2, c_playerPropVespene, c_playerPropOperSetTo, 10000);
-    PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION3, c_playerPropMinerals, c_playerPropOperSetTo, 10000);
-    PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION3, c_playerPropVespene, c_playerPropOperSetTo, 10000);
+    PlayerModifyPropertyInt(gv_pLAYER_04_TAL_DARIM, c_playerPropMinerals, c_playerPropOperSetTo, 10000);
+    PlayerModifyPropertyInt(gv_pLAYER_04_TAL_DARIM, c_playerPropVespene, c_playerPropOperSetTo, 10000);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION4, c_playerPropMinerals, c_playerPropOperSetTo, 10000);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION4, c_playerPropVespene, c_playerPropOperSetTo, 10000);
     PlayerModifyPropertyInt(gv_pLAYER_02_DOMINION5, c_playerPropMinerals, c_playerPropOperSetTo, 10000);
@@ -3763,7 +3801,7 @@ bool gt_AmbientWaves1_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -3778,17 +3816,17 @@ bool gt_AmbientWaves1_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -3817,7 +3855,7 @@ bool gt_AmbientWaves1_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -3832,17 +3870,17 @@ bool gt_AmbientWaves1_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -3871,7 +3909,7 @@ bool gt_AmbientWaves1_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -3886,17 +3924,17 @@ bool gt_AmbientWaves1_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -4012,7 +4050,7 @@ bool gt_AmbientWaves2_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4027,7 +4065,7 @@ bool gt_AmbientWaves2_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4042,18 +4080,18 @@ bool gt_AmbientWaves2_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -4082,7 +4120,7 @@ bool gt_AmbientWaves2_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4097,7 +4135,7 @@ bool gt_AmbientWaves2_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4112,18 +4150,18 @@ bool gt_AmbientWaves2_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -4249,7 +4287,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4264,7 +4302,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4279,7 +4317,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -4295,7 +4333,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4310,17 +4348,17 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Observer", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Observer", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     UnitGroupAdd(gv_observerWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -4349,7 +4387,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4364,7 +4402,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4379,7 +4417,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -4395,7 +4433,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4410,7 +4448,7 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4425,17 +4463,17 @@ bool gt_AmbientWaves3_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Observer", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Observer", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     UnitGroupAdd(gv_observerWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -4544,7 +4582,7 @@ bool gt_AmbientWaves4_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4559,7 +4597,7 @@ bool gt_AmbientWaves4_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4574,7 +4612,7 @@ bool gt_AmbientWaves4_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Monitor", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -4590,7 +4628,7 @@ bool gt_AmbientWaves4_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4605,7 +4643,7 @@ bool gt_AmbientWaves4_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     gf_TrackUnitforLeaderboard(UnitLastCreated(), lv_laneIndexes[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
@@ -4620,17 +4658,17 @@ bool gt_AmbientWaves4_Func (bool testConds, bool runActions) {
                         return true;
                     }
 
-                    libNtve_gf_UnitCreateFacingPoint(1, "Observer", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
+                    libNtve_gf_UnitCreateFacingPoint(1, "Observer", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(lv_spawnRegions[lv_i]), lv_firstWaypoints[lv_i]);
                     UnitGroupAdd(lv_currentWave, UnitLastCreated());
                     UnitGroupAdd(gv_observerWave, UnitLastCreated());
                     Wait(0.0625, c_timeAI);
                 }
-                AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-                AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(lv_spawnRegions[lv_i]));
-                AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_firstWaypoints[lv_i], false);
-                AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, lv_secondWaypoints[lv_i], false);
-                AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+                AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+                AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(lv_spawnRegions[lv_i]));
+                AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_firstWaypoints[lv_i], false);
+                AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, lv_secondWaypoints[lv_i], false);
+                AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
             }
 
         }
@@ -4692,7 +4730,7 @@ bool gt_SpecialWave1ImmortalsCenterQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -4709,7 +4747,7 @@ bool gt_SpecialWave1ImmortalsCenterQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -4738,11 +4776,11 @@ bool gt_SpecialWave1ImmortalsCenterQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1549), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1549), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -4799,7 +4837,7 @@ bool gt_SpecialWave2VoidRaysLeftQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -4816,7 +4854,7 @@ bool gt_SpecialWave2VoidRaysLeftQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -4845,13 +4883,13 @@ bool gt_SpecialWave2VoidRaysLeftQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(33)), 16.0, 315.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(2)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(28)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1548), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(33)), 16.0, 315.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(2)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(28)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1548), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -4908,7 +4946,7 @@ bool gt_SpecialWave3VoidRaysRightQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -4925,7 +4963,7 @@ bool gt_SpecialWave3VoidRaysRightQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -4955,13 +4993,13 @@ bool gt_SpecialWave3VoidRaysRightQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(37)), 16.0, 135.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(7)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(30)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1550), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(37)), 16.0, 135.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(7)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(30)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1550), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -5018,7 +5056,7 @@ bool gt_SpecialWave4ImmortalsCenterBigQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5035,7 +5073,7 @@ bool gt_SpecialWave4ImmortalsCenterBigQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5063,12 +5101,12 @@ bool gt_SpecialWave4ImmortalsCenterBigQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(4)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1549), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(4)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1549), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -5125,7 +5163,7 @@ bool gt_SpecialWave5WrathwalkersLeftQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "ColossusTaldarim", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(31)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "ColossusTaldarim", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(31)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 315.0)), c_orderQueueReplace);
@@ -5142,7 +5180,7 @@ bool gt_SpecialWave5WrathwalkersLeftQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(31)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(31)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 315.0)), c_orderQueueReplace);
@@ -5170,13 +5208,13 @@ bool gt_SpecialWave5WrathwalkersLeftQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(31)), 16.0, 315.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(1)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(28)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1548), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(31)), 16.0, 315.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(1)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(28)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1548), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -5233,7 +5271,7 @@ bool gt_SpecialWave6WrathwalkersRightQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "ColossusTaldarim", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(39)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "ColossusTaldarim", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(39)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 135.0)), c_orderQueueReplace);
@@ -5250,7 +5288,7 @@ bool gt_SpecialWave6WrathwalkersRightQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(39)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(39)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 135.0)), c_orderQueueReplace);
@@ -5278,13 +5316,13 @@ bool gt_SpecialWave6WrathwalkersRightQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(39)), 16.0, 135.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(6)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(30)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1550), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(39)), 16.0, 135.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(6)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(30)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1550), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -5334,7 +5372,7 @@ bool gt_SpecialWave7JinaraQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libNtve_gf_UnitCreateFacingPoint(1, "NovaMothership", 0, gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(35)), PointFromId(1549));
+    libNtve_gf_UnitCreateFacingPoint(1, "NovaMothership", 0, gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(35)), PointFromId(1549));
     gv_jinaraMothership1 = UnitLastCreated();
     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
     UnitBehaviorAdd(UnitLastCreated(), "Detector12", UnitLastCreated(), 1);
@@ -5350,7 +5388,7 @@ bool gt_SpecialWave7JinaraQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         gv_enemyUnitsRemaining += 1;
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -5363,7 +5401,7 @@ bool gt_SpecialWave7JinaraQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         gv_enemyUnitsRemaining += 1;
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -5392,11 +5430,11 @@ bool gt_SpecialWave7JinaraQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1549), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1549), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     SoundtrackStop(PlayerGroupAll(), c_soundtrackCategoryMusic, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "nDLC_Music_Nova08_Mothership", c_soundtrackCueAny, c_soundtrackIndexAny, true);
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategoryMusic, 100.0, 2.0);
@@ -5454,7 +5492,7 @@ bool gt_SpecialWave8VoidRaysLowerLeftQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(40)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(40)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 315.0)), c_orderQueueReplace);
@@ -5487,12 +5525,12 @@ bool gt_SpecialWave8VoidRaysLowerLeftQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(40)), 16.0, 315.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(28)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1548), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(40)), 16.0, 315.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(28)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1548), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -5547,7 +5585,7 @@ bool gt_SpecialWave9VoidRaysLowerRightQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(41)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(41)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 135.0)), c_orderQueueReplace);
@@ -5579,12 +5617,12 @@ bool gt_SpecialWave9VoidRaysLowerRightQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(41)), 16.0, 135.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(30)), false);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1550), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(41)), 16.0, 135.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(30)), false);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1550), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     return true;
 }
 
@@ -5653,7 +5691,7 @@ bool gt_SpecialWave10ImmortalsTripleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave1, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5670,7 +5708,7 @@ bool gt_SpecialWave10ImmortalsTripleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(33)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave1, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5687,7 +5725,7 @@ bool gt_SpecialWave10ImmortalsTripleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         UnitGroupAdd(lv_currentWave2, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5704,7 +5742,7 @@ bool gt_SpecialWave10ImmortalsTripleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         UnitGroupAdd(lv_currentWave2, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5721,7 +5759,7 @@ bool gt_SpecialWave10ImmortalsTripleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Immortal", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave3, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5738,7 +5776,7 @@ bool gt_SpecialWave10ImmortalsTripleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(37)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave3, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 225.0)), c_orderQueueReplace);
@@ -5769,34 +5807,34 @@ bool gt_SpecialWave10ImmortalsTripleQ_Func (bool testConds, bool runActions) {
     Wait(libNtve_gf_DifficultyValueFixed(30.0, 25.0, 20.0, 15.0), c_timeAI);
     if ((libNtve_gf_UnitGroupIsDead(lv_currentWave1) == false)) {
         AISetGroupScriptControlled(lv_currentWave1, false);
-        AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-        AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(33)), 16.0, 225.0));
-        AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave1);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(1)), false);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1548), false);
-        AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+        AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+        AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(33)), 16.0, 225.0));
+        AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave1);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(1)), false);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1548), false);
+        AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     }
 
     Wait(libNtve_gf_DifficultyValueFixed(15.0, 10.0, 5.0, 0.0), c_timeAI);
     if ((libNtve_gf_UnitGroupIsDead(lv_currentWave2) == false)) {
         AISetGroupScriptControlled(lv_currentWave2, false);
-        AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-        AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
-        AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave2);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(4)), false);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1549), false);
-        AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+        AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+        AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
+        AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave2);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(4)), false);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1549), false);
+        AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     }
 
     Wait(libNtve_gf_DifficultyValueFixed(15.0, 10.0, 5.0, 0.0), c_timeAI);
     if ((libNtve_gf_UnitGroupIsDead(lv_currentWave3) == false)) {
         AISetGroupScriptControlled(lv_currentWave3, false);
-        AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-        AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(37)), 16.0, 225.0));
-        AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave3);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(6)), false);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1550), false);
-        AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+        AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+        AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(37)), 16.0, 225.0));
+        AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave3);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(6)), false);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1550), false);
+        AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     }
 
     return true;
@@ -5857,7 +5895,7 @@ bool gt_SpecialWave11VoidRaysDoubleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(40)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(40)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 1);
         UnitGroupAdd(lv_currentWave1, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 315.0)), c_orderQueueReplace);
@@ -5874,7 +5912,7 @@ bool gt_SpecialWave11VoidRaysDoubleQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(41)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(41)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 3);
         UnitGroupAdd(lv_currentWave2, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 16.0, 135.0)), c_orderQueueReplace);
@@ -5904,23 +5942,23 @@ bool gt_SpecialWave11VoidRaysDoubleQ_Func (bool testConds, bool runActions) {
     Wait(libNtve_gf_DifficultyValueFixed(30.0, 25.0, 20.0, 15.0), c_timeAI);
     if ((libNtve_gf_UnitGroupIsDead(lv_currentWave1) == false)) {
         AISetGroupScriptControlled(lv_currentWave1, false);
-        AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-        AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(40)), 16.0, 225.0));
-        AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave1);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(28)), false);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1548), false);
-        AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+        AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+        AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(40)), 16.0, 225.0));
+        AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave1);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(28)), false);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1548), false);
+        AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     }
 
     Wait(libNtve_gf_DifficultyValueFixed(15.0, 10.0, 5.0, 0.0), c_timeAI);
     if ((libNtve_gf_UnitGroupIsDead(lv_currentWave2) == false)) {
         AISetGroupScriptControlled(lv_currentWave2, false);
-        AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-        AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(41)), 16.0, 225.0));
-        AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave2);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(30)), false);
-        AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1550), false);
-        AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+        AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+        AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(41)), 16.0, 225.0));
+        AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave2);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(30)), false);
+        AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1550), false);
+        AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     }
 
     return true;
@@ -5987,7 +6025,7 @@ bool gt_FinalSpecialWaveJinaraQ_Func (bool testConds, bool runActions) {
         return true;
     }
 
-    libNtve_gf_UnitCreateFacingPoint(1, "NovaMothership", 0, gv_pLAYER_02_DOMINION3, RegionGetCenter(RegionFromId(35)), PointFromId(1549));
+    libNtve_gf_UnitCreateFacingPoint(1, "NovaMothership", 0, gv_pLAYER_04_TAL_DARIM, RegionGetCenter(RegionFromId(35)), PointFromId(1549));
     gv_jinaraMothership2 = UnitLastCreated();
     UnitSetPropertyFixed(UnitLastCreated(), c_unitPropEnergyPercent, 100.0);
     libNCMI_gf_SetUnitInfoTextCampaign(UnitLastCreated(), null, StringExternal("Param/Value/BEEF651B"), null);
@@ -6002,7 +6040,7 @@ bool gt_FinalSpecialWaveJinaraQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         gv_enemyUnitsRemaining += 1;
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -6015,7 +6053,7 @@ bool gt_FinalSpecialWaveJinaraQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Carrier", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Carrier", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         gv_enemyUnitsRemaining += 1;
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -6028,7 +6066,7 @@ bool gt_FinalSpecialWaveJinaraQ_Func (bool testConds, bool runActions) {
             return true;
         }
 
-        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
+        libNtve_gf_UnitCreateFacingPoint(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(35)), PointFromId(1549));
         gf_TrackUnitforLeaderboard(UnitLastCreated(), 2);
         gv_enemyUnitsRemaining += 1;
         UnitGroupAdd(lv_currentWave, UnitLastCreated());
@@ -6058,11 +6096,11 @@ bool gt_FinalSpecialWaveJinaraQ_Func (bool testConds, bool runActions) {
     }
 
     AISetGroupScriptControlled(lv_currentWave, false);
-    AIAttackWaveSetTargetPlayer(gv_pLAYER_02_DOMINION3, PlayerGroupSingle(gv_pLAYER_01_USER));
-    AIAttackWaveSetGatherPoint(gv_pLAYER_02_DOMINION3, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
-    AIAttackWaveUseGroup(gv_pLAYER_02_DOMINION3, lv_currentWave);
-    AIAttackWaveAddWaypoint(gv_pLAYER_02_DOMINION3, PointFromId(1549), false);
-    AIAttackWaveSend(gv_pLAYER_02_DOMINION3, 0, false);
+    AIAttackWaveSetTargetPlayer(gv_pLAYER_04_TAL_DARIM, PlayerGroupSingle(gv_pLAYER_01_USER));
+    AIAttackWaveSetGatherPoint(gv_pLAYER_04_TAL_DARIM, PointWithOffsetPolar(RegionGetCenter(RegionFromId(35)), 16.0, 225.0));
+    AIAttackWaveUseGroup(gv_pLAYER_04_TAL_DARIM, lv_currentWave);
+    AIAttackWaveAddWaypoint(gv_pLAYER_04_TAL_DARIM, PointFromId(1549), false);
+    AIAttackWaveSend(gv_pLAYER_04_TAL_DARIM, 0, false);
     SoundtrackStop(PlayerGroupAll(), c_soundtrackCategoryMusic, true);
     SoundtrackPlay(PlayerGroupAll(), c_soundtrackCategoryMusic, "nDLC_Music_Nova08_Mothership", c_soundtrackCueAny, c_soundtrackIndexAny, true);
     SoundChannelSetVolume(PlayerGroupAll(), c_soundCategoryMusic, 100.0, 2.0);
@@ -6409,19 +6447,19 @@ bool gt_BriefingSurroundedActions01_Func (bool testConds, bool runActions) {
     lv_iter = 0;
     for (autoF575F647_i = 1; autoF575F647_i <= autoF575F647_n; autoF575F647_i += 1) {
         lv_iter += 1;
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, PointFromName(("Briefing - 01 - Zealot 0" + IntToString(lv_iter))));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, PointFromName(("Briefing - 01 - Zealot 0" + IntToString(lv_iter))));
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 50.0, PointGetFacing(PointFromName(("Briefing - 01 - Zealot 0" + IntToString(lv_iter)))))), c_orderQueueReplace);
     }
     lv_iter = 0;
     for (auto9E316ECF_i = 1; auto9E316ECF_i <= auto9E316ECF_n; auto9E316ECF_i += 1) {
         lv_iter += 1;
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, PointFromName(("Briefing - 01 - Stalker 0" + IntToString(lv_iter))));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, PointFromName(("Briefing - 01 - Stalker 0" + IntToString(lv_iter))));
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 50.0, PointGetFacing(PointFromName(("Briefing - 01 - Stalker 0" + IntToString(lv_iter)))))), c_orderQueueReplace);
     }
     lv_iter = 0;
     for (auto105BE911_i = 1; auto105BE911_i <= auto105BE911_n; auto105BE911_i += 1) {
         lv_iter += 1;
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, PointFromName(("Briefing - 01 - Stalker 0" + IntToString(lv_iter))));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, PointFromName(("Briefing - 01 - Stalker 0" + IntToString(lv_iter))));
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 50.0, PointGetFacing(PointFromName(("Briefing - 01 - Stalker 0" + IntToString(lv_iter)))))), c_orderQueueReplace);
     }
     lv_iter = 0;
@@ -6458,20 +6496,20 @@ bool gt_BriefingSurroundedActions02_Func (bool testConds, bool runActions) {
     lv_iter = 0;
     for (auto00128DD8_i = 1; auto00128DD8_i <= auto00128DD8_n; auto00128DD8_i += 1) {
         lv_iter += 1;
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, PointFromName(("Briefing - 02 - Zealot 0" + IntToString(lv_iter))));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, PointFromName(("Briefing - 02 - Zealot 0" + IntToString(lv_iter))));
         UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 50.0, PointGetFacing(PointFromName(("Briefing - 02 - Zealot 0" + IntToString(lv_iter)))))), c_orderQueueReplace);
     }
     lv_iter = 0;
     for (autoE47FA237_i = 1; autoE47FA237_i <= autoE47FA237_n; autoE47FA237_i += 1) {
         lv_iter += 1;
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, PointFromName(("Briefing - 02 - Stalker 0" + IntToString(lv_iter))));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, PointFromName(("Briefing - 02 - Stalker 0" + IntToString(lv_iter))));
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 50.0, PointGetFacing(PointFromName(("Briefing - 02 - Stalker 0" + IntToString(lv_iter)))))), c_orderQueueReplace);
     }
     lv_iter = 0;
     for (auto76163A90_i = 1; auto76163A90_i <= auto76163A90_n; auto76163A90_i += 1) {
         lv_iter += 1;
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "VoidRay", 0, gv_pLAYER_02_DOMINION3, PointFromName(("Briefing - 02 - Stalker 0" + IntToString(lv_iter))));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "VoidRay", 0, gv_pLAYER_04_TAL_DARIM, PointFromName(("Briefing - 02 - Stalker 0" + IntToString(lv_iter))));
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), PointWithOffsetPolar(UnitGetPosition(UnitLastCreated()), 50.0, PointGetFacing(PointFromName(("Briefing - 02 - Stalker 0" + IntToString(lv_iter)))))), c_orderQueueReplace);
     }
     return true;
@@ -6524,11 +6562,11 @@ bool gt_BriefingDefendersActions_Func (bool testConds, bool runActions) {
     }
 
     for (auto3EF51943_i = 1; auto3EF51943_i <= auto3EF51943_n; auto3EF51943_i += 1) {
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(77)));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(77)));
         UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(3))), c_orderQueueReplace);
     }
-    libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(77)));
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(77)));
     UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
     UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(3))), c_orderQueueReplace);
     while (true) {
@@ -6537,11 +6575,11 @@ bool gt_BriefingDefendersActions_Func (bool testConds, bool runActions) {
         }
 
         for (autoC95D5461_i = 1; autoC95D5461_i <= autoC95D5461_n; autoC95D5461_i += 1) {
-            libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(64)));
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(64)));
             UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
             UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(4))), c_orderQueueReplace);
         }
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(64)));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(64)));
         UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(4))), c_orderQueueReplace);
         Wait(15.0, c_timeGame);
@@ -6826,11 +6864,11 @@ bool gt_IntroAttacks_Func (bool testConds, bool runActions) {
 
     Wait(5.0, c_timeGame);
     for (auto22509C2E_i = 1; auto22509C2E_i <= auto22509C2E_n; auto22509C2E_i += 1) {
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(77)));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(77)));
         UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(3))), c_orderQueueReplace);
     }
-    libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(77)));
+    libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(77)));
     UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
     UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(3))), c_orderQueueReplace);
     while (true) {
@@ -6839,11 +6877,11 @@ bool gt_IntroAttacks_Func (bool testConds, bool runActions) {
         }
 
         for (autoB0971379_i = 1; autoB0971379_i <= autoB0971379_n; autoB0971379_i += 1) {
-            libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(64)));
+            libNtve_gf_CreateUnitsWithDefaultFacing(1, "Zealot", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(64)));
             UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
             UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(4))), c_orderQueueReplace);
         }
-        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_02_DOMINION3, RegionRandomPoint(RegionFromId(64)));
+        libNtve_gf_CreateUnitsWithDefaultFacing(1, "Stalker", 0, gv_pLAYER_04_TAL_DARIM, RegionRandomPoint(RegionFromId(64)));
         UnitGroupAdd(gv_cinematicTempUnits, UnitLastCreated());
         UnitIssueOrder(UnitLastCreated(), OrderTargetingPoint(AbilityCommand("attack", 0), RegionGetCenter(RegionFromId(4))), c_orderQueueReplace);
         Wait(15.0, c_timeGame);
@@ -6923,7 +6961,7 @@ bool gt_VictorySetup_Func (bool testConds, bool runActions) {
     GameTimeOfDayPause(true);
     gv_cinematicTempUnits = UnitGroupEmpty();
     gv_cinematicHiddenUnits = UnitGroupEmpty();
-    auto3F4B6F62_g = UnitGroup(null, gv_pLAYER_02_DOMINION3, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
+    auto3F4B6F62_g = UnitGroup(null, gv_pLAYER_04_TAL_DARIM, RegionEntireMap(), UnitFilter(0, 0, (1 << c_targetFilterMissile), (1 << (c_targetFilterDead - 32)) | (1 << (c_targetFilterHidden - 32))), 0);
     auto3F4B6F62_u = UnitGroupCount(auto3F4B6F62_g, c_unitCountAll);
     for (;; auto3F4B6F62_u -= 1) {
         auto3F4B6F62_var = UnitGroupUnitFromEnd(auto3F4B6F62_g, auto3F4B6F62_u);
@@ -7346,6 +7384,7 @@ void InitTriggers () {
     gt_Mid3BaseKilled_Init();
     gt_DeathFleetCounter_Init();
     gt_ProtossUnitDies_Init();
+    gt_ProtossUnitMindControlled_Init();
     gt_ProtossUnitDominated_Init();
     gt_ProtossUnitReleased_Init();
     gt_JinaraDies1Q_Init();

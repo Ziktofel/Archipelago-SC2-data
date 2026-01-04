@@ -84,3 +84,17 @@ The Dig:
 -s2: Start Drill phase
 -s3, -s4, -s5: Set the door to 70%, 33%, 5% hp
 -drill: Get control of the Drill
+
+Into the Void:
+
+-fX: Establish Forward Bases. 1,2,3 for Raynor, Kerrigan or Artanis AI (only available if the respective AI controls one of the bases). Each use will make the AI progress 1 "step".
+-bX: Finish the 4 Bonus Objectives.
+-tX: Spawn Void Thrasher attacking Player X, 1,2,3 being Raynor, Kerrigan or Artanis.
+
+The Essence of Eternity
+
+-revive, -r: Instantly revives all heroes used by your allies (or yourself if playing with ally control enabled).
+
+Amon's Fall:
+
+-eat: Trigger Amon to destroy the next base in the cycle.
